@@ -1,0 +1,19 @@
+:root {
+  --primary: #355872;
+  --secondary: #7AAACE;
+  --accent: #9CD5FF;
+  --background: #F7F8F0;
+  --dark: #2C3947;
+  --gold: #E6C77B;
+
+  --muted: #7B8794;
+  --ink: #102630;
+
+  --card-bg: rgba(255, 255, 255, 0.66);
+  --card-bg-strong: rgba(255, 255, 255, 0.78);
+  --card-border: rgba(255, 255, 255, 0.72);
+
+  --shadow-card: 0 22px 70px rgba(53, 88, 114, 0.13);
+  --shadow-soft: 0 14px 45px rgba(53, 88, 114, 0.1);
+  --radius-card: 30px;
+}
