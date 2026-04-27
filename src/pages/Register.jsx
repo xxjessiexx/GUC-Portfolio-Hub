@@ -152,6 +152,7 @@ export default function Register() {
         description="Choose your role to personalize your registration flow."
       />
 
+      {/* ROLE SELECTION */}
       <div className="mb-8 grid gap-4 md:grid-cols-3">
         {roleOptions.map((option) => {
           const Icon = option.icon;
@@ -167,15 +168,17 @@ export default function Register() {
               }}
               className={`rounded-3xl border p-5 text-left transition hover:-translate-y-1 ${
                 isSelected
-                  ? "border-[#E6C77B] bg-[#9CD5FF]/25 shadow-[0_18px_40px_rgba(53,88,114,0.16)]"
-                  : "border-white/80 bg-white/55 hover:border-[#7AAACE]/50"
+                  ? "border-[color:var(--gold)] bg-[color:var(--accent)]/25 shadow-[0_18px_40px_rgba(53,88,114,0.16)]"
+                  : "border-white/80 bg-white/55 hover:border-[color:var(--secondary)]/50"
               }`}
             >
-              <Icon className="mb-4 h-7 w-7 text-[#355872]" />
+              <Icon className="mb-4 h-7 w-7 text-[color:var(--primary)]" />
 
-              <h3 className="font-black text-[#102630]">{option.title}</h3>
+              <h3 className="font-black text-[color:var(--ink)]">
+                {option.title}
+              </h3>
 
-              <p className="mt-2 text-sm leading-6 text-[#7B8794]">
+              <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
                 {option.description}
               </p>
             </button>
@@ -207,10 +210,12 @@ export default function Register() {
 
         <div className="grid gap-5 md:grid-cols-2">
           <AuthField error={errors.password}>
-            <Label className="font-bold text-[#2C3947]">Password</Label>
+            <Label className="font-bold text-[color:var(--dark)]">
+              Password
+            </Label>
 
             <AuthInputWrap error={errors.password}>
-              <Lock className="h-5 w-5 text-[#355872]" />
+              <Lock className="h-5 w-5 text-[color:var(--primary)]" />
 
               <Input
                 type={showPassword ? "text" : "password"}
@@ -223,7 +228,7 @@ export default function Register() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-[#7B8794] hover:text-[#355872]"
+                className="text-[color:var(--muted)] hover:text-[color:var(--primary)]"
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5" />
@@ -311,7 +316,7 @@ export default function Register() {
                   e.target.files?.[0]?.name || ""
                 )
               }
-              className="file:mr-4 file:rounded-xl file:border-0 file:bg-[#9CD5FF]/30 file:px-4 file:py-2 file:font-bold file:text-[#355872]"
+              className="file:mr-4 file:rounded-xl file:border-0 file:bg-[color:var(--accent)]/30 file:px-4 file:py-2 file:font-bold file:text-[color:var(--primary)]"
             />
           </>
         )}

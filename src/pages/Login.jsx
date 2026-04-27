@@ -70,18 +70,22 @@ export default function Login() {
 
         <AuthField error={errors.password}>
           <div className="flex items-center justify-between">
-            <Label className="font-bold text-[#2C3947]">Password</Label>
+            {/* ✅ replaced */}
+            <Label className="font-bold text-[color:var(--dark)]">
+              Password
+            </Label>
 
             <Link
               to="/forgot-password"
-              className="text-sm font-bold text-[#355872] hover:text-[#7AAACE]"
+              className="text-sm font-bold text-[color:var(--primary)] hover:text-[color:var(--secondary)]"
             >
               Forgot password?
             </Link>
           </div>
 
           <AuthInputWrap error={errors.password}>
-            <Lock className="h-5 w-5 text-[#355872]" />
+            {/* ✅ replaced */}
+            <Lock className="h-5 w-5 text-[color:var(--primary)]" />
 
             <Input
               type={showPassword ? "text" : "password"}
@@ -97,7 +101,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="text-[#7B8794] hover:text-[#355872]"
+              className="text-[color:var(--muted)] hover:text-[color:var(--primary)]"
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" />

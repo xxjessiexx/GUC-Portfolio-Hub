@@ -28,10 +28,10 @@ export default function AuthLayout({
   }, [blobOneX, blobOneY, blobTwoX, blobTwoY]);
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#F7F8F0_0%,#EAF4FA_45%,#D8ECF8_100%)] p-6 text-[#102630]">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[linear-gradient(135deg,var(--background)_0%,#EAF4FA_45%,#D8ECF8_100%)] p-6 text-[color:var(--ink)]">
       <motion.div
         style={{ x: blobOneX, y: blobOneY }}
-        className="pointer-events-none fixed -left-28 -top-36 h-[540px] w-[540px] rounded-full bg-[radial-gradient(circle,#9CD5FF_0%,rgba(122,170,206,0.32)_55%,transparent_72%)] blur-3xl"
+        className="pointer-events-none fixed -left-28 -top-36 h-[540px] w-[540px] rounded-full bg-[radial-gradient(circle,var(--accent)_0%,rgba(122,170,206,0.32)_55%,transparent_72%)] blur-3xl"
       />
 
       <motion.div
@@ -45,7 +45,7 @@ export default function AuthLayout({
         transition={{ duration: 0.7, ease: "easeOut" }}
         className={`relative z-10 w-full ${maxWidth}`}
       >
-        <Card className="relative overflow-hidden rounded-[34px] border border-white/80 bg-white/65 shadow-[0_34px_100px_rgba(36,57,73,0.22)] backdrop-blur-2xl">
+        <Card className="relative overflow-hidden rounded-[34px] border border-white/80 bg-[var(--card-bg)] shadow-[var(--shadow-card)] backdrop-blur-2xl">
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.75),transparent_36%),radial-gradient(circle_at_top_right,rgba(230,199,123,0.13),transparent_34%)]" />
 
           <CardContent className={`relative z-10 ${contentClassName}`}>
