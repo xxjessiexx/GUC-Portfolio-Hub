@@ -55,11 +55,12 @@ export default function Register() {
     if (!form.email.trim()) {
       newErrors.email = "Email is required";
     } else if (
-      (role === "student" || role === "instructor") &&
-      !form.email.endsWith("@guc.edu.eg") &&
+      role === "student" &&
       !form.email.endsWith("@student.guc.edu.eg")
     ) {
-      newErrors.email = "Please use a valid GUC email address";
+      newErrors.email = "Please use your GUC student email address";
+    } else if (role === "instructor" && !form.email.endsWith("@guc.edu.eg")) {
+      newErrors.email = "Please use your GUC instructor email address";
     } else if (role === "employer" && !/\S+@\S+\.\S+/.test(form.email)) {
       newErrors.email = "Please enter a valid company email";
     }
@@ -132,6 +133,13 @@ export default function Register() {
     },
   ];
 
+  const emailPlaceholder =
+    role === "employer"
+      ? "name@company.com"
+      : role === "student"
+      ? "name@student.guc.edu.eg"
+      : "name@guc.edu.eg";
+
   return (
     <AuthLayout
       maxWidth="max-w-[760px]"
@@ -192,7 +200,7 @@ export default function Register() {
             type="email"
             value={form.email}
             error={errors.email}
-            placeholder={role === "employer" ? "name@company.com" : "name@guc.edu.eg"}
+            placeholder={emailPlaceholder}
             onChange={(e) => updateField("email", e.target.value)}
           />
         </div>

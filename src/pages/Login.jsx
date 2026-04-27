@@ -25,7 +25,7 @@ export default function Login() {
     const newErrors = {};
 
     if (!email.trim()) newErrors.email = "Email is required";
-    else if (!email.endsWith("@guc.edu.eg"))
+    else if (!email.endsWith("@student.guc.edu.eg"))
       newErrors.email = "Please use your GUC email address";
 
     if (!password.trim()) newErrors.password = "Password is required";
@@ -61,7 +61,7 @@ export default function Login() {
           type="email"
           value={email}
           error={errors.email}
-          placeholder="your-email@guc.edu.eg"
+          placeholder="your-email@student.guc.edu.eg"
           onChange={(event) => {
             setEmail(event.target.value);
             setErrors((prev) => ({ ...prev, email: "" }));
