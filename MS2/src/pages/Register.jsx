@@ -109,7 +109,7 @@ export default function Register({ addUser }) {
     password: form.password,
   };
 
-    addUser(newUser); // ✅ send data to parent
+    addUser(newUser);
       
       alert(
         role === "employer"
