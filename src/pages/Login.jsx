@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
-export default function Login() {
+export default function Login({users}) {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,9 +25,9 @@ export default function Login() {
     const newErrors = {};
 
     if (!email.trim()) newErrors.email = "Email is required";
-    else if (!email.endsWith("@student.guc.edu.eg"))
-      newErrors.email = "Please use your GUC email address";
-
+   // else if (!email.endsWith("@student.guc.edu.eg")) 
+   // newErrors.email = "Please use your GUC email address";
+   // else if(!email.endsWith("@guc.edu.eg"))
     if (!password.trim()) newErrors.password = "Password is required";
     else if (password.length < 6)
       newErrors.password = "Password must be at least 6 characters";
@@ -38,10 +38,20 @@ export default function Login() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    
+    if (!validate()) return;
+    const foundUser = users.find(
+    (user) => user.email === email && user.password === password
+    );
+    if (foundUser) {
+    window.location.href = "/student-dashboard";
+  } else {
+    setErrors({
+      email: "",
+      password: "Invalid email or password",
+    });
+  }
 
-    if (validate()) {
-      window.location.href = "/student-dashboard";
-    }
   };
 
   return (
