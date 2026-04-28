@@ -4,16 +4,33 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import StudentDashboard from "./pages/StudentDashboard";
 import FloatingCTA from "./components/ui/FloatingCTA";
+import { useState, useEffect } from "react";
 
 export default function App() {
+
+  const [users, setUsers] = useState(() => {
+  const stored = sessionStorage.getItem("users");
+  return stored ? JSON.parse(stored) : [];
+});
+
+const addUser = (user) => {
+  setUsers((prev) => {
+    const updated = [...prev, user];
+    sessionStorage.setItem("users", JSON.stringify(updated));
+    return updated;
+  });
+};
+  useEffect(() => {
+  console.log("Users array:", users);
+}, [users]);
   return (
     <BrowserRouter>
       <FloatingCTA />
 
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login users={users}/>} />
+        <Route path="/register" element={<Register addUser={addUser}/>} />
         <Route path="/student-dashboard" element={<StudentDashboard />} />
       </Routes>
     </BrowserRouter>

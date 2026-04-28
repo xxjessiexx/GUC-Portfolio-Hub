@@ -23,7 +23,7 @@ import {
   User,
 } from "lucide-react";
 
-export default function Register() {
+export default function Register({ addUser }) {
   const [role, setRole] = useState("student");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -104,12 +104,21 @@ export default function Register() {
     event.preventDefault();
 
     if (validate()) {
+    const newUser = {
+    email: form.email,
+    password: form.password,
+  };
+
+    addUser(newUser); // ✅ send data to parent
+      
       alert(
         role === "employer"
           ? "Employer registration submitted for admin approval!"
           : "Registration form is valid!"
       );
     }
+
+    
   };
 
   const roleOptions = [
@@ -321,7 +330,7 @@ export default function Register() {
           </>
         )}
 
-        <AuthSubmitButton>Create Account</AuthSubmitButton>
+        <AuthSubmitButton  >Create Account</AuthSubmitButton>
       </form>
 
       <AuthDivider />
