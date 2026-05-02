@@ -7,6 +7,10 @@ import AuthInputWrap from "@/components/auth/AuthInputWrap";
 import AuthBottomLink from "../components/auth/AuthBottomLink";
 import { useNavigate } from "react-router-dom";
 
+import {
+  Mail,
+} from "lucide-react";
+
 export default function ForgotPassword() {
  
   const [email, setEmail] = useState(
@@ -20,7 +24,7 @@ const handleSubmit = (e) => {
 
   sessionStorage.setItem("resetEmail", email);
 
-  navigate("/login"); // 🔥 redirect here
+  navigate("/verifyOTP", { state: { email } });
 };
 
   return (
@@ -34,10 +38,12 @@ const handleSubmit = (e) => {
   description="Enter your email and we’ll send you a reset link"
   showBrand={true}
 />
-
+<form className="space-y-6" onSubmit={handleSubmit}>
       <AuthInput
         label="Email"
         type="email"
+        required
+        icon={Mail}
         value={email}
         placeholder="name@student.guc.edu.eg"
         onChange={(e) => setEmail(e.target.value)}
@@ -46,9 +52,11 @@ const handleSubmit = (e) => {
       <div className="mt-6">
       <AuthSubmitButton text="Send Reset Link" onClick={handleSubmit} className="mt-6 space-y-4" >
         Send
-        </AuthSubmitButton>
+      </AuthSubmitButton>
       </div>
-      <AuthBottomLink >
+      </form>
+      <AuthBottomLink backLabel="Back to login"
+      backTo="/login">
       
     </AuthBottomLink>
     </AuthLayout>
