@@ -5,6 +5,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import StudentDashboard from "./pages/StudentDashboard";
+import ForgotPassword from "./pages/forgot-password";
 import EditProfile from "./pages/EditProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
 
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="/student-dashboard" element={<StudentDashboard />} />
 
           <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
         </Routes>
       </UserProfileProvider>
     </BrowserRouter>
