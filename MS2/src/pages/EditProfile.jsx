@@ -1,9 +1,12 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import ProfilePhotoUploader from "@/components/profile/ProfilePhotoUploader";
+
+import MiniProfileSummary from "@/components/profile/MiniProfileSummary";
 import EditableProfileField from "@/components/profile/EditableProfileField";
 import ProfileSelectField from "@/components/profile/ProfileSelectField";
+import SkillsEditor from "@/components/profile/SkillsEditor";
+import DangerActions from "@/components/profile/DangerActions";
 
 import { notifications } from "@/data/studentDashboardData";
 import { useUserProfile } from "@/context/UserProfileContext";
@@ -23,78 +26,126 @@ export default function EditProfile() {
       <div className="space-y-6">
         <SectionHeader
           title="Profile Information"
-          subtitle="Manage your personal information and portfolio details."
+          subtitle="Manage your personal information, skills, and portfolio links."
         />
 
-        <AppCard className="p-8 text-center">
-          <ProfilePhotoUploader
-            image={profile.image}
-            setImage={(image) => updateProfile({ image })}
-            name={profile.name}
-          />
+        <div className="grid gap-6 xl:grid-cols-[0.75fr_1.25fr]">
+          <div className="space-y-6">
+            <AppCard className="p-8">
+              <MiniProfileSummary
+                profile={profile}
+                updateProfile={updateProfile}
+              />
+            </AppCard>
+          </div>
 
-          <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)]">
-            {profile.name}
-          </h2>
+          <div className="space-y-6">
+            <AppCard className="p-6">
+              <h3 className="mb-4 text-xl font-black text-[color:var(--ink)]">
+                Basic Information
+              </h3>
 
-          <p className="text-sm font-semibold text-[color:var(--muted)]">
-            {profile.role}
-          </p>
+              {/* READ-ONLY FIELD */}
+              <div className="grid gap-3 border-b border-[color:var(--primary)]/10 py-4 md:grid-cols-[180px_1fr] md:items-center">
+                <p className="text-sm font-black text-[color:var(--dark)]">
+                  Full Name
+                </p>
+                <p className="text-sm font-semibold text-[color:var(--muted)]">
+                  {profile.name}
+                </p>
+              </div>
 
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[color:var(--muted)]">
-            {profile.bio}
-          </p>
-        </AppCard>
+              {/* READ-ONLY FIELD */}
+              <div className="grid gap-3 border-b border-[color:var(--primary)]/10 py-4 md:grid-cols-[180px_1fr] md:items-center">
+                <p className="text-sm font-black text-[color:var(--dark)]">
+                  Email
+                </p>
+                <p className="text-sm font-semibold text-[color:var(--muted)]">
+                  {profile.email}
+                </p>
+              </div>
 
-        <AppCard className="p-6">
-          <h3 className="mb-4 text-xl font-black text-[color:var(--ink)]">
-            Basic Information
-          </h3>
+              <EditableProfileField
+                label="Bio"
+                value={profile.bio}
+                onSave={(value) => updateProfile({ bio: value })}
+              />
 
-          <EditableProfileField
-            label="Full Name"
-            value={profile.name}
-            onSave={(value) => updateProfile({ name: value })}
-          />
+              <ProfileSelectField
+                label="Faculty"
+                value={profile.faculty}
+                options={facultyOptions}
+                onChange={(value) => updateProfile({ faculty: value })}
+              />
 
-          <EditableProfileField
-            label="Email"
-            value={profile.email}
-            onSave={(value) => updateProfile({ email: value })}
-          />
+              <ProfileSelectField
+                label="Major"
+                value={profile.major}
+                options={majorOptions}
+                onChange={(value) =>
+                  updateProfile({
+                    major: value,
+                    role: `${value} Student`,
+                  })
+                }
+              />
 
-          <EditableProfileField
-            label="Bio"
-            value={profile.bio}
-            onSave={(value) => updateProfile({ bio: value })}
-          />
+              <ProfileSelectField
+                label="Semester"
+                value={String(profile.semester)}
+                options={semesterOptions}
+                onChange={(value) => updateProfile({ semester: value })}
+              />
+            </AppCard>
 
-          <ProfileSelectField
-            label="Faculty"
-            value={profile.faculty}
-            options={facultyOptions}
-            onChange={(value) => updateProfile({ faculty: value })}
-          />
+            <AppCard className="p-6">
+              <SkillsEditor
+                skills={profile.skills}
+                onChange={(skills) => updateProfile({ skills })}
+              />
+            </AppCard>
 
-          <ProfileSelectField
-            label="Major"
-            value={profile.major}
-            options={majorOptions}
-            onChange={(value) =>
-              updateProfile({
-                major: value,
-                role: `${value} Student`,
-              })
-            }
-          />
+            <AppCard className="p-6">
+              <h3 className="mb-4 text-xl font-black text-[color:var(--ink)]">
+                Portfolio Links
+              </h3>
 
-          <ProfileSelectField
-            label="Semester"
-            value={String(profile.semester)}
-            options={semesterOptions}
-            onChange={(value) => updateProfile({ semester: value })}
-          />
-        </AppCard>
+              <EditableProfileField
+                label="LinkedIn URL"
+                value={profile.links.linkedin}
+                onSave={(value) =>
+                  updateProfile({
+                    links: { ...profile.links, linkedin: value },
+                  })
+                }
+              />
+
+              <EditableProfileField
+                label="GitHub URL"
+                value={profile.links.github}
+                onSave={(value) =>
+                  updateProfile({
+                    links: { ...profile.links, github: value },
+                  })
+                }
+              />
+
+              <EditableProfileField
+                label="Behance URL"
+                value={profile.links.behance}
+                onSave={(value) =>
+                  updateProfile({
+                    links: { ...profile.links, behance: value },
+                  })
+                }
+              />
+            </AppCard>
+
+            <AppCard className="p-6">
+              <DangerActions />
+            </AppCard>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
