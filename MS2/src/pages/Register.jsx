@@ -4,20 +4,17 @@ import { motion } from "framer-motion";
 import AuthLayout from "@/components/auth/AuthLayout";
 import AuthHeader from "@/components/auth/AuthHeader";
 import AuthInput from "@/components/auth/AuthInput";
-import AuthField from "@/components/auth/AuthField";
-import AuthInputWrap from "@/components/auth/AuthInputWrap";
 import AuthSubmitButton from "@/components/auth/AuthSubmitButton";
 import AuthDivider from "@/components/auth/AuthDivider";
 import AuthBottomLink from "@/components/auth/AuthBottomLink";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useNavigate } from "react-router-dom";
+
+
 
 import {
   Briefcase,
   Building2,
-  Eye,
-  EyeOff,
   GraduationCap,
   Lock,
   Mail,
@@ -25,9 +22,13 @@ import {
 } from "lucide-react";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 
+
 export default function Register({ addUser }) {
   const [role, setRole] = useState("student");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     fullName: "",
@@ -128,6 +129,8 @@ export default function Register({ addUser }) {
           ? "Employer registration submitted for admin approval!"
           : "Registration form is valid!"
       );
+
+      navigate("/login");
     }
 
     
@@ -214,6 +217,7 @@ export default function Register({ addUser }) {
         <div className="grid gap-5 md:grid-cols-2">
           <AuthInput
             label="Full Name"
+            required
             icon={User}
             value={form.fullName}
             error={errors.fullName}
@@ -226,6 +230,7 @@ export default function Register({ addUser }) {
             icon={Mail}
             type="email"
             value={form.email}
+            required
             error={errors.email}
             placeholder={emailPlaceholder}
             onChange={(e) => updateField("email", e.target.value)}
@@ -233,43 +238,32 @@ export default function Register({ addUser }) {
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
-          <AuthField error={errors.password}>
-            <Label className="font-bold text-[color:var(--dark)]">
-              Password
-            </Label>
-
-            <AuthInputWrap error={errors.password}>
-              <Lock className="h-5 w-5 text-[color:var(--primary)]" />
-
-              <Input
-                type={showPassword ? "text" : "password"}
-                value={form.password}
-                onChange={(e) => updateField("password", e.target.value)}
-                placeholder="••••••••"
-                className="border-0 bg-transparent shadow-none focus-visible:ring-0"
-              />
-
-              <motion.button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                whileHover={{ scale: 1.08 }}
-                whileTap={tapScale}
-                transition={{ duration: 0.18, ease: easeOutExpo }}
-                className="text-[color:var(--muted)] hover:text-[color:var(--primary)]"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </motion.button>
-            </AuthInputWrap>
-          </AuthField>
-
           <AuthInput
+          label="Password"
+          icon={Lock}
+          type="password"
+          enableToggle
+          showPassword={showPassword}
+          setShowPassword={setShowPassword}
+          tapScale={tapScale}
+          required
+          easeOutExpo={easeOutExpo}
+          value={form.password}
+          error={errors.password}
+          placeholder="••••••••"
+          onChange={(e) => updateField("password", e.target.value)}
+        />
+
+        <AuthInput
             label="Confirm Password"
             icon={Lock}
-            type={showPassword ? "text" : "password"}
+            type="password"
+            enableToggle
+            required
+            showPassword={showConfirmPassword}
+            setShowPassword={setShowConfirmPassword}
+            tapScale={tapScale}
+            easeOutExpo={easeOutExpo}
             value={form.confirmPassword}
             error={errors.confirmPassword}
             placeholder="••••••••"
@@ -281,6 +275,7 @@ export default function Register({ addUser }) {
           <div className="grid gap-5 md:grid-cols-2">
             <AuthInput
               label="Faculty"
+              required
               icon={GraduationCap}
               value={form.faculty}
               error={errors.faculty}
@@ -290,6 +285,7 @@ export default function Register({ addUser }) {
 
             <AuthInput
               label="Semester"
+              required
               icon={GraduationCap}
               value={form.semester}
               error={errors.semester}
