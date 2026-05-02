@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 
-export default function Login({users}) {
+export default function Login({ users, setCurrentUser }){
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,6 +46,8 @@ export default function Login({users}) {
     (user) => user.email === email && user.password === password
     );
     if (foundUser) {
+    sessionStorage.setItem("currentUser", JSON.stringify(foundUser));
+    setCurrentUser(foundUser);
     window.location.href = "/student-dashboard";
   } else {
     setErrors({
