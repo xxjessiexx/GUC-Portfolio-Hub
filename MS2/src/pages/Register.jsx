@@ -8,6 +8,8 @@ import AuthSubmitButton from "@/components/auth/AuthSubmitButton";
 import AuthDivider from "@/components/auth/AuthDivider";
 import AuthBottomLink from "@/components/auth/AuthBottomLink";
 
+import { useNavigate } from "react-router-dom";
+
 
 
 import {
@@ -25,6 +27,8 @@ export default function Register({ addUser }) {
   const [role, setRole] = useState("student");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     fullName: "",
@@ -115,6 +119,8 @@ export default function Register({ addUser }) {
           ? "Employer registration submitted for admin approval!"
           : "Registration form is valid!"
       );
+
+      navigate("/login");
     }
 
     
