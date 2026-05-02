@@ -4,7 +4,7 @@ import { student } from "@/data/studentDashboardData";
 const UserProfileContext = createContext();
 
 export function UserProfileProvider({ children, currentUser }) {
-  const [profile, setProfile] = useState({
+  const defaultProfile = {
     name: currentUser?.name || student.name,
     email: currentUser?.email || "yasmin.khaled@student.guc.edu.eg",
     semester: currentUser?.semester || student.semester,
@@ -17,7 +17,15 @@ export function UserProfileProvider({ children, currentUser }) {
       currentUser?.bio ||
       "Passionate about building impactful digital solutions.",
     image: currentUser?.image || null,
-  });
+    skills: currentUser?.skills || ["Python", "JavaScript", "React", "UI/UX"],
+    links: currentUser?.links || {
+      linkedin: "linkedin.com/in/yasminkhaled",
+      github: "github.com/yasminkhaled",
+      behance: "behance.net/yasminkhaled",
+    },
+  };
+
+  const [profile, setProfile] = useState(defaultProfile);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -25,7 +33,7 @@ export function UserProfileProvider({ children, currentUser }) {
     setProfile({
       name: currentUser.name,
       email: currentUser.email,
-      semester: currentUser.semester,
+      semester: currentUser.semester || "1",
       faculty: currentUser.faculty || "Faculty of Engineering",
       major: currentUser.major || "Computer Science",
       role: `${currentUser.major || "Computer Science"} Student`,
@@ -33,6 +41,12 @@ export function UserProfileProvider({ children, currentUser }) {
         currentUser.bio ||
         "Passionate about building impactful digital solutions.",
       image: currentUser.image || null,
+      skills: currentUser.skills || ["Python", "JavaScript", "React", "UI/UX"],
+      links: currentUser.links || {
+        linkedin: "",
+        github: "",
+        behance: "",
+      },
     });
   }, [currentUser]);
 
