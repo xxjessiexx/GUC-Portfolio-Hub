@@ -39,7 +39,7 @@ export default function AuthInput({
       )}</Label>
 
       <Link
-              to="/verifyOTP"
+              to="/forgot-password"
               className="text-sm font-bold text-[color:var(--primary)] hover:text-[color:var(--secondary)]"
             >
               Forgot password?

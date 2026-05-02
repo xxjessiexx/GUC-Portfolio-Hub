@@ -6,58 +6,66 @@ import AuthHeader from "@/components/auth/AuthHeader";
 import AuthSubmitButton from "@/components/auth/AuthSubmitButton";
 import AuthBottomLink from "@/components/auth/AuthBottomLink";
 
+import { useLocation } from "react-router-dom";
+
 import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
+InputOTP,
+InputOTPGroup,
+InputOTPSlot,
 } from "@/components/ui/input-otp";
 
 export default function VerifyOTP() {
-  const [otp, setOtp] = useState("");
-  const navigate = useNavigate();
+const [otp, setOtp] = useState("");
+const navigate = useNavigate();
+const location = useLocation();
 
-  const handleSubmit = (e) => {
+const email =
+location.state?.email || sessionStorage.getItem("resetEmail");
+
+const handleSubmit = (e) => {
     e.preventDefault();
-    navigate("/login");
-  };
+    navigate("/SetPassword", { state: { email } });
+};
 
-  return (
+return (
     <AuthLayout>
-      <AuthHeader
+    <AuthHeader
         showBrand
         badge="Student Portfolio Platform"
-        title="Check your email"
-        highlightedWord=""
+        title="Check your"
+        highlightedWord="email"
         description="Input the code that was sent to your email"
-      />
+    />
 
-      <form className="space-y-6" onSubmit={handleSubmit}>
+    <form className="space-y-6" onSubmit={handleSubmit}>
         <div className="flex justify-center mt-10">
-          <InputOTP
+        <InputOTP
             maxLength={6}
             value={otp}
             onChange={(value) => setOtp(value)}
-          >
+        >
             <InputOTPGroup>
-              {[...Array(6)].map((_, i) => (
+            {[...Array(6)].map((_, i) => (
                 <InputOTPSlot key={i} index={i} />
-              ))}
+            ))}
             </InputOTPGroup>
-          </InputOTP>
+        </InputOTP>
         </div>
             
         <AuthSubmitButton>Continue</AuthSubmitButton>
-      </form>
-      <div className="my-8 flex items-center gap-4 font-semibold text-[color:var(--muted)]">
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[color:var(--secondary)]/30 to-transparent" />
-      
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[color:var(--secondary)]/30 to-transparent" />
+    </form>
+    <div className="my-8 flex items-center gap-4 font-semibold text-[color:var(--muted)]">
+    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[color:var(--secondary)]/30 to-transparent" />
+
+    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[color:var(--secondary)]/30 to-transparent" />
     </div>
-       <AuthBottomLink
-              text="Didn't get any code?"
-              linkText="Click to resend"
-              to="/VerifyOTP"
-            />
+    <AuthBottomLink
+            text="Didn't get any code?"
+            linkText="Click to resend"
+            to="/VerifyOTP"
+            backLabel="Back to login"
+            backTo="/login"
+    />
     </AuthLayout>
-  );
+);
 }

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
-export default function AuthBottomLink({ text, linkText, to }) {
+export default function AuthBottomLink({ text, linkText, to, backTo = "/",backLabel = "Back to home" }) {
   return (
     <>
       <p className="text-center text-lg font-semibold text-[color:var(--ink)]">
@@ -16,11 +16,11 @@ export default function AuthBottomLink({ text, linkText, to }) {
       </p>
 
       <Link
-        to="/"
+        to={backTo}
         className="mx-auto mt-7 flex w-fit items-center gap-2 font-bold text-[color:var(--muted)] hover:text-[color:var(--primary)]"
       >
-        <ArrowLeft className="h-4 w-4" />
-        Back to home
+      <ArrowLeft className="h-4 w-4" />
+        {backLabel}
       </Link>
     </>
   );

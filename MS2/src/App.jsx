@@ -6,8 +6,10 @@ import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
 import Register from "./pages/Register";
 import StudentDashboard from "./pages/StudentDashboard";
+import ForgotPassword from "./pages/forgot-password";
 import EditProfile from "./pages/EditProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
+import SetPassword from "./pages/SetPassword"
 
 import { UserProfileProvider } from "./context/UserProfileContext";
 
@@ -44,6 +46,9 @@ export default function App() {
           <Route path="/" element={<Landing />} />
 
           <Route path="/verifyOTP" element={<VerifyOTP />} />
+          <Route path="/SetPassword" element={<SetPassword users={users}
+                                      setUsers={setUsers}
+                                      setCurrentUser={setCurrentUser} />} />
 
           <Route
             path="/login"
@@ -58,6 +63,7 @@ export default function App() {
           <Route path="/student-dashboard" element={<StudentDashboard />} />
 
           <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
         </Routes>
       </UserProfileProvider>
     </BrowserRouter>
