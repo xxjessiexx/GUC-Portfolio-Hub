@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 import AuthLayout from "@/components/auth/AuthLayout";
 import AuthHeader from "@/components/auth/AuthHeader";
@@ -14,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 
 export default function Login({users}) {
   const [showPassword, setShowPassword] = useState(false);
@@ -108,9 +110,12 @@ export default function Login({users}) {
               className="border-0 bg-transparent shadow-none focus-visible:ring-0"
             />
 
-            <button
+            <motion.button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              whileHover={{ scale: 1.08 }}
+              whileTap={tapScale}
+              transition={{ duration: 0.18, ease: easeOutExpo }}
               className="text-[color:var(--muted)] hover:text-[color:var(--primary)]"
             >
               {showPassword ? (
@@ -118,7 +123,7 @@ export default function Login({users}) {
               ) : (
                 <Eye className="h-5 w-5" />
               )}
-            </button>
+            </motion.button>
           </AuthInputWrap>
         </AuthField>
 

@@ -1,4 +1,6 @@
 import { Eye, EyeOff } from "lucide-react";
+import { motion } from "framer-motion";
+import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 import { AppCard } from "@/components/ui/AppCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 
@@ -17,10 +19,14 @@ export default function ProjectsPanel({
 
       <div className="mt-6 space-y-4">
         {projects.map((project) => (
-          <button
+          <motion.button
             key={project.id}
+            type="button"
             onClick={() => setSelectedProject(project)}
-            className={`w-full rounded-[26px] border p-5 text-left transition hover:-translate-y-0.5 ${
+            whileHover={{ y: -3 }}
+            whileTap={tapScale}
+            transition={{ duration: 0.22, ease: easeOutExpo }}
+            className={`w-full rounded-[26px] border p-5 text-left transition ${
               selectedProject.id === project.id
                 ? "border-[var(--gold)] bg-[rgba(156,213,255,0.2)] shadow-[0_18px_45px_rgba(53,88,114,0.12)]"
                 : "border-white/70 bg-white/55 hover:bg-white/75"
@@ -49,7 +55,7 @@ export default function ProjectsPanel({
                 </span>
               ))}
             </div>
-          </button>
+          </motion.button>
         ))}
       </div>
     </AppCard>

@@ -16,4 +16,176 @@
   --shadow-card: 0 22px 70px rgba(53, 88, 114, 0.13);
   --shadow-soft: 0 14px 45px rgba(53, 88, 114, 0.1);
   --radius-card: 30px;
+
+  --page-gradient: linear-gradient(
+    135deg,
+    var(--background) 0%,
+    #EAF4FA 45%,
+    #D8ECF8 100%
+  );
+
+  --hero-gradient: linear-gradient(
+    135deg,
+    #F7F8F0 0%,
+    #EAF4FA 45%,
+    #D8ECF8 100%
+  );
+
+  --nav-gradient: linear-gradient(135deg, #2C3947, #355872);
+
+  --dashboard-sidebar-gradient: linear-gradient(
+    180deg,
+    #2C3947,
+    #355872
+  );
+
+  /* Auth-specific tokens: keeps redesignability without changing the design */
+  --auth-card-bg: rgba(255, 255, 255, 0.72);
+  --auth-card-border: rgba(255, 255, 255, 0.8);
+  --auth-card-shadow:
+    0 34px 95px rgba(53, 88, 114, 0.2),
+    0 16px 42px rgba(53, 88, 114, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74);
+
+  --auth-card-sheen:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.72),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(230, 199, 123, 0.12),
+      transparent 34%
+    );
+
+  --auth-input-bg: rgba(255, 255, 255, 0.78);
+  --auth-input-border: rgba(53, 88, 114, 0.15);
+  --auth-input-shadow:
+    0 14px 38px rgba(53, 88, 114, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+
+  --auth-button-gradient: linear-gradient(
+    135deg,
+    var(--dark),
+    var(--primary) 45%,
+    var(--secondary)
+  );
+
+  --auth-button-shadow:
+    0 22px 44px rgba(53, 88, 114, 0.32),
+    0 10px 28px rgba(122, 170, 206, 0.16);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --theme-transition:
+    background-color 220ms var(--ease-out-expo),
+    color 220ms var(--ease-out-expo),
+    border-color 220ms var(--ease-out-expo),
+    box-shadow 220ms var(--ease-out-expo);
+}
+
+.dark {
+  --primary: #8EC7EA;
+  --secondary: #7AAACE;
+  --accent: #9CD5FF;
+  --background: #0B1118;
+  --dark: #EAF4FA;
+  --gold: #E6C77B;
+
+  --muted: #AAB7C4;
+  --ink: #F3F8FB;
+
+  --card-bg: rgba(15, 28, 39, 0.72);
+  --card-bg-strong: rgba(18, 35, 49, 0.84);
+  --card-border: rgba(156, 213, 255, 0.16);
+
+  --shadow-card: 0 24px 80px rgba(0, 0, 0, 0.36);
+  --shadow-soft: 0 16px 52px rgba(0, 0, 0, 0.28);
+
+  --page-gradient: linear-gradient(
+    135deg,
+    #0B1118 0%,
+    #102030 45%,
+    #142B3D 100%
+  );
+
+  --hero-gradient: linear-gradient(
+    135deg,
+    #0B1118 0%,
+    #102030 45%,
+    #142B3D 100%
+  );
+
+  --nav-gradient: linear-gradient(
+    135deg,
+    #0F1C27,
+    #24394C 55%,
+    #355872
+  );
+
+  --dashboard-sidebar-gradient: linear-gradient(
+    180deg,
+    #0F1C27,
+    #24394C 55%,
+    #355872
+  );
+
+  --auth-card-bg: rgba(15, 28, 39, 0.76);
+  --auth-card-border: rgba(156, 213, 255, 0.18);
+  --auth-card-shadow:
+    0 34px 105px rgba(0, 0, 0, 0.44),
+    0 18px 52px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+
+  --auth-card-sheen:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.08),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(156, 213, 255, 0.1),
+      transparent 34%
+    );
+
+  --auth-input-bg: rgba(255, 255, 255, 0.075);
+  --auth-input-border: rgba(156, 213, 255, 0.14);
+  --auth-input-shadow:
+    0 16px 44px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  --auth-button-gradient: linear-gradient(
+    135deg,
+    #0F1C27,
+    #355872 52%,
+    #7AAACE
+  );
+
+  --auth-button-shadow:
+    0 24px 54px rgba(0, 0, 0, 0.36),
+    0 12px 34px rgba(122, 170, 206, 0.16);
+}
+
+html {
+  background: var(--background);
+  color: var(--ink);
+}
+
+body {
+  background: var(--background);
+  color: var(--ink);
+  transition: var(--theme-transition);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
 }

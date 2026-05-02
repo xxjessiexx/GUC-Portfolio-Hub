@@ -1,3 +1,5 @@
+import { motion } from "framer-motion";
+import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 import {
   Bell,
   Briefcase,
@@ -40,9 +42,13 @@ export default function Sidebar({ open, setOpen }) {
             const active = index === 0;
 
             return (
-              <button
+              <motion.button
                 key={label}
+                type="button"
                 title={!open ? label : undefined}
+                whileHover={{ x: open ? 3 : 0, scale: 1.015 }}
+                whileTap={tapScale}
+                transition={{ duration: 0.22, ease: easeOutExpo }}
                 className={`group relative flex h-12 w-full items-center rounded-2xl text-sm font-bold transition-all duration-300 ${
                   open ? "justify-start gap-3 px-4" : "justify-center px-0"
                 } ${
@@ -64,7 +70,7 @@ export default function Sidebar({ open, setOpen }) {
                 {active && (
                   <span className="absolute right-3 h-2 w-2 rounded-full bg-[#E6C77B]" />
                 )}
-              </button>
+              </motion.button>
             );
           })}
         </nav>

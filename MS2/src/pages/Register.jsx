@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 import AuthLayout from "@/components/auth/AuthLayout";
 import AuthHeader from "@/components/auth/AuthHeader";
@@ -22,6 +23,7 @@ import {
   Mail,
   User,
 } from "lucide-react";
+import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 
 export default function Register({ addUser }) {
   const [role, setRole] = useState("student");
@@ -168,9 +170,12 @@ export default function Register({ addUser }) {
           const isSelected = role === option.id;
 
           return (
-            <button
+            <motion.button
               key={option.id}
               type="button"
+              whileHover={{ y: -4 }}
+              whileTap={tapScale}
+              transition={{ duration: 0.22, ease: easeOutExpo }}
               onClick={() => {
                 setRole(option.id);
                 setErrors({});
@@ -190,7 +195,7 @@ export default function Register({ addUser }) {
               <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
                 {option.description}
               </p>
-            </button>
+            </motion.button>
           );
         })}
       </div>
@@ -234,9 +239,12 @@ export default function Register({ addUser }) {
                 className="border-0 bg-transparent shadow-none focus-visible:ring-0"
               />
 
-              <button
+              <motion.button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                whileHover={{ scale: 1.08 }}
+                whileTap={tapScale}
+                transition={{ duration: 0.18, ease: easeOutExpo }}
                 className="text-[color:var(--muted)] hover:text-[color:var(--primary)]"
               >
                 {showPassword ? (
@@ -244,7 +252,7 @@ export default function Register({ addUser }) {
                 ) : (
                   <Eye className="h-5 w-5" />
                 )}
-              </button>
+              </motion.button>
             </AuthInputWrap>
           </AuthField>
 
