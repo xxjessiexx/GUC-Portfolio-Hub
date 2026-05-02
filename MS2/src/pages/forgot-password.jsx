@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 export default function ForgotPassword() {
-
+ 
   const [email, setEmail] = useState(
     sessionStorage.getItem("resetEmail") || ""
   );
@@ -28,7 +28,7 @@ const handleSubmit = (e) => {
 };
 
   return (
-  
+   
     <AuthLayout>
       
       <AuthHeader
