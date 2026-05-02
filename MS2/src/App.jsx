@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import VerifyOTP from "./pages/VerifyOTP";
 import Register from "./pages/Register";
 import StudentDashboard from "./pages/StudentDashboard";
 import EditProfile from "./pages/EditProfile";
@@ -41,6 +42,8 @@ export default function App() {
 
         <Routes>
           <Route path="/" element={<Landing />} />
+
+          <Route path="/verifyOTP" element={<VerifyOTP />} />
 
           <Route
             path="/login"
