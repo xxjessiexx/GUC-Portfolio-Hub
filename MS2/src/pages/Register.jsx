@@ -107,9 +107,19 @@ export default function Register({ addUser }) {
 
     if (validate()) {
     const newUser = {
-    email: form.email,
-    password: form.password,
-  };
+      name: form.fullName,
+      email: form.email,
+      password: form.password,
+      role,
+      faculty: form.faculty || "",
+      major: "Computer Science",
+      semester: form.semester || "1",
+      department: form.department || "",
+      companyName: form.companyName || "",
+      industry: form.industry || "",
+      image: null,
+      bio: "Passionate about building impactful digital solutions.",
+    };
 
     addUser(newUser);
       
