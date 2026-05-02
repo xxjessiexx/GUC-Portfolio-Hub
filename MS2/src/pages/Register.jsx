@@ -207,6 +207,7 @@ export default function Register({ addUser }) {
         <div className="grid gap-5 md:grid-cols-2">
           <AuthInput
             label="Full Name"
+            required
             icon={User}
             value={form.fullName}
             error={errors.fullName}
@@ -219,6 +220,7 @@ export default function Register({ addUser }) {
             icon={Mail}
             type="email"
             value={form.email}
+            required
             error={errors.email}
             placeholder={emailPlaceholder}
             onChange={(e) => updateField("email", e.target.value)}
@@ -234,6 +236,7 @@ export default function Register({ addUser }) {
           showPassword={showPassword}
           setShowPassword={setShowPassword}
           tapScale={tapScale}
+          required
           easeOutExpo={easeOutExpo}
           value={form.password}
           error={errors.password}
@@ -246,6 +249,7 @@ export default function Register({ addUser }) {
             icon={Lock}
             type="password"
             enableToggle
+            required
             showPassword={showConfirmPassword}
             setShowPassword={setShowConfirmPassword}
             tapScale={tapScale}
@@ -261,6 +265,7 @@ export default function Register({ addUser }) {
           <div className="grid gap-5 md:grid-cols-2">
             <AuthInput
               label="Faculty"
+              required
               icon={GraduationCap}
               value={form.faculty}
               error={errors.faculty}
@@ -270,6 +275,7 @@ export default function Register({ addUser }) {
 
             <AuthInput
               label="Semester"
+              required
               icon={GraduationCap}
               value={form.semester}
               error={errors.semester}

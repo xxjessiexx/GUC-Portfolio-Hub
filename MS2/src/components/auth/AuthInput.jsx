@@ -4,6 +4,7 @@ import AuthInputWrap from "./AuthInputWrap";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 import {
   Eye,
@@ -15,11 +16,13 @@ export default function AuthInput({
   icon: Icon,
   error,
   className = "",
+  required = false,
   showPassword,
   setShowPassword,
   enableToggle = false,
   tapScale,
   easeOutExpo,
+  forgotPassword = false,
   ...props
 }) {
 
@@ -27,7 +30,27 @@ export default function AuthInput({
 
   return (
     <AuthField error={error}>
-      <Label className="font-bold text-[color:var(--dark)]">{label}</Label>
+
+
+    {forgotPassword && (
+      <div className="flex items-center justify-between">
+      <Label className="font-bold text-[color:var(--dark)]">{label} {required && (
+      <span className="ml-1 text-red-500">*</span>
+      )}</Label>
+
+      <Link
+              to="/forgot-password"
+              className="text-sm font-bold text-[color:var(--primary)] hover:text-[color:var(--secondary)]"
+            >
+              Forgot password?
+        </Link>
+        </div>)
+  }
+
+
+      {!forgotPassword && (<Label className="font-bold text-[color:var(--dark)]">{label} {required && (
+      <span className="ml-1 text-red-500">*</span> )}</Label>)}
+
 
       <AuthInputWrap error={error}>
         {Icon && <Icon className="h-5 w-5 text-[color:var(--primary)]" />}

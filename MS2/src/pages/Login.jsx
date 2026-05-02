@@ -1,20 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 
 import AuthLayout from "@/components/auth/AuthLayout";
 import AuthHeader from "@/components/auth/AuthHeader";
 import AuthInput from "@/components/auth/AuthInput";
-import AuthField from "@/components/auth/AuthField";
-import AuthInputWrap from "@/components/auth/AuthInputWrap";
 import AuthSubmitButton from "@/components/auth/AuthSubmitButton";
 import AuthDivider from "@/components/auth/AuthDivider";
 import AuthBottomLink from "@/components/auth/AuthBottomLink";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+
+import { Mail, Lock }from "lucide-react";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 
 export default function Login({users}) {
@@ -69,6 +64,7 @@ export default function Login({users}) {
       <form className="space-y-7" onSubmit={handleSubmit}>
         <AuthInput
           label="Email Address"
+          required
           icon={Mail}
           type="email"
           value={email}
@@ -79,53 +75,22 @@ export default function Login({users}) {
             setErrors((prev) => ({ ...prev, email: "" }));
           }}
         />
-
-        <AuthField error={errors.password}>
-          <div className="flex items-center justify-between">
-            {/* ✅ replaced */}
-            <Label className="font-bold text-[color:var(--dark)]">
-              Password
-            </Label>
-
-            <Link
-              to="/forgot-password"
-              className="text-sm font-bold text-[color:var(--primary)] hover:text-[color:var(--secondary)]"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
-          <AuthInputWrap error={errors.password}>
-            {/* ✅ replaced */}
-            <Lock className="h-5 w-5 text-[color:var(--primary)]" />
-
-            <Input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(event) => {
-                setPassword(event.target.value);
-                setErrors((prev) => ({ ...prev, password: "" }));
-              }}
-              placeholder="••••••••"
-              className="border-0 bg-transparent shadow-none focus-visible:ring-0"
-            />
-
-            <motion.button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              whileHover={{ scale: 1.08 }}
-              whileTap={tapScale}
-              transition={{ duration: 0.18, ease: easeOutExpo }}
-              className="text-[color:var(--muted)] hover:text-[color:var(--primary)]"
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-            </motion.button>
-          </AuthInputWrap>
-        </AuthField>
+      <AuthInput
+                  label="Password"
+                  icon={Lock}
+                  type="password"
+                  forgotPassword
+                  enableToggle
+                  showPassword={showPassword}
+                  setShowPassword={setShowPassword}
+                  tapScale={tapScale}
+                  required
+                  easeOutExpo={easeOutExpo}
+                  value={password}
+                  error={errors.password}
+                  placeholder="••••••••"
+                  onChange={(e) => setPassword(e.target.value)}
+                />
 
         <AuthSubmitButton>Sign In</AuthSubmitButton>
       </form>
