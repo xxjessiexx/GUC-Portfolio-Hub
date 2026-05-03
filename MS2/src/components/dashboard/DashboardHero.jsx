@@ -1,8 +1,12 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppCard } from "@/components/ui/AppCard";
+import { useNavigate } from "react-router-dom";
 
 export default function DashboardHero({ student }) {
+  
+  const navigate = useNavigate();
+  
   return (
     <AppCard className="mb-6 overflow-hidden">
       <div className="grid gap-6 p-8 lg:grid-cols-[1.35fr_0.65fr]">
@@ -40,10 +44,13 @@ export default function DashboardHero({ student }) {
             visibility settings.
           </p>
 
-          <Button className="mt-5 rounded-2xl bg-white px-5 font-black text-[var(--primary)] hover:bg-white/90">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Project
-          </Button>
+         <Button
+          onClick={() => navigate("/create-project")}
+          className="mt-5 rounded-2xl bg-white px-5 font-black text-[var(--primary)] hover:bg-white/90"
+>
+         <Plus className="mr-2 h-4 w-4" />
+         Create Project
+         </Button>
         </div>
       </div>
     </AppCard>

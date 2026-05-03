@@ -9,6 +9,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import ForgotPassword from "./pages/forgot-password";
 import EditProfile from "./pages/EditProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
+import CreateNewProject from "./pages/CreateNewProject";
 import SetPassword from "./pages/SetPassword"
 
 import { UserProfileProvider } from "./context/UserProfileContext";
