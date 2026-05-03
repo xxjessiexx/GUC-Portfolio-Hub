@@ -11,8 +11,8 @@ import {
   Mail,
 } from "lucide-react";
 
-export default function ForgotPassword({ users, setCurrentUser }) {
- 
+export default function ForgotPassword({ users }) {
+
   const [email, setEmail] = useState(
     sessionStorage.getItem("resetEmail") || ""
   );
@@ -23,33 +23,29 @@ export default function ForgotPassword({ users, setCurrentUser }) {
     const newErrors = {};
 
     if (!email.trim()) newErrors.email = "Email is required";
-   // else if (!email.endsWith("@student.guc.edu.eg")) 
-   // newErrors.email = "Please use your GUC email address";
-   // else if(!email.endsWith("@guc.edu.eg"))
-   
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   
-  const navigate = useNavigate();
+const navigate = useNavigate();
 
 const handleSubmit = (e) => {
   e.preventDefault();
 
   const newErrors = {};
 
-  if (!email.trim()) {
-    newErrors.email = "Email is required";
+if (!validate()) return;
+    const foundUser = users.find(
+    (user) => user.email === email
+    );
+    if (foundUser) {
+    navigate("/VerifyOTP")
   } else {
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-
-    const foundUser = users.find((user) => user.email === email);
-
-    if (!foundUser) {
-      newErrors.email = "This email is not registered";
-    }
+    setErrors({
+      email: "Invalid email, make sure you are registered or enter a valid email address",
+      password:"",
+    });
   }
 
   setErrors(newErrors);
