@@ -11,24 +11,58 @@ import {
   Mail,
 } from "lucide-react";
 
-export default function ForgotPassword() {
- 
+export default function ForgotPassword({ users }) {
+
   const [email, setEmail] = useState(
     sessionStorage.getItem("resetEmail") || ""
   );
 
-  const navigate = useNavigate();
+
+  const [errors, setErrors] = useState({});
+  const validate = () => {
+    const newErrors = {};
+
+    if (!email.trim()) newErrors.email = "Email is required";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  
+const navigate = useNavigate();
 
 const handleSubmit = (e) => {
   e.preventDefault();
+
+  const newErrors = {};
+
+if (!validate()) return;
+    const foundUser = users.find(
+    (user) => user.email === email
+    );
+    if (foundUser) {
+    navigate("/VerifyOTP")
+  } else {
+    setErrors({
+      email: "Invalid email, make sure you are registered or enter a valid email address",
+      password:"",
+    });
+  }
+
+  setErrors(newErrors);
+
+  if (Object.keys(newErrors).length > 0) return;
 
   sessionStorage.setItem("resetEmail", email);
 
   navigate("/verifyOTP", { state: { email } });
 };
 
+  console.log("Users:", users);
+console.log("Typed email:", email);
+
   return (
-   
+  
+     
     <AuthLayout>
       
       <AuthHeader
@@ -38,7 +72,7 @@ const handleSubmit = (e) => {
   description="Enter your email and we’ll send you a reset link"
   showBrand={true}
 />
-<form className="space-y-6" onSubmit={handleSubmit}>
+  <form onSubmit={handleSubmit}>
       <AuthInput
         label="Email"
         type="email"
@@ -46,6 +80,7 @@ const handleSubmit = (e) => {
         icon={Mail}
         value={email}
         placeholder="name@student.guc.edu.eg"
+        error={errors.email}
         onChange={(e) => setEmail(e.target.value)}
       />
       
@@ -60,6 +95,7 @@ const handleSubmit = (e) => {
       
     </AuthBottomLink>
     </AuthLayout>
+   
     
   );
 }
