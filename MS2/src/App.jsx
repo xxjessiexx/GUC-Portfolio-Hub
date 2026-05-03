@@ -63,7 +63,7 @@ export default function App() {
           <Route path="/student-dashboard" element={<StudentDashboard />} />
 
           <Route path="/edit-profile" element={<EditProfile />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-password" element={<ForgotPassword users={users} setCurrentUser={setCurrentUser}/>} />
         </Routes>
       </UserProfileProvider>
     </BrowserRouter>
