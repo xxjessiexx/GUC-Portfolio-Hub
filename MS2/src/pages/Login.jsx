@@ -6,17 +6,20 @@ import AuthInput from "@/components/auth/AuthInput";
 import AuthSubmitButton from "@/components/auth/AuthSubmitButton";
 import AuthDivider from "@/components/auth/AuthDivider";
 import AuthBottomLink from "@/components/auth/AuthBottomLink";
+import { useNavigate } from "react-router-dom";
 
 
 
 import { Mail, Lock }from "lucide-react";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 
+
 export default function Login({ users, setCurrentUser }){
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
 
   const validate = () => {
     const newErrors = {};
@@ -43,7 +46,7 @@ export default function Login({ users, setCurrentUser }){
     if (foundUser) {
     sessionStorage.setItem("currentUser", JSON.stringify(foundUser));
     setCurrentUser(foundUser);
-    window.location.href = "/student-dashboard";
+    navigate("/student-dashboard");
   } else {
     setErrors({
       email: "",
