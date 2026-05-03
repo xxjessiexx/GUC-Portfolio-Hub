@@ -48,13 +48,11 @@ if (!validate()) return;
     });
   }
 
-  setErrors(newErrors);
+  
 
   if (Object.keys(newErrors).length > 0) return;
 
-  sessionStorage.setItem("resetEmail", email);
-
-  navigate("/verifyOTP", { state: { email } });
+ 
 };
 
   console.log("Users:", users);
