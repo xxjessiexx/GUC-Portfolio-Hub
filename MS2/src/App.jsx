@@ -64,6 +64,7 @@ export default function App() {
           <Route path="/student-dashboard" element={<StudentDashboard />} />
 
           <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/create-project" element={<CreateNewProject />} />
           <Route path="/forgot-password" element={<ForgotPassword users={users} setCurrentUser={setCurrentUser}/>} />
         </Routes>
       </UserProfileProvider>
