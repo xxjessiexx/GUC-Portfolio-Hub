@@ -7,13 +7,29 @@ import {
   FolderKanban,
   Heart,
   LayoutDashboard,
+  LogOut,
   MessageSquare,
   Settings,
   User,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { student } from "@/data/studentDashboardData";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 export default function Sidebar({ open, setOpen }) {
+  const navigate = useNavigate();
+
   const items = [
     ["Overview", LayoutDashboard],
     ["My Portfolio", User],
@@ -24,6 +40,11 @@ export default function Sidebar({ open, setOpen }) {
     ["Favorites", Heart],
     ["Settings", Settings],
   ];
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("currentUser");
+    navigate("/");
+  };
 
   return (
     <aside
@@ -36,7 +57,7 @@ export default function Sidebar({ open, setOpen }) {
       <div className="pointer-events-none absolute -left-20 top-10 h-52 w-52 rounded-full bg-[#9CD5FF]/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 right-0 h-64 w-64 rounded-full bg-[#E6C77B]/10 blur-3xl" />
 
-      <div className="relative z-10 flex h-full flex-col justify-between p-4">
+      <div className="relative z-10 flex h-full flex-col justify-between gap-4 overflow-y-auto p-4">
         <nav className="space-y-2">
           {items.map(([label, Icon], index) => {
             const active = index === 0;
@@ -75,33 +96,85 @@ export default function Sidebar({ open, setOpen }) {
           })}
         </nav>
 
-        <div
-          className={`overflow-hidden rounded-3xl border border-white/10 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-300 ${
-            open ? "p-4" : "p-3"
-          }`}
-        >
-          {open ? (
-            <>
-              <p className="text-sm font-black text-white">
-                Portfolio completion
-              </p>
+        <div className="space-y-4">
+          <div
+            className={`overflow-hidden rounded-3xl border border-white/10 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-300 ${
+              open ? "p-4" : "p-3"
+            }`}
+          >
+            {open ? (
+              <>
+                <p className="text-sm font-black text-white">
+                  Portfolio completion
+                </p>
 
-              <div className="mt-3 h-3 rounded-full bg-white/10">
-                <div
-                  className="h-3 rounded-full bg-[linear-gradient(90deg,#E6C77B,#9CD5FF)]"
-                  style={{ width: `${student.profileCompletion}%` }}
-                />
+                <div className="mt-3 h-3 rounded-full bg-white/10">
+                  <div
+                    className="h-3 rounded-full bg-[linear-gradient(90deg,#E6C77B,#9CD5FF)]"
+                    style={{ width: `${student.profileCompletion}%` }}
+                  />
+                </div>
+
+                <p className="mt-2 text-xs font-semibold text-white/60">
+                  {student.profileCompletion}% completed
+                </p>
+              </>
+            ) : (
+              <div className="grid h-10 place-items-center">
+                <CheckCircle2 className="h-5 w-5 text-[#9CD5FF]" />
               </div>
+            )}
+          </div>
 
-              <p className="mt-2 text-xs font-semibold text-white/60">
-                {student.profileCompletion}% completed
-              </p>
-            </>
-          ) : (
-            <div className="grid h-10 place-items-center">
-              <CheckCircle2 className="h-5 w-5 text-[#9CD5FF]" />
-            </div>
-          )}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={tapScale}
+                className={`group relative flex w-full items-center rounded-2xl border border-red-400/20 bg-red-500/10 text-red-300 transition-all duration-300 hover:bg-red-500/20 ${
+                  open
+                    ? "justify-start gap-3 px-4 py-3"
+                    : "justify-center py-3"
+                }`}
+              >
+                <LogOut className="h-5 w-5" />
+
+                {open && <span className="font-bold">Logout</span>}
+
+                {!open && (
+                  <span className="pointer-events-none absolute left-[76px] z-50 rounded-xl bg-[#102630] px-3 py-2 text-xs font-bold text-white opacity-0 shadow-xl transition group-hover:opacity-100">
+                    Logout
+                  </span>
+                )}
+              </motion.button>
+            </AlertDialogTrigger>
+
+            <AlertDialogContent className="z-[9999] rounded-3xl border border-white/70 bg-white/95 p-6 shadow-[0_24px_80px_rgba(44,57,71,0.25)] backdrop-blur-2xl">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-2xl font-black text-[color:var(--ink)]">
+                  Log out?
+                </AlertDialogTitle>
+
+                <AlertDialogDescription className="text-base leading-7 text-[color:var(--muted)]">
+                  You will be signed out of your account.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel className="rounded-2xl">
+                  Cancel
+                </AlertDialogCancel>
+
+                <AlertDialogAction
+                  onClick={handleLogout}
+                  className="rounded-2xl bg-[color:var(--primary)] font-bold text-white hover:bg-[color:var(--dark)]"
+                >
+                  Yes, log out
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </aside>
