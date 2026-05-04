@@ -1,3 +1,5 @@
+
+
 export const student = {
   name: "Yasmin Khaled",
   email: "yasmin.khaled@student.guc.edu.eg",
@@ -50,9 +52,10 @@ export const projects = [
 ];
 
 export const notifications = [
-  { title: "New instructor feedback", text: "Dr. Aya commented on Smart Study Buddy.", unread: true },
-  { title: "Project invitation", text: "You were invited to join EcoTrack.", unread: true },
-  { title: "Internship update", text: "Your Frontend Intern application was viewed.", unread: false },
+  { title: "New Feedback", text: "Dr. Aya Salama left feedback on your Smart Study Buddy Project.", unread: true, type:"feedback" },
+  { title: "Project invitation", text: "Sara Mohamed has invited you to join EcoTrack.", unread: false, type:"invite" },
+  { title: "Internship update", text: "Your Frontend Intern application was viewed.", unread: false, type:"" },
+  {title: "New Message", text: "Fatima Mohamed sent you a new message", unread: false, type:"message" }
 ];
 
 export const recommendedProjects = [

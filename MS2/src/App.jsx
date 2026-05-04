@@ -10,7 +10,8 @@ import ForgotPassword from "./pages/forgot-password";
 import EditProfile from "./pages/EditProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
 import CreateNewProject from "./pages/CreateNewProject";
-import SetPassword from "./pages/SetPassword"
+import SetPassword from "./pages/SetPassword";
+import Notifications from "./pages/Notifications";
 
 import { UserProfileProvider } from "./context/UserProfileContext";
 
@@ -55,6 +56,8 @@ export default function App() {
             path="/login"
             element={<Login users={users} setCurrentUser={setCurrentUser} />}
           />
+
+          <Route path="/notifications" element={<Notifications />} />
 
           <Route
             path="/register"
