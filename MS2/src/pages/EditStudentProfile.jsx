@@ -13,7 +13,7 @@ import { useUserProfile } from "@/context/UserProfileContext";
 
 import { Link2 } from "lucide-react";
 
-export default function EditProfile() {
+export default function EditStudentProfile() {
   const { profile, updateProfile } = useUserProfile();
 
   const semesterOptions = Array.from({ length: 10 }, (_, i) =>
@@ -21,7 +21,7 @@ export default function EditProfile() {
   );
 
   const facultyOptions = [
-    "Media Engineering and Technology",
+    "Engineering and Technology",
     "Management Technology",
   ];
 
