@@ -1,4 +1,5 @@
 import { Ban } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // ✅ added
 
 import {
   AlertDialog,
@@ -13,19 +14,21 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function DangerActions() {
-    const handleDeactivate = () => {
-      const users = JSON.parse(sessionStorage.getItem("users")) || [];
-      const currentUser = JSON.parse(sessionStorage.getItem("currentUser"));
+  const navigate = useNavigate(); // ✅ added
 
-      const updatedUsers = users.filter(
-        (user) => user.email !== currentUser.email
-      );
+  const handleDeactivate = () => {
+    const users = JSON.parse(sessionStorage.getItem("users")) || [];
+    const currentUser = JSON.parse(sessionStorage.getItem("currentUser"));
 
-      sessionStorage.setItem("users", JSON.stringify(updatedUsers));
-      sessionStorage.removeItem("currentUser");
+    const updatedUsers = users.filter(
+      (user) => user.email !== currentUser.email
+    );
 
-      window.location.href = "/";
-    };
+    sessionStorage.setItem("users", JSON.stringify(updatedUsers));
+    sessionStorage.removeItem("currentUser");
+
+    navigate("/"); // ✅ replaced href
+  };
 
   return (
     <div>
