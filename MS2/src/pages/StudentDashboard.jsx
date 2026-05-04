@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNotifications } from "@/context/NotificationsContext";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import DashboardHero from "@/components/dashboard/DashboardHero";
@@ -8,16 +9,20 @@ import ProjectPreview from "@/components/dashboard/ProjectPreview";
 import SecondaryPanels from "@/components/dashboard/SecondaryPanels";
 
 import { useUserProfile } from "@/context/UserProfileContext";
+import { useEffect } from "react";
 
 import {
   student,
   projects,
-  notifications,
   recommendedProjects,
   internships,
 } from "@/data/studentDashboardData";
 
 export default function StudentDashboard() {
+
+
+const { notifications, setNotifications } = useNotifications();
+
   const { profile } = useUserProfile();
   const [selectedProject, setSelectedProject] = useState(projects[0]);
 
@@ -48,6 +53,24 @@ export default function StudentDashboard() {
         return acc;
       }, {});
   }, []);
+
+
+  useEffect(() => {
+  const timer = setTimeout(() => {
+    const newNotification = {
+      id: "n-" + Date.now(),
+      userId: "stu-001",
+      type: "message",
+      title: "IT WORKED",
+      message: "You just received a new message!",
+      unread: true,
+    };
+
+    setNotifications((prev) => [newNotification, ...prev]);
+  }, 2000); // 2 seconds
+
+  return () => clearTimeout(timer);
+}, []);
 
   return (
     <DashboardLayout notifications={notifications}>

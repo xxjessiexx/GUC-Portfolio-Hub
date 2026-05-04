@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { AppCard } from "@/components/ui/AppCard";
 import NotificationCard from "./notificationCard";
 import { MessageCircle, Bell, Mail, UserPlus } from "lucide-react";
 

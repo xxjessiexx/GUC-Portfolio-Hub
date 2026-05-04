@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
-
+import { NotificationsProvider } from "./context/NotificationsContext";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
@@ -41,6 +41,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+    <NotificationsProvider>
       <UserProfileProvider currentUser={currentUser}>
         <FloatingCTA />
 
@@ -71,6 +72,7 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword users={users} setCurrentUser={setCurrentUser}/>} />
         </Routes>
       </UserProfileProvider>
+      </NotificationsProvider>
     </BrowserRouter>
   );
 }
