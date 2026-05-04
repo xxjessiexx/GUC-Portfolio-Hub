@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 
 export default function EditableProfileField({ label, value, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [draftValue, setDraftValue] = useState(value);
+  const [draftValue, setDraftValue] = useState(value || "");
 
   const handleSave = () => {
     onSave(draftValue);
@@ -12,7 +12,7 @@ export default function EditableProfileField({ label, value, onSave }) {
   };
 
   const handleCancel = () => {
-    setDraftValue(value);
+    setDraftValue(value || "");
     setIsEditing(false);
   };
 
@@ -28,7 +28,7 @@ export default function EditableProfileField({ label, value, onSave }) {
         />
       ) : (
         <p className="text-sm font-semibold text-[color:var(--muted)]">
-          {value}
+          {value || "Not added"}
         </p>
       )}
 

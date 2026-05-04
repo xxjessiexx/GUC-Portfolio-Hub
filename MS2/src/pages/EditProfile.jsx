@@ -11,15 +11,21 @@ import DangerActions from "@/components/profile/DangerActions";
 import { notifications } from "@/data/studentDashboardData";
 import { useUserProfile } from "@/context/UserProfileContext";
 
+import { Link2 } from "lucide-react";
+
 export default function EditProfile() {
   const { profile, updateProfile } = useUserProfile();
 
-  const semesterOptions = Array.from({ length: 10 }, (_, index) =>
-    String(index + 1)
+  const semesterOptions = Array.from({ length: 10 }, (_, i) =>
+    String(i + 1)
   );
 
-  const facultyOptions = ["Faculty of Engineering"];
-  const majorOptions = ["Computer Science"];
+  const facultyOptions = [
+    "Media Engineering and Technology",
+    "Management Technology",
+  ];
+
+  const majorOptions = ["MET", "DMET", "CSEN", "BI", "Mechatronics"];
 
   return (
     <DashboardLayout notifications={notifications}>
@@ -29,23 +35,85 @@ export default function EditProfile() {
           subtitle="Manage your personal information, skills, and portfolio links."
         />
 
-        <div className="grid gap-6 xl:grid-cols-[0.75fr_1.25fr]">
-          <div className="space-y-6">
-            <AppCard className="p-8">
-              <MiniProfileSummary
-                profile={profile}
-                updateProfile={updateProfile}
-              />
-            </AppCard>
-          </div>
+        <div className="grid items-start gap-6 lg:grid-cols-[0.75fr_1.25fr]">
+          
+          {/* ================= LEFT CARD ================= */}
+          <AppCard className="p-8">
+            <MiniProfileSummary
+              profile={profile}
+              updateProfile={updateProfile}
+            />
 
+            <div className="my-6 h-px bg-[color:var(--primary)]/10" />
+
+            {/* ===== SKILLS DISPLAY ===== */}
+            <div>
+              <h3 className="mb-4 text-lg font-black text-[color:var(--ink)]">
+                Skills
+              </h3>
+
+              <div className="flex flex-wrap gap-2">
+                {profile.skills?.length > 0 ? (
+                  profile.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-xl border border-[color:var(--primary)]/20 bg-[color:var(--primary)]/10 px-3 py-1.5 text-sm font-bold text-[color:var(--primary)]"
+                    >
+                      {skill}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-sm font-semibold text-[color:var(--muted)]">
+                    No skills added yet.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="my-6 h-px bg-[color:var(--primary)]/10" />
+
+            {/* ===== LINKS DISPLAY ===== */}
+            <div>
+              <h3 className="mb-4 text-lg font-black text-[color:var(--ink)]">
+                Portfolio Links
+              </h3>
+
+              <div className="space-y-4">
+                {[
+                  ["LinkedIn", profile.links?.linkedin],
+                  ["GitHub", profile.links?.github],
+                  ["Behance", profile.links?.behance],
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="flex items-start justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Link2 className="h-4 w-4 text-[color:var(--primary)]" />
+                      <p className="text-sm font-black text-[color:var(--dark)]">
+                        {label}
+                      </p>
+                    </div>
+
+                    <p className="max-w-[180px] truncate text-right text-sm font-semibold text-[color:var(--muted)]">
+                      {value || "Not added"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </AppCard>
+
+          {/* ================= RIGHT CARD ================= */}
           <div className="space-y-6">
+
+            {/* ===== BASIC INFO ===== */}
             <AppCard className="p-6">
               <h3 className="mb-4 text-xl font-black text-[color:var(--ink)]">
                 Basic Information
               </h3>
 
-              {/* READ-ONLY FIELD */}
+              {/* Name (NON-EDITABLE) */}
               <div className="grid gap-3 border-b border-[color:var(--primary)]/10 py-4 md:grid-cols-[180px_1fr] md:items-center">
                 <p className="text-sm font-black text-[color:var(--dark)]">
                   Full Name
@@ -55,7 +123,7 @@ export default function EditProfile() {
                 </p>
               </div>
 
-              {/* READ-ONLY FIELD */}
+              {/* Email (NON-EDITABLE) */}
               <div className="grid gap-3 border-b border-[color:var(--primary)]/10 py-4 md:grid-cols-[180px_1fr] md:items-center">
                 <p className="text-sm font-black text-[color:var(--dark)]">
                   Email
@@ -98,6 +166,7 @@ export default function EditProfile() {
               />
             </AppCard>
 
+            {/* ===== SKILLS EDITOR ===== */}
             <AppCard className="p-6">
               <SkillsEditor
                 skills={profile.skills}
@@ -105,9 +174,10 @@ export default function EditProfile() {
               />
             </AppCard>
 
+            {/* ===== LINKS EDITOR ===== */}
             <AppCard className="p-6">
               <h3 className="mb-4 text-xl font-black text-[color:var(--ink)]">
-                Portfolio Links
+                Edit Portfolio Links
               </h3>
 
               <EditableProfileField
@@ -141,9 +211,11 @@ export default function EditProfile() {
               />
             </AppCard>
 
+            {/* ===== ACCOUNT ACTIONS ===== */}
             <AppCard className="p-6">
               <DangerActions />
             </AppCard>
+
           </div>
         </div>
       </div>
