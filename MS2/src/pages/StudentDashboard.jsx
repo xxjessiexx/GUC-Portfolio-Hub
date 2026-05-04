@@ -53,21 +53,42 @@ const { notifications, setNotifications } = useNotifications();
         return acc;
       }, {});
   }, []);
+  function formatDateTime() {
+  const now = new Date();
+
+  const day = now.getDate();
+  const month = now.getMonth() + 1; // months start at 0
+  const year = now.getFullYear();
+
+  let hours = now.getHours();
+  let minutes = now.getMinutes();
+
+  // format minutes like 2:00 instead of 2:0
+  minutes = minutes < 10 ? "0" + minutes : minutes;
+
+  return `${day}/${month}/${year} at ${hours}:${minutes}`;
+}
 
 
   useEffect(() => {
+  const alreadyTriggered = sessionStorage.getItem("notificationShown");
+
+  if (alreadyTriggered) return; // 
+
   const timer = setTimeout(() => {
     const newNotification = {
       id: "n-" + Date.now(),
-      userId: "stu-001",
       type: "message",
       title: "IT WORKED",
-      message: "You just received a new message!",
+      text: "You just received a new message!",
       unread: true,
+      time: formatDateTime(),
     };
 
     setNotifications((prev) => [newNotification, ...prev]);
-  }, 2000); // 2 seconds
+
+    sessionStorage.setItem("notificationShown", "true"); // ✅ mark as shown
+  }, 3000);
 
   return () => clearTimeout(timer);
 }, []);

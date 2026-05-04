@@ -1,6 +1,6 @@
 import { AppCard } from "../ui/AppCard";
 
-export default function NotificationCard({ icon, title, description, unread }) {
+export default function NotificationCard({ icon, title, description, unread, time}) {
   return (
     <AppCard className="p-4 flex items-start gap-4 border border-white/10 bg-white/5 backdrop-blur-xl">
       
@@ -26,6 +26,10 @@ export default function NotificationCard({ icon, title, description, unread }) {
         <p className="text-sm text-[color:var(--muted)">
           {description}
         </p>
+
+        <p className="text-xs text-[color:var(--muted)]">
+  {time}
+</p>
       </div>
     </AppCard>
   );
