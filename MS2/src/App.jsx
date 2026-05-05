@@ -11,6 +11,7 @@ import EditStudentProfile from "./pages/EditStudentProfile";
 import EditInstructorProfile from "./pages/EditInstructorProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
 import CreateNewProject from "./pages/CreateNewProject";
+import EditProject from "./pages/EditProject";
 import SetPassword from "./pages/SetPassword"
 
 import { UserProfileProvider } from "./context/UserProfileContext";
@@ -67,9 +68,12 @@ export default function App() {
           <Route path="/edit-student-profile" element={<EditStudentProfile />} />
           <Route path="/edit-instructor-profile" element={<EditInstructorProfile />} />
           <Route path="/create-project" element={<CreateNewProject />} />
+          <Route path="/edit-project/:projectId" element={<EditProject />} />
+          <Route path="/projects/:projectId/edit" element={<EditProject />} />
           <Route path="/forgot-password" element={<ForgotPassword users={users} setCurrentUser={setCurrentUser}/>} />
         </Routes>
       </UserProfileProvider>
     </BrowserRouter>
   );
 }
+

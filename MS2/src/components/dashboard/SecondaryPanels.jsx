@@ -18,10 +18,11 @@ export default function SecondaryPanels({
               <MiniItem key={task.title}>
                 <div className="flex justify-between gap-4">
                   <p className="font-bold text-[var(--ink)]">{task.title}</p>
-                  <span className="text-xs font-black text-[var(--primary)]">
+                  <span className="text-xs font-black text-[var(--primary)] dark:text-[var(--accent)]">
                     {task.status}
                   </span>
                 </div>
+
                 <p className="mt-1 text-sm text-[var(--muted)]">
                   {task.assignee} • Due {task.deadline}
                 </p>
@@ -45,14 +46,14 @@ export default function SecondaryPanels({
           <div className="space-y-4">
             {Object.entries(languageCounts).map(([lang, count]) => (
               <div key={lang}>
-                <div className="mb-1 flex justify-between text-sm font-bold">
+                <div className="mb-1 flex justify-between text-sm font-bold text-[var(--ink)]">
                   <span>{lang}</span>
                   <span>{count}</span>
                 </div>
 
-                <div className="h-3 rounded-full bg-[rgba(156,213,255,0.2)]">
+                <div className="h-3 rounded-full bg-[rgba(156,213,255,0.2)] dark:bg-white/10">
                   <div
-                    className="h-3 rounded-full bg-[linear-gradient(90deg,var(--primary),var(--secondary))]"
+                    className="h-3 rounded-full bg-[linear-gradient(90deg,var(--primary),var(--secondary))] dark:bg-[linear-gradient(90deg,var(--accent),var(--secondary))]"
                     style={{ width: `${Math.min(count * 35, 100)}%` }}
                   />
                 </div>
@@ -71,7 +72,11 @@ export default function SecondaryPanels({
                 className="flex items-center justify-between"
               >
                 <span className="font-bold text-[var(--ink)]">{project}</span>
-                <Button variant="outline" className="rounded-xl">
+
+                <Button
+                  variant="outline"
+                  className="rounded-xl border-[color:var(--border-blue)] bg-white/60 font-bold text-[var(--primary)] hover:bg-white/80 dark:border-white/10 dark:bg-white/[0.06] dark:text-[var(--accent)] dark:hover:bg-white/[0.09]"
+                >
                   Save
                 </Button>
               </MiniItem>
@@ -88,7 +93,7 @@ export default function SecondaryPanels({
                     {internship.title}
                   </p>
 
-                  <span className="text-xs font-black text-[var(--primary)]">
+                  <span className="text-xs font-black text-[var(--primary)] dark:text-[var(--accent)]">
                     {internship.status}
                   </span>
                 </div>
@@ -117,7 +122,7 @@ function Panel({ title, subtitle, children }) {
 function MiniItem({ children, className = "" }) {
   return (
     <div
-      className={`rounded-[22px] border border-white/70 bg-white/60 p-4 ${className}`}
+      className={`rounded-[22px] border border-white/70 bg-white/60 p-4 dark:border-white/10 dark:bg-white/[0.045] dark:hover:bg-white/[0.07] ${className}`}
     >
       {children}
     </div>
