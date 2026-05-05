@@ -9,6 +9,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import ForgotPassword from "./pages/forgot-password";
 import EditStudentProfile from "./pages/EditStudentProfile";
 import EditInstructorProfile from "./pages/EditInstructorProfile";
+import EditEmployerProfile from "./pages/EditEmployerProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
 import CreateNewProject from "./pages/CreateNewProject";
 import SetPassword from "./pages/SetPassword"
@@ -66,6 +67,7 @@ export default function App() {
 
           <Route path="/edit-student-profile" element={<EditStudentProfile />} />
           <Route path="/edit-instructor-profile" element={<EditInstructorProfile />} />
+          <Route path="/edit-employer-profile" element={<EditEmployerProfile />} />
           <Route path="/create-project" element={<CreateNewProject />} />
           <Route path="/forgot-password" element={<ForgotPassword users={users} setCurrentUser={setCurrentUser}/>} />
         </Routes>
