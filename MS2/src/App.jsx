@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
-
+import { NotificationsProvider } from "./context/NotificationsContext";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
@@ -12,8 +12,12 @@ import EditInstructorProfile from "./pages/EditInstructorProfile";
 import EditEmployerProfile from "./pages/EditEmployerProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
 import CreateNewProject from "./pages/CreateNewProject";
+import SetPassword from "./pages/SetPassword";
+import Notifications from "./pages/Notifications";
+
+
 import EditProject from "./pages/EditProject";
-import SetPassword from "./pages/SetPassword"
+
 import Portfolio from "./pages/Portfolio";
 import { UserProfileProvider } from "./context/UserProfileContext";
 import ManagePortfolio from "./pages/ManagePortfolio";
@@ -43,6 +47,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+    <NotificationsProvider>
       <UserProfileProvider currentUser={currentUser}>
         <FloatingCTA />
 
@@ -58,6 +63,8 @@ export default function App() {
             path="/login"
             element={<Login users={users} setCurrentUser={setCurrentUser} />}
           />
+
+          <Route path="/notifications" element={<Notifications />} />
 
           <Route
             path="/register"
@@ -77,6 +84,7 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword users={users} setCurrentUser={setCurrentUser}/>} />
         </Routes>
       </UserProfileProvider>
+      </NotificationsProvider>
     </BrowserRouter>
   );
 }
