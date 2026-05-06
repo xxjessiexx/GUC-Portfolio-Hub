@@ -14,9 +14,9 @@ import FloatingCTA from "./components/ui/FloatingCTA";
 import CreateNewProject from "./pages/CreateNewProject";
 import EditProject from "./pages/EditProject";
 import SetPassword from "./pages/SetPassword"
-
+import Portfolio from "./pages/Portfolio";
 import { UserProfileProvider } from "./context/UserProfileContext";
-
+import ManagePortfolio from "./pages/ManagePortfolio";
 export default function App() {
   const [users, setUsers] = useState(() => {
     const stored = sessionStorage.getItem("users");
@@ -65,13 +65,15 @@ export default function App() {
           />
 
           <Route path="/student-dashboard" element={<StudentDashboard />} />
-
+          <Route path="/student-dashboard/portfolio" element={<Portfolio />} />
           <Route path="/edit-student-profile" element={<EditStudentProfile />} />
           <Route path="/edit-instructor-profile" element={<EditInstructorProfile />} />
           <Route path="/edit-employer-profile" element={<EditEmployerProfile />} />
           <Route path="/create-project" element={<CreateNewProject />} />
           <Route path="/edit-project/:projectId" element={<EditProject />} />
           <Route path="/projects/:projectId/edit" element={<EditProject />} />
+          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/manage-portfolio" element={<ManagePortfolio />} />
           <Route path="/forgot-password" element={<ForgotPassword users={users} setCurrentUser={setCurrentUser}/>} />
         </Routes>
       </UserProfileProvider>

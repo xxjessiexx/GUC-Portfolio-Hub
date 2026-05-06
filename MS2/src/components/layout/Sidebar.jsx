@@ -34,7 +34,7 @@ export default function Sidebar({ open, setOpen }) {
   const items = [
     { label: "Home", icon: Home, path: "/student-dashboard" },
     { label: "Explore", icon: SearchIcon, path: null },
-    { label: "My Portfolio", icon: User, path: null },
+    { label: "My Portfolio", icon: User, path: "/student-dashboard/portfolio" },
     { label: "My Projects", icon: FolderKanban, path: null },
     { label: "Feedback", icon: MessageSquare, path: null },
     { label: "Internships", icon: Briefcase, path: null },
