@@ -12,7 +12,9 @@ import EditInstructorProfile from "./pages/EditInstructorProfile";
 import EditEmployerProfile from "./pages/EditEmployerProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
 import CreateNewProject from "./pages/CreateNewProject";
-import SetPassword from "./pages/SetPassword";
+import SetPassword from "./pages/SetPassword"
+import ViewAllProjects from "./pages/ViewAllProjects";
+
 import Notifications from "./pages/Notifications";
 
 
@@ -82,6 +84,7 @@ export default function App() {
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/manage-portfolio" element={<ManagePortfolio />} />
           <Route path="/forgot-password" element={<ForgotPassword users={users} setCurrentUser={setCurrentUser}/>} />
+          <Route path="/view-all-projects" element={<ViewAllProjects />} />
         </Routes>
       </UserProfileProvider>
       </NotificationsProvider>
