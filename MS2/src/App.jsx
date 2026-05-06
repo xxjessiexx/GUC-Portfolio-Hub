@@ -11,6 +11,7 @@ import EditProfile from "./pages/EditProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
 import CreateNewProject from "./pages/CreateNewProject";
 import SetPassword from "./pages/SetPassword"
+import ProjectPage from "./pages/ProjectPage";
 
 import { UserProfileProvider } from "./context/UserProfileContext";
 
@@ -66,7 +67,8 @@ export default function App() {
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/create-project" element={<CreateNewProject />} />
           <Route path="/forgot-password" element={<ForgotPassword users={users} setCurrentUser={setCurrentUser}/>} />
-        </Routes>
+          <Route path="/project" element={<ProjectPage />} />
+       </Routes>
       </UserProfileProvider>
     </BrowserRouter>
   );

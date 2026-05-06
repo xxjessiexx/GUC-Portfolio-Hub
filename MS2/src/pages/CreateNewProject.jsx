@@ -1,6 +1,5 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { AppCard } from "@/components/ui/AppCard";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +33,6 @@ export default function CreateNewProject() {
   });
 
   const handleSubmit = () => {
-    console.log("Submitting...");
     console.log(formData);
   };
 
@@ -83,13 +81,12 @@ export default function CreateNewProject() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 pb-20">
+      <div className="p-6">
+        {/* MAIN CARD */}
+        <div className="max-w-5xl mx-auto bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/10">
 
-        {/* ✅ SAME CARD AS DASHBOARD */}
-        <AppCard className="max-w-5xl mx-auto p-8">
-
-          {/* Title */}
-          <h1 className="text-2xl font-bold mb-6 text-[color:var(--ink)]">
+          {/* TITLE */}
+          <h1 className="text-2xl font-bold mb-6 text-[var(--foreground)]">
             Create New Project
           </h1>
 
@@ -159,7 +156,7 @@ export default function CreateNewProject() {
             <Label>Description *</Label>
             <textarea
               placeholder="Describe your project, features, technologies used..."
-              value={formData.description || ""}
+              value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
@@ -173,7 +170,7 @@ export default function CreateNewProject() {
               <Label>GitHub Repository</Label>
               <Input
                 placeholder="https://github.com/your-project"
-                value={formData.github || ""}
+                value={formData.github}
                 onChange={(e) =>
                   setFormData({ ...formData, github: e.target.value })
                 }
@@ -184,7 +181,7 @@ export default function CreateNewProject() {
               <Label>Live Demo URL</Label>
               <Input
                 placeholder="https://your-demo.com"
-                value={formData.liveDemo || ""}
+                value={formData.liveDemo}
                 onChange={(e) =>
                   setFormData({ ...formData, liveDemo: e.target.value })
                 }
@@ -210,7 +207,6 @@ export default function CreateNewProject() {
           {/* Tags */}
           <div className="mb-4">
             <Label>Tags</Label>
-
             <div className="flex gap-2">
               <Input
                 placeholder="e.g. React, AI, Mobile App"
@@ -220,7 +216,6 @@ export default function CreateNewProject() {
                 }
                 onKeyDown={(e) => e.key === "Enter" && addTag()}
               />
-
               <button
                 type="button"
                 onClick={addTag}
@@ -263,11 +258,9 @@ export default function CreateNewProject() {
                   </button>
                 </AlertDialogTrigger>
 
-                <AlertDialogContent className="bg-[var(--dark)] text-white border border-white/10">
+                <AlertDialogContent className="bg-[var(--dark)] text-white border border-white/10 shadow-2xl">
                   <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Invite Collaborator
-                    </AlertDialogTitle>
+                    <AlertDialogTitle>Invite Collaborator</AlertDialogTitle>
                     <AlertDialogDescription>
                       Enter the email of your teammate to invite them.
                     </AlertDialogDescription>
@@ -317,24 +310,20 @@ export default function CreateNewProject() {
               }
               className="w-full h-10 px-3 rounded-md border border-[var(--border)] bg-[var(--input)] text-[var(--foreground)] text-sm"
             >
-              <option value="private">
-                Private (Only you and collaborators)
-              </option>
-              <option value="public">
-                Public (Visible to everyone)
-              </option>
+              <option value="private">Private</option>
+              <option value="public">Public</option>
             </select>
           </div>
 
           {/* Submit */}
           <button
             onClick={handleSubmit}
-            className="w-full py-3 rounded-xl bg-[var(--primary)] text-white font-bold hover:opacity-90"
+            className="w-full py-3 rounded-xl bg-[var(--primary)] text-white font-bold"
           >
             Create Project
           </button>
 
-        </AppCard>
+        </div>
       </div>
     </DashboardLayout>
   );

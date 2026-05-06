@@ -3,12 +3,14 @@ import { motion } from "framer-motion";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 import { AppCard } from "@/components/ui/AppCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { useNavigate } from "react-router-dom";
 
 export default function ProjectsPanel({
   projects,
   selectedProject,
   setSelectedProject,
 }) {
+  const navigate = useNavigate();
   return (
     <AppCard className="p-6">
       <SectionHeader
@@ -22,7 +24,13 @@ export default function ProjectsPanel({
           <motion.button
             key={project.id}
             type="button"
-            onClick={() => setSelectedProject(project)}
+           /* onClick={() => setSelectedProject(project)}*/
+           /*temp*/
+           onClick={() => {
+          setSelectedProject(project);
+          navigate("/project");
+               }}
+            /*..*/
             whileHover={{ y: -3 }}
             whileTap={tapScale}
             transition={{ duration: 0.22, ease: easeOutExpo }}
