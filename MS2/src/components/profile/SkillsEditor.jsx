@@ -1,64 +1,59 @@
 import { useState } from "react";
-import { Plus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
 
-export default function SkillsEditor({ skills, onChange }) {
-  const [newSkill, setNewSkill] = useState("");
+export default function SkillsEditor({ skills = [], onChange }) {
+  const [input, setInput] = useState("");
 
   const addSkill = () => {
-    const cleanSkill = newSkill.trim();
-    if (!cleanSkill) return;
+    const trimmed = input.trim();
+    if (!trimmed || skills.includes(trimmed)) return;
 
-    onChange([...skills, cleanSkill]);
-    setNewSkill("");
+    onChange([...skills, trimmed]);
+    setInput("");
   };
 
   const removeSkill = (skillToRemove) => {
     onChange(skills.filter((skill) => skill !== skillToRemove));
   };
 
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addSkill();
+    }
+  };
+
   return (
     <div>
-      <div className="mb-5 flex items-center justify-between gap-4">
-        <h3 className="text-xl font-black text-[color:var(--ink)]">Skills</h3>
+      <h3 className="mb-4 text-xl font-black text-[color:var(--ink)]">
+        Skills
+      </h3>
 
-        <div className="flex gap-2">
-          <Input
-            value={newSkill}
-            onChange={(e) => setNewSkill(e.target.value)}
-            placeholder="Add skill"
-            className="h-10 w-40 rounded-2xl bg-white/70"
-          />
-
-          <Button
-            type="button"
-            onClick={addSkill}
-            className="rounded-2xl bg-[color:var(--primary)] text-white"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3 rounded-[24px] border border-[color:var(--primary)]/12 bg-white/75 px-4 py-4 shadow-sm dark:border-white/10 dark:bg-white/[0.055]">
         {skills.map((skill) => (
           <span
             key={skill}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[color:var(--accent)]/25 px-4 py-2 text-sm font-bold text-[color:var(--primary)]"
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-[#7AAACE]/55 bg-[#5F86A3] px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(53,88,114,0.14)] dark:border-white/10 dark:bg-white/10 dark:text-[color:var(--accent)] dark:shadow-none"
           >
-            {skill}
+            <span>{skill}</span>
 
             <button
               type="button"
               onClick={() => removeSkill(skill)}
-              className="text-[color:var(--primary)]/70 hover:text-red-500"
+              className="grid h-5 w-5 place-items-center rounded-full text-white/85 transition hover:bg-white/15 hover:text-white dark:text-[color:var(--accent)]/75 dark:hover:bg-white/10"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </button>
           </span>
         ))}
+
+        <input
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Enter skill"
+          className="min-w-[140px] flex-1 bg-transparent text-sm font-semibold text-[color:var(--ink)] outline-none placeholder:text-[color:var(--muted)]/70"
+        />
       </div>
     </div>
   );

@@ -7,15 +7,20 @@ import VerifyOTP from "./pages/VerifyOTP";
 import Register from "./pages/Register";
 import StudentDashboard from "./pages/StudentDashboard";
 import ForgotPassword from "./pages/forgot-password";
-import EditProfile from "./pages/EditProfile";
+import EditStudentProfile from "./pages/EditStudentProfile";
+import EditInstructorProfile from "./pages/EditInstructorProfile";
+import EditEmployerProfile from "./pages/EditEmployerProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
 import CreateNewProject from "./pages/CreateNewProject";
 import SetPassword from "./pages/SetPassword";
 import Notifications from "./pages/Notifications";
 
 
-import { UserProfileProvider } from "./context/UserProfileContext";
+import EditProject from "./pages/EditProject";
 
+import Portfolio from "./pages/Portfolio";
+import { UserProfileProvider } from "./context/UserProfileContext";
+import ManagePortfolio from "./pages/ManagePortfolio";
 export default function App() {
   const [users, setUsers] = useState(() => {
     const stored = sessionStorage.getItem("users");
@@ -67,9 +72,15 @@ export default function App() {
           />
 
           <Route path="/student-dashboard" element={<StudentDashboard />} />
-
-          <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/student-dashboard/portfolio" element={<Portfolio />} />
+          <Route path="/edit-student-profile" element={<EditStudentProfile />} />
+          <Route path="/edit-instructor-profile" element={<EditInstructorProfile />} />
+          <Route path="/edit-employer-profile" element={<EditEmployerProfile />} />
           <Route path="/create-project" element={<CreateNewProject />} />
+          <Route path="/edit-project/:projectId" element={<EditProject />} />
+          <Route path="/projects/:projectId/edit" element={<EditProject />} />
+          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/manage-portfolio" element={<ManagePortfolio />} />
           <Route path="/forgot-password" element={<ForgotPassword users={users} setCurrentUser={setCurrentUser}/>} />
         </Routes>
       </UserProfileProvider>
@@ -77,3 +88,4 @@ export default function App() {
     </BrowserRouter>
   );
 }
+

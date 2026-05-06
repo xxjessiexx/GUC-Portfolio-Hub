@@ -10,7 +10,7 @@ export default function ProjectPreview({ project }) {
         subtitle="Selected project details and feedback."
       />
 
-      <div className="mt-6 rounded-[28px] bg-[linear-gradient(135deg,var(--dark),var(--primary)_55%,var(--secondary))] p-5 text-white">
+      <div className="mt-6 rounded-[28px] bg-[linear-gradient(135deg,var(--dark),var(--primary)_55%,var(--secondary))] p-5 text-white dark:[background:var(--dashboard-preview-gradient)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-xl font-black">{project.title}</h3>
@@ -31,7 +31,7 @@ export default function ProjectPreview({ project }) {
         </div>
       </div>
 
-      <div className="mt-5 rounded-[24px] border border-[rgba(53,88,114,0.1)] bg-white/60 p-5">
+      <div className="mt-5 rounded-[24px] border border-[rgba(53,88,114,0.1)] bg-white/60 p-5 dark:border-white/10 dark:bg-white/[0.045]">
         <h3 className="font-black text-[var(--ink)]">Instructor Feedback</h3>
         <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
           {project.feedback}
