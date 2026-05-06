@@ -85,6 +85,7 @@ export default function ViewAllProjects() {
   const [search, setSearch] = useState("");
   const [filterVisibility, setFilterVisibility] = useState("All");
   const [filterPinned, setFilterPinned] = useState("All");
+  const [sortBy, setSortBy] = useState("Updated");
     
   const deleteProject = (id) => {
     setProjects((prev) => prev.filter((p) => p.id !== id));
@@ -99,7 +100,18 @@ export default function ViewAllProjects() {
         (filterPinned === "Pinned" && p.pinned) ||
         (filterPinned === "Unpinned" && !p.pinned))
       );
-    });
+    })
+     .sort((a, b) => {
+    if (sortBy === "Alphabetical") {
+      return a.name.localeCompare(b.name);
+    }
+
+    if (sortBy === "Updated") {
+      return new Date(b.updated) - new Date(a.updated);
+    }
+
+    return 0;
+  });
 
   const pinnedProjects = filteredProjects.filter((p) => p.pinned);
 
@@ -154,34 +166,46 @@ function SortableProject({ p, children }) {
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      className={`border rounded p-4 flex justify-between items-center ${
-        isDragging ? "shadow-xl scale-[1.02]" : ""
-      }`}
-    >
+  ref={setNodeRef}
+  style={style}
+  className={`border rounded-xl px-6 py-5 
+  grid grid-cols-[2.4fr_1fr_1.4fr_0.8fr_1.2fr_1fr]
+  items-center gap-6
+  ${isDragging ? "shadow-xl scale-[1.02]" : ""}
+`}
+>
       {/* LEFT SIDE with drag handle */}
-      <div className="flex items-center gap-4">
+     <div className="flex items-center gap-5 min-w-0">
 
         {/* 🔥 DRAG HANDLE (dots) */}
         <div
           {...listeners}
           {...attributes}
-          className="flex flex-col gap-1 cursor-grab active:cursor-grabbing"
+          className="grid grid-cols-2 gap-[4px]
+              cursor-grab active:cursor-grabbing
+              opacity-70 hover:opacity-100
+              mr-2"
         >
           {[...Array(6)].map((_, i) => (
-            <span key={i} className="w-1 h-1 bg-gray-400 rounded-full"></span>
+            <span key={i} className="w-[4px] h-[4px] rounded-full bg-[#3A3558]" />
           ))}
         </div>
 
         {children.left}
       </div>
 
-      {/* MIDDLE */}
-      {children.middle}
+     {/* UPDATED */}
+<div className="text-sm font-medium text-gray-500">
+  {p.updated}
+</div>
 
+{/* VISIBILITY + PIN + RATING */}
+{children.middle}
+        
       {/* RIGHT */}
+      <div className="flex justify-end gap-2">
       {children.right}
+      </div>
     </div>
   );
 }
@@ -193,14 +217,15 @@ function SortableProject({ p, children }) {
             title="My Projects"
             subtitle="Manage, edit, and organize your projects."
             action={
-              <span
-                onClick={() => navigate("/create-project")}
-                className="rounded-2xl px-6 py-3 text-white font-semibold 
-                          bg-[#2C4E80] shadow-md hover:bg-[#243f69] transition-all cursor-pointer"
-              >
-                
-                + Create Project
-              </span>
+      <div className="-m-2">
+        <span
+          onClick={() => navigate("/create-project")}
+          className="inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
+          bg-[#2C4E80] shadow-md hover:bg-[#243f69] transition-all cursor-pointer"
+        >
+          + Create Project
+        </span>
+      </div>
             }
           />
           
@@ -221,7 +246,7 @@ function SortableProject({ p, children }) {
             </div>
 
             {/* 🎓 Course */}
-            <div className="flex items-center gap-2 border rounded-xl px-3 py-2 bg-white/70">
+            <div className="flex items-center gap-2 border rounded-xl px-6 py-2 bg-white/70">
               <GraduationCap size={16} className="text-gray-500" />
               <select className="bg-transparent outline-none text-sm">
                 <option>Course</option>
@@ -235,7 +260,7 @@ function SortableProject({ p, children }) {
             </div>
 
             {/* 👁 Visibility */}
-            <div className="flex items-center gap-2 border rounded-xl px-3 py-2 bg-white/70">
+            <div className="flex items-center gap-2 border rounded-xl px-7 py-2 bg-white/70">
               <Eye size={16} className="text-gray-500" />
               <select
             value={filterVisibility}
@@ -250,7 +275,7 @@ function SortableProject({ p, children }) {
             </div>
 
             {/* 📌 Pinned */}
-            <div className="flex items-center gap-2 border rounded-xl px-3 py-2 bg-white/70">
+            <div className="flex items-center gap-2 border rounded-xl px-7 py-2 bg-white/70">
               <Pin size={16} className="text-gray-500 rotate-45" strokeWidth={2.5} />
             <select
             value={filterPinned}
@@ -265,11 +290,13 @@ function SortableProject({ p, children }) {
             </div>
 
             {/* ⬇ Sort */}
-              <div className="flex items-center gap-2 border rounded-xl px-3 py-2 bg-white/70">
+              <div className="flex items-center gap-2 border rounded-xl px-7 py-2 bg-white/70">
                 <span className="text-sm text-gray-500">Sort by</span>
-                <select className="bg-transparent outline-none text-sm font-medium">
-                  <option>Updated</option>
-                  <option>Name</option>
+                <select value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="bg-transparent outline-none text-sm font-medium">
+                  <option value="Updated">Updated</option>
+                  <option value="Alphabetical">Name</option>
                 </select>
               
               </div>
@@ -279,7 +306,7 @@ function SortableProject({ p, children }) {
         {/* 📌 Pinned */}
         {pinnedProjects.length > 0 && (
           <AppCard className="p-4">
-            <Label className="mb-1 text-lg font-semibold text-[#2C4E80]">
+            <Label className="mb-1 text-xl font-bold text-[#243B6B]">
               Pinned on Portfolio
             </Label>
 
@@ -291,16 +318,16 @@ function SortableProject({ p, children }) {
               {pinnedProjects.map((p) => (
                 <div
                   key={p.id}
-                  className="border rounded p-3 flex justify-between w-80"
+                  className="border rounded-2xl p-3 flex justify-between items-start w-80"
                 >
                   <div>
-                    <h3 className="font-semibold">{p.name}</h3>
-                    <p className="text-sm text-gray-500">{p.course}</p>
+                    <h3 className="font-extrabold text-[15px] text-[#243B6B] whitespace-nowrap">{p.name}</h3>
+                    <p className="inline-block mt-1.5 px-3 py-1 rounded-full bg-[#E8F0FF] text-[#3B5FCC] text-sm text-gray-500 text-[12px] font-medium">{p.course}</p>
                   </div>
 
                 <button
           onClick={() => togglePin(p.id)}
-          className={`flex items-center justify-center w-10 h-10 rounded-full border transition ${
+          className={` mt-2 flex items-center justify-center w-10 h-10 rounded-full border transition ${
             p.pinned
               ? "bg-yellow-100 border-yellow-300 text-yellow-600"
               : "bg-white border-gray-200 text-gray-400 hover:bg-gray-100"
@@ -316,16 +343,30 @@ function SortableProject({ p, children }) {
 
         {/* 📊 All Projects */}
         <AppCard className="p-4">
-          <Label className="font-semibold mb-4">All My Projects</Label>
-                <div className="grid grid-cols-[2fr_1fr_1.5fr_1fr_1.5fr_1fr] px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                    <span>Project</span>
-                    <span>Updated</span>
-                    <span>Portfolio Visibility</span>
-                    <span>Pinned to Top</span>
-                    <span>Rating / Comments</span>
-                    <span className="text-right">Actions</span>
-              </div>
+          <Label className=" mb-4 ml-3 text-xl font-bold text-[#243B6B]">All My Projects</Label>
+                <div className="grid grid-cols-[3.5fr_1.2fr_1.7fr_1.2fr_1.5fr_1fr] px-10 py-3 text-xs font-semibold text-gray-500 uppercase">
+  <span className="pl-12">Project</span>
 
+  <span className="-ml-14">
+    Updated
+  </span>
+
+  <span className="-ml-8">
+    Portfolio Visibility
+  </span>
+
+  <span className="-ml-8">
+    Pinned to Top
+  </span>
+
+  <span className="-ml-8">
+    Rating / Comments
+  </span>
+
+  <span className="pl-5">
+    Actions
+  </span>
+</div>
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -335,7 +376,7 @@ function SortableProject({ p, children }) {
               items={projects.map((p) => p.id)}
               strategy={verticalListSortingStrategy}
             >
-        <div className="space-y-3">
+        <div className="space-y-">
 
           {filteredProjects.map((p) => (
 
@@ -344,28 +385,26 @@ function SortableProject({ p, children }) {
               {{
                 left: (
                   <div>
-                    <h3 className="font-semibold text-2xl">
+                    <h3 className="font-bold text-[16px] text-[#16253A] whitespace-nowrap leading-none">
                       {p.name}
                     </h3>
 
-                    <p className="text-blue-500 font-medium">
+                   <p className="text-[#3B82F6] text-sm font-semibold mt-1">
                       {p.course}
                     </p>
 
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 min-w-0">
                       {p.description}
                     </p>
 
-                    <p className="text-xs text-gray-400 mt-1">
-                      {p.updated}
-                    </p>
                   </div>
                 ),
 
                 middle: (
-                  <div className="flex items-center gap-6">
+                 <div className="contents">
 
                     {/* VISIBILITY */}
+                    <div className="flex justify-center">
                     <div className="relative w-fit">
 
                       <select
@@ -391,6 +430,7 @@ function SortableProject({ p, children }) {
                         <option value="Public">Public</option>
                         <option value="Private">Private</option>
                       </select>
+                     
 
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
                         {p.visibility === "Public" ? (
@@ -405,8 +445,10 @@ function SortableProject({ p, children }) {
                       </span>
 
                     </div>
+                      </div>
 
                     {/* PIN */}
+                    <div className="flex justify-center">
                     <button
                       onClick={() => togglePin(p.id)}
                       className={`flex items-center justify-center w-10 h-10 rounded-full border transition ${
@@ -421,7 +463,8 @@ function SortableProject({ p, children }) {
                         className="rotate-45"
                       />
                     </button>
-
+                    </div>
+                    
                     {/* RATING */}
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <span className="font-medium">
@@ -445,7 +488,7 @@ function SortableProject({ p, children }) {
                 ),
 
                 right: (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 justify-end -mr-4">
 
                     <button className="p-2 rounded border hover:bg-gray-100">
                       <Eye size={16} />
@@ -484,6 +527,7 @@ function SortableProject({ p, children }) {
                     </button>
 
                   </div>
+                 
                 ),
               }}
 
