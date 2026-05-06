@@ -4,16 +4,22 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 import { Link } from "react-router-dom";
 import { useUserProfile } from "@/context/UserProfileContext";
+import { useNavigate } from "react-router-dom";
 
-export default function TopNav({ notifications = [] }) {
+export default function TopNav({ notifications}) {
   const unread = notifications.filter((n) => n.unread).length;
   const { profile } = useUserProfile();
+
+  const navigate = useNavigate();
 
   const initials = profile.name
     .split(" ")
     .map((part) => part[0])
     .join("")
     .slice(0, 2);
+  const handleNotificationsClick = () => {
+  navigate("/Notifications");
+};
 
   const profilePath =
     profile.role === "instructor"
@@ -45,6 +51,7 @@ export default function TopNav({ notifications = [] }) {
 
           <motion.button
             type="button"
+            onClick={handleNotificationsClick}
             whileHover={{ y: -3 }}
             whileTap={tapScale}
             transition={{ duration: 0.22, ease: easeOutExpo }}
