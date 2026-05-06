@@ -1,18 +1,18 @@
 import { motion } from "framer-motion";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 import {
-  Bell,
+  Home,
+  SearchIcon,
   Briefcase,
   CheckCircle2,
   FolderKanban,
   Heart,
-  LayoutDashboard,
   LogOut,
   MessageSquare,
   Settings,
   User,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { student } from "@/data/studentDashboardData";
 
 import {
@@ -29,16 +29,17 @@ import {
 
 export default function Sidebar({ open, setOpen }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const items = [
-    ["Overview", LayoutDashboard],
-    ["My Portfolio", User],
-    ["My Projects", FolderKanban],
-    ["Notifications", Bell],
-    ["Feedback", MessageSquare],
-    ["Internships", Briefcase],
-    ["Favorites", Heart],
-    ["Settings", Settings],
+    { label: "Home", icon: Home, path: "/student-dashboard" },
+    { label: "Explore", icon: SearchIcon, path: null },
+    { label: "My Portfolio", icon: User, path: "/student-dashboard/portfolio" },
+    { label: "My Projects", icon: FolderKanban, path: null },
+    { label: "Feedback", icon: MessageSquare, path: null },
+    { label: "Internships", icon: Briefcase, path: null },
+    { label: "Favorites", icon: Heart, path: null },
+    { label: "Settings", icon: Settings, path: null },
   ];
 
   const handleLogout = () => {
@@ -50,7 +51,7 @@ export default function Sidebar({ open, setOpen }) {
     <aside
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
-      className={`fixed left-0 top-20 z-40 h-[calc(100vh-80px)] border-r border-white/10 bg-[linear-gradient(180deg,#2C3947,#355872)] text-white shadow-[18px_0_70px_rgba(44,57,71,0.24)] backdrop-blur-2xl transition-all duration-300 ease-out ${
+      className={`fixed left-0 top-20 z-40 h-[calc(100vh-80px)] border-r border-white/10 bg-[linear-gradient(180deg,#2C3947,#355872)] text-white shadow-[18px_0_70px_rgba(44,57,71,0.24)] backdrop-blur-2xl transition-all duration-300 ease-out dark:[background:var(--dashboard-sidebar-gradient)] dark:shadow-[18px_0_70px_rgba(0,0,0,0.24)] ${
         open ? "w-[280px]" : "w-[92px]"
       }`}
     >
@@ -59,14 +60,20 @@ export default function Sidebar({ open, setOpen }) {
 
       <div className="relative z-10 flex h-full flex-col justify-between gap-4 overflow-y-auto p-4">
         <nav className="space-y-2">
-          {items.map(([label, Icon], index) => {
-            const active = index === 0;
+          {items.map(({ label, icon: Icon, path }) => {
+            const active =
+              path &&
+              (location.pathname === path ||
+                (path === "/student-dashboard" && location.pathname === "/"));
 
             return (
               <motion.button
                 key={label}
                 type="button"
                 title={!open ? label : undefined}
+                onClick={() => {
+                  if (path) navigate(path);
+                }}
                 whileHover={{ x: open ? 3 : 0, scale: 1.015 }}
                 whileTap={tapScale}
                 transition={{ duration: 0.22, ease: easeOutExpo }}
@@ -150,7 +157,7 @@ export default function Sidebar({ open, setOpen }) {
               </motion.button>
             </AlertDialogTrigger>
 
-            <AlertDialogContent className="z-[9999] rounded-3xl border border-white/70 bg-white/95 p-6 shadow-[0_24px_80px_rgba(44,57,71,0.25)] backdrop-blur-2xl">
+            <AlertDialogContent className="z-[9999] rounded-3xl border border-white/70 bg-white p-6 shadow-[0_24px_80px_rgba(44,57,71,0.25)] dark:border-white/10 dark:bg-[#101f2d]">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-2xl font-black text-[color:var(--ink)]">
                   Log out?
@@ -168,7 +175,7 @@ export default function Sidebar({ open, setOpen }) {
 
                 <AlertDialogAction
                   onClick={handleLogout}
-                  className="rounded-2xl bg-[color:var(--primary)] font-bold text-white hover:bg-[color:var(--dark)]"
+                  className="rounded-2xl bg-[color:var(--primary)] font-bold text-white hover:bg-[color:var(--dark)] dark:text-[#102630]"
                 >
                   Yes, log out
                 </AlertDialogAction>

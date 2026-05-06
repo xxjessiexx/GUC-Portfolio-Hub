@@ -29,18 +29,18 @@ export default function SkillsEditor({ skills = [], onChange }) {
         Skills
       </h3>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[color:var(--primary)]/15 bg-white/75 px-3 py-3 shadow-sm">
+      <div className="flex flex-wrap items-center gap-3 rounded-[24px] border border-[color:var(--primary)]/12 bg-white/75 px-4 py-4 shadow-sm dark:border-white/10 dark:bg-white/[0.055]">
         {skills.map((skill) => (
           <span
             key={skill}
-            className="inline-flex items-center gap-2 rounded-xl border border-[color:var(--primary)]/20 bg-[color:var(--primary)]/10 px-3 py-1.5 text-sm font-bold text-[color:var(--primary)]"
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-[#7AAACE]/55 bg-[#5F86A3] px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(53,88,114,0.14)] dark:border-white/10 dark:bg-white/10 dark:text-[color:var(--accent)] dark:shadow-none"
           >
-            {skill}
+            <span>{skill}</span>
 
             <button
               type="button"
               onClick={() => removeSkill(skill)}
-              className="text-[color:var(--primary)]/70 transition hover:text-red-500"
+              className="grid h-5 w-5 place-items-center rounded-full text-white/85 transition hover:bg-white/15 hover:text-white dark:text-[color:var(--accent)]/75 dark:hover:bg-white/10"
             >
               <X className="h-3.5 w-3.5" />
             </button>

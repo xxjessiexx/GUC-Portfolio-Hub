@@ -4,9 +4,8 @@ import { AppCard } from "@/components/ui/AppCard";
 import { useNavigate } from "react-router-dom";
 
 export default function DashboardHero({ student }) {
-  
   const navigate = useNavigate();
-  
+
   return (
     <AppCard className="mb-6 overflow-hidden">
       <div className="grid gap-6 p-8 lg:grid-cols-[1.35fr_0.65fr]">
@@ -24,11 +23,11 @@ export default function DashboardHero({ student }) {
             keep your academic work ready for discovery.
           </p>
 
-          <div className="mt-6 flex flex-wrap gap-2">
+          <div className="mt-6 flex flex-wrap gap-3">
             {student.skills.map((skill) => (
               <span
                 key={skill}
-                className="rounded-full bg-[rgba(156,213,255,0.28)] px-4 py-2 text-xs font-black text-[var(--primary)]"
+                className="inline-flex h-10 items-center rounded-full border border-[#7AAACE]/60 bg-[#5F86A3] px-4 text-xs font-black text-white shadow-[0_10px_24px_rgba(53,88,114,0.16)] dark:border-white/10 dark:bg-white/10 dark:text-[var(--accent)] dark:shadow-none"
               >
                 {skill}
               </span>
@@ -36,7 +35,7 @@ export default function DashboardHero({ student }) {
           </div>
         </div>
 
-        <div className="rounded-[28px] bg-[linear-gradient(135deg,var(--dark),var(--primary)_55%,var(--secondary))] p-6 text-white shadow-[0_24px_65px_rgba(53,88,114,0.28)]">
+        <div className="rounded-[28px] bg-[linear-gradient(135deg,var(--dark),var(--primary)_55%,var(--secondary))] p-6 text-white shadow-[0_24px_65px_rgba(53,88,114,0.28)] dark:[background:var(--dashboard-hero-action-gradient)] dark:shadow-[0_24px_65px_rgba(0,0,0,0.28)]">
           <p className="text-sm font-semibold text-white/70">Quick action</p>
           <h3 className="mt-2 text-2xl font-black">Add your next project</h3>
           <p className="mt-2 text-sm leading-6 text-white/70">
@@ -44,13 +43,13 @@ export default function DashboardHero({ student }) {
             visibility settings.
           </p>
 
-         <Button
-          onClick={() => navigate("/create-project")}
-          className="mt-5 rounded-2xl bg-white px-5 font-black text-[var(--primary)] hover:bg-white/90"
->
-         <Plus className="mr-2 h-4 w-4" />
-         Create Project
-         </Button>
+          <Button
+            onClick={() => navigate("/create-project")}
+            className="mt-5 rounded-2xl bg-white px-5 font-black text-[var(--primary)] hover:bg-white/90"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Create Project
+          </Button>
         </div>
       </div>
     </AppCard>

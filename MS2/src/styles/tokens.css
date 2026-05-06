@@ -39,7 +39,38 @@
     #355872
   );
 
-  /* Auth-specific tokens: keeps redesignability without changing the design */
+  --dashboard-hero-action-gradient: linear-gradient(
+    135deg,
+    #2C3947,
+    #355872 55%,
+    #7AAACE
+  );
+
+  --dashboard-preview-gradient: linear-gradient(
+    135deg,
+    #2C3947,
+    #355872 55%,
+    #7AAACE
+  );
+
+  --surface-soft: rgba(255, 255, 255, 0.66);
+  --surface-strong: rgba(255, 255, 255, 0.78);
+  --surface-elevated: rgba(255, 255, 255, 0.92);
+  --border-blue: rgba(53, 88, 114, 0.12);
+  --input-bg: rgba(255, 255, 255, 0.78);
+  --ring-soft: rgba(156, 213, 255, 0.28);
+
+  --shadow-brand:
+    0 22px 44px rgba(53, 88, 114, 0.32),
+    0 10px 28px rgba(122, 170, 206, 0.16);
+
+  --gradient-brand: linear-gradient(
+    135deg,
+    var(--dark),
+    var(--primary) 45%,
+    var(--secondary)
+  );
+
   --auth-card-bg: rgba(255, 255, 255, 0.72);
   --auth-card-border: rgba(255, 255, 255, 0.8);
   --auth-card-shadow:
@@ -84,51 +115,80 @@
     border-color 220ms var(--ease-out-expo),
     box-shadow 220ms var(--ease-out-expo);
 }
-
 .dark {
-  --primary: #8EC7EA;
-  --secondary: #7AAACE;
-  --accent: #9CD5FF;
-  --background: #0B1118;
-  --dark: #EAF4FA;
-  --gold: #E6C77B;
+  --primary: #8fc3e6;
+  --secondary: #6ea0c4;
+  --accent: #9cd5ff;
+  --background: #09131c;
+  --dark: #eaf4fa;
+  --gold: #e6c77b;
 
-  --muted: #AAB7C4;
-  --ink: #F3F8FB;
+  --muted: #9cb0bf;
+  --ink: #f3f8fb;
 
-  --card-bg: rgba(15, 28, 39, 0.72);
-  --card-bg-strong: rgba(18, 35, 49, 0.84);
-  --card-border: rgba(156, 213, 255, 0.16);
-
-  --shadow-card: 0 24px 80px rgba(0, 0, 0, 0.36);
-  --shadow-soft: 0 16px 52px rgba(0, 0, 0, 0.28);
+  --shadow-card: 0 24px 80px rgba(0, 0, 0, 0.34);
+  --shadow-soft: 0 16px 52px rgba(0, 0, 0, 0.24);
 
   --page-gradient: linear-gradient(
     135deg,
-    #0B1118 0%,
-    #102030 45%,
-    #142B3D 100%
+    #09131c 0%,
+    #0d1c2a 42%,
+    #11273a 100%
   );
 
   --hero-gradient: linear-gradient(
     135deg,
-    #0B1118 0%,
-    #102030 45%,
-    #142B3D 100%
+    #09131c 0%,
+    #0d1c2a 42%,
+    #11273a 100%
   );
 
   --nav-gradient: linear-gradient(
     135deg,
-    #0F1C27,
-    #24394C 55%,
-    #355872
+    #102030 0%,
+    #183048 54%,
+    #213f5b 100%
   );
 
   --dashboard-sidebar-gradient: linear-gradient(
     180deg,
-    #0F1C27,
-    #24394C 55%,
-    #355872
+    #0f1d2b 0%,
+    #173148 54%,
+    #203f58 100%
+  );
+
+  --dashboard-hero-action-gradient: linear-gradient(
+    135deg,
+    #173149 0%,
+    #214760 50%,
+    #2e6789 100%
+  );
+
+  --dashboard-preview-gradient: linear-gradient(
+    135deg,
+    #163044 0%,
+    #214a67 56%,
+    #2f698c 100%
+  );
+--surface-soft: rgba(156, 213, 255, 0.055);
+--surface-strong: rgba(156, 213, 255, 0.085);
+--surface-elevated: rgba(156, 213, 255, 0.115);
+
+--card-bg: rgba(8, 19, 29, 0.88);
+--card-bg-strong: rgba(10, 25, 38, 0.96);
+--card-border: rgba(156, 213, 255, 0.105);
+
+--muted: #9FB2C1;
+   --border-blue: rgba(156, 213, 255, 0.1);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --ring-soft: rgba(156, 213, 255, 0.18);
+
+  --shadow-brand: 0 20px 50px rgba(0, 0, 0, 0.3);
+  --gradient-brand: linear-gradient(
+    135deg,
+    #102030,
+    #21455e 46%,
+    #346f95
   );
 
   --auth-card-bg: rgba(15, 28, 39, 0.76);
@@ -158,9 +218,9 @@
 
   --auth-button-gradient: linear-gradient(
     135deg,
-    #0F1C27,
+    #0f1c27,
     #355872 52%,
-    #7AAACE
+    #7aaace
   );
 
   --auth-button-shadow:

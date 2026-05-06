@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNotifications } from "@/context/NotificationsContext";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import DashboardHero from "@/components/dashboard/DashboardHero";
@@ -8,16 +9,22 @@ import ProjectPreview from "@/components/dashboard/ProjectPreview";
 import SecondaryPanels from "@/components/dashboard/SecondaryPanels";
 
 import { useUserProfile } from "@/context/UserProfileContext";
+import { useEffect } from "react";
 
 import {
   student,
   projects,
-  notifications,
   recommendedProjects,
   internships,
 } from "@/data/studentDashboardData";
+import Toast from "@/components/ui/toast";
 
 export default function StudentDashboard() {
+
+
+const { notifications, setNotifications} = useNotifications();
+const [toast, setToast] = useState(null);
+
   const { profile } = useUserProfile();
   const [selectedProject, setSelectedProject] = useState(projects[0]);
 
@@ -48,9 +55,59 @@ export default function StudentDashboard() {
         return acc;
       }, {});
   }, []);
+  function formatDateTime() {
+  const now = new Date();
+
+  const day = now.getDate();
+  const month = now.getMonth() + 1; // months start at 0
+  const year = now.getFullYear();
+
+  let hours = now.getHours();
+  let minutes = now.getMinutes();
+
+  // format minutes like 2:00 instead of 2:0
+  minutes = minutes < 10 ? "0" + minutes : minutes;
+
+  return `${day}/${month}/${year} at ${hours}:${minutes}`;
+}
+
+
+  useEffect(() => {
+  const alreadyTriggered = sessionStorage.getItem("notificationShown");
+
+  if (alreadyTriggered) return; // 
+
+  const timer = setTimeout(() => {
+    const newNotification = {
+      id: "n-" + Date.now(),
+      type: "message",
+      title: "IT WORKED",
+      text: "You just received a new message!",
+      unread: true,
+      time: formatDateTime(),
+    };
+
+    setNotifications((prev) => [newNotification, ...prev]);
+    setToast(newNotification); // ✅ show popup
+
+setTimeout(() => {
+setToast(null); // auto hide
+}, 3000);
+
+    sessionStorage.setItem("notificationShown", "true"); // ✅ mark as shown
+  }, 3000);
+
+  return () => clearTimeout(timer);
+}, []);
 
   return (
+    
     <DashboardLayout notifications={notifications}>
+      {/* ✅ TOAST GOES HERE */}
+  <Toast
+  notification={toast}
+  onClose={() => setToast(null)}
+/>
       <DashboardHero student={dashboardStudent} />
 
       <DashboardStats stats={stats} />

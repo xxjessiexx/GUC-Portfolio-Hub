@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
-
+import { NotificationsProvider } from "./context/NotificationsContext";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
@@ -9,13 +9,20 @@ import StudentDashboard from "./pages/StudentDashboard";
 import ForgotPassword from "./pages/forgot-password";
 import EditStudentProfile from "./pages/EditStudentProfile";
 import EditInstructorProfile from "./pages/EditInstructorProfile";
+import EditEmployerProfile from "./pages/EditEmployerProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
 import CreateNewProject from "./pages/CreateNewProject";
 import SetPassword from "./pages/SetPassword"
 import ViewAllProjects from "./pages/ViewAllProjects";
+import SetPassword from "./pages/SetPassword";
+import Notifications from "./pages/Notifications";
 
+
+import EditProject from "./pages/EditProject";
+
+import Portfolio from "./pages/Portfolio";
 import { UserProfileProvider } from "./context/UserProfileContext";
-
+import ManagePortfolio from "./pages/ManagePortfolio";
 export default function App() {
   const [users, setUsers] = useState(() => {
     const stored = sessionStorage.getItem("users");
@@ -42,6 +49,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+    <NotificationsProvider>
       <UserProfileProvider currentUser={currentUser}>
         <FloatingCTA />
 
@@ -58,20 +66,29 @@ export default function App() {
             element={<Login users={users} setCurrentUser={setCurrentUser} />}
           />
 
+          <Route path="/notifications" element={<Notifications />} />
+
           <Route
             path="/register"
             element={<Register addUser={addUser} />}
           />
 
           <Route path="/student-dashboard" element={<StudentDashboard />} />
-
+          <Route path="/student-dashboard/portfolio" element={<Portfolio />} />
           <Route path="/edit-student-profile" element={<EditStudentProfile />} />
           <Route path="/edit-instructor-profile" element={<EditInstructorProfile />} />
+          <Route path="/edit-employer-profile" element={<EditEmployerProfile />} />
           <Route path="/create-project" element={<CreateNewProject />} />
+          <Route path="/edit-project/:projectId" element={<EditProject />} />
+          <Route path="/projects/:projectId/edit" element={<EditProject />} />
+          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/manage-portfolio" element={<ManagePortfolio />} />
           <Route path="/forgot-password" element={<ForgotPassword users={users} setCurrentUser={setCurrentUser}/>} />
           <Route path="/view-all-projects" element={<ViewAllProjects />} />
         </Routes>
       </UserProfileProvider>
+      </NotificationsProvider>
     </BrowserRouter>
   );
 }
+

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   CheckCircle2,
   FileText,
@@ -107,6 +108,39 @@ function saveProject(project) {
   return updatedProjects;
 }
 
+function updateStoredProject(projectId, updatedProject) {
+  const existingProjects = getStoredProjects();
+  const updatedProjects = existingProjects.map((project) =>
+    project.id === projectId ? updatedProject : project
+  );
+
+  localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(updatedProjects));
+  return updatedProjects;
+}
+
+function findStoredProject(projectId) {
+  return getStoredProjects().find((project) => project.id === projectId) || null;
+}
+
+function mapProjectToFormData(project) {
+  return {
+    title: project.title || "",
+    type: project.type || "course",
+    courseName: project.courseName || "",
+    thesisFile: project.thesisFile
+      ? { ...project.thesisFile, __existing: true }
+      : null,
+    description: project.description || "",
+    github: project.github || "",
+    video: project.video ? { ...project.video, __existing: true } : null,
+    tags: project.technologies || project.tags || [],
+    tagInput: "",
+    collaborators: project.collaborators || [],
+    instructors: project.instructors || [],
+    visibility: project.visibility || "private",
+  };
+}
+
 function openProjectFilesDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(PROJECT_FILES_DB, 1);
@@ -125,7 +159,7 @@ function openProjectFilesDB() {
 }
 
 async function saveProjectFile(file, prefix) {
-  if (!file) return null;
+  if (!file || file.__existing) return null;
 
   const db = await openProjectFilesDB();
 
@@ -592,8 +626,13 @@ function validateInviteEmail(value, existing) {
   return "";
 }
 
-export default function CreateNewProject() {
-  const [formData, setFormData] = useState(initialProjectData);
+export default function EditProject() {
+  const { projectId } = useParams();
+  const navigate = useNavigate();
+  const [loadedProject] = useState(() => findStoredProject(projectId));
+  const [formData, setFormData] = useState(() =>
+    loadedProject ? mapProjectToFormData(loadedProject) : initialProjectData
+  );
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [saveMessage, setSaveMessage] = useState({ type: "", message: "" });
@@ -896,7 +935,6 @@ export default function CreateNewProject() {
 
     try {
       const now = new Date().toISOString();
-      const projectId = `project-${Date.now()}`;
 
       const savedVideo = await saveProjectFile(
         formData.video,
@@ -909,27 +947,32 @@ export default function CreateNewProject() {
       );
 
       const storedProject = {
+        ...loadedProject,
         id: projectId,
         title: formData.title.trim(),
         type: formData.type,
         courseName:
           formData.type === "course" ? formData.courseName.trim() : "",
-        thesisFile: createStoredFileReference(savedThesisFile),
+        thesisFile: formData.thesisFile?.__existing
+          ? loadedProject.thesisFile
+          : createStoredFileReference(savedThesisFile),
         description: formData.description.trim(),
         github: formData.github.trim(),
-        video: createStoredFileReference(savedVideo),
+        video: formData.video?.__existing
+          ? loadedProject.video
+          : createStoredFileReference(savedVideo),
         technologies: formData.tags,
         collaborators: formData.collaborators,
         instructors: formData.instructors,
         visibility: formData.visibility,
         status: "draft",
-        createdAt: now,
+        createdAt: loadedProject.createdAt || now,
         updatedAt: now,
       };
 
-      saveProject(storedProject);
+      updateStoredProject(projectId, storedProject);
 
-      setFormData(initialProjectData);
+      setFormData(mapProjectToFormData(storedProject));
       setErrors({});
       setTouched({});
       setTagFeedback({ type: "", message: "" });
@@ -941,7 +984,7 @@ export default function CreateNewProject() {
       setSaveMessage({
         type: "success",
         message:
-          "Project saved successfully. Files and creation time were saved too.",
+          "Project updated successfully. Changes and update time were saved.",
       });
     } catch (error) {
       console.error("Failed to save project:", error);
@@ -953,6 +996,28 @@ export default function CreateNewProject() {
       setIsSaving(false);
     }
   };
+
+  if (!loadedProject) {
+    return (
+      <DashboardLayout>
+        <AppCard className="p-8">
+          <h1 className="text-3xl font-black text-[color:var(--ink)]">
+            Project not found
+          </h1>
+          <p className="mt-2 text-sm font-semibold text-[color:var(--muted)]">
+            The project you are trying to edit could not be found in localStorage.
+          </p>
+          <AppButton
+            type="button"
+            onClick={() => navigate("/student-dashboard")}
+            className="mt-6 rounded-2xl bg-[var(--primary)] px-6 font-black text-white"
+          >
+            Back to dashboard
+          </AppButton>
+        </AppCard>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -993,11 +1058,11 @@ export default function CreateNewProject() {
                   </p>
 
                   <h1 className="mt-4 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
-                    Create New Project
+                    Edit Project
                   </h1>
 
                   <p className="mt-4 max-w-3xl text-base font-semibold leading-7 text-[color:var(--muted)]">
-                    Add your project details, files, technologies, teammates,
+                    Update your project details, files, technologies, teammates,
                     and course instructors.
                   </p>
                 </div>
@@ -1241,7 +1306,7 @@ export default function CreateNewProject() {
                 <AppButton
                   type="button"
                   onClick={() => {
-                    setFormData(initialProjectData);
+                    setFormData(mapProjectToFormData(loadedProject));
                     setErrors({});
                     setTouched({});
                     setTagFeedback({ type: "", message: "" });
@@ -1263,7 +1328,7 @@ export default function CreateNewProject() {
                   className="min-h-12 rounded-2xl bg-[var(--primary)] px-8 font-black text-white shadow-[var(--shadow-brand)] transition hover:-translate-y-0.5 hover:bg-[var(--dark)] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   <CheckCircle2 className="mr-2 size-4" />
-                  {isSaving ? "Saving..." : "Create Project"}
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </AppButton>
               </div>
             </div>
