@@ -14,7 +14,7 @@ import FloatingCTA from "./components/ui/FloatingCTA";
 import CreateNewProject from "./pages/CreateNewProject";
 import SetPassword from "./pages/SetPassword"
 import ViewAllProjects from "./pages/ViewAllProjects";
-import SetPassword from "./pages/SetPassword";
+
 import Notifications from "./pages/Notifications";
 
 
