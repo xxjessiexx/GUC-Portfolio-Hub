@@ -13,6 +13,7 @@ import CreateNewProject from "./pages/CreateNewProject";
 import SetPassword from "./pages/SetPassword";
 import Notifications from "./pages/Notifications";
 
+
 import { UserProfileProvider } from "./context/UserProfileContext";
 
 export default function App() {

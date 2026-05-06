@@ -52,10 +52,10 @@ export const projects = [
 ];
 
 export const notifications = [
-  { title: "New Feedback", text: "Dr. Aya Salama left feedback on your Smart Study Buddy Project.", unread: true, type:"feedback" , time:"10/5/2026 at 2:09 pm"},
-  { title: "Project invitation", text: "Sara Mohamed has invited you to join EcoTrack.", unread: false, type:"invite", time:"20/5/2026 at 5:00 pm" },
-  { title: "Internship update", text: "Your Frontend Intern application was viewed.", unread: false, type:"", time:"1/5/2026 at 10:19 pm" },
-  {title: "New Message", text: "Fatima Mohamed sent you a new message", unread: false, type:"message", time:"8/5/2026 at 9:53 pm" }
+  {id:"n-1", title: "New Feedback", text: "Dr. Aya Salama left feedback on your Smart Study Buddy Project.", unread: true, type:"feedback" , time:"10/5/2026 at 2:09 pm"},
+  {id:"n-2",  title: "Project invitation", text: "Sara Mohamed has invited you to join EcoTrack.", unread: false, type:"invite", time:"20/5/2026 at 5:00 pm" },
+  {id:"n-3",  title: "Internship update", text: "Your Frontend Intern application was viewed.", unread: false, type:"", time:"1/5/2026 at 10:19 pm" },
+  {id:"n-4", title: "New Message", text: "Fatima Mohamed sent you a new message", unread: false, type:"message", time:"8/5/2026 at 9:53 pm" }
 ];
 
 export const recommendedProjects = [

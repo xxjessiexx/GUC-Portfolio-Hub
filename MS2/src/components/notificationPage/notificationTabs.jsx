@@ -2,8 +2,21 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import NotificationCard from "./notificationCard";
 import { MessageCircle, Bell, Mail, UserPlus } from "lucide-react";
+import { useNotifications } from "@/context/NotificationsContext";
 
 export default function NotificationsTabs({ notifications }) {
+const { setNotifications } = useNotifications();
+const handleDelete = (id) => {
+  setNotifications((prev) => prev.filter((n) => n.id !== id));
+};
+const handleMarkAsRead = (id) => {
+  setNotifications((prev) =>
+    prev.map((n) =>
+      n.id === id ? { ...n, unread: false } : n
+    )
+  );
+};
+
 const [activeTab, setActiveTab] = useState("all");
 const iconMap = {
 feedback: <MessageCircle className="h-5 w-5" />,
@@ -52,7 +65,7 @@ return (
         className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold transition-all duration-300 border
         ${
             isActive
-            ? "bg-white/10 text-white/70"
+            ? "border-[var(--dark)] bg-white/10 text-[var(--dark)]/70"
             : "border-white/10 bg-[linear-gradient(135deg,var(--dark),var(--primary))] text-white hover:text-white hover:bg-white/10"
         }`}
     >
@@ -63,7 +76,7 @@ return (
         className={`rounded-full px-2 py-0.5 text-xs font-bold
             ${
             isActive
-                ? "bg-white/10 text-white/70"  //first affect the number circle 
+                ? "border border-[var(--dark)] bg-white/10 text-[var(--dark)]/70"  //first affect the number circle 
                 : "bg-white/10 text-white/70"
             }`}
         >
@@ -78,17 +91,19 @@ return (
       {/* Content */}
     <div className="space-y-4">
         {filteredNotifications.length === 0 ? (
-        <p className="text-sm text-white/50">No notifications</p>
+        <p className="text-sm text-[var(--muted)]">No notifications</p>
         ) : (
         filteredNotifications.map((n) => (
 <NotificationCard
-    key={n.id}
-    title={n.title}
-    description={n.text}
-    unread={n.unread}
-    icon={iconMap[n.type] || iconMap.default}
-    time = {n.time}
-
+  key={n.id}
+  id={n.id}
+  title={n.title}
+  description={n.text}
+  unread={n.unread}
+  icon={iconMap[n.type] || iconMap.default}
+  time={n.time}
+  onDelete={handleDelete}
+  onMarkAsRead={handleMarkAsRead}
 />
 ))
         )}

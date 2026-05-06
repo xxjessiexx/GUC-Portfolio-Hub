@@ -17,11 +17,13 @@ import {
   recommendedProjects,
   internships,
 } from "@/data/studentDashboardData";
+import Toast from "@/components/ui/toast";
 
 export default function StudentDashboard() {
 
 
-const { notifications, setNotifications } = useNotifications();
+const { notifications, setNotifications} = useNotifications();
+const [toast, setToast] = useState(null);
 
   const { profile } = useUserProfile();
   const [selectedProject, setSelectedProject] = useState(projects[0]);
@@ -86,6 +88,11 @@ const { notifications, setNotifications } = useNotifications();
     };
 
     setNotifications((prev) => [newNotification, ...prev]);
+    setToast(newNotification); // ✅ show popup
+
+setTimeout(() => {
+setToast(null); // auto hide
+}, 3000);
 
     sessionStorage.setItem("notificationShown", "true"); // ✅ mark as shown
   }, 3000);
@@ -94,7 +101,13 @@ const { notifications, setNotifications } = useNotifications();
 }, []);
 
   return (
+    
     <DashboardLayout notifications={notifications}>
+      {/* ✅ TOAST GOES HERE */}
+  <Toast
+  notification={toast}
+  onClose={() => setToast(null)}
+/>
       <DashboardHero student={dashboardStudent} />
 
       <DashboardStats stats={stats} />

@@ -6,6 +6,8 @@ const NotificationsContext = createContext();
 export function NotificationsProvider({ children }) {
 const [notifications, setNotifications] = useState(initialNotifications);
 
+
+
 return (
     <NotificationsContext.Provider value={{ notifications, setNotifications }}>
     {children}
