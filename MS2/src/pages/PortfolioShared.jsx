@@ -652,30 +652,7 @@ function PortfolioTopCard({ profile, stats, page }) {
             </div>
           </div>
 
-          <div className="rounded-[1.35rem] border border-white/60 bg-white/55 p-4 shadow-[0_10px_24px_rgba(53,88,114,0.05)] dark:border-white/10 dark:bg-white/[0.035]">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-black text-[color:var(--ink)]">
-                Skills
-              </h3>
-
-              <span className="text-xs font-bold text-[color:var(--muted)]">
-                {skills.length} added
-              </span>
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              {skills.length > 0 ? (
-                skills.map((skill) => (
-                  <SkillChip key={skill}>{skill}</SkillChip>
-                ))
-              ) : (
-                <p className="text-sm font-semibold text-[color:var(--muted)]">
-                  No skills added yet.
-                </p>
-              )}
-            </div>
-          </div>
-
+         
           <div className="grid gap-2 md:grid-cols-3">
             <LinkRow icon={Link2} label="LinkedIn" value={links.linkedin} />
             <LinkRow icon={Code2} label="GitHub" value={links.github} />
