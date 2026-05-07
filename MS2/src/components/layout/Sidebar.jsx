@@ -66,6 +66,11 @@ export default function Sidebar({ open, setOpen }) {
               <motion.button
                 key={label}
                 type="button"
+                 onClick={() => {
+                  if (label === "My Projects") {
+                    navigate("/view-all-projects");
+                  }
+                }}
                 title={!open ? label : undefined}
                 whileHover={{ x: open ? 3 : 0, scale: 1.015 }}
                 whileTap={tapScale}

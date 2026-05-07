@@ -14,7 +14,7 @@ export default function ProjectsPanel({
       <SectionHeader
         title="My Projects"
         subtitle="Track visibility, progress, collaborators, and links."
-        action="View All"
+       action="View All"
       />
 
       <div className="mt-6 space-y-4">
