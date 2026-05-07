@@ -114,13 +114,6 @@
     color 220ms var(--ease-out-expo),
     border-color 220ms var(--ease-out-expo),
     box-shadow 220ms var(--ease-out-expo);
-    --surface: var(--surface-soft);
---border-soft: var(--border-blue);
---radius-md: 20px;
---radius-lg: 26px;
---radius-xl: 32px;
---shadow-lifted: 0 28px 70px rgba(53, 88, 114, 0.18);
---gradient-page: var(--page-gradient);
 }
 .dark {
   --primary: #8fc3e6;

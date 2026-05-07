@@ -6,27 +6,30 @@ import { Link } from "react-router-dom";
 import { useUserProfile } from "@/context/UserProfileContext";
 import { useNavigate } from "react-router-dom";
 
-export default function TopNav({ notifications}) {
+export default function TopNav({ notifications = [] }) {
   const unread = notifications.filter((n) => n.unread).length;
   const { profile } = useUserProfile();
-
   const navigate = useNavigate();
 
-  const initials = profile.name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2);
-  const handleNotificationsClick = () => {
-  navigate("/Notifications");
-};
+  // Safely handle initials in case profile name is missing
+  const initials = profile?.name
+    ? profile.name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+    : "??";
 
   const profilePath =
-    profile.role === "instructor"
+    profile?.role === "instructor"
       ? "/edit-instructor-profile"
-      : profile.role === "employer"
+      : profile?.role === "employer"
       ? "/edit-employer-profile"
       : "/edit-student-profile";
+
+  const handleNotificationsClick = () => {
+    navigate("/notifications"); // Keep this lowercase to match your App.jsx route
+  };
 
   return (
     <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-[linear-gradient(135deg,var(--dark),var(--primary))] text-white shadow-[0_18px_55px_rgba(44,57,71,0.22)] backdrop-blur-2xl dark:[background:var(--nav-gradient)] dark:shadow-[0_18px_55px_rgba(0,0,0,0.24)]">
@@ -37,18 +40,15 @@ export default function TopNav({ notifications}) {
           </div>
 
           <div>
-            <h1 className="text-lg font-black text-white">
-              GUC Portfolio Hub
-            </h1>
-            <p className="text-xs font-semibold text-white/55">
-              Student Workspace
-            </p>
+            <h1 className="text-lg font-black text-white">GUC Portfolio Hub</h1>
+            <p className="text-xs font-semibold text-white/55">Student Workspace</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           <ThemeToggle variant="dark" />
 
+          {/* FIXED: onClick is now a prop of motion.button */}
           <motion.button
             type="button"
             onClick={handleNotificationsClick}
@@ -71,7 +71,7 @@ export default function TopNav({ notifications}) {
             className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:bg-white/15"
           >
             <div className="grid h-9 w-9 overflow-hidden place-items-center rounded-xl bg-[color:var(--accent)]/20 text-sm font-black text-white ring-1 ring-white/15">
-              {profile.image ? (
+              {profile?.image ? (
                 <img
                   src={profile.image}
                   alt={profile.name}
@@ -83,13 +83,15 @@ export default function TopNav({ notifications}) {
             </div>
 
             <div className="hidden sm:block">
-              <p className="text-sm font-black text-white">{profile.name}</p>
+              <p className="text-sm font-black text-white">{profile?.name || "User"}</p>
               <p className="text-xs font-semibold text-white/55">
-                {profile.role === "student"
+                {profile?.role === "student"
                   ? `Semester ${profile.semester}`
-                  : profile.role === "instructor"
+                  : profile?.role === "instructor"
                   ? "Instructor"
-                  : "Employer"}
+                  : profile?.role === "employer"
+                  ? "Employer"
+                  : "Guest"}
               </p>
             </div>
           </Link>
