@@ -20,6 +20,7 @@ import Notifications from "./pages/Notifications";
 import EditProject from "./pages/EditProject";
 import Portfolio from "./pages/Portfolio";
 import ManagePortfolio from "./pages/ManagePortfolio";
+import CreateInternship from "./pages/CreateInternship";
 
 export default function App() {
   const [users, setUsers] = useState(() => {
@@ -72,7 +73,7 @@ export default function App() {
             />
 
             <Route path="/notifications" element={<Notifications />} />
-
+            <Route path="/create-internship" element={<CreateInternship />} />
             <Route
               path="/register"
               element={<Register addUser={addUser} />}
