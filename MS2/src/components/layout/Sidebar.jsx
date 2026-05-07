@@ -37,7 +37,7 @@ export default function Sidebar({ open, setOpen }) {
     { label: "My Portfolio", icon: User, path: "/student-dashboard/portfolio" },
     { label: "My Projects", icon: FolderKanban, path: null },
     { label: "Feedback", icon: MessageSquare, path: null },
-    { label: "Internships", icon: Briefcase, path: null },
+    { label: "Internships", icon: Briefcase, path: "/internships" },
     { label: "Favorites", icon: Heart, path: null },
     { label: "Settings", icon: Settings, path: null },
   ];

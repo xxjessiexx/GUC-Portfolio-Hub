@@ -22,6 +22,11 @@ import Portfolio from "./pages/Portfolio";
 import ManagePortfolio from "./pages/ManagePortfolio";
 import CreateInternship from "./pages/CreateInternship";
 import Discover from "./pages/Discover";
+import Internships from "./pages/Internships";
+import InternshipDetails from "./pages/InternshipDetails";
+import MyApplications from "./pages/MyApplications";
+import ManageInternships from "./pages/ManageInternships";
+import ManageApplicants from "./pages/ManageApplicants";
 
 export default function App() {
   const [users, setUsers] = useState(() => {
@@ -96,6 +101,11 @@ export default function App() {
             />
             <Route path="/view-all-projects" element={<ViewAllProjects />} />
              <Route path="/Discover" element={<Discover/>} />
+            <Route path="/internships" element={<Internships />} />
+            <Route path="/internships/:internshipId" element={<InternshipDetails />} />
+            <Route path="/my-applications" element={<MyApplications />} />
+            <Route path="/manage-internships" element={<ManageInternships />} />
+            <Route path="/manage-applicants/:internshipId" element={<ManageApplicants />} />
           </Routes>
         </UserProfileProvider>
       </NotificationsProvider>
