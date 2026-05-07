@@ -598,7 +598,7 @@ function PortfolioTopCard({ profile, stats, page }) {
               "Passionate about building impactful digital solutions."}
           </p>
 
-          <PrimaryButton to="/edit-profile" className="mt-5 w-full max-w-[210px]">
+          <PrimaryButton to="/edit-student-profile" className="mt-5 w-full max-w-[210px]">
             <Edit3 className="h-4 w-4" />
             Manage Profile
           </PrimaryButton>
