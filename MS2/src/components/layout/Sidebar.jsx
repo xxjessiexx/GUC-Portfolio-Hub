@@ -70,9 +70,12 @@ export default function Sidebar({ open, setOpen }) {
               <motion.button
                 key={label}
                 type="button"
-                title={!open ? label : undefined}
                 onClick={() => {
-                  if (path) navigate(path);
+                  if (label === "My Projects") {
+                    navigate("/view-all-projects");
+                  } else if (path) {
+                    navigate(path);
+                  }
                 }}
                 whileHover={{ x: open ? 3 : 0, scale: 1.015 }}
                 whileTap={tapScale}
