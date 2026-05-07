@@ -48,13 +48,13 @@ sendScriptedReply(updatedChats);
 const [isTyping, setIsTyping] = useState(false);
 
 useEffect(() => {
-  const container = messagesContainerRef.current;
-  if (!container) return;
+    const container = messagesContainerRef.current;
+    if (!container) return;
 
-  container.scrollTo({
+    container.scrollTo({
     top: container.scrollHeight,
     behavior: "smooth",
-  });
+});
 }, [selectedChat.messages, isTyping]);
 
 
@@ -121,8 +121,8 @@ return (
 
       {/* Messages */}
     <div
-  ref={messagesContainerRef}
-  className="flex-1 overflow-y-auto bg-[#f8f8f8] p-8"
+    ref={messagesContainerRef}
+    className="flex-1 overflow-y-auto bg-[#f8f8f8] p-8"
 >
 
         <div className="flex flex-col gap-6">
@@ -135,15 +135,13 @@ return (
 ))}
 
 {isTyping && (
-
-    <div className="flex justify-start">
-
-    <div className="rounded-3xl bg-gray-200 px-5 py-3 text-gray-500">
-        Typing...
+<div className="flex justify-start">
+    <div className="flex items-center gap-1 rounded-3xl bg-gray-200 px-5 py-3">
+    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500 [animation-delay:-0.2s]"></span>
+    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500 [animation-delay:-0.1s]"></span>
+    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500"></span>
     </div>
-
-    </div>
-
+</div>
 )}
 
 
