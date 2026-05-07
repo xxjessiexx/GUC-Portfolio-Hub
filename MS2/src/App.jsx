@@ -21,6 +21,7 @@ import EditProject from "./pages/EditProject";
 import Portfolio from "./pages/Portfolio";
 import ManagePortfolio from "./pages/ManagePortfolio";
 import CreateInternship from "./pages/CreateInternship";
+import ProjectPage from "./pages/ProjectPage";
 
 export default function App() {
   const [users, setUsers] = useState(() => {
@@ -94,6 +95,8 @@ export default function App() {
               element={<ForgotPassword users={users} setCurrentUser={setCurrentUser} />}
             />
             <Route path="/view-all-projects" element={<ViewAllProjects />} />
+            <Route path="/project" element={<ProjectPage />} />
+           
           </Routes>
         </UserProfileProvider>
       </NotificationsProvider>
