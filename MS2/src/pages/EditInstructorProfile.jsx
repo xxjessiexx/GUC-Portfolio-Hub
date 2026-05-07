@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
@@ -48,8 +48,7 @@ export default function EditInstructorProfile() {
     profile.officeHoursData?.endTime || "12:00"
   );
 
-  const department =
-    profile.department || "Computer Science and Engineering";
+  const department = profile.department || "Computer Science and Engineering";
 
   const formatTime = (time) => {
     const [hour, minute] = time.split(":");
@@ -102,9 +101,7 @@ export default function EditInstructorProfile() {
 
   const toggleDay = (day) => {
     setOfficeDays((prev) =>
-      prev.includes(day)
-        ? prev.filter((item) => item !== day)
-        : [...prev, day]
+      prev.includes(day) ? prev.filter((item) => item !== day) : [...prev, day]
     );
   };
 
@@ -238,9 +235,9 @@ export default function EditInstructorProfile() {
                 <button
                   type="button"
                   onClick={() => setOfficeDialogOpen(true)}
-                  className="grid h-11 w-11 place-items-center rounded-2xl bg-white/70 text-[color:var(--primary)] transition hover:bg-[color:var(--accent)]/25"
+                  className="grid h-9 w-9 place-items-center rounded-xl bg-white/70 text-[color:var(--primary)] transition hover:bg-[color:var(--accent)]/25 dark:bg-white/10 dark:text-[color:var(--accent)] dark:hover:bg-white/15"
                 >
-                  ✎
+                  <Pencil className="h-4 w-4" />
                 </button>
               </div>
             </AppCard>
@@ -304,9 +301,9 @@ export default function EditInstructorProfile() {
                     <button
                       type="button"
                       onClick={() => openEditEducation(index)}
-                      className="grid h-9 w-9 place-items-center rounded-xl bg-white/70 text-[color:var(--primary)] transition hover:bg-[color:var(--accent)]/25"
+                      className="grid h-9 w-9 place-items-center rounded-xl bg-white/70 text-[color:var(--primary)] transition hover:bg-[color:var(--accent)]/25 dark:bg-white/10 dark:text-[color:var(--accent)] dark:hover:bg-white/15"
                     >
-                      ✎
+                      <Pencil className="h-4 w-4" />
                     </button>
                   </div>
                 ))}
