@@ -43,6 +43,14 @@ export const dummyChats = [
     avatar: "F",
     online: true,
     unread: 1,
+    replyIndex: 0,   //which reply we are on
+      scriptedReplies: [
+    "Great! We are currently looking for frontend interns.",
+    "The internship lasts 3 months and is fully remote.",
+    "Do you have any React projects you can share?",
+    "Your experience sounds impressive!",
+    "We would love to schedule an interview with you."
+  ],
     messages: [
       {
         id: 1,

@@ -1,10 +1,12 @@
 import ChatItem from "./ChatItem";
+import { useState } from "react";
 
 export default function ChatSidebar({
   chats,
   selectedChatId,
   setSelectedChatId,
 }) {
+    const [search, setSearch] = useState("");
 
   return (
     <div className="w-[360px] border-r bg-[#fafafa]">
@@ -15,15 +17,21 @@ export default function ChatSidebar({
         </h1>
 
         <input
-          type="text"
-          placeholder="Search conversations..."
-          className="mt-6 w-full rounded-xl border p-3 outline-none"
+        type="text"
+        placeholder="Search conversations..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="mt-6 w-full rounded-xl border p-3 outline-none"
         />
       </div>
 
       <div>
 
-        {chats.map((chat) => (
+        {chats
+  .filter((chat) =>
+    chat.name.toLowerCase().includes(search.toLowerCase())
+  )
+  .map((chat) => (
           <ChatItem
             key={chat.id}
             chat={chat}
