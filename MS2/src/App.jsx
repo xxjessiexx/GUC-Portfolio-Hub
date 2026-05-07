@@ -20,6 +20,7 @@ import Notifications from "./pages/Notifications";
 import EditProject from "./pages/EditProject";
 import Portfolio from "./pages/Portfolio";
 import ManagePortfolio from "./pages/ManagePortfolio";
+import ChatsSection from "./pages/ChatsSection";
 
 export default function App() {
   const [users, setUsers] = useState(() => {
@@ -65,6 +66,8 @@ export default function App() {
                 />
               }
             />
+
+            <Route path="/chat" element={<ChatsSection />} />
 
             <Route
               path="/login"
