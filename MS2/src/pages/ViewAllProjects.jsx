@@ -11,9 +11,14 @@ import { Label } from "@/components/ui/label";
 
 import { Eye, Pencil, Trash2, Pin } from "lucide-react";
 import { Search, GraduationCap,  ChevronDown ,Globe,Lock} from "lucide-react";
-
+import CourseBadge from "@/components/ui/CourseBadge";
 import DragDropList from "@/components/ui/DragDropList";
 import SortableCard from "@/components/ui/SortableCard";
+import SearchInput from "@/components/filters/SearchInput";
+import CourseFilter from "@/components/filters/CourseFilter";
+import VisibilityFilter from "@/components/filters/VisibilityFilter";
+import PinnedFilter from "@/components/filters/PinnedFilter";
+import SortFilter from "@/components/filters/SortFilter";
 
 const initialProjects = [
   {
@@ -150,77 +155,34 @@ export default function ViewAllProjects() {
         {/* Filters */}
       <AppCard className="p-4 flex items-center gap-4 flex-wrap rounded-2xl bg-white/60 backdrop-blur-md">
 
-            <div className="relative w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-              <Input
-                type="text"
-                placeholder="Search my projects"
-                className="pl-9 bg-transparent"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+                  <SearchInput
+            search={search}
+            setSearch={setSearch}
+            placeholder="Search my projects"
+          />
 
-            {/* 🎓 Course */}
-            <div className="flex items-center gap-2 border rounded-xl px-6 py-2 bg-white/70">
-              <GraduationCap size={16} className="text-gray-500" />
-              <select
-                value={filterCourse}
-                onChange={(e) => setFilterCourse(e.target.value)}
-                className="bg-transparent outline-none text-sm"
-              >
-                <option value="All">Course</option>
-                <option value="CSEN">CSEN</option>
-                <option value="MET">MET</option>
-                <option value="DMET">DMET</option>
-                <option value="BI">BI</option>
-                <option value="MECHATRONICS">MECHATRONICS</option>
-            </select>
-            
-            </div>
+          <CourseFilter
+            value={filterCourse}
+            onChange={setFilterCourse}
+            options={["CSEN", "MET", "DMET", "BI"]}
+          />
 
-            {/* 👁 Visibility */}
-            <div className="flex items-center gap-2 border rounded-xl px-7 py-2 bg-white/70">
-              <Eye size={16} className="text-gray-500" />
-              <select
+          <VisibilityFilter
             value={filterVisibility}
-            onChange={(e) => setFilterVisibility(e.target.value)}
-            className="bg-transparent outline-none text-sm"
-          >
-            <option value="All">Visibility</option>   {/* ✅ important */}
-            <option value="Public">Public</option>
-            <option value="Private">Private</option>
-          </select>
-              
-            </div>
+            onChange={setFilterVisibility}
+            options={["Public", "Private"]}
+          />
 
-            {/* 📌 Pinned */}
-            <div className="flex items-center gap-2 border rounded-xl px-7 py-2 bg-white/70">
-              <Pin size={16} className="text-gray-500 rotate-45" strokeWidth={2.5} />
-            <select
+          <PinnedFilter
             value={filterPinned}
-            onChange={(e) => setFilterPinned(e.target.value)}
-            className="bg-transparent outline-none text-sm"
-          >
-            <option value="All">none</option>
-            <option value="Pinned">Pinned</option>
-            <option value="Unpinned">Unpinned</option>
-          </select>
-              
-            </div>
-
-            {/* ⬇ Sort */}
-              <div className="flex items-center gap-2 border rounded-xl px-7 py-2 bg-white/70">
-                <span className="text-sm text-gray-500">Sort by</span>
-                <select value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="bg-transparent outline-none text-sm font-medium">
-                  <option value="None">None</option>
-                  <option value="Updated">Updated</option>
-                  <option value="Alphabetical">Name</option>
-                </select>
-              
-              </div>
+            onChange={setFilterPinned}
+            options={["Pinned", "Unpinned"]}
+          />
+          <SortFilter
+            value={sortBy}
+            onChange={setSortBy}
+            options={["None", "Updated", "Alphabetical"]}
+          />
       </AppCard>
 
 
@@ -243,7 +205,7 @@ export default function ViewAllProjects() {
                 >
                   <div>
                     <h3 className="font-extrabold text-[15px] text-[#243B6B] whitespace-nowrap">{p.name}</h3>
-                    <p className="inline-block mt-1.5 px-3 py-1 rounded-full bg-[#E8F0FF] text-[#3B5FCC] text-sm text-gray-500 text-[12px] font-medium">{p.course}</p>
+                  <CourseBadge course={p.course} />
                   </div>
 
                 <button
