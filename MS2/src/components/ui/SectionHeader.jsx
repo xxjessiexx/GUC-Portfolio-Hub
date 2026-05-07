@@ -7,6 +7,7 @@ export function SectionHeader({ title, subtitle, action }) {
         <h2 className="text-2xl font-black tracking-tight text-[var(--ink)]">
           {title}
         </h2>
+
         {subtitle && (
           <p className="mt-1 text-sm font-medium text-[var(--muted)]">
             {subtitle}
@@ -17,7 +18,7 @@ export function SectionHeader({ title, subtitle, action }) {
       {action && (
         <Button
           variant="outline"
-          className="rounded-2xl border-[color:rgba(53,88,114,0.15)] bg-white/60 font-bold text-[var(--primary)]"
+          className="rounded-2xl border-[color:rgba(53,88,114,0.15)] bg-white/60 font-bold text-[var(--primary)] dark:border-white/10 dark:bg-white/[0.06] dark:text-[var(--accent)]"
         >
           {action}
         </Button>

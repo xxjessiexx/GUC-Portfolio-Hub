@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ThemeContext } from "@/lib/themeContext";
 
-const STORAGE_KEY = "guc-portfolio-theme-safe";
+const STORAGE_KEY = "guc-portfolio-theme-v2";
 
 function getInitialTheme() {
   if (typeof window === "undefined") return "light";
@@ -20,6 +20,8 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     const root = document.documentElement;
+
+    localStorage.removeItem("guc-portfolio-theme-safe");
 
     root.classList.toggle("dark", theme === "dark");
     root.dataset.theme = theme;
