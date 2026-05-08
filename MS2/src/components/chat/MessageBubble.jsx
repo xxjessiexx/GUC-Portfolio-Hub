@@ -26,15 +26,15 @@ export default function MessageBubble({
           `}
         >
           {message.text}
-        </div>
 
-        <p
-          className={`mt-1 text-xs text-gray-400
+            <p
+          className={`mt-1 text-[11px] text-gray-400
           ${isMe ? "text-right" : "text-left"}
           `}
         >
           {message.time}
         </p>
+        </div>
 
       </div>
 
