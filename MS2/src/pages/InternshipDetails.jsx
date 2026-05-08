@@ -15,6 +15,8 @@ import {
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
+import StatusBadge from "@/components/common/StatusBadge";
+
 import { notifications } from "@/data/studentDashboardData";
 import { internshipsData } from "@/data/internshipsData";
 
@@ -59,6 +61,7 @@ export default function InternshipDetails() {
 
   const relatedInternships = useMemo(() => {
     if (!internship) return [];
+
     return internshipsData
       .filter((item) => item.id !== internship.id)
       .slice(0, 3);
@@ -72,6 +75,7 @@ export default function InternshipDetails() {
             <h1 className="text-3xl font-black text-[color:var(--ink)]">
               Internship not found
             </h1>
+
             <Link
               to="/internships"
               className="mt-4 inline-block font-bold text-[color:var(--primary)]"
@@ -159,9 +163,7 @@ export default function InternshipDetails() {
 
                   <div className="flex-1">
                     {internship.featured && (
-                      <span className="inline-flex rounded-full bg-[color:var(--accent)]/25 px-4 py-1.5 text-xs font-black text-[color:var(--primary)]">
-                        Featured
-                      </span>
+                      <StatusBadge status="Featured" />
                     )}
 
                     <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">
@@ -180,25 +182,10 @@ export default function InternshipDetails() {
                     </div>
 
                     <div className="mt-5 flex flex-wrap gap-4 text-sm font-semibold text-[color:var(--muted)]">
-                      <span className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        {internship.location}
-                      </span>
-
-                      <span className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        {internship.duration}
-                      </span>
-
-                      <span className="flex items-center gap-2">
-                        <Briefcase className="h-4 w-4" />
-                        {internship.workMode}
-                      </span>
-
-                      <span className="flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4" />
-                        {internship.postedAt}
-                      </span>
+                      <InfoPill icon={MapPin} text={internship.location} />
+                      <InfoPill icon={Clock} text={internship.duration} />
+                      <InfoPill icon={Briefcase} text={internship.workMode} />
+                      <InfoPill icon={CalendarDays} text={internship.postedAt} />
                     </div>
 
                     <div className="mt-5 flex flex-wrap gap-2">
@@ -217,42 +204,26 @@ export default function InternshipDetails() {
 
               <AppCard className="p-6 sm:p-8">
                 <div className="space-y-8">
-                  <section>
-                    <h3 className="text-2xl font-black text-[color:var(--ink)]">
-                      Overview
-                    </h3>
+                  <ContentSection title="Overview">
                     <p className="mt-3 text-sm font-semibold leading-7 text-[color:var(--muted)]">
                       {internship.overview}
                     </p>
-                  </section>
+                  </ContentSection>
 
-                  <section>
-                    <h3 className="text-2xl font-black text-[color:var(--ink)]">
-                      Responsibilities
-                    </h3>
-                    <ul className="mt-3 list-disc space-y-2 pl-5 text-sm font-semibold leading-7 text-[color:var(--muted)]">
-                      {internship.responsibilities.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  </section>
+                  <ContentSection title="Responsibilities">
+                    <BulletList items={internship.responsibilities} />
+                  </ContentSection>
 
-                  <section>
-                    <h3 className="text-2xl font-black text-[color:var(--ink)]">
-                      Requirements
-                    </h3>
-                    <ul className="mt-3 list-disc space-y-2 pl-5 text-sm font-semibold leading-7 text-[color:var(--muted)]">
-                      {internship.requirements.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  </section>
+                  <ContentSection title="Requirements">
+                    <BulletList items={internship.requirements} />
+                  </ContentSection>
 
                   <div className="grid gap-5 lg:grid-cols-2">
                     <AppCard className="p-5">
                       <h3 className="text-xl font-black text-[color:var(--ink)]">
                         About the Company
                       </h3>
+
                       <p className="mt-3 text-sm font-semibold leading-7 text-[color:var(--muted)]">
                         {internship.companyAbout}
                       </p>
@@ -262,14 +233,12 @@ export default function InternshipDetails() {
                       <h3 className="text-xl font-black text-[color:var(--ink)]">
                         Perks & Benefits
                       </h3>
-                      <ul className="mt-3 space-y-2 text-sm font-semibold text-[color:var(--muted)]">
+
+                      <div className="mt-3 space-y-2">
                         {internship.benefits.map((item) => (
-                          <li key={item} className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-[color:var(--primary)]" />
-                            {item}
-                          </li>
+                          <CheckItem key={item} text={item} />
                         ))}
-                      </ul>
+                      </div>
                     </AppCard>
                   </div>
                 </div>
@@ -291,26 +260,7 @@ export default function InternshipDetails() {
 
                 <div className="grid gap-4 md:grid-cols-3">
                   {relatedInternships.map((item) => (
-                    <Link key={item.id} to={`/internships/${item.id}`}>
-                      <div className="rounded-2xl border border-white/70 bg-white/55 p-4 transition hover:-translate-y-1 hover:bg-white/75">
-                        <h4 className="font-black text-[color:var(--ink)]">
-                          {item.title}
-                        </h4>
-                        <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
-                          {item.company}
-                        </p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {item.skills.slice(0, 2).map((skill) => (
-                            <span
-                              key={skill}
-                              className="rounded-full bg-[color:var(--accent)]/25 px-2 py-1 text-xs font-black text-[color:var(--primary)]"
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </Link>
+                    <RelatedInternshipCard key={item.id} internship={item} />
                   ))}
                 </div>
               </AppCard>
@@ -338,13 +288,7 @@ export default function InternshipDetails() {
 
                   <div className="space-y-2">
                     {internship.eligibility.map((item) => (
-                      <p
-                        key={item}
-                        className="flex items-center gap-2 text-sm font-semibold text-[color:var(--muted)]"
-                      >
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        {item}
-                      </p>
+                      <CheckItem key={item} text={item} />
                     ))}
                   </div>
                 </div>
@@ -352,56 +296,55 @@ export default function InternshipDetails() {
 
               <AppCard className="p-6">
                 <div className="mb-4 flex items-center justify-between gap-3">
-                    <h3 className="text-xl font-black text-[color:var(--ink)]">
+                  <h3 className="text-xl font-black text-[color:var(--ink)]">
                     Apply with Cover Letter
-                    </h3>
+                  </h3>
 
-                    <span className="rounded-full bg-[color:var(--accent)]/25 px-3 py-1 text-xs font-black text-[color:var(--primary)]">
-                    Optional
-                    </span>
+                  <StatusBadge status="Optional" />
                 </div>
 
                 <p className="text-sm font-semibold leading-6 text-[color:var(--muted)]">
-                    You can add a short cover letter, or leave it empty and apply directly.
+                  You can add a short cover letter, or leave it empty and apply
+                  directly.
                 </p>
 
                 <div className="mt-5 rounded-2xl border border-white/70 bg-white/55 p-4 dark:border-white/10 dark:bg-white/[0.05]">
-                    <div className="mb-3 flex items-center gap-2">
+                  <div className="mb-3 flex items-center gap-2">
                     <FileText className="h-4 w-4 text-[color:var(--primary)]" />
                     <p className="text-sm font-black text-[color:var(--ink)]">
-                        Cover Letter
+                      Cover Letter
                     </p>
-                    </div>
+                  </div>
 
-                    <textarea
+                  <textarea
                     value={coverLetter}
                     onChange={(event) => setCoverLetter(event.target.value)}
                     placeholder="Write a short message to the employer..."
                     maxLength={700}
                     className="min-h-36 w-full resize-none rounded-2xl border border-[color:var(--primary)]/10 bg-white/70 px-4 py-3 text-sm font-semibold leading-6 text-[color:var(--ink)] outline-none placeholder:text-[color:var(--muted)]/70 focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--ring-soft)] dark:border-white/10 dark:bg-white/[0.06]"
-                    />
+                  />
 
-                    <p className="mt-2 text-xs font-bold text-[color:var(--muted)]">
+                  <p className="mt-2 text-xs font-bold text-[color:var(--muted)]">
                     {coverLetter.length}/700 characters
-                    </p>
+                  </p>
                 </div>
 
                 <AppButton
-                    type="button"
-                    onClick={() => setApplyDialogOpen(true)}
-                    disabled={isApplied}
-                    className="mt-5 min-h-12 w-full rounded-2xl bg-[color:var(--primary)] font-black text-white hover:bg-[color:var(--dark)] disabled:opacity-60"
+                  type="button"
+                  onClick={() => setApplyDialogOpen(true)}
+                  disabled={isApplied}
+                  className="mt-5 min-h-12 w-full rounded-2xl bg-[color:var(--primary)] font-black text-white hover:bg-[color:var(--dark)] disabled:opacity-60"
                 >
-                    <Send className="mr-2 h-4 w-4" />
-                    {isApplied ? "Applied" : "Apply Now"}
+                  <Send className="mr-2 h-4 w-4" />
+                  {isApplied ? "Applied" : "Apply Now"}
                 </AppButton>
 
                 {isApplied && (
-                    <p className="mt-3 text-center text-sm font-black text-[color:var(--primary)]">
+                  <p className="mt-3 text-center text-sm font-black text-[color:var(--primary)]">
                     Application submitted successfully.
-                    </p>
+                  </p>
                 )}
-                </AppCard>
+              </AppCard>
             </aside>
           </div>
         </div>
@@ -435,6 +378,72 @@ export default function InternshipDetails() {
         </AlertDialogContent>
       </AlertDialog>
     </DashboardLayout>
+  );
+}
+
+function InfoPill({ icon: Icon, text }) {
+  return (
+    <span className="flex items-center gap-2">
+      <Icon className="h-4 w-4" />
+      {text}
+    </span>
+  );
+}
+
+function ContentSection({ title, children }) {
+  return (
+    <section>
+      <h3 className="text-2xl font-black text-[color:var(--ink)]">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+function BulletList({ items }) {
+  return (
+    <ul className="mt-3 list-disc space-y-2 pl-5 text-sm font-semibold leading-7 text-[color:var(--muted)]">
+      {items.map((item) => (
+        <li key={item}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
+function CheckItem({ text }) {
+  return (
+    <p className="flex items-center gap-2 text-sm font-semibold text-[color:var(--muted)]">
+      <CheckCircle2 className="h-4 w-4 text-green-500" />
+      {text}
+    </p>
+  );
+}
+
+function RelatedInternshipCard({ internship }) {
+  return (
+    <Link to={`/internships/${internship.id}`}>
+      <div className="rounded-2xl border border-white/70 bg-white/55 p-4 transition hover:-translate-y-1 hover:bg-white/75">
+        <h4 className="font-black text-[color:var(--ink)]">
+          {internship.title}
+        </h4>
+
+        <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
+          {internship.company}
+        </p>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {internship.skills.slice(0, 2).map((skill) => (
+            <span
+              key={skill}
+              className="rounded-full bg-[color:var(--accent)]/25 px-2 py-1 text-xs font-black text-[color:var(--primary)]"
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+      </div>
+    </Link>
   );
 }
 

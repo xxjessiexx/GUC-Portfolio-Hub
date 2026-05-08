@@ -24,6 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+import InitialsAvatar from "@/components/common/InitialsAvatar";
+import MetricCard from "@/components/common/MetricCard";
+import FilterSelect from "@/components/common/FilterSelect";
+import AppModal from "@/components/common/AppModal";
+
 import { notifications } from "@/data/studentDashboardData";
 
 const applicantsData = [
@@ -170,13 +176,17 @@ export default function ManageApplicants() {
 
   const filteredApplicants = useMemo(() => {
     const filtered = applicants.filter((applicant) => {
-      const matchesSearch =
-        applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        applicant.skills
-          .join(" ")
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        applicant.university.toLowerCase().includes(searchTerm.toLowerCase());
+      const searchableText = [
+        applicant.name,
+        applicant.university,
+        applicant.major,
+        applicant.semester,
+        ...applicant.skills,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch = searchableText.includes(searchTerm.toLowerCase());
 
       const matchesMajor =
         selectedMajor === "All Majors" || applicant.major === selectedMajor;
@@ -294,25 +304,25 @@ export default function ManageApplicants() {
           </div>
 
           <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            <StatCard
+            <MetricCard
               title="Total Applicants"
               value={stats.total}
               icon={Users}
               helper="100% of all applicants"
             />
-            <StatCard
+            <MetricCard
               title="Shortlisted"
               value={stats.shortlisted}
               icon={Bookmark}
               helper="Initial strong matches"
             />
-            <StatCard
+            <MetricCard
               title="Accepted"
               value={stats.accepted}
               icon={CheckCircle2}
               helper="Confirmed candidates"
             />
-            <StatCard
+            <MetricCard
               title="Rejected"
               value={stats.rejected}
               icon={XCircle}
@@ -392,7 +402,7 @@ export default function ManageApplicants() {
                       }
                       className="flex items-center gap-3 text-left"
                     >
-                      <Avatar name={applicant.name} />
+                      <InitialsAvatar name={applicant.name} />
 
                       <div>
                         <p className="font-black text-[color:var(--ink)] hover:text-[color:var(--primary)]">
@@ -510,7 +520,7 @@ export default function ManageApplicants() {
                     className="mb-3 flex items-center justify-between rounded-2xl border border-white/70 bg-white/55 p-4 last:mb-0"
                   >
                     <div className="flex items-center gap-3">
-                      <Avatar name={candidate.name} />
+                      <InitialsAvatar name={candidate.name} />
                       <div>
                         <p className="font-black text-[color:var(--ink)]">
                           {candidate.name}
@@ -581,101 +591,43 @@ export default function ManageApplicants() {
         </div>
 
         {notesOpen && (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/30 p-6 backdrop-blur-sm">
-            <div className="w-full max-w-xl rounded-[32px] border border-white/70 bg-white p-6 shadow-[0_30px_90px_rgba(44,57,71,0.3)]">
-              <h2 className="text-2xl font-black text-[color:var(--ink)]">
-                Applicant Notes & Feedback
-              </h2>
+          <AppModal
+            title="Applicant Notes & Feedback"
+            onClose={() => setNotesOpen(false)}
+            maxWidth="max-w-xl"
+          >
+            <p className="mt-2 text-sm font-semibold text-[color:var(--muted)]">
+              Add internal notes for your hiring team.
+            </p>
 
-              <p className="mt-2 text-sm font-semibold text-[color:var(--muted)]">
-                Add internal notes for your hiring team.
-              </p>
+            <textarea
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder="Write feedback, interview comments, or next steps..."
+              className="mt-5 min-h-[180px] w-full rounded-2xl border border-[color:var(--primary)]/15 bg-white p-4 font-semibold text-[color:var(--ink)] outline-none focus:ring-4 focus:ring-[color:var(--accent)]/25"
+            />
 
-              <textarea
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                placeholder="Write feedback, interview comments, or next steps..."
-                className="mt-5 min-h-[180px] w-full rounded-2xl border border-[color:var(--primary)]/15 bg-white p-4 font-semibold text-[color:var(--ink)] outline-none focus:ring-4 focus:ring-[color:var(--accent)]/25"
-              />
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setNotesOpen(false)}
+                className="h-12 rounded-2xl border border-gray-200 bg-white px-6 font-black text-[color:var(--muted)]"
+              >
+                Cancel
+              </button>
 
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setNotesOpen(false)}
-                  className="h-12 rounded-2xl border border-gray-200 bg-white px-6 font-black text-[color:var(--muted)]"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setNotesOpen(false)}
-                  className="h-12 rounded-2xl bg-[color:var(--primary)] px-6 font-black text-white"
-                >
-                  Save Notes
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setNotesOpen(false)}
+                className="h-12 rounded-2xl bg-[color:var(--primary)] px-6 font-black text-white"
+              >
+                Save Notes
+              </button>
             </div>
-          </div>
+          </AppModal>
         )}
       </main>
     </DashboardLayout>
-  );
-}
-
-function FilterSelect({ value, onChange, options }) {
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-black text-[color:var(--ink)] shadow-sm">
-        <SelectValue />
-      </SelectTrigger>
-
-      <SelectContent position="popper" className="z-[9999] rounded-2xl">
-        {options.map((option) => (
-          <SelectItem key={option} value={option}>
-            {option}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
-function StatCard({ title, value, icon: Icon, helper }) {
-  return (
-    <AppCard className="p-6">
-      <div className="flex items-center gap-4">
-        <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[color:var(--accent)]/25 text-[color:var(--primary)]">
-          <Icon className="h-6 w-6" />
-        </div>
-
-        <div>
-          <p className="text-sm font-black text-[color:var(--muted)]">
-            {title}
-          </p>
-          <p className="mt-1 text-4xl font-black text-[color:var(--ink)]">
-            {value}
-          </p>
-          <p className="mt-1 text-xs font-bold text-[color:var(--muted)]">
-            {helper}
-          </p>
-        </div>
-      </div>
-    </AppCard>
-  );
-}
-
-function Avatar({ name }) {
-  const initials = name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2);
-
-  return (
-    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[color:var(--accent)]/30 text-sm font-black text-[color:var(--primary)]">
-      {initials}
-    </div>
   );
 }
 
@@ -727,7 +679,7 @@ function CandidateMini({ candidate }) {
   return (
     <div className="mb-3 flex items-center justify-between rounded-2xl border border-white/70 bg-white/55 p-4 last:mb-0">
       <div className="flex items-center gap-3">
-        <Avatar name={candidate.name} />
+        <InitialsAvatar name={candidate.name} />
         <div>
           <p className="font-black text-[color:var(--ink)]">{candidate.name}</p>
           <p className="text-sm font-semibold text-[color:var(--muted)]">
