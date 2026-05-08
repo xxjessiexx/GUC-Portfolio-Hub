@@ -12,42 +12,92 @@ export default function CourseFilter({
   const items = options || courses;
 
   return (
-    <label
-      className={`flex min-w-[180px] items-center justify-between gap-3 rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] px-4 py-3 shadow-[var(--shadow-soft)] ${className}`}
+    <div
+      className={`
+        relative
+        min-w-[180px]
+        rounded-2xl
+        border border-[color:var(--border-soft)]
+        bg-[color:var(--surface)]
+        px-4 py-3
+        shadow-[var(--shadow-soft)]
+        ${className}
+      `}
     >
-      <div className="min-w-0">
-        <span className="block text-[10px] font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">
-          {label}
-        </span>
+      <span
+        className="
+          block
+          text-[10px]
+          font-black
+          uppercase
+          tracking-[0.16em]
+          text-[color:var(--muted)]
+        "
+      >
+        {label}
+      </span>
 
-        <select
-          value={value}
-          onChange={(event) => onChange?.(event.target.value)}
-          className="mt-0.5 w-full appearance-none bg-transparent text-sm font-black text-[color:var(--ink)] outline-none"
-        >
-          <option value="all">{placeholder}</option>
+      {/* SELECT */}
+      <select
+        value={value}
+        onChange={(event) =>
+          onChange?.(event.target.value)
+        }
+        className="
+          mt-1
+          w-full
+          appearance-none
+          bg-transparent
+          text-sm
+          font-black
+          text-[color:var(--ink)]
+          outline-none
+          cursor-pointer
+          pr-8
+        "
+      >
+        <option value="all">{placeholder}</option>
 
-          {items.map((course) => {
-            const courseValue =
-              typeof course === "string"
-                ? course
-                : course.value || course.id || course.name || course.title;
+        {items.map((course) => {
+          const courseValue =
+            typeof course === "string"
+              ? course
+              : course.value ||
+                course.id ||
+                course.name ||
+                course.title;
 
-            const courseLabel =
-              typeof course === "string"
-                ? course
-                : course.label || course.name || course.title || courseValue;
+          const courseLabel =
+            typeof course === "string"
+              ? course
+              : course.label ||
+                course.name ||
+                course.title ||
+                courseValue;
 
-            return (
-              <option key={courseValue} value={courseValue}>
-                {courseLabel}
-              </option>
-            );
-          })}
-        </select>
-      </div>
+          return (
+            <option
+              key={courseValue}
+              value={courseValue}
+            >
+              {courseLabel}
+            </option>
+          );
+        })}
+      </select>
 
-      <ChevronDown className="pointer-events-none h-4 w-4 shrink-0 text-[color:var(--muted)]" />
-    </label>
+      {/* ARROW */}
+      <ChevronDown
+        className="
+          absolute
+          right-4
+          top-1/2
+          -translate-y-1/2
+          h-4 w-4
+          text-[color:var(--muted)]
+          pointer-events-none
+        "
+      />
+    </div>
   );
 }
