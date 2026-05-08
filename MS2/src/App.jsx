@@ -9,6 +9,9 @@ import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
 import Register from "./pages/Register";
 import StudentDashboard from "./pages/StudentDashboard";
+import InstructorDashboard from "./pages/InstructorDashboard";
+import EmployerDashboard from "./pages/EmployerDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import ForgotPassword from "./pages/forgot-password";
 import EditStudentProfile from "./pages/EditStudentProfile";
 import EditInstructorProfile from "./pages/EditInstructorProfile";
@@ -21,7 +24,16 @@ import Notifications from "./pages/Notifications";
 import EditProject from "./pages/EditProject";
 import Portfolio from "./pages/Portfolio";
 import ManagePortfolio from "./pages/ManagePortfolio";
-import ChatsSection from "./pages/ChatsSection";
+import CreateInternship from "./pages/CreateInternship";
+import Discover from "./pages/Discover";
+import Internships from "./pages/Internships";
+import InternshipDetails from "./pages/InternshipDetails";
+import MyApplications from "./pages/MyApplications";
+import ManageInternships from "./pages/ManageInternships";
+import ManageApplicants from "./pages/ManageApplicants";
+import ProjectPage from "./pages/ProjectPage";
+import ExploreInstructors from "./pages/ExploreInstructors";
+import ExploreProjects from "@/pages/ExploreProjects";
 
 export default function App() {
   const [users, setUsers] = useState(() => {
@@ -76,29 +88,45 @@ export default function App() {
               path="/login"
               element={<Login users={users} setCurrentUser={setCurrentUser} />}
             />
+            <Route path="/register" element={<Register addUser={addUser} />} />
+
+            <Route path="/student-dashboard" element={<StudentDashboard />} />
+            <Route path="/instructor-dashboard" element={<InstructorDashboard />} />
+            <Route path="/employer-dashboard" element={<EmployerDashboard />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
 
             <Route path="/notifications" element={<Notifications />} />
 
-            <Route
-              path="/register"
-              element={<Register addUser={addUser} />}
-            />
+            <Route path="/discover" element={<Discover />} />
+            <Route path="/Discover" element={<Discover />} />
+            <Route path="/view-all-projects" element={<ViewAllProjects />} />
 
-            <Route path="/student-dashboard" element={<StudentDashboard />} />
+            <Route path="/create-internship" element={<CreateInternship />} />
+            <Route path="/internships" element={<Internships />} />
+            <Route path="/internships/:internshipId" element={<InternshipDetails />} />
+            <Route path="/my-applications" element={<MyApplications />} />
+            <Route path="/manage-internships" element={<ManageInternships />} />
+            <Route path="/manage-applicants/:internshipId" element={<ManageApplicants />} />
+
             <Route path="/student-dashboard/portfolio" element={<Portfolio />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/manage-portfolio" element={<ManagePortfolio />} />
+
             <Route path="/edit-student-profile" element={<EditStudentProfile />} />
             <Route path="/edit-instructor-profile" element={<EditInstructorProfile />} />
             <Route path="/edit-employer-profile" element={<EditEmployerProfile />} />
+
             <Route path="/create-project" element={<CreateNewProject />} />
             <Route path="/edit-project/:projectId" element={<EditProject />} />
             <Route path="/projects/:projectId/edit" element={<EditProject />} />
-            <Route path="/portfolio" element={<Portfolio />} />
-            <Route path="/manage-portfolio" element={<ManagePortfolio />} />
+            <Route path="/project" element={<ProjectPage />} />
+            <Route path="/explore-instructors" element={<ExploreInstructors />} />
+            <Route path="/explore-projects" element={<ExploreProjects />} />
+
             <Route
               path="/forgot-password"
               element={<ForgotPassword users={users} setCurrentUser={setCurrentUser} />}
             />
-            <Route path="/view-all-projects" element={<ViewAllProjects />} />
           </Routes>
         </UserProfileProvider>
       </NotificationsProvider>

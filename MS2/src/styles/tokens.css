@@ -53,6 +53,16 @@
     #7AAACE
   );
 
+  --surface: var(--card-bg);
+  --border-soft: var(--card-border);
+  --radius-md: 20px;
+  --radius-lg: 26px;
+  --radius-xl: 32px;
+  --shadow-lifted: 0 28px 70px rgba(53, 88, 114, 0.18);
+  --gradient-page: var(--page-gradient);
+  --gradient-glow-primary: radial-gradient(circle, rgba(156, 213, 255, 0.32), transparent 70%);
+  --gradient-glow-gold: radial-gradient(circle, rgba(230, 199, 123, 0.18), transparent 70%);
+
   --surface-soft: rgba(255, 255, 255, 0.66);
   --surface-strong: rgba(255, 255, 255, 0.78);
   --surface-elevated: rgba(255, 255, 255, 0.92);
@@ -170,6 +180,13 @@
     #214a67 56%,
     #2f698c 100%
   );
+  --surface: var(--card-bg);
+  --border-soft: var(--card-border);
+  --shadow-lifted: 0 28px 80px rgba(0, 0, 0, 0.42);
+  --gradient-page: var(--page-gradient);
+  --gradient-glow-primary: radial-gradient(circle, rgba(156, 213, 255, 0.16), transparent 70%);
+  --gradient-glow-gold: radial-gradient(circle, rgba(230, 199, 123, 0.12), transparent 70%);
+
 --surface-soft: rgba(156, 213, 255, 0.055);
 --surface-strong: rgba(156, 213, 255, 0.085);
 --surface-elevated: rgba(156, 213, 255, 0.115);

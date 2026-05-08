@@ -131,6 +131,7 @@ export default function Register({ addUser }) {
     : "Account created successfully!",
 );
 
+      sessionStorage.setItem("lastRegisteredRole", role);
       navigate("/login");
     }
 

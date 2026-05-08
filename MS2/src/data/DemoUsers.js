@@ -13,8 +13,8 @@ export const demoUsers = [
   },
   {
     id: "instructor-demo-1",
-    name: "Dr. Sarah Hassan",
-    email: "sarah.hassan@guc.edu.eg",
+    name: "Dr. Mervat Abulkheir",
+    email: "mervat@guc.edu.eg",
     password: "123456",
     role: "instructor",
     department: "Computer Science",
@@ -31,6 +31,16 @@ export const demoUsers = [
     companyName: "TechBridge",
     position: "Talent Acquisition Lead",
     bio: "Looking for strong student portfolios, clean project documentation, and internship-ready candidates.",
+    avatar: "",
+  },
+  {
+    id: "admin-demo-1",
+    name: "Nadine Amin",
+    email: "admin@guc.edu.eg",
+    password: "123456",
+    role: "admin",
+    title: "Platform Administrator",
+    bio: "Responsible for verifying employers, managing users and courses, reviewing flags and appeals, and monitoring platform usage.",
     avatar: "",
   },
 ];
