@@ -9,11 +9,6 @@ import AuthBottomLink from "@/components/auth/AuthBottomLink";
 import { useLocation } from "react-router-dom";
 //import { PinInput } from "@mantine/core";
 
-import {
-InputOTP,
-InputOTPGroup,
-InputOTPSlot,
-} from "@/components/ui/input-otp";
 import PinInputLikeMantine from "@/components/ui/PinInputLikeMantine";
 
 export default function VerifyOTP() {

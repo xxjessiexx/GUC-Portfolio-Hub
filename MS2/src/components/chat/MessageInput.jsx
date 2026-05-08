@@ -1,11 +1,49 @@
-import { useState } from "react";
-import { Send } from "lucide-react";
+import { useState, useRef, useEffect  } from "react";
+import { Send,  Smile } from "lucide-react";
+import EmojiPicker from "emoji-picker-react";
 
 export default function MessageInput({
   onSend,
 }) {
+  const pickerRef = useRef(null);
 
   const [message, setMessage] = useState("");
+
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const handleEmojiClick = (emojiData) => {
+  setMessage((prev) => prev + emojiData.emoji);
+};
+
+useEffect(() => {
+
+  const handleClickOutside = (event) => {
+
+    if (
+      pickerRef.current &&
+      !pickerRef.current.contains(event.target)
+    ) {
+      setShowEmojiPicker(false);
+    }
+
+  };
+
+  document.addEventListener(
+    "mousedown",
+    handleClickOutside
+  );
+
+  return () => {
+
+    document.removeEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+  };
+
+}, []);
+
 
   const handleSubmit = () => {
 
@@ -17,9 +55,30 @@ export default function MessageInput({
   };
 
   return (
-    <div className="border-t bg-white p-5">
+    <div className="relative border-t bg-white p-5">
 
       <div className="flex gap-4">
+
+        {showEmojiPicker && (
+
+  <div ref={pickerRef} className="absolute bottom-24 left-5 z-50">
+
+    <EmojiPicker
+      onEmojiClick={handleEmojiClick}
+    />
+
+  </div>
+
+)}
+<button
+  type="button"
+  onClick={() =>
+    setShowEmojiPicker(!showEmojiPicker)
+  }
+  className="rounded-2xl border px-4 text-gray-600 transition hover:bg-gray-100"
+>
+  <Smile size={22} />
+</button>
 
         <input
           type="text"

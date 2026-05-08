@@ -15,7 +15,6 @@ setChats,
 const handleSendMessage = (text) => {
     if (!selectedChat) return;
 
-
     if (!text.trim()) return;
 
     const newMessage = {
