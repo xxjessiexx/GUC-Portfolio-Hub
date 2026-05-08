@@ -1,7 +1,6 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 
 import DragDropList from "@/components/ui/DragDropList";
 import SortableCard from "@/components/ui/SortableCard";
@@ -11,10 +10,10 @@ import {
   EyeOff,
   Star,
   Users,
-  GripVertical,
 } from "lucide-react";
 
 export default function ProjectPage() {
+
   /* ================= PROJECT DATA ================= */
   const project = {
     title: "Smart Study Buddy",
@@ -31,18 +30,21 @@ export default function ProjectPage() {
 
     technologies: ["React", "Node.js", "MongoDB"],
 
-    team: [
-      {
-        name: "Ahmed Hassan",
-        role: "Owner",
-        img: "https://i.pravatar.cc/40?img=1",
-      },
-      {
-        name: "Sara Mohamed",
-        role: "Member",
-        img: "https://i.pravatar.cc/40?img=2",
-      },
-    ],
+    team:
+      "Course Project" === "Bachelor Project"
+        ? []
+        : [
+            {
+              name: "Ahmed Hassan",
+              role: "Owner",
+              img: "https://i.pravatar.cc/40?img=1",
+            },
+            {
+              name: "Sara Mohamed",
+              role: "Member",
+              img: "https://i.pravatar.cc/40?img=2",
+            },
+          ],
 
     instructor: {
       name: "Dr. Mervat Abuelkheir",
@@ -51,10 +53,45 @@ export default function ProjectPage() {
     },
   };
 
-  /* ================= STATES ================= */
-  const [activeTab, setActiveTab] = useState("overview");
+  /* ================= CURRENT USER ================= */
 
-  const [selectedTaskId, setSelectedTaskId] = useState(null);
+  // CHANGE THIS TO TEST DIFFERENT USERS
+  // "Ahmed Hassan" -> creator
+  // "Sara Mohamed" -> collaborator
+  // "Dr. Mervat Abuelkheir" -> instructor
+  // "Omar Ali" -> outsider
+
+  const currentUser = "Sara Mohamed";
+
+  /* ================= PROJECT CREATOR ================= */
+  const projectCreator = "Ahmed Hassan";
+
+  /* ================= ROLE CHECKS ================= */
+  const isCreator =
+    currentUser === projectCreator;
+
+  const isInstructor =
+    currentUser === project.instructor.name;
+
+  const isCollaborator =
+    project.team.some(
+      (member) =>
+        member.name === currentUser
+    );
+
+  /* ================= COMMENT VISIBILITY ================= */
+  const canViewComments =
+    isCreator ||
+    isCollaborator ||
+    isInstructor;
+
+  /* ================= BACHELOR PROJECT ================= */
+  const isBachelorProject =
+    project.type === "Bachelor Project";
+
+  /* ================= STATES ================= */
+  const [activeTab, setActiveTab] =
+    useState("overview");
 
   const [tasks, setTasks] = useState([
     {
@@ -64,7 +101,11 @@ export default function ProjectPage() {
         "Add JWT-based authentication with login and registration",
       assignee: "Ahmed Hassan",
       status: "completed",
+
+      instructorComment:
+        "Excellent security implementation and clean JWT structure.",
     },
+
     {
       id: "2",
       title: "Design database schema",
@@ -72,7 +113,11 @@ export default function ProjectPage() {
         "Create MongoDB schema for products, orders, and users",
       assignee: "Sara Mohamed",
       status: "completed",
+
+      instructorComment:
+        "Good normalization and schema relationships.",
     },
+
     {
       id: "3",
       title: "Build admin dashboard",
@@ -80,21 +125,30 @@ export default function ProjectPage() {
         "Create admin panel for managing products and orders",
       assignee: "Ahmed Hassan",
       status: "in-progress",
+
+      instructorComment:
+        "Need better responsive design for smaller screens.",
     },
   ]);
-  const [showTaskPopup, setShowTaskPopup] = useState(false);
 
-const [newTask, setNewTask] = useState({
-  title: "",
-  description: "",
-  assignee: "",
-  deadline: "",
-  status: "pending",
-  time: "",
-});
+  const [showTaskPopup, setShowTaskPopup] =
+    useState(false);
+
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    assignee: "",
+    deadline: "",
+    status: "pending",
+    time: "",
+  });
 
   /* ================= FUNCTIONS ================= */
-  const updateTaskStatus = (id, newStatus) => {
+
+  const updateTaskStatus = (
+    id,
+    newStatus
+  ) => {
     setTasks((prev) =>
       prev.map((task) =>
         task.id === id
@@ -103,44 +157,33 @@ const [newTask, setNewTask] = useState({
       )
     );
   };
+
   const addTask = () => {
-  if (!newTask.title) return;
+    if (!newTask.title) return;
 
-  setTasks((prev) => [
-    ...prev,
-    {
-      id: Date.now().toString(),
-      ...newTask,
-    },
-  ]);
+    setTasks((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        ...newTask,
+        instructorComment: "",
+      },
+    ]);
 
-  setNewTask({
-    title: "",
-    description: "",
-    assignee: "",
-    deadline: "",
-    status: "pending",
-  });
+    setNewTask({
+      title: "",
+      description: "",
+      assignee: "",
+      deadline: "",
+      status: "pending",
+      time: "",
+    });
 
-  setShowTaskPopup(false);
-};
-
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-
-    const reordered = Array.from(tasks);
-
-    const [removed] = reordered.splice(
-      result.source.index,
-      1
-    );
-
-    reordered.splice(result.destination.index, 0, removed);
-
-    setTasks(reordered);
+    setShowTaskPopup(false);
   };
 
-  const isPublic = project.visibility === "Public";
+  const isPublic =
+    project.visibility === "Public";
 
   return (
     <DashboardLayout>
@@ -217,7 +260,9 @@ const [newTask, setNewTask] = useState({
               (tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() =>
+                    setActiveTab(tab)
+                  }
                   className={`pb-2 text-sm font-black capitalize ${
                     activeTab === tab
                       ? "border-b-2 border-[var(--primary)] text-[var(--primary)]"
@@ -252,48 +297,54 @@ const [newTask, setNewTask] = useState({
                 </h3>
 
                 <div className="flex flex-wrap gap-2">
-                  {project.technologies.map((tech) => (
-                    <span
-                      key={tech}
-                      className="rounded-full bg-white/70 px-3 py-1 text-xs font-black text-[var(--primary)]"
-                    >
-                      {tech}
-                    </span>
-                  ))}
+                  {project.technologies.map(
+                    (tech) => (
+                      <span
+                        key={tech}
+                        className="rounded-full bg-white/70 px-3 py-1 text-xs font-black text-[var(--primary)]"
+                      >
+                        {tech}
+                      </span>
+                    )
+                  )}
                 </div>
               </div>
 
               {/* TEAM */}
-              <div>
-                <h3 className="mb-2 text-lg font-black text-[var(--ink)]">
-                  Team Members
-                </h3>
+              {!isBachelorProject && (
+                <div>
+                  <h3 className="mb-2 text-lg font-black text-[var(--ink)]">
+                    Team Members
+                  </h3>
 
-                <div className="space-y-3">
-                  {project.team.map((member) => (
-                    <div
-                      key={member.name}
-                      className="flex items-center gap-3 rounded-xl border bg-white/60 p-3"
-                    >
-                      <img
-                        src={member.img}
-                        alt=""
-                        className="h-10 w-10 rounded-full"
-                      />
+                  <div className="space-y-3">
+                    {project.team.map(
+                      (member) => (
+                        <div
+                          key={member.name}
+                          className="flex items-center gap-3 rounded-xl border bg-white/60 p-3"
+                        >
+                          <img
+                            src={member.img}
+                            alt=""
+                            className="h-10 w-10 rounded-full"
+                          />
 
-                      <div>
-                        <p className="text-sm font-bold">
-                          {member.name}
-                        </p>
+                          <div>
+                            <p className="text-sm font-bold">
+                              {member.name}
+                            </p>
 
-                        <p className="text-xs text-[var(--muted)]">
-                          {member.role}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                            <p className="text-xs text-[var(--muted)]">
+                              {member.role}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* INSTRUCTOR */}
               <div>
@@ -323,268 +374,370 @@ const [newTask, setNewTask] = useState({
           )}
 
           {/* ===== TASKS ===== */}
-          {/* ===== TASKS ===== */}
-{activeTab === "tasks" && (
-  <DragDropList
-    items={tasks}
-    setItems={setTasks}
-  >
-    <div className="space-y-4">
-
-  {/* ADD TASK BUTTON */}
-  <div className="flex justify-end">
-    <button
-      onClick={() => setShowTaskPopup(true)}
-      className="rounded-xl bg-[var(--primary)] px-4 py-2 text-sm font-bold text-white hover:opacity-90"
-    >
-      + Add Task
-    </button>
-  </div>
-
-      {tasks.map((task) => {
-
-        const statusStyles = {
-          completed: "bg-green-100 text-green-700",
-          "in-progress": "bg-blue-100 text-blue-700",
-          todo: "bg-gray-200 text-gray-600",
-        };
-
-        return (
-          <SortableCard
-            key={task.id}
-            id={task.id}
-            updated={task.assignee}
-
-            left={
-              <div>
-                <h3 className="font-bold text-[16px] text-[#16253A]">
-                  {task.title}
-                </h3>
-
-                <p className="text-sm text-gray-500 mt-1">
-                  {task.description}
-                </p>
-              </div>
-            }
-
-            middle={
-              <div className="flex justify-center">
-                <div className="relative">
-
-  <select
-    value={task.status}
-    onChange={(e) =>
-      updateTaskStatus(task.id, e.target.value)
-    }
-    className={`appearance-none rounded-xl px-4 py-2 text-xs font-bold border cursor-pointer ${
-      statusStyles[task.status]
-    }`}
-  >
-    <option value="pending">Pending</option>
-    <option value="post-poned">Post-Poned</option>
-    <option value="completed">Completed</option>
-  </select>
-
-</div>
-              </div>
-            }
-
-            right={
-              <div className="text-sm text-gray-500">
-               
-              </div>
-            }
-          />
-        );
-      })}
-
-    </div>
-  </DragDropList>
-  
-
-)}
-{/* ===== POPUP ===== */}
-{showTaskPopup && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-
-    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-
-      <h2 className="mb-4 text-xl font-black text-[var(--ink)]">
-        Add New Task
-      </h2>
-
-      {/* TITLE */}
-      <div className="mb-4">
-        <label className="mb-1 block text-sm font-bold">
-          Task Title
-        </label>
-
-        <input
-          type="text"
-          value={newTask.title}
-          onChange={(e) =>
-            setNewTask({
-              ...newTask,
-              title: e.target.value,
-            })
-          }
-          className="w-full rounded-xl border p-3"
-        />
-      </div>
-
-      {/* DESCRIPTION */}
-      <div className="mb-4">
-        <label className="mb-1 block text-sm font-bold">
-          Description
-        </label>
-
-        <textarea
-          value={newTask.description}
-          onChange={(e) =>
-            setNewTask({
-              ...newTask,
-              description: e.target.value,
-            })
-          }
-          className="w-full rounded-xl border p-3"
-        />
-      </div>
-
-      {/* ASSIGNEE */}
-      <div className="mb-4">
-        <label className="mb-1 block text-sm font-bold">
-          Collaborator
-        </label>
-
-        <select
-          value={newTask.assignee}
-          onChange={(e) =>
-            setNewTask({
-              ...newTask,
-              assignee: e.target.value,
-            })
-          }
-          className="w-full rounded-xl border p-3"
-        >
-          <option value="">Choose collaborator</option>
-
-          {project.team.map((member) => (
-            <option
-              key={member.name}
-              value={member.name}
+          {activeTab === "tasks" && (
+            <DragDropList
+              items={tasks}
+              setItems={
+                isCreator
+                  ? setTasks
+                  : () => {}
+              }
             >
-              {member.name}
-            </option>
-          ))}
-        </select>
-      </div>
+              <div className="space-y-4">
 
-      {/* DEADLINE */}
-      <div className="mb-6">
-        <label className="mb-1 block text-sm font-bold">
-          Deadline Details
-        </label>
-
-        <input
-          type="date"
-          
-          value={newTask.deadline}
-          onChange={(e) =>
-            setNewTask({
-              ...newTask,
-              deadline: e.target.value,
-            })
-          }
-          className="w-full rounded-xl border p-3"
-        />
-      </div>
-      {/* TIME */}
-<div className="mt-4">
-  <label className="mb-1 block text-sm font-bold">
-    Deadline Time
-  </label>
-
-  <input
-    type="time"
-    value={newTask.time}
-    onChange={(e) =>
-      setNewTask({
-        ...newTask,
-        time: e.target.value,
-      })
-    }
-    className="w-full rounded-xl border p-3"
-  />
-</div>
-
-      {/* BUTTONS */}
-      <div className="flex justify-end gap-3">
-
-        <button
-          onClick={() => setShowTaskPopup(false)}
-          className="w-1/2 rounded-xl border px-4 py-2 font-bold"
-        >
-          Cancel
-        </button>
-
-        <button
-          onClick={addTask}
-          className="w-1/2 rounded-xl bg-[var(--primary)] px-4 py-2 font-bold text-white"
-        >
-          Confirm
-        </button>
-
-      </div>
-    </div>
-  </div>
-)}
-
-          {/* ===== FEEDBACK ===== */}
-          {activeTab === "feedback" && (
-            <div className="space-y-6">
-
-              <h3 className="text-xl font-black text-[var(--primary)]">
-                Feedback & Reviews
-              </h3>
-
-              <div className="rounded-2xl border border-[color:var(--primary)]/20 bg-white/70 p-5">
-
-                <div className="flex items-center justify-between">
-
-                  {/* USER */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 font-black text-white">
-                      D
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-black text-[var(--ink)]">
-                        Dr. Mervat Abuelkheir
-                      </p>
-
-                      <p className="text-xs text-[var(--muted)]">
-                        05/03/2026
-                      </p>
-                    </div>
+                {/* ADD TASK BUTTON */}
+                {isCreator && (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() =>
+                        setShowTaskPopup(true)
+                      }
+                      className="rounded-xl bg-[var(--primary)] px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+                    >
+                      + Add Task
+                    </button>
                   </div>
+                )}
 
-                  {/* RATING */}
-                  <div className="flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-sm font-black text-yellow-700">
-                    ⭐ 9 / 10
-                  </div>
+                {tasks.map((task) => {
+
+                  const canEditStatus =
+                    isCreator ||
+                    task.assignee ===
+                      currentUser;
+
+                  const statusStyles = {
+                    completed:
+                      "bg-green-100 text-green-700",
+                    "in-progress":
+                      "bg-blue-100 text-blue-700",
+                    pending:
+                      "bg-gray-200 text-gray-600",
+                    "post-poned":
+                      "bg-yellow-100 text-yellow-700",
+                  };
+
+                  return (
+                    <div
+                      key={task.id}
+                      className="space-y-3"
+                    >
+
+                      <SortableCard
+                        id={task.id}
+                        updated={task.assignee}
+
+                        left={
+                          <div>
+                            <h3 className="font-bold text-[16px] text-[#16253A]">
+                              {task.title}
+                            </h3>
+
+                            <p className="text-sm text-gray-500 mt-1">
+                              {task.description}
+                            </p>
+                          </div>
+                        }
+
+                        middle={
+                          <div className="flex justify-center">
+                            <div className="relative">
+
+                              <select
+                                value={task.status}
+                                disabled={
+                                  !canEditStatus
+                                }
+                                onChange={(e) =>
+                                  updateTaskStatus(
+                                    task.id,
+                                    e.target.value
+                                  )
+                                }
+                                className={`appearance-none rounded-xl px-4 py-2 text-xs font-bold border ${
+                                  canEditStatus
+                                    ? "cursor-pointer"
+                                    : "cursor-not-allowed opacity-60"
+                                } ${
+                                  statusStyles[
+                                    task.status
+                                  ]
+                                }`}
+                              >
+                                <option value="pending">
+                                  Pending
+                                </option>
+
+                                <option value="post-poned">
+                                  Post-Poned
+                                </option>
+
+                                <option value="completed">
+                                  Completed
+                                </option>
+                              </select>
+
+                            </div>
+                          </div>
+                        }
+
+                        right={
+                          <div className="text-sm text-gray-500">
+                          </div>
+                        }
+                      />
+
+                      {/* ===== TASK COMMENT ===== */}
+                      {canViewComments && (
+                        <div className="ml-4 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+
+                          <p className="text-xs font-black uppercase tracking-wide text-blue-600">
+                            Instructor Comment
+                          </p>
+
+                          <p className="mt-2 text-sm text-gray-700">
+                            {task.instructorComment}
+                          </p>
+                        </div>
+                      )}
+
+                    </div>
+                  );
+                })}
+
+              </div>
+            </DragDropList>
+          )}
+
+          {/* ===== POPUP ===== */}
+          {showTaskPopup && isCreator && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+
+              <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+                <h2 className="mb-4 text-xl font-black text-[var(--ink)]">
+                  Add New Task
+                </h2>
+
+                {/* TITLE */}
+                <div className="mb-4">
+                  <label className="mb-1 block text-sm font-bold">
+                    Task Title
+                  </label>
+
+                  <input
+                    type="text"
+                    value={newTask.title}
+                    onChange={(e) =>
+                      setNewTask({
+                        ...newTask,
+                        title:
+                          e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border p-3"
+                  />
                 </div>
 
-                {/* COMMENT */}
-                <p className="mt-4 leading-relaxed text-sm text-[var(--muted)]">
-                  Excellent implementation of
-                  microservices architecture. The
-                  UI is intuitive and responsive.
-                  Great work on the payment
-                  integration!
-                </p>
+                {/* DESCRIPTION */}
+                <div className="mb-4">
+                  <label className="mb-1 block text-sm font-bold">
+                    Description
+                  </label>
+
+                  <textarea
+                    value={
+                      newTask.description
+                    }
+                    onChange={(e) =>
+                      setNewTask({
+                        ...newTask,
+                        description:
+                          e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border p-3"
+                  />
+                </div>
+
+                {/* ASSIGNEE */}
+                {!isBachelorProject && (
+                  <div className="mb-4">
+                    <label className="mb-1 block text-sm font-bold">
+                      Collaborator
+                    </label>
+
+                    <select
+                      value={
+                        newTask.assignee
+                      }
+                      onChange={(e) =>
+                        setNewTask({
+                          ...newTask,
+                          assignee:
+                            e.target.value,
+                        })
+                      }
+                      className="w-full rounded-xl border p-3"
+                    >
+                      <option value="">
+                        Choose collaborator
+                      </option>
+
+                      {project.team.map(
+                        (member) => (
+                          <option
+                            key={member.name}
+                            value={
+                              member.name
+                            }
+                          >
+                            {member.name}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+                )}
+
+                {/* DEADLINE */}
+                <div className="mb-6">
+                  <label className="mb-1 block text-sm font-bold">
+                    Deadline Details
+                  </label>
+
+                  <input
+                    type="date"
+                    value={
+                      newTask.deadline
+                    }
+                    onChange={(e) =>
+                      setNewTask({
+                        ...newTask,
+                        deadline:
+                          e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border p-3"
+                  />
+                </div>
+
+                {/* TIME */}
+                <div className="mt-4">
+                  <label className="mb-1 block text-sm font-bold">
+                    Deadline Time
+                  </label>
+
+                  <input
+                    type="time"
+                    value={newTask.time}
+                    onChange={(e) =>
+                      setNewTask({
+                        ...newTask,
+                        time:
+                          e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border p-3"
+                  />
+                </div>
+
+                {/* BUTTONS */}
+                <div className="flex justify-end gap-3">
+
+                  <button
+                    onClick={() =>
+                      setShowTaskPopup(false)
+                    }
+                    className="w-1/2 rounded-xl border px-4 py-2 font-bold"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={addTask}
+                    className="w-1/2 rounded-xl bg-[var(--primary)] px-4 py-2 font-bold text-white"
+                  >
+                    Confirm
+                  </button>
+
+                </div>
               </div>
             </div>
           )}
+
+          {/* ===== FEEDBACK ===== */}
+          {activeTab === "feedback" && (
+
+            <>
+              {canViewComments ? (
+
+                <div className="space-y-6">
+
+                  <h3 className="text-xl font-black text-[var(--primary)]">
+                    Instructor Feedback
+                  </h3>
+
+                  <div className="rounded-2xl border border-[color:var(--primary)]/20 bg-white/70 p-5">
+
+                    <div className="flex items-center justify-between">
+
+                      {/* USER */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 font-black text-white">
+                          D
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-black text-[var(--ink)]">
+                            Dr. Mervat Abuelkheir
+                          </p>
+
+                          <p className="text-xs text-[var(--muted)]">
+                            05/03/2026
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* RATING */}
+                      <div className="flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-sm font-black text-yellow-700">
+                        ⭐ 9 / 10
+                      </div>
+                    </div>
+
+                    {/* COMMENT */}
+                    <p className="mt-4 leading-relaxed text-sm text-[var(--muted)]">
+                      Excellent implementation of
+                      microservices architecture.
+                      The UI is intuitive and
+                      responsive. Great work on
+                      the payment integration!
+                    </p>
+                  </div>
+
+                </div>
+
+              ) : (
+
+                <div className="rounded-2xl border bg-white p-6 text-center">
+
+                  <h3 className="text-lg font-black text-[#16253A]">
+                    Private Instructor Feedback
+                  </h3>
+
+                  <p className="mt-2 text-sm text-gray-500">
+                    Only the project creator,
+                    collaborators, and assigned
+                    instructors can view feedback
+                    and comments.
+                  </p>
+
+                </div>
+
+              )}
+            </>
+          )}
+
         </AppCard>
       </div>
     </DashboardLayout>
