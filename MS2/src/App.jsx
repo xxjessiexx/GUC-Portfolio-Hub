@@ -325,6 +325,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+  
 
             <Route
               path="/projects/:projectId/edit"
@@ -365,6 +366,15 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+         <Route 
+               path="/explore-portfolio" 
+               element={
+                 <ProtectedRoute allowedRoles={["student", "instructor", "employer", "admin"]}
+                >
+                  <ExplorePortfolios />
+                </ProtectedRoute>
+               } 
+              />
 
             <Route
               path="/edit-internship/:internshipId"
