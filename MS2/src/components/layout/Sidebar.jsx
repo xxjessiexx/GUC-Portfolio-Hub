@@ -69,7 +69,7 @@ const workspaceItems = {
     { label: "Home", icon: Home, path: "/employer-dashboard" },
     { label: "Discover", icon: SearchIcon, path: "/discover" },
     { label: "Internships", icon: Briefcase, path: "/manage-internships" },
-    { label: "Applicants", icon: Users, path: null },
+    { label: "Applicants", icon: Users, path: "/manage-applicants/emp-int-1" },
     { label: "Favorites", icon: Heart, path: null },
     { label: "Messages", icon: MessageSquare, path: null },
     { label: "Statistics", icon: BarChart3, path: null },

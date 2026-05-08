@@ -20,6 +20,8 @@ import StatusBadge from "@/components/common/StatusBadge";
 import { notifications } from "@/data/studentDashboardData";
 import { internshipsData } from "@/data/internshipsData";
 
+import { useUserProfile } from "@/context/UserProfileContext";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +51,18 @@ function saveStoredIds(key, ids) {
 export default function InternshipDetails() {
   const { internshipId } = useParams();
   const internship = internshipsData.find((item) => item.id === internshipId);
+  const { profile } = useUserProfile();
+
+  const currentUser =
+    profile || JSON.parse(sessionStorage.getItem("currentUser") || "null");
+
+  const userRole =
+    currentUser?.role ||
+    currentUser?.systemRole ||
+    currentUser?.accountRole ||
+    "student";
+
+  const isStudent = userRole === "student";
 
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
@@ -101,7 +115,8 @@ export default function InternshipDetails() {
     saveStoredIds(SAVED_INTERNSHIPS_KEY, updated);
   };
 
-  const confirmApply = () => {
+   const confirmApply = () => {
+      if (!isStudent) return;
       if (isApplied) return;
 
       if (!coverLetter.trim()) {
@@ -122,14 +137,8 @@ export default function InternshipDetails() {
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
             <div>
-              <Link
-                to="/internships"
-                className="text-sm font-black text-[color:var(--primary)]"
-              >
-                ← Back to Internships
-              </Link>
 
-              <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
+              <h1 className="text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
                 Internship Details
               </h1>
 
@@ -137,7 +146,7 @@ export default function InternshipDetails() {
                 Discover the details and apply for this opportunity.
               </p>
             </div>
-
+            {isStudent && (
             <div className="flex flex-wrap gap-3">
               <AppButton
                 type="button"
@@ -158,6 +167,7 @@ export default function InternshipDetails() {
                 {isApplied ? "Applied" : "Apply Now"}
               </AppButton>
             </div>
+            )}
           </div>
 
           <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
@@ -300,7 +310,8 @@ export default function InternshipDetails() {
                   </div>
                 </div>
               </AppCard>
-
+              
+              {isStudent && (
               <AppCard className="p-6">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <h3 className="text-xl font-black text-[color:var(--ink)]">
@@ -358,6 +369,7 @@ export default function InternshipDetails() {
                   </p>
                 )}
               </AppCard>
+              )}
             </aside>
           </div>
         </div>

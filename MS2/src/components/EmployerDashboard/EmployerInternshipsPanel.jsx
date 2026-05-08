@@ -1,20 +1,42 @@
-import { Archive, BriefcaseBusiness, CalendarDays, UsersRound } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  Archive,
+  BriefcaseBusiness,
+  CalendarDays,
+  UsersRound,
+} from "lucide-react";
+
 import AppBadge from "@/components/ui/AppBadge";
 import { DashboardPanel, SoftItem } from "./EmployerDashboardShell";
 
-export default function EmployerInternshipsPanel({ internships, selectedInternship, onSelect }) {
+export default function EmployerInternshipsPanel({
+  internships,
+  selectedInternship,
+  onSelect,
+}) {
+  const navigate = useNavigate();
+  const internshipDetailsMap = {
+  "emp-int-1": "int-1",
+  "emp-int-2": "int-3",
+  "emp-int-3": "int-2",
+};
+
   return (
     <DashboardPanel
       title="My Internships"
       subtitle="View, manage, archive, and track offered roles."
       action="Manage All"
+      onAction={() => navigate("/manage-internships")}
     >
       <div className="space-y-4">
         {internships.map((internship) => (
           <SoftItem
             key={internship.id}
-            selected={selectedInternship.id === internship.id}
-            onClick={() => onSelect(internship)}
+            selected={false}
+            onClick={() => {
+              onSelect(internship);
+              navigate(`/internships/${internshipDetailsMap[internship.id] || "int-1"}`);
+            }}
           >
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
               <div className="min-w-0">
@@ -22,6 +44,7 @@ export default function EmployerInternshipsPanel({ internships, selectedInternsh
                   <h3 className="text-lg font-black text-[var(--ink)]">
                     {internship.title}
                   </h3>
+
                   {internship.archived && (
                     <AppBadge tone="muted" className="py-1">
                       <Archive className="h-3 w-3" /> Archived
@@ -34,15 +57,31 @@ export default function EmployerInternshipsPanel({ internships, selectedInternsh
                 </p>
               </div>
 
-              <AppBadge tone={internship.status === "Currently hiring" ? "blue" : "gold"}>
+              <AppBadge
+                tone={internship.status === "Currently hiring" ? "blue" : "gold"}
+              >
                 {internship.status}
               </AppBadge>
             </div>
 
             <div className="mt-4 grid gap-3 text-sm text-[var(--muted)] sm:grid-cols-3">
-              <Meta icon={CalendarDays} label="Deadline" value={internship.deadline} />
-              <Meta icon={BriefcaseBusiness} label="Duration" value={internship.duration} />
-              <Meta icon={UsersRound} label="Applicants" value={internship.applicants} />
+              <Meta
+                icon={CalendarDays}
+                label="Deadline"
+                value={internship.deadline}
+              />
+
+              <Meta
+                icon={BriefcaseBusiness}
+                label="Duration"
+                value={internship.duration}
+              />
+
+              <Meta
+                icon={UsersRound}
+                label="Applicants"
+                value={internship.applicants}
+              />
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
