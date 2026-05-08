@@ -11,7 +11,7 @@ export default function RecommendedProjectsSection({
       className="
         p-3
         rounded-[30px]
-        bg-white
+        bg-transparent
         border border-gray-100
         shadow-sm
       "

@@ -13,7 +13,7 @@ export default function DiscoverCard({
       className="
         p-5 sm:p-6
         rounded-[28px]
-        bg-white
+        bg-transparent
         border border-gray-100
         shadow-sm
         hover:shadow-md

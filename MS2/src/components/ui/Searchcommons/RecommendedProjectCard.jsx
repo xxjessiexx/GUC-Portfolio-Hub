@@ -15,8 +15,8 @@ export default function RecommendedProjectCard({
       className="
         border border-gray-100
         rounded-[24px]
-        p-4
-        bg-white
+        p-5
+        bg-transperant
         hover:shadow-md
         transition
       "
@@ -57,16 +57,16 @@ export default function RecommendedProjectCard({
 
       {/* DESCRIPTION */}
       <p
-        className="
-          text-[15px]
-          text-gray-500
-          mt-5
-          leading-8
-          min-h-[90px]
-        "
-      >
-        {project.description}
-      </p>
+  className="
+    text-[15px]
+    text-gray-500
+    mt-4
+    leading-7
+    min-h-[72px]
+  "
+>
+  {project.description}
+</p>
 
       {/* TAGS */}
       <div className="flex flex-wrap gap-2 mt-5">
@@ -81,15 +81,15 @@ export default function RecommendedProjectCard({
 
       {/* FOOTER */}
       <div
-        className="
-          grid grid-cols-3
-          items-start
-          mt-6
-          text-sm
-          text-gray-500
-          font-medium
-        "
-      >
+  className="
+    flex items-center justify-between
+    flex-wrap gap-4
+    mt-6
+    text-sm
+    text-gray-500
+    font-medium
+  "
+>
         <div className="flex items-center gap-1">
           <Star size={15} className="text-yellow-500" />
           {project.rating}
@@ -103,10 +103,10 @@ export default function RecommendedProjectCard({
           </span>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 ml-6">
           <GitBranch size={15} />
 
-          <span className="leading-5">
+          <span className="leading-5 ml-4">
             {project.updated}
           </span>
         </div>
