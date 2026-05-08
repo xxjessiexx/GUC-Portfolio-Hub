@@ -1,4 +1,4 @@
-import { Bell, BriefcaseBusiness, GraduationCap, ShieldCheck, UserCog } from "lucide-react";
+import { Bell, BriefcaseBusiness, GraduationCap, ShieldCheck, UserCog ,MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -56,6 +56,13 @@ export default function TopNav({
     normalizedRole === "student" && profile?.semester
       ? `Semester ${profile.semester}`
       : profile?.displayRole || roleLabels[normalizedRole] || "Guest";
+    const handleChatsClick = () => {
+    navigate("/chat"); // Keep this lowercase to match your App.jsx route
+  };
+  const handleNotificationsClick = () => {
+    navigate("/notifications"); // Keep this lowercase to match your App.jsx route
+  };
+  
 
   return (
     <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-[image:var(--nav-gradient)] text-white shadow-[0_18px_55px_rgba(44,57,71,0.22)] backdrop-blur-2xl dark:[background:var(--nav-gradient)] dark:shadow-[0_18px_55px_rgba(0,0,0,0.24)]">
