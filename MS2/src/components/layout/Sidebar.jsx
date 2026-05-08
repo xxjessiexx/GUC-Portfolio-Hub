@@ -55,7 +55,7 @@ const workspaceItems = {
 
   instructor: [
     { label: "Home", icon: Home, path: "/instructor-dashboard" },
-    { label: "Discover", icon: SearchIcon, path: "/discover" },
+    { label: "Explore", icon: SearchIcon, path: "/discover" },
     { label: "Projects", icon: FolderKanban, path: "/view-all-projects" },
     { label: "Courses", icon: BookOpen, path: null },
     { label: "Invitations", icon: ClipboardCheck, path: null },
@@ -65,7 +65,7 @@ const workspaceItems = {
 
   employer: [
     { label: "Home", icon: Home, path: "/employer-dashboard" },
-    { label: "Discover", icon: SearchIcon, path: "/discover" },
+    { label: "Explore", icon: SearchIcon, path: "/discover" },
     { label: "Internships", icon: Briefcase, path: "/manage-internships" },
     { label: "Applicants", icon: Users, path: "/manage-applicants/emp-int-1" },
     { label: "Favorites", icon: Heart, path: null },
@@ -75,6 +75,7 @@ const workspaceItems = {
 
   admin: [
     { label: "Home", icon: Home, path: "/admin-dashboard" },
+    { label: "Explore", icon: SearchIcon, path: "/discover" },
     { label: "Users", icon: Users, path: "/admin/users" },
     { label: "Companies", icon: ShieldCheck, path: "/admin/employers" },
     { label: "Courses", icon: BookOpen, path: "/admin/courses" },
@@ -109,18 +110,13 @@ export default function Sidebar({
   open,
   setOpen,
   workspace = "student",
-  sidebarProgress,
+  
 }) {
   const navigate = useNavigate();
   const location = useLocation();
 
   const activeWorkspace = workspaceItems[workspace] ? workspace : "student";
   const items = workspaceItems[activeWorkspace];
-
-  const progress =
-    sidebarProgress ||
-    workspaceDefaults[activeWorkspace] ||
-    workspaceDefaults.student;
 
   const handleLogout = () => {
     sessionStorage.removeItem("currentUser");
@@ -191,34 +187,9 @@ export default function Sidebar({
         </nav>
 
         <div className="space-y-4">
-          <div
-            className={`overflow-hidden rounded-3xl border border-white/10 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-300 ${
-              open ? "p-4" : "p-3"
-            }`}
-          >
-            {open ? (
-              <>
-                <p className="text-sm font-black text-white">
-                  {progress.label}
-                </p>
-
-                <div className="mt-3 h-3 rounded-full bg-white/10">
-                  <div
-                    className="h-3 rounded-full bg-[linear-gradient(90deg,var(--gold),var(--accent))]"
-                    style={{ width: `${progress.value}%` }}
-                  />
-                </div>
-
-                <p className="mt-2 text-xs font-semibold text-white/60">
-                  {progress.value}% completed
-                </p>
-              </>
-            ) : (
-              <div className="grid h-10 place-items-center">
-                <CheckCircle2 className="h-5 w-5 text-[color:var(--accent)]" />
-              </div>
-            )}
-          </div>
+          
+            
+          
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
