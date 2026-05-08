@@ -44,11 +44,18 @@ const PROJECTS_STORAGE_KEY = "guc-portfolio-projects";
 const PROJECT_FILES_DB = "guc-portfolio-files-db";
 const PROJECT_FILES_STORE = "projectFiles";
 
+const COURSES = [
+          "CSEN704",
+          "Software Engineering",
+          "Machine Learning",
+          "Bachelor Project",
+        ];
+
 const initialProjectData = {
   title: "",
   type: "course",
   courseName: "",
-  thesisFile: null,
+  thesisDrafts: [],
   description: "",
   github: "",
   video: null,
@@ -338,7 +345,7 @@ function FileDropField({
           </p>
 
           <p className="mt-1 text-xs font-semibold leading-5 text-[color:var(--muted)]">
-            The selected file name will appear here.
+            You can upload more than 1 draft
           </p>
         </div>
 
@@ -548,13 +555,21 @@ function validateProjectField(field, data) {
       if (!data.courseName.trim()) return "Course name is required.";
       return "";
 
-    case "thesisFile":
-      if (data.type !== "thesis") return "";
-      if (!data.thesisFile) return "Please upload the thesis PDF.";
-      if (data.thesisFile.type !== "application/pdf") {
-        return "Thesis file must be a PDF.";
-      }
+    case "thesisDrafts":
+    if (
+      data.courseName !==
+      "Bachelor Project"
+    ) {
       return "";
+    }
+
+    if (
+      data.thesisDrafts.length === 0
+    ) {
+      return "Upload at least one thesis draft.";
+    }
+
+    return "";
 
     case "description":
       if (!data.description.trim()) return "Project description is required.";
@@ -654,16 +669,77 @@ export default function CreateNewProject() {
     setSaveMessage({ type: "", message: "" });
   };
 
-  const handleThesisChange = (file) => {
-    const nextData = { ...formData, thesisFile: file };
-    setFormData(nextData);
-    setTouched((current) => ({ ...current, thesisFile: true }));
-    setErrors((current) => ({
-      ...current,
-      thesisFile: validateProjectField("thesisFile", nextData),
-    }));
-    setSaveMessage({ type: "", message: "" });
+  const handleThesisUpload = (file) => {
+  if (!file) return;
+
+  const newDraft = {
+    id: crypto.randomUUID(),
+    file,
+
+    uploadedAt: new Date().toISOString(),
+
+    isFinal: false,
+    visibility: "private",
   };
+
+  const nextData = {
+    ...formData,
+    thesisDrafts: [
+      ...formData.thesisDrafts,
+      newDraft,
+    ],
+  };
+
+  setFormData(nextData);
+
+  setTouched((current) => ({
+    ...current,
+    thesisDrafts: true,
+  }));
+
+  setErrors((current) => ({
+    ...current,
+    thesisDrafts:
+      validateProjectField(
+        "thesisDrafts",
+        nextData
+      ),
+  }));
+
+  setSaveMessage({
+    type: "",
+    message: "",
+  });
+};
+ const setFinalDraft = (draftId) => {
+  setFormData((current) => ({
+    ...current,
+
+    thesisDrafts:
+      current.thesisDrafts.map((draft) => ({
+        ...draft,
+
+        isFinal:
+          draft.id === draftId,
+
+        visibility:
+          draft.id === draftId
+            ? "public"
+            : "private",
+      })),
+  }));
+};
+const removeDraft = (draftId) => {
+  setFormData((current) => ({
+    ...current,
+
+    thesisDrafts:
+      current.thesisDrafts.filter(
+        (draft) =>
+          draft.id !== draftId
+      ),
+  }));
+};
 
   const addTag = () => {
     const cleanTag = formData.tagInput.trim();
@@ -859,7 +935,10 @@ export default function CreateNewProject() {
     const nextErrors = {
       title: validateProjectField("title", formData),
       courseName: validateProjectField("courseName", formData),
-      thesisFile: validateProjectField("thesisFile", formData),
+      thesisDrafts: validateProjectField(
+      "thesisDrafts",
+      formData
+),
       description: validateProjectField("description", formData),
       github: validateProjectField("github", formData),
       video: validateProjectField("video", formData),
@@ -869,7 +948,7 @@ export default function CreateNewProject() {
     setTouched({
       title: true,
       courseName: true,
-      thesisFile: true,
+      thesisDrafts: true,
       description: true,
       github: true,
       video: true,
@@ -903,18 +982,44 @@ export default function CreateNewProject() {
         `${projectId}-video`
       );
 
-      const savedThesisFile = await saveProjectFile(
-        formData.thesisFile,
-        `${projectId}-thesis`
-      );
+      const savedThesisDrafts =
+  await Promise.all(
+    formData.thesisDrafts.map(
+      async (draft) => {
+        const savedFile =
+          await saveProjectFile(
+            draft.file,
+            `${projectId}-draft`
+          );
+
+        return {
+          id: draft.id,
+
+          file:
+            createStoredFileReference(
+              savedFile
+            ),
+
+          uploadedAt:
+            draft.uploadedAt,
+
+          isFinal:
+            draft.isFinal,
+
+          visibility:
+            draft.visibility,
+        };
+      }
+    )
+  );
 
       const storedProject = {
         id: projectId,
         title: formData.title.trim(),
         type: formData.type,
         courseName:
-          formData.type === "course" ? formData.courseName.trim() : "",
-        thesisFile: createStoredFileReference(savedThesisFile),
+        formData.type === "course" ? formData.courseName.trim() : "",
+        thesisDrafts: savedThesisDrafts,
         description: formData.description.trim(),
         github: formData.github.trim(),
         video: createStoredFileReference(savedVideo),
@@ -1063,34 +1168,93 @@ export default function CreateNewProject() {
 
             {formData.type === "course" ? (
               <FieldShell label="Course Name" required icon={FileText}>
-                <Input
-                  className={inputStyles}
-                  placeholder="Software Engineering"
-                  value={formData.courseName}
-                  onChange={(event) =>
-                    updateField("courseName", event.target.value)
-                  }
-                  onBlur={() => handleBlur("courseName")}
-                />
-                <FieldFeedback
-                  error={errors.courseName}
-                  helper="Required for course projects."
-                />
-              </FieldShell>
-            ) : (
-              <FileDropField
-                label="Upload Thesis PDF"
-                required
-                accept="application/pdf"
-                file={formData.thesisFile}
-                icon={FileText}
-                onChange={handleThesisChange}
-                error={errors.thesisFile}
-                success={
-                  formData.thesisFile ? "Thesis file selected successfully." : ""
+              <Select
+                value={formData.courseName}
+                onValueChange={(value) =>
+                  updateField("courseName", value)
                 }
-                helper="Upload your thesis document in PDF format."
+              >
+                <SelectTrigger className={selectTriggerStyles}>
+                  <SelectValue placeholder="Choose course" />
+                </SelectTrigger>
+
+                <SelectContent className="rounded-2xl border-white/70 bg-[var(--surface-elevated)] text-[color:var(--ink)] shadow-[var(--shadow-card)] backdrop-blur-2xl">
+                  {COURSES.map((course) => (
+                    <SelectItem key={course} value={course}>
+                      {course}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <FieldFeedback
+                error={errors.courseName}
+                helper="Select the course related to this project."
               />
+            </FieldShell>
+            ) : (
+           <div className="space-y-4">
+  <FileDropField
+    label="Upload Thesis Draft"
+    required
+    accept="application/pdf"
+    icon={FileText}
+    onChange={handleThesisUpload}
+    error={errors.thesisDrafts}
+    helper="Upload one or more thesis drafts."
+  />
+
+  <div className="space-y-3">
+    {formData.thesisDrafts.map(
+      (draft) => (
+        <div
+          key={draft.id}
+          className="flex items-center justify-between rounded-2xl border border-white/60 bg-[var(--surface-soft)] p-4"
+        >
+          <div>
+            <p className="font-black text-[color:var(--ink)]">
+              {draft.file.name}
+            </p>
+
+            <p className="text-xs font-semibold text-[color:var(--muted)]">
+              {draft.isFinal
+                ? "Final Draft (Public)"
+                : "Private Draft"}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {!draft.isFinal && (
+              <AppButton
+                type="button"
+                onClick={() =>
+                  setFinalDraft(
+                    draft.id
+                  )
+                }
+                className="min-h-12 rounded-2xl bg-[var(--primary)] px-4 font-black text-white shadow-[var(--shadow-brand)] transition hover:-translate-y-0.5 hover:bg-[var(--dark)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                Set Final
+              </AppButton>
+            )}
+
+            <AppButton
+              type="button"
+              onClick={() =>
+                removeDraft(
+                  draft.id
+                )
+              }
+              className="min-h-12 rounded-2xl bg-red-500 px-4 text-white transition hover:-translate-y-0.5 hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              Remove
+            </AppButton>
+          </div>
+        </div>
+      )
+    )}
+  </div>
+</div>
             )}
 
             <div className="space-y-2.5">
