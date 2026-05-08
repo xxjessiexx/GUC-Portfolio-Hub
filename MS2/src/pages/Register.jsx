@@ -130,6 +130,7 @@ export default function Register({ addUser }) {
           : "Registration form is valid!"
       );
 
+      sessionStorage.setItem("lastRegisteredRole", role);
       navigate("/login");
     }
 

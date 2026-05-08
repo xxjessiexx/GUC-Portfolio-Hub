@@ -11,14 +11,24 @@ import AuthBottomLink from "@/components/auth/AuthBottomLink";
 import { Mail, Lock } from "lucide-react";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 import { demoUsers } from "@/data/DemoUsers";
-import { getDashboardRouteByRole, normalizeUserRole } from "@/utils/roleRoutes";
+import {
+  getDashboardRouteByRole,
+  normalizeUserRole,
+} from "@/utils/roleRoutes";
 
 function findUserByCredentials(users, email, password) {
   const normalizedEmail = email.trim().toLowerCase();
-  const registeredUsers = Array.isArray(users) ? users : [];
-  const sessionUsers = JSON.parse(sessionStorage.getItem("users") || "[]");
 
-  const allUsers = [...demoUsers, ...registeredUsers, ...sessionUsers];
+  const registeredUsers = Array.isArray(users) ? users : [];
+  const sessionUsers = JSON.parse(
+    sessionStorage.getItem("users") || "[]"
+  );
+
+  const allUsers = [
+    ...demoUsers,
+    ...registeredUsers,
+    ...sessionUsers,
+  ];
 
   return allUsers.find(
     (user) =>
@@ -32,18 +42,35 @@ export default function Login({ users, setCurrentUser }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
+
   const navigate = useNavigate();
+
+  const lastRegisteredRole =
+    sessionStorage.getItem("lastRegisteredRole") || "student";
+
+  const emailPlaceholder =
+    lastRegisteredRole === "employer"
+      ? "name@company.com"
+      : lastRegisteredRole === "instructor"
+      ? "name@guc.edu.eg"
+      : "name@student.guc.edu.eg";
 
   const validate = () => {
     const newErrors = {};
 
-    if (!email.trim()) newErrors.email = "Email is required";
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+    }
 
-    if (!password.trim()) newErrors.password = "Password is required";
-    else if (password.length < 6)
-      newErrors.password = "Password must be at least 6 characters";
+    if (!password.trim()) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password =
+        "Password must be at least 6 characters";
+    }
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -52,23 +79,29 @@ export default function Login({ users, setCurrentUser }) {
 
     if (!validate()) return;
 
-    const foundUser = findUserByCredentials(users, email, password);
+    const foundUser = findUserByCredentials(
+      users,
+      email,
+      password
+    );
 
     if (!foundUser) {
       setErrors({
         email: "",
         password: "Invalid email or password",
       });
+
       return;
     }
 
     const role = normalizeUserRole(
-  foundUser.role ||
-    foundUser.accountRole ||
-    foundUser.systemRole ||
-    foundUser.userType ||
-    "student"
-);
+      foundUser.role ||
+        foundUser.accountRole ||
+        foundUser.systemRole ||
+        foundUser.userType ||
+        "student"
+    );
+
     const normalizedUser = {
       ...foundUser,
       role,
@@ -76,8 +109,13 @@ export default function Login({ users, setCurrentUser }) {
       accountRole: role,
     };
 
-    sessionStorage.setItem("currentUser", JSON.stringify(normalizedUser));
+    sessionStorage.setItem(
+      "currentUser",
+      JSON.stringify(normalizedUser)
+    );
+
     setCurrentUser(normalizedUser);
+
     navigate(getDashboardRouteByRole(role));
   };
 
@@ -85,10 +123,10 @@ export default function Login({ users, setCurrentUser }) {
     <AuthLayout>
       <AuthHeader
         showBrand
-        badge="Student Portfolio Platform"
+        badge="GUC Portfolio Platform"
         title="Welcome"
         highlightedWord="Back"
-        description="Sign in to manage your projects, achievements, and academic profile."
+        description="Sign in to manage your projects, achievements, and workspace."
       />
 
       <form className="space-y-7" onSubmit={handleSubmit}>
@@ -99,10 +137,14 @@ export default function Login({ users, setCurrentUser }) {
           type="email"
           value={email}
           error={errors.email}
-          placeholder="your-email@student.guc.edu.eg"
+          placeholder={emailPlaceholder}
           onChange={(event) => {
             setEmail(event.target.value);
-            setErrors((prev) => ({ ...prev, email: "" }));
+
+            setErrors((prev) => ({
+              ...prev,
+              email: "",
+            }));
           }}
         />
 
@@ -122,11 +164,17 @@ export default function Login({ users, setCurrentUser }) {
           placeholder="••••••••"
           onChange={(event) => {
             setPassword(event.target.value);
-            setErrors((prev) => ({ ...prev, password: "" }));
+
+            setErrors((prev) => ({
+              ...prev,
+              password: "",
+            }));
           }}
         />
 
-        <AuthSubmitButton>Sign In</AuthSubmitButton>
+        <AuthSubmitButton>
+          Sign In
+        </AuthSubmitButton>
       </form>
 
       <AuthDivider />

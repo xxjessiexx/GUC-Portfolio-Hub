@@ -20,24 +20,11 @@ import AppIconFrame from "@/components/ui/AppIconFrame";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
+
+import AppModal from "@/components/common/AppModal";
+import FilterSelect from "@/components/common/FilterSelect";
+import StatusBadge from "@/components/common/StatusBadge";
+
 import { notifications } from "@/data/studentDashboardData";
 
 const INTERNSHIPS_STORAGE_KEY = "guc-portfolio-internships";
@@ -45,15 +32,10 @@ const INTERNSHIPS_STORAGE_KEY = "guc-portfolio-internships";
 const inputStyles =
   "min-h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-semibold text-[color:var(--ink)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] placeholder:text-[color:var(--muted)]/65 transition focus-visible:border-[color:var(--accent)] focus-visible:ring-2 focus-visible:ring-[color:var(--ring-soft)]";
 
-const selectTriggerStyles = cn(
-  inputStyles,
-  "h-12 w-full justify-between py-0 text-left"
-);
-
 const initialInternshipData = {
   title: "",
   department: "",
-  workMode: "hybrid",
+  workMode: "Hybrid",
   duration: "",
   startDate: "",
   deadline: "",
@@ -83,120 +65,6 @@ function saveInternship(internship) {
   const existing = getStoredInternships();
   const updated = [internship, ...existing];
   localStorage.setItem(INTERNSHIPS_STORAGE_KEY, JSON.stringify(updated));
-  return updated;
-}
-
-function FieldFeedback({ error, helper }) {
-  if (!error && !helper) return null;
-
-  return (
-    <p
-      className={`text-xs font-semibold leading-5 ${
-        error ? "text-red-500" : "text-[color:var(--muted)]"
-      }`}
-    >
-      {error || helper}
-    </p>
-  );
-}
-
-function FieldShell({ label, required, icon: Icon, children }) {
-  return (
-    <div className="space-y-2.5">
-      <Label className="flex items-center gap-2 text-sm font-black text-[color:var(--ink)]">
-        {Icon && <Icon className="size-4 text-[color:var(--primary)]" />}
-        {label}
-        {required && <span className="text-[color:var(--gold)]">*</span>}
-      </Label>
-      {children}
-    </div>
-  );
-}
-
-function FormSection({ number, title, icon: Icon, children }) {
-  return (
-    <AppCard className="p-6 sm:p-7">
-      <div className="mb-6 flex items-center gap-3">
-        <AppIconFrame>
-          <span className="text-sm font-black">{number}</span>
-        </AppIconFrame>
-
-        <div>
-          <h2 className="text-2xl font-black tracking-tight text-[color:var(--ink)]">
-            {title}
-          </h2>
-          {Icon && <Icon className="mt-1 size-4 text-[color:var(--primary)]" />}
-        </div>
-      </div>
-
-      {children}
-    </AppCard>
-  );
-}
-
-function Chip({ children, onRemove }) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-xl border border-[#7AAACE]/55 bg-[#5F86A3] px-3 py-1.5 text-sm font-bold text-white shadow-[0_8px_20px_rgba(53,88,114,0.14)] dark:border-white/10 dark:bg-white/10 dark:text-[color:var(--accent)] dark:shadow-none">
-      {children}
-
-      <button
-        type="button"
-        onClick={onRemove}
-        className="text-white/80 transition hover:text-red-200"
-      >
-        <X className="size-3.5" />
-      </button>
-    </span>
-  );
-}
-
-function ChipInput({
-  items,
-  value,
-  placeholder,
-  emptyText,
-  onValueChange,
-  onAdd,
-  onRemove,
-  helper,
-}) {
-  return (
-    <div className="space-y-3">
-      <div className="flex min-h-14 flex-wrap items-center gap-2 rounded-2xl border border-white/70 bg-[var(--surface-soft)] px-3 py-3 shadow-[0_12px_30px_rgba(53,88,114,0.06)]">
-        {items.map((item) => (
-          <Chip key={item} onRemove={() => onRemove(item)}>
-            {item}
-          </Chip>
-        ))}
-
-        <input
-          value={value}
-          onChange={(event) => onValueChange(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              onAdd();
-            }
-          }}
-          placeholder={items.length ? placeholder : emptyText}
-          className="min-w-[180px] flex-1 bg-transparent text-sm font-semibold text-[color:var(--ink)] outline-none placeholder:text-[color:var(--muted)]/70"
-        />
-      </div>
-
-      <FieldFeedback helper={helper} />
-    </div>
-  );
-}
-
-function PreviewRow({ label, value }) {
-  return (
-    <div className="grid gap-1 border-b border-[color:var(--primary)]/10 py-3 sm:grid-cols-[160px_1fr]">
-      <p className="text-sm font-black text-[color:var(--dark)]">{label}</p>
-      <p className="text-sm font-semibold text-[color:var(--muted)]">
-        {value || "Not added"}
-      </p>
-    </div>
-  );
 }
 
 function validateInternshipField(field, data) {
@@ -431,7 +299,7 @@ export default function CreateInternship() {
               <AppButton
                 type="button"
                 onClick={handleSaveDraft}
-                className="min-h-12 rounded-2xl border border-white/70 bg-[var(--surface-strong)] px-6 font-black text-[color:var(--primary)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] transition hover:-translate-y-0.5 hover:bg-[var(--surface-elevated)]"
+                className="min-h-12 rounded-2xl border border-white/70 bg-[var(--surface-strong)] px-6 font-black text-[color:var(--primary)]"
               >
                 Save Draft
               </AppButton>
@@ -465,40 +333,21 @@ export default function CreateInternship() {
               </FieldShell>
 
               <FieldShell label="Work Mode" required icon={Briefcase}>
-                <Select
+                <FilterSelect
                   value={formData.workMode}
-                  onValueChange={(value) => updateField("workMode", value)}
-                >
-                  <SelectTrigger className={selectTriggerStyles}>
-                    <SelectValue />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    <SelectItem value="onsite">On-site</SelectItem>
-                    <SelectItem value="remote">Remote</SelectItem>
-                    <SelectItem value="hybrid">Hybrid</SelectItem>
-                  </SelectContent>
-                </Select>
+                  onChange={(value) => updateField("workMode", value)}
+                  options={["On-site", "Remote", "Hybrid"]}
+                />
               </FieldShell>
             </div>
 
             <div className="mt-5 grid gap-5 lg:grid-cols-3">
               <FieldShell label="Duration" required icon={CalendarDays}>
-                <Select
+                <FilterSelect
                   value={formData.duration}
-                  onValueChange={(value) => updateField("duration", value)}
-                >
-                  <SelectTrigger className={selectTriggerStyles}>
-                    <SelectValue placeholder="Choose duration" />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    <SelectItem value="1 Month">1 Month</SelectItem>
-                    <SelectItem value="2 Months">2 Months</SelectItem>
-                    <SelectItem value="3 Months">3 Months</SelectItem>
-                    <SelectItem value="6 Months">6 Months</SelectItem>
-                  </SelectContent>
-                </Select>
+                  onChange={(value) => updateField("duration", value)}
+                  options={["1 Month", "2 Months", "3 Months", "6 Months"]}
+                />
                 <FieldFeedback error={errors.duration} />
               </FieldShell>
 
@@ -513,7 +362,11 @@ export default function CreateInternship() {
                 />
               </FieldShell>
 
-              <FieldShell label="Application Deadline" required icon={CalendarDays}>
+              <FieldShell
+                label="Application Deadline"
+                required
+                icon={CalendarDays}
+              >
                 <Input
                   type="date"
                   className={inputStyles}
@@ -584,9 +437,7 @@ export default function CreateInternship() {
                     value={formData.skillInput}
                     placeholder="Figma, Research, Prototyping"
                     emptyText="Add a skill and press Enter"
-                    onValueChange={(value) =>
-                      updateField("skillInput", value)
-                    }
+                    onValueChange={(value) => updateField("skillInput", value)}
                     onAdd={addSkill}
                     onRemove={removeSkill}
                     helper="Press Enter after each skill."
@@ -615,7 +466,10 @@ export default function CreateInternship() {
                     <button
                       type="button"
                       onClick={() =>
-                        updateField("openings", Math.max(1, formData.openings - 1))
+                        updateField(
+                          "openings",
+                          Math.max(1, formData.openings - 1)
+                        )
                       }
                       className="grid h-8 w-8 place-items-center rounded-xl bg-white/70 font-black text-[color:var(--primary)]"
                     >
@@ -654,69 +508,23 @@ export default function CreateInternship() {
 
           <FormSection number="4" title="Additional Settings" icon={Briefcase}>
             <div className="grid gap-5 md:grid-cols-2">
-              <div className="rounded-[1.5rem] border border-white/70 bg-[var(--surface-soft)] p-5">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-black text-[color:var(--ink)]">
-                      Hiring Status
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
-                      Actively hiring for this internship.
-                    </p>
-                  </div>
+              <ToggleCard
+                title="Hiring Status"
+                description="Actively hiring for this internship."
+                checked={formData.hiringActive}
+                onCheckedChange={(checked) =>
+                  updateField("hiringActive", checked)
+                }
+              />
 
-                  <Switch
-                    checked={formData.hiringActive}
-                    onCheckedChange={(checked) =>
-                        updateField("hiringActive", checked)
-                    }
-                    className="
-                        h-7 w-12
-                        rounded-full
-                        border border-[color:var(--primary)]/20
-                        bg-gray-300
-                        data-[state=checked]:bg-[color:var(--primary)]
-                        [&>span]:h-5
-                        [&>span]:w-5
-                        [&>span]:bg-white
-                        [&>span]:shadow-md
-                        [&>span]:data-[state=checked]:translate-x-5
-                    "
-                    />
-                </div>
-              </div>
-
-              <div className="rounded-[1.5rem] border border-white/70 bg-[var(--surface-soft)] p-5">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-black text-[color:var(--ink)]">
-                      Position Filled
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
-                      Mark as filled when the right candidate is selected.
-                    </p>
-                  </div>
-
-                  <Switch
-                    checked={formData.positionFilled}
-                    onCheckedChange={(checked) =>
-                        updateField("positionFilled", checked)
-                    }
-                    className="
-                        h-7 w-12
-                        rounded-full
-                        border border-[color:var(--primary)]/20
-                        bg-gray-300
-                        data-[state=checked]:bg-[color:var(--primary)]
-                        [&>span]:h-5
-                        [&>span]:w-5
-                        [&>span]:bg-white
-                        [&>span]:shadow-md
-                        [&>span]:data-[state=checked]:translate-x-5
-                    "
-                    />
-                </div>
-              </div>
+              <ToggleCard
+                title="Position Filled"
+                description="Mark as filled when the right candidate is selected."
+                checked={formData.positionFilled}
+                onCheckedChange={(checked) =>
+                  updateField("positionFilled", checked)
+                }
+              />
             </div>
           </FormSection>
 
@@ -744,7 +552,7 @@ export default function CreateInternship() {
                 <AppButton
                   type="button"
                   onClick={resetForm}
-                  className="min-h-12 rounded-2xl border border-white/70 bg-[var(--surface-strong)] px-6 font-black text-red-500 shadow-[0_10px_28px_rgba(53,88,114,0.06)] transition hover:-translate-y-0.5 hover:bg-red-50"
+                  className="min-h-12 rounded-2xl border border-white/70 bg-[var(--surface-strong)] px-6 font-black text-red-500 transition hover:bg-red-50"
                 >
                   <Trash2 className="mr-2 size-4" />
                   Clear
@@ -753,7 +561,7 @@ export default function CreateInternship() {
                 <AppButton
                   type="button"
                   onClick={() => setPreviewOpen(true)}
-                  className="min-h-12 rounded-2xl border border-white/70 bg-[var(--surface-strong)] px-6 font-black text-[color:var(--primary)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] transition hover:-translate-y-0.5 hover:bg-[var(--surface-elevated)]"
+                  className="min-h-12 rounded-2xl border border-white/70 bg-[var(--surface-strong)] px-6 font-black text-[color:var(--primary)] transition hover:bg-[var(--surface-elevated)]"
                 >
                   <Eye className="mr-2 size-4" />
                   Preview
@@ -761,7 +569,7 @@ export default function CreateInternship() {
 
                 <AppButton
                   type="submit"
-                  className="min-h-12 rounded-2xl bg-[var(--primary)] px-8 font-black text-white shadow-[var(--shadow-brand)] transition hover:-translate-y-0.5 hover:bg-[var(--dark)]"
+                  className="min-h-12 rounded-2xl bg-[var(--primary)] px-8 font-black text-white shadow-[var(--shadow-brand)] transition hover:bg-[var(--dark)]"
                 >
                   <Send className="mr-2 size-4" />
                   Publish Internship
@@ -772,16 +580,15 @@ export default function CreateInternship() {
         </form>
       </main>
 
-      <AlertDialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <AlertDialogContent className="z-[9999] max-h-[85vh] max-w-[52rem] overflow-y-auto rounded-3xl border border-white/70 bg-white/95 p-6 shadow-[0_24px_80px_rgba(44,57,71,0.25)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#102030]">          <AlertDialogHeader>
-            <AlertDialogTitle className="text-3xl font-black text-[color:var(--ink)]">
-              Internship Preview
-            </AlertDialogTitle>
-
-            <AlertDialogDescription className="text-base leading-7 text-[color:var(--muted)]">
-              This is how the internship information will look before publishing.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+      {previewOpen && (
+        <AppModal
+          title="Internship Preview"
+          onClose={() => setPreviewOpen(false)}
+          maxWidth="max-w-[52rem]"
+        >
+          <p className="text-base leading-7 text-[color:var(--muted)]">
+            This is how the internship information will look before publishing.
+          </p>
 
           <div className="mt-4 rounded-[1.5rem] border border-[color:var(--primary)]/10 bg-[var(--surface-soft)] p-5">
             <h3 className="text-2xl font-black text-[color:var(--ink)]">
@@ -811,59 +618,182 @@ export default function CreateInternship() {
             </div>
 
             <div className="mt-5 grid gap-5 md:grid-cols-2">
-              <div>
-                <h4 className="font-black text-[color:var(--ink)]">
-                  Responsibilities
-                </h4>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm font-semibold text-[color:var(--muted)]">
-                  {responsibilitiesList.length ? (
-                    responsibilitiesList.map((item) => <li key={item}>{item}</li>)
-                  ) : (
-                    <li>Not added</li>
-                  )}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="font-black text-[color:var(--ink)]">
-                  Requirements
-                </h4>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm font-semibold text-[color:var(--muted)]">
-                  {requirementsList.length ? (
-                    requirementsList.map((item) => <li key={item}>{item}</li>)
-                  ) : (
-                    <li>Not added</li>
-                  )}
-                </ul>
-              </div>
+              <PreviewList title="Responsibilities" items={responsibilitiesList} />
+              <PreviewList title="Requirements" items={requirementsList} />
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
               {[...formData.skills, ...formData.languages].map((item) => (
-                <span
-                  key={item}
-                  className="rounded-full bg-[color:var(--accent)]/25 px-3 py-1 text-xs font-black text-[color:var(--primary)]"
-                >
-                  {item}
-                </span>
+                <StatusBadge key={item} status={item} />
               ))}
             </div>
           </div>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-2xl">
-              Close
-            </AlertDialogCancel>
-
-            <AlertDialogAction
+          <div className="mt-6 flex justify-end">
+            <button
+              type="button"
               onClick={() => setPreviewOpen(false)}
-              className="rounded-2xl bg-[color:var(--primary)] font-bold text-white hover:bg-[color:var(--dark)]"
+              className="h-12 rounded-2xl bg-[color:var(--primary)] px-6 font-black text-white"
             >
               Looks Good
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </button>
+          </div>
+        </AppModal>
+      )}
     </DashboardLayout>
+  );
+}
+
+function FieldFeedback({ error, helper }) {
+  if (!error && !helper) return null;
+
+  return (
+    <p
+      className={`text-xs font-semibold leading-5 ${
+        error ? "text-red-500" : "text-[color:var(--muted)]"
+      }`}
+    >
+      {error || helper}
+    </p>
+  );
+}
+
+function FieldShell({ label, required, icon: Icon, children }) {
+  return (
+    <div className="space-y-2.5">
+      <Label className="flex items-center gap-2 text-sm font-black text-[color:var(--ink)]">
+        {Icon && <Icon className="size-4 text-[color:var(--primary)]" />}
+        {label}
+        {required && <span className="text-[color:var(--gold)]">*</span>}
+      </Label>
+      {children}
+    </div>
+  );
+}
+
+function FormSection({ number, title, icon: Icon, children }) {
+  return (
+    <AppCard className="p-6 sm:p-7">
+      <div className="mb-6 flex items-center gap-3">
+        <AppIconFrame>
+          <span className="text-sm font-black">{number}</span>
+        </AppIconFrame>
+
+        <div>
+          <h2 className="text-2xl font-black tracking-tight text-[color:var(--ink)]">
+            {title}
+          </h2>
+          {Icon && <Icon className="mt-1 size-4 text-[color:var(--primary)]" />}
+        </div>
+      </div>
+
+      {children}
+    </AppCard>
+  );
+}
+
+function Chip({ children, onRemove }) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-xl border border-[#7AAACE]/55 bg-[#5F86A3] px-3 py-1.5 text-sm font-bold text-white shadow-[0_8px_20px_rgba(53,88,114,0.14)] dark:border-white/10 dark:bg-white/10 dark:text-[color:var(--accent)] dark:shadow-none">
+      {children}
+
+      <button
+        type="button"
+        onClick={onRemove}
+        className="text-white/80 transition hover:text-red-200"
+      >
+        <X className="size-3.5" />
+      </button>
+    </span>
+  );
+}
+
+function ChipInput({
+  items,
+  value,
+  placeholder,
+  emptyText,
+  onValueChange,
+  onAdd,
+  onRemove,
+  helper,
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex min-h-14 flex-wrap items-center gap-2 rounded-2xl border border-white/70 bg-[var(--surface-soft)] px-3 py-3 shadow-[0_12px_30px_rgba(53,88,114,0.06)]">
+        {items.map((item) => (
+          <Chip key={item} onRemove={() => onRemove(item)}>
+            {item}
+          </Chip>
+        ))}
+
+        <input
+          value={value}
+          onChange={(event) => onValueChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              onAdd();
+            }
+          }}
+          placeholder={items.length ? placeholder : emptyText}
+          className="min-w-[180px] flex-1 bg-transparent text-sm font-semibold text-[color:var(--ink)] outline-none placeholder:text-[color:var(--muted)]/70"
+        />
+      </div>
+
+      <FieldFeedback helper={helper} />
+    </div>
+  );
+}
+
+function ToggleCard({ title, description, checked, onCheckedChange }) {
+  return (
+    <div className="rounded-[1.5rem] border border-white/70 bg-[var(--surface-soft)] p-5">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="font-black text-[color:var(--ink)]">{title}</p>
+          <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
+            {description}
+          </p>
+        </div>
+
+        <Switch
+          checked={checked}
+          onCheckedChange={onCheckedChange}
+          className="
+            h-7 w-12 rounded-full border border-[color:var(--primary)]/20
+            bg-gray-300 data-[state=checked]:bg-[color:var(--primary)]
+            [&>span]:h-5 [&>span]:w-5 [&>span]:bg-white [&>span]:shadow-md
+            [&>span]:data-[state=checked]:translate-x-5
+          "
+        />
+      </div>
+    </div>
+  );
+}
+
+function PreviewRow({ label, value }) {
+  return (
+    <div className="grid gap-1 border-b border-[color:var(--primary)]/10 py-3 sm:grid-cols-[160px_1fr]">
+      <p className="text-sm font-black text-[color:var(--dark)]">{label}</p>
+      <p className="text-sm font-semibold text-[color:var(--muted)]">
+        {value || "Not added"}
+      </p>
+    </div>
+  );
+}
+
+function PreviewList({ title, items }) {
+  return (
+    <div>
+      <h4 className="font-black text-[color:var(--ink)]">{title}</h4>
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm font-semibold text-[color:var(--muted)]">
+        {items.length ? (
+          items.map((item) => <li key={item}>{item}</li>)
+        ) : (
+          <li>Not added</li>
+        )}
+      </ul>
+    </div>
   );
 }

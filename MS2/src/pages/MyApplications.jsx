@@ -15,13 +15,10 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
+import FilterSelect from "@/components/common/FilterSelect";
+import StatusBadge from "@/components/common/StatusBadge";
+
 import { notifications } from "@/data/studentDashboardData";
 
 const applications = [
@@ -113,13 +110,6 @@ const savedApplications = [
   },
 ];
 
-function statusStyles(status) {
-  if (status === "Accepted") return "bg-green-100 text-green-700";
-  if (status === "Rejected") return "bg-red-100 text-red-700";
-  if (status === "Pending") return "bg-purple-100 text-purple-700";
-  return "bg-[color:var(--accent)]/30 text-[color:var(--primary)]";
-}
-
 export default function MyApplications() {
   const [activeTab, setActiveTab] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
@@ -150,9 +140,17 @@ export default function MyApplications() {
 
   const filteredApplications = useMemo(() => {
     return applications.filter((application) => {
-      const matchesSearch =
-        application.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        application.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const searchableText = [
+        application.company,
+        application.title,
+        application.location,
+        application.duration,
+        application.status,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch = searchableText.includes(searchTerm.toLowerCase());
 
       const matchesTab =
         activeTab === "All" || application.status === activeTab;
@@ -207,6 +205,7 @@ export default function MyApplications() {
                 <div className="grid items-center gap-4 lg:grid-cols-[1.3fr_240px_240px_240px_auto]">
                   <div className="relative">
                     <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
+
                     <Input
                       value={searchTerm}
                       onChange={(event) => setSearchTerm(event.target.value)}
@@ -215,56 +214,34 @@ export default function MyApplications() {
                     />
                   </div>
 
-                  <div className="flex items-center">
-                    <Select
-                        value={selectedStatus}
-                        onValueChange={setSelectedStatus}
-                    >
-                    <SelectTrigger className="h-12 w-full rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-black text-[color:var(--ink)] shadow-sm">
-                      <SelectValue placeholder="All Statuses" />
-                    </SelectTrigger>
+                  <FilterSelect
+                    value={selectedStatus}
+                    onChange={setSelectedStatus}
+                    options={[
+                      "All Statuses",
+                      "Under Review",
+                      "Pending",
+                      "Accepted",
+                      "Rejected",
+                    ]}
+                  />
 
-                    <SelectContent position="popper" className="z-[9999] rounded-2xl">
-                      <SelectItem value="All Statuses">All Statuses</SelectItem>
-                      <SelectItem value="Under Review">Under Review</SelectItem>
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="Accepted">Accepted</SelectItem>
-                      <SelectItem value="Rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FilterSelect
+                    value={selectedCompany}
+                    onChange={setSelectedCompany}
+                    options={companies}
+                  />
+
+                  <div className="relative">
+                    <CalendarDays className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
+
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(event) => setSelectedDate(event.target.value)}
+                      className="h-12 w-full rounded-2xl border border-white/70 bg-[var(--input-bg)] pl-11 pr-3 text-sm font-black text-[color:var(--ink)] shadow-sm"
+                    />
                   </div>
-
-                  <div className="flex items-center">
-                    <Select
-                        value={selectedCompany}
-                        onValueChange={setSelectedCompany}
-                    >
-                    <SelectTrigger className="h-12 w-full rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-black text-[color:var(--ink)] shadow-sm">
-                      <SelectValue placeholder="All Companies" />
-                    </SelectTrigger>
-
-                    <SelectContent position="popper" className="z-[9999] rounded-2xl">
-                      {companies.map((company) => (
-                        <SelectItem key={company} value={company}>
-                          {company}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  </div>
-
-                  <div className="flex items-center">
-                        <div className="relative w-full">
-                            <CalendarDays className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
-
-                            <Input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(event) => setSelectedDate(event.target.value)}
-                            className="h-14 w-full rounded-2xl border border-white/70 bg-[var(--input-bg)] pl-11 pr-3 text-sm font-black text-[color:var(--ink)] shadow-sm"
-                            />
-                        </div>
-                        </div>
 
                   {hasActiveFilters && (
                     <button
@@ -281,20 +258,24 @@ export default function MyApplications() {
 
               <AppCard className="overflow-hidden">
                 <div className="grid grid-cols-5 border-b border-[color:var(--primary)]/10 text-center text-sm font-black">
-                  {["All", "Under Review", "Pending", "Accepted", "Rejected"].map(
-                    (tab) => (
-                      <Tab
-                        key={tab}
-                        label={tab}
-                        count={statusCounts[tab]}
-                        active={activeTab === tab}
-                        onClick={() => {
-                          setActiveTab(tab);
-                          setSelectedStatus("All Statuses");
-                        }}
-                      />
-                    )
-                  )}
+                  {[
+                    "All",
+                    "Under Review",
+                    "Pending",
+                    "Accepted",
+                    "Rejected",
+                  ].map((tab) => (
+                    <Tab
+                      key={tab}
+                      label={tab}
+                      count={statusCounts[tab]}
+                      active={activeTab === tab}
+                      onClick={() => {
+                        setActiveTab(tab);
+                        setSelectedStatus("All Statuses");
+                      }}
+                    />
+                  ))}
                 </div>
 
                 <div className="hidden grid-cols-[1.4fr_0.6fr_0.7fr_1fr_auto] border-b border-[color:var(--primary)]/10 px-6 py-4 text-sm font-black text-[color:var(--dark)] lg:grid">
@@ -357,13 +338,7 @@ export default function MyApplications() {
                         </p>
                       </div>
 
-                      <span
-                        className={`w-fit rounded-full px-3 py-1.5 text-xs font-black ${statusStyles(
-                          application.status
-                        )}`}
-                      >
-                        {application.status}
-                      </span>
+                      <StatusBadge status={application.status} />
 
                       <div>
                         <p className="text-sm font-black text-[color:var(--ink)]">

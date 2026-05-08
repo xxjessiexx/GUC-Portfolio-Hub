@@ -4,7 +4,6 @@ import {
   Archive,
   ArrowDownUp,
   BriefcaseBusiness,
-  CalendarDays,
   CheckCircle2,
   Edit,
   Eye,
@@ -14,20 +13,19 @@ import {
   Rocket,
   Search,
   Users,
-  X,
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
+import MetricCard from "@/components/common/MetricCard";
+import FilterSelect from "@/components/common/FilterSelect";
+import InitialsAvatar from "@/components/common/InitialsAvatar";
+import StatusBadge from "@/components/common/StatusBadge";
+import AppModal from "@/components/common/AppModal";
+
 import { notifications } from "@/data/studentDashboardData";
 import { employerInternshipsData } from "@/data/employerInternshipsData";
 
@@ -39,13 +37,6 @@ function isDeadlinePassed(deadline) {
   deadlineDate.setHours(0, 0, 0, 0);
 
   return deadlineDate < today;
-}
-
-function statusStyles(status) {
-  if (status === "Open") return "bg-green-100 text-green-700";
-  if (status === "Filled")
-    return "bg-[color:var(--accent)]/30 text-[color:var(--primary)]";
-  return "bg-gray-100 text-gray-600";
 }
 
 export default function ManageInternships() {
@@ -63,29 +54,38 @@ export default function ManageInternships() {
   const [editingInternship, setEditingInternship] = useState(null);
   const [showAllCandidates, setShowAllCandidates] = useState(false);
   const [showAllActivity, setShowAllActivity] = useState(false);
-const [notesOpen, setNotesOpen] = useState(false);
-const [notes, setNotes] = useState("");
+
   useEffect(() => {
     const closeMenu = () => setOpenMenuId(null);
     window.addEventListener("click", closeMenu);
     return () => window.removeEventListener("click", closeMenu);
   }, []);
 
-  const departments = [
-    "All Departments",
-    ...new Set(internships.map((item) => item.department)),
-  ];
+  const departments = useMemo(
+    () => [
+      "All Departments",
+      ...new Set(internships.map((item) => item.department)),
+    ],
+    [internships]
+  );
 
-  const locations = [
-    "All Locations",
-    ...new Set(internships.map((item) => item.location)),
-  ];
+  const locations = useMemo(
+    () => ["All Locations", ...new Set(internships.map((item) => item.location))],
+    [internships]
+  );
 
   const filteredInternships = useMemo(() => {
     const filtered = internships.filter((internship) => {
-      const matchesSearch = internship.title
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+      const searchableText = [
+        internship.title,
+        internship.department,
+        internship.location,
+        internship.status,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch = searchableText.includes(searchTerm.toLowerCase());
 
       const matchesDepartment =
         selectedDepartment === "All Departments" ||
@@ -105,10 +105,22 @@ const [notes, setNotes] = useState("");
     });
 
     return [...filtered].sort((a, b) => {
-      if (sortBy === "Newest") return new Date(b.deadline) - new Date(a.deadline);
-      if (sortBy === "Oldest") return new Date(a.deadline) - new Date(b.deadline);
-      if (sortBy === "Most Applicants") return b.applicants - a.applicants;
-      if (sortBy === "Least Applicants") return a.applicants - b.applicants;
+      if (sortBy === "Newest") {
+        return new Date(b.deadline) - new Date(a.deadline);
+      }
+
+      if (sortBy === "Oldest") {
+        return new Date(a.deadline) - new Date(b.deadline);
+      }
+
+      if (sortBy === "Most Applicants") {
+        return b.applicants - a.applicants;
+      }
+
+      if (sortBy === "Least Applicants") {
+        return a.applicants - b.applicants;
+      }
+
       return 0;
     });
   }, [
@@ -126,6 +138,42 @@ const [notes, setNotes] = useState("");
     filled: internships.filter((item) => item.isFilled).length,
     archived: internships.filter((item) => item.isArchived).length,
   };
+
+  const candidates = [
+    { name: "Mariam Khaled", major: "Data Science • GUC" },
+    { name: "Youssef Ashraf", major: "Computer Science • GUC" },
+    { name: "Nourhan Hany", major: "Information Systems • GUC" },
+    { name: "Omar Tarek", major: "Software Engineering • GUC" },
+    { name: "Farida Samir", major: "Business Informatics • GUC" },
+  ];
+
+  const activities = [
+    {
+      text: "48 new applications",
+      subtext: "Data Analyst Intern",
+      time: "1h ago",
+    },
+    {
+      text: "New saved candidate",
+      subtext: "Youssef Ashraf",
+      time: "2h ago",
+    },
+    {
+      text: "Interview scheduled",
+      subtext: "UI/UX Design Intern",
+      time: "3h ago",
+    },
+    {
+      text: "Internship filled",
+      subtext: "Marketing Intern",
+      time: "1d ago",
+    },
+    {
+      text: "Application withdrawn",
+      subtext: "Product Research Intern",
+      time: "2d ago",
+    },
+  ];
 
   const markAsFilled = (id) => {
     setInternships((current) =>
@@ -181,22 +229,6 @@ const [notes, setNotes] = useState("");
     setMessage("Internship details updated successfully.");
   };
 
-  const candidates = [
-    { name: "Mariam Khaled", major: "Data Science • GUC" },
-    { name: "Youssef Ashraf", major: "Computer Science • GUC" },
-    { name: "Nourhan Hany", major: "Information Systems • GUC" },
-    { name: "Omar Tarek", major: "Software Engineering • GUC" },
-    { name: "Farida Samir", major: "Business Informatics • GUC" },
-  ];
-
-  const activities = [
-    { text: "48 new applications", subtext: "Data Analyst Intern", time: "1h ago" },
-    { text: "New saved candidate", subtext: "Youssef Ashraf", time: "2h ago" },
-    { text: "Interview scheduled", subtext: "UI/UX Design Intern", time: "3h ago" },
-    { text: "Internship filled", subtext: "Marketing Intern", time: "1d ago" },
-    { text: "Application withdrawn", subtext: "Product Research Intern", time: "2d ago" },
-  ];
-
   return (
     <DashboardLayout notifications={notifications}>
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
@@ -224,10 +256,33 @@ const [notes, setNotes] = useState("");
           </div>
 
           <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            <StatCard title="Active Internships" value={stats.active} icon={BriefcaseBusiness} helper="12% vs last month" />
-            <StatCard title="Applications Received" value={stats.applicants} icon={Users} helper="18% vs last month" />
-            <StatCard title="Positions Filled" value={stats.filled} icon={CheckCircle2} helper="30% vs last month" />
-            <StatCard title="Archived Internships" value={stats.archived} icon={Archive} helper="8% vs last month" />
+            <MetricCard
+              title="Active Internships"
+              value={stats.active}
+              icon={BriefcaseBusiness}
+              helper="↗ 12% vs last month"
+            />
+
+            <MetricCard
+              title="Applications Received"
+              value={stats.applicants}
+              icon={Users}
+              helper="↗ 18% vs last month"
+            />
+
+            <MetricCard
+              title="Positions Filled"
+              value={stats.filled}
+              icon={CheckCircle2}
+              helper="↗ 30% vs last month"
+            />
+
+            <MetricCard
+              title="Archived Internships"
+              value={stats.archived}
+              icon={Archive}
+              helper="↗ 8% vs last month"
+            />
           </section>
 
           {message && (
@@ -254,6 +309,7 @@ const [notes, setNotes] = useState("");
                 <div className="grid gap-4 lg:grid-cols-[1.2fr_11rem_11rem_11rem_13rem]">
                   <div className="relative">
                     <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
+
                     <Input
                       value={searchTerm}
                       onChange={(event) => setSearchTerm(event.target.value)}
@@ -262,58 +318,34 @@ const [notes, setNotes] = useState("");
                     />
                   </div>
 
-                  <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                    <SelectTrigger className="h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-black text-[color:var(--ink)] shadow-sm">
-                      <SelectValue placeholder="All Departments" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="z-[9999] rounded-2xl">
-                      {departments.map((department) => (
-                        <SelectItem key={department} value={department}>
-                          {department}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FilterSelect
+                    value={selectedDepartment}
+                    onChange={setSelectedDepartment}
+                    options={departments}
+                  />
 
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-black text-[color:var(--ink)] shadow-sm">
-                      <SelectValue placeholder="All Statuses" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="z-[9999] rounded-2xl">
-                      <SelectItem value="All Statuses">All Statuses</SelectItem>
-                      <SelectItem value="Open">Open</SelectItem>
-                      <SelectItem value="Filled">Filled</SelectItem>
-                      <SelectItem value="Archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FilterSelect
+                    value={selectedStatus}
+                    onChange={setSelectedStatus}
+                    options={["All Statuses", "Open", "Filled", "Archived"]}
+                  />
 
-                  <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                    <SelectTrigger className="h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-black text-[color:var(--ink)] shadow-sm">
-                      <SelectValue placeholder="All Locations" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="z-[9999] rounded-2xl">
-                      {locations.map((location) => (
-                        <SelectItem key={location} value={location}>
-                          {location}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FilterSelect
+                    value={selectedLocation}
+                    onChange={setSelectedLocation}
+                    options={locations}
+                  />
 
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-black text-[color:var(--ink)] shadow-sm">
-                      <div className="flex w-full items-center justify-between gap-2">
-                        <span className="truncate">Sort: {sortBy}</span>
-                        <ArrowDownUp className="h-4 w-4 shrink-0" />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="z-[9999] rounded-2xl">
-                      <SelectItem value="Newest">Newest</SelectItem>
-                      <SelectItem value="Oldest">Oldest</SelectItem>
-                      <SelectItem value="Most Applicants">Most Applicants</SelectItem>
-                      <SelectItem value="Least Applicants">Least Applicants</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FilterSelect
+                    value={sortBy}
+                    onChange={setSortBy}
+                    options={[
+                      "Newest",
+                      "Oldest",
+                      "Most Applicants",
+                      "Least Applicants",
+                    ]}
+                  />
                 </div>
               </AppCard>
 
@@ -375,13 +407,7 @@ const [notes, setNotes] = useState("");
                         {internship.applicants}
                       </p>
 
-                      <span
-                        className={`w-fit rounded-full px-3 py-1.5 text-xs font-black ${statusStyles(
-                          internship.status
-                        )}`}
-                      >
-                        {internship.status}
-                      </span>
+                      <StatusBadge status={internship.status} />
 
                       <div className="relative">
                         <button
@@ -425,7 +451,7 @@ const [notes, setNotes] = useState("");
                               onClick={() => {
                                 navigate(`/manage-applicants/${internship.id}`);
                                 setOpenMenuId(null);
-                            }}
+                              }}
                             />
 
                             {!internship.isFilled && (
@@ -438,7 +464,11 @@ const [notes, setNotes] = useState("");
 
                             <ActionItem
                               icon={Archive}
-                              label={canArchive ? "Archive internship" : "Archive disabled"}
+                              label={
+                                canArchive
+                                  ? "Archive internship"
+                                  : "Archive disabled"
+                              }
                               danger={canArchive}
                               disabled={!canArchive}
                               onClick={() => archiveInternship(internship)}
@@ -561,74 +591,88 @@ function EditInternshipModal({ internship, setInternship, onClose, onSave }) {
   };
 
   return (
-<div className="fixed inset-0 z-[99999] flex items-start justify-center overflow-y-auto bg-black/30 px-6 pb-10 pt-28 backdrop-blur-sm">
-  <div className="w-full max-w-3xl rounded-[32px] border border-white/70 bg-white p-6 shadow-[0_30px_90px_rgba(44,57,71,0.3)]">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-black text-[color:var(--ink)]">
-            Edit Internship
-          </h2>
+    <AppModal
+      title="Edit Internship"
+      onClose={onClose}
+      maxWidth="max-w-3xl"
+    >
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field
+          label="Title"
+          value={internship.title}
+          onChange={(value) => updateField("title", value)}
+        />
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="grid h-10 w-10 place-items-center rounded-2xl bg-gray-100 text-[color:var(--muted)]"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+        <Field
+          label="Department"
+          value={internship.department}
+          onChange={(value) => updateField("department", value)}
+        />
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Title" value={internship.title} onChange={(value) => updateField("title", value)} />
-          <Field label="Department" value={internship.department} onChange={(value) => updateField("department", value)} />
-          <Field label="Location" value={internship.location} onChange={(value) => updateField("location", value)} />
-          <Field label="Duration" value={internship.duration} onChange={(value) => updateField("duration", value)} />
-          <Field label="Deadline" type="date" value={internship.deadline} onChange={(value) => updateField("deadline", value)} />
-          <Field label="Applicants" type="number" value={internship.applicants} onChange={(value) => updateField("applicants", Number(value))} />
+        <Field
+          label="Location"
+          value={internship.location}
+          onChange={(value) => updateField("location", value)}
+        />
 
-          <div>
-            <label className="mb-2 block text-sm font-black text-[color:var(--ink)]">
-              Status
-            </label>
+        <Field
+          label="Duration"
+          value={internship.duration}
+          onChange={(value) => updateField("duration", value)}
+        />
 
-            <select
-              value={internship.status}
-              onChange={(event) => {
-                const status = event.target.value;
-                setInternship((current) => ({
-                  ...current,
-                  status,
-                  isFilled: status === "Filled",
-                  isArchived: status === "Archived",
-                }));
-              }}
-              className="h-12 w-full rounded-2xl border border-[color:var(--primary)]/15 bg-white px-4 font-bold text-[color:var(--ink)] outline-none"
-            >
-              <option>Open</option>
-              <option>Filled</option>
-              <option>Archived</option>
-            </select>
-          </div>
-        </div>
+        <Field
+          label="Deadline"
+          type="date"
+          value={internship.deadline}
+          onChange={(value) => updateField("deadline", value)}
+        />
 
-        <div className="mt-7 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-12 rounded-2xl border border-gray-200 bg-white px-6 font-black text-[color:var(--muted)]"
-          >
-            Cancel
-          </button>
+        <Field
+          label="Applicants"
+          type="number"
+          value={internship.applicants}
+          onChange={(value) => updateField("applicants", Number(value))}
+        />
 
-          <button
-            type="button"
-            onClick={onSave}
-            className="h-12 rounded-2xl bg-[color:var(--primary)] px-6 font-black text-white"
-          >
-            Save Changes
-          </button>
+        <div>
+          <label className="mb-2 block text-sm font-black text-[color:var(--ink)]">
+            Status
+          </label>
+
+          <FilterSelect
+            value={internship.status}
+            onChange={(status) => {
+              setInternship((current) => ({
+                ...current,
+                status,
+                isFilled: status === "Filled",
+                isArchived: status === "Archived",
+              }));
+            }}
+            options={["Open", "Filled", "Archived"]}
+          />
         </div>
       </div>
-    </div>
+
+      <div className="mt-7 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="h-12 rounded-2xl border border-gray-200 bg-white px-6 font-black text-[color:var(--muted)]"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={onSave}
+          className="h-12 rounded-2xl bg-[color:var(--primary)] px-6 font-black text-white"
+        >
+          Save Changes
+        </button>
+      </div>
+    </AppModal>
   );
 }
 
@@ -649,25 +693,13 @@ function Field({ label, value, onChange, type = "text" }) {
   );
 }
 
-function StatCard({ title, value, icon: Icon, helper }) {
-  return (
-    <AppCard className="p-6">
-      <div className="flex items-center gap-4">
-        <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[color:var(--accent)]/25 text-[color:var(--primary)]">
-          <Icon className="h-6 w-6" />
-        </div>
-
-        <div>
-          <p className="text-sm font-black text-[color:var(--muted)]">{title}</p>
-          <p className="mt-1 text-4xl font-black text-[color:var(--ink)]">{value}</p>
-          <p className="mt-1 text-xs font-bold text-green-600">↗ {helper}</p>
-        </div>
-      </div>
-    </AppCard>
-  );
-}
-
-function ActionItem({ icon: Icon, label, onClick, danger = false, disabled = false }) {
+function ActionItem({
+  icon: Icon,
+  label,
+  onClick,
+  danger = false,
+  disabled = false,
+}) {
   return (
     <button
       type="button"
@@ -688,22 +720,16 @@ function ActionItem({ icon: Icon, label, onClick, danger = false, disabled = fal
 }
 
 function Candidate({ name, major, onView }) {
-  const initials = name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2);
-
   return (
     <div className="mb-3 flex items-center justify-between rounded-2xl border border-white/70 bg-white/55 p-4 last:mb-0">
       <div className="flex items-center gap-3">
-        <div className="grid h-12 w-12 place-items-center rounded-full bg-[color:var(--accent)]/25 text-sm font-black text-[color:var(--primary)]">
-          {initials}
-        </div>
+        <InitialsAvatar name={name} className="h-12 w-12" />
 
         <div>
           <p className="font-black text-[color:var(--ink)]">{name}</p>
-          <p className="text-sm font-semibold text-[color:var(--muted)]">{major}</p>
+          <p className="text-sm font-semibold text-[color:var(--muted)]">
+            {major}
+          </p>
         </div>
       </div>
 
@@ -723,10 +749,14 @@ function Activity({ text, subtext, time }) {
     <div className="mb-4 flex items-start justify-between gap-4 last:mb-0">
       <div>
         <p className="font-black text-[color:var(--ink)]">{text}</p>
-        <p className="text-sm font-semibold text-[color:var(--muted)]">{subtext}</p>
+        <p className="text-sm font-semibold text-[color:var(--muted)]">
+          {subtext}
+        </p>
       </div>
 
-      <span className="text-xs font-bold text-[color:var(--muted)]">{time}</span>
+      <span className="text-xs font-bold text-[color:var(--muted)]">
+        {time}
+      </span>
     </div>
   );
 }
