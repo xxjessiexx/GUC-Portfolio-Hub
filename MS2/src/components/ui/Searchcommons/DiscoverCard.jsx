@@ -7,10 +7,13 @@ export default function DiscoverCard({
   description,
   buttonText,
   image,
+   onClick,
 }) {
   return (
     <AppCard
+    onClick={onClick}
       className="
+      cursor-pointer
         p-5 sm:p-6
         rounded-[28px]
         bg-white
