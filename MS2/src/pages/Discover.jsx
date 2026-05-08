@@ -11,6 +11,7 @@ import TipItem from "@/components/ui/Searchcommons/TipItem";
 import RecommendedProjectsSection from "@/components/ui/Searchcommons/RecommendedProjectsSection";
 import DiscoverSearchBar from "@/components/ui/Searchcommons/DiscoverSearchBar";
 import { useNavigate } from "react-router-dom";
+import {recommendedProjects} from "@/data/discoverdata"
 
 import {
   Search,
@@ -29,53 +30,13 @@ import {
   Leaf,
 } from "lucide-react";
 
-const recommendedProjects = [
-  {
-    id: 1,
-    title: "Smart Study Buddy",
-    course: "CSEN 501 - Software Engineering",
-    description:
-      "AI-powered study assistant that helps students organize notes, track progress, and get personalized recommendations.",
-    tags: ["React", "Node.js", "MongoDB"],
-    rating: 4.8,
-    contributors: 12,
-    updated: "Updated 2 days ago",
-    icon: Box,
-    color: "bg-cyan-100 text-cyan-600",
-  },
-  {
-    id: 2,
-    title: "EcoTrack",
-    course: "CSEN 307 - Database Systems",
-    description:
-      "Sustainability tracking platform that helps users monitor their environmental impact and adopt greener habits.",
-    tags: ["Next.js", "PostgreSQL", "Tailwind"],
-    rating: 4.6,
-    contributors: 8,
-    updated: "Updated 5 days ago",
-    icon: Leaf,
-    color: "bg-green-100 text-green-600",
-  },
-  {
-    id: 3,
-    title: "HealthSync",
-    course: "CSEN 403 - Mobile Computing",
-    description:
-      "Mobile app for health monitoring and appointment management with secure data synchronization across devices.",
-    tags: ["Flutter", "Firebase", "Dart"],
-    rating: 4.7,
-    contributors: 10,
-    updated: "Updated 1 week ago",
-    icon: Heart,
-    color: "bg-red-100 text-red-500",
-  },
-];
+
 
 export default function DiscoverPage() {
   const navigate = useNavigate();
   return (
     <DashboardLayout>
-      <div className="p-4 xl:p-5 space-y-3 bg-[#F8FBFF] min-h-screen">
+      <div className="p-4 xl:p-5 space-y-3 min-h-screen">
         {/* HEADER */}
         <div>
           <h1 className="text-3xl xl:text-4xl font-black text-[#0F2233]">
@@ -88,9 +49,9 @@ export default function DiscoverPage() {
         </div>
 
         {/* SEARCH */}
-       <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5">
+       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_260px] gap-4">
           <div className="flex-1 space-y-3">
-            <AppCard className="p-4 rounded-[28px] border border-gray-100 bg-white shadow-sm">
+            <AppCard className="p-4 rounded-[28px] border border-gray-100  shadow-sm">
               <div className="flex items-center justify-between gap-4">
                 <DiscoverSearchBar
                   placeholder="Search projects, portfolios, technologies, skills, or instructors..."
@@ -104,7 +65,7 @@ export default function DiscoverPage() {
             </AppCard>
 
             {/* TOP CARDS */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               <DiscoverCard
                 icon={FolderOpen}
                 title="Explore Projects"
@@ -130,6 +91,7 @@ export default function DiscoverPage() {
                 description="Connect with expert instructors and explore their courses and specialties."
                 buttonText="Find Instructors"
                 image="/discover/portfolio-card.png"
+                onClick={() => navigate("/explore-instructors")}
                
               />
             </div>
@@ -141,9 +103,9 @@ export default function DiscoverPage() {
           </div>
 
           {/* RIGHT SIDEBAR */}
-          <div className="w-full xl:w-[290px] shrink-0 pt-2 space-y-5">
+          <div className="w-full xl:w-[260px] shrink-0 pt-1 space-y-4">
             {/* SEARCH TIPS */}
-            <AppCard className="p-6 rounded-[28px] bg-white border border-gray-100 shadow-sm">
+            <AppCard className="p-6 rounded-[28px] bg-transparent border border-gray-100 shadow-sm">
               <div className="flex items-center gap-2 mb-5">
                 <Lightbulb size={18} className="text-yellow-500" />
 
@@ -164,7 +126,7 @@ export default function DiscoverPage() {
             </AppCard>
 
             {/* TAGS */}
-            <AppCard className="p-6 rounded-[28px] bg-white border border-gray-100 shadow-sm">
+            <AppCard className="p-6 rounded-[28px] bg-transparent border-gray-100 shadow-sm">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <Hash size={18} className="text-[#69A7FF]" />
@@ -200,7 +162,7 @@ export default function DiscoverPage() {
             </AppCard>
 
             {/* INSIGHTS */}
-            <AppCard className="p-6 rounded-[28px] bg-white border border-gray-100 shadow-sm">
+            <AppCard className="p-6 rounded-[28px] bg-transparent border border-gray-100 shadow-sm">
               <div className="flex items-center gap-2 mb-5">
                 <Box size={18} className="text-[#67D5C0]" />
 
