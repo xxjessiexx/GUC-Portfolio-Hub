@@ -35,8 +35,13 @@ import ProjectPage from "./pages/ProjectPage";
 import ExploreInstructors from "./pages/ExploreInstructors";
 import ExploreProjects from "@/pages/ExploreProjects";
 import ChatsSection from "@/pages/ChatsSection";
+<<<<<<< reeditingbasedonform
+import ExplorePortfolios from "./pages/ExplorePortfolios";
+;
+=======
 import EditInternship from "@/pages/EditInternship";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+>>>>>>> main
 
 export default function App() {
   const [users, setUsers] = useState(() => {
@@ -294,6 +299,15 @@ export default function App() {
               }
             />
 
+<<<<<<< reeditingbasedonform
+            <Route path="/create-project" element={<CreateNewProject />} />
+            <Route path="/edit-project/:projectId" element={<EditProject />} />
+            <Route path="/projects/:projectId/edit" element={<EditProject />} />
+            <Route path="/project" element={<ProjectPage />} />
+            <Route path="/explore-instructors" element={<ExploreInstructors />} />
+            <Route path="/explore-projects" element={<ExploreProjects />} />
+             <Route path="/explore-portfolio" element={<ExplorePortfolios />} />
+=======
             <Route
               path="/create-project"
               element={
@@ -360,6 +374,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+>>>>>>> main
 
             <Route
               path="/forgot-password"
