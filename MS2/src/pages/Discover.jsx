@@ -10,6 +10,7 @@ import InsightRow from "@/components/ui/Searchcommons/InsightRow";
 import TipItem from "@/components/ui/Searchcommons/TipItem";
 import RecommendedProjectsSection from "@/components/ui/Searchcommons/RecommendedProjectsSection";
 import DiscoverSearchBar from "@/components/ui/Searchcommons/DiscoverSearchBar";
+import { useNavigate } from "react-router-dom";
 
 import {
   Search,
@@ -71,6 +72,7 @@ const recommendedProjects = [
 ];
 
 export default function DiscoverPage() {
+  const navigate = useNavigate();
   return (
     <DashboardLayout>
       <div className="p-4 xl:p-5 space-y-3 bg-[#F8FBFF] min-h-screen">
@@ -109,6 +111,7 @@ export default function DiscoverPage() {
                 description="Browse innovative projects built by students across all disciplines."
                 buttonText="Browse Projects"
                 image="/discover/instructor-card.png"
+                onClick={() => navigate("/explore-projects")}
                 
               />
 
