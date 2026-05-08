@@ -2,8 +2,10 @@ import { Archive, CalendarDays, Code2, Edit3, ToggleLeft, UsersRound } from "luc
 import AppBadge from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { DashboardPanel } from "./EmployerDashboardShell";
+import { useNavigate } from "react-router-dom";
 
 export default function EmployerInternshipPreview({ internship }) {
+  const navigate = useNavigate();
   return (
     <DashboardPanel
       title="Internship Preview"
@@ -31,11 +33,18 @@ export default function EmployerInternshipPreview({ internship }) {
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <AppButton variant="outline">
+        <AppButton
+          variant="outline"
+          onClick={() => navigate("/manage-internships")}
+        >
           <Edit3 className="h-4 w-4" />
           Edit Role
         </AppButton>
-        <AppButton variant="outline">
+
+        <AppButton
+          variant="outline"
+          onClick={() => navigate("/manage-internships")}
+        >
           <ToggleLeft className="h-4 w-4" />
           Hiring / Filled
         </AppButton>

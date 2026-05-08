@@ -8,6 +8,7 @@ import {
   FileText,
   MessageSquare,
   Search,
+  SlidersHorizontal,
   Star,
   Users,
   XCircle,
@@ -31,6 +32,7 @@ import FilterSelect from "@/components/common/FilterSelect";
 import AppModal from "@/components/common/AppModal";
 
 import { notifications } from "@/data/studentDashboardData";
+import FilterPanel from "@/components/common/FilterPanel";
 
 const applicantsData = [
   {
@@ -165,6 +167,7 @@ export default function ManageApplicants() {
   const [selectedSemester, setSelectedSemester] = useState("All Semesters");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
   const [sortBy, setSortBy] = useState("Top Score");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [notes, setNotes] = useState("");
 
@@ -204,7 +207,7 @@ export default function ManageApplicants() {
 
     return [...filtered].sort((a, b) => {
       if (sortBy === "Top Score") return b.score - a.score;
-      if (sortBy === "Most Projects") return b.projects - a.projects;
+      if (sortBy === "Top Contributors") return b.projects - a.projects;
       if (sortBy === "Name A-Z") return a.name.localeCompare(b.name);
       return 0;
     });
@@ -333,8 +336,8 @@ export default function ManageApplicants() {
           <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
             <div className="space-y-6">
               <AppCard className="p-5">
-                <div className="grid gap-4 lg:grid-cols-[1.3fr_11rem_11rem_11rem_13rem]">
-                  <div className="relative">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="relative min-w-[260px] flex-1">
                     <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
                     <Input
                       value={searchTerm}
@@ -344,37 +347,71 @@ export default function ManageApplicants() {
                     />
                   </div>
 
-                  <FilterSelect
-                    value={selectedMajor}
-                    onChange={setSelectedMajor}
-                    options={majors}
-                  />
+                  <div className="w-[14rem]">
+                    <FilterSelect
+                      value={`Sort by: ${sortBy}`}
+                      onChange={(value) => setSortBy(value.replace("Sort by: ", ""))}
+                      options={[
+                        "Sort by: Top Score",
+                        "Sort by: Top Contributors",
+                        "Sort by: Name A-Z",
+                      ]}
+                    />
+                  </div>
 
-                  <FilterSelect
-                    value={selectedSemester}
-                    onChange={setSelectedSemester}
-                    options={semesters}
-                  />
-
-                  <FilterSelect
-                    value={selectedStatus}
-                    onChange={setSelectedStatus}
-                    options={[
-                      "All Statuses",
-                      "Shortlisted",
-                      "Nominated",
-                      "Accepted",
-                      "Rejected",
-                      "Reviewing",
-                    ]}
-                  />
-
-                  <FilterSelect
-                    value={sortBy}
-                    onChange={setSortBy}
-                    options={["Top Score", "Most Projects", "Name A-Z"]}
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen((current) => !current)}
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/60 px-5 text-sm font-black text-[color:var(--primary)] shadow-sm transition hover:bg-white/80"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Filters
+                  </button>
                 </div>
+
+                {filtersOpen && (
+                  <FilterPanel
+                    title="Filter applicants"
+                    onClear={() => {
+                      setSelectedMajor("All Majors");
+                      setSelectedSemester("All Semesters");
+                      setSelectedStatus("All Statuses");
+                    }}
+                  >
+                    <FilterSelect
+                      value={`Major: ${selectedMajor}`}
+                      onChange={(value) =>
+                        setSelectedMajor(value.replace("Major: ", ""))
+                      }
+                      options={majors.map((major) => `Major: ${major}`)}
+                    />
+
+                    <FilterSelect
+                      value={`Semester: ${selectedSemester}`}
+                      onChange={(value) =>
+                        setSelectedSemester(value.replace("Semester: ", ""))
+                      }
+                      options={semesters.map(
+                        (semester) => `Semester: ${semester}`
+                      )}
+                    />
+
+                    <FilterSelect
+                      value={`Status: ${selectedStatus}`}
+                      onChange={(value) =>
+                        setSelectedStatus(value.replace("Status: ", ""))
+                      }
+                      options={[
+                        "Status: All Statuses",
+                        "Status: Shortlisted",
+                        "Status: Nominated",
+                        "Status: Accepted",
+                        "Status: Rejected",
+                        "Status: Reviewing",
+                      ]}
+                    />
+                  </FilterPanel>
+                )}
               </AppCard>
 
               <AppCard className="overflow-hidden">
