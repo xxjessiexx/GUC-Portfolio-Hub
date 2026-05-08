@@ -21,11 +21,11 @@ import {
 import {
   EmployerHero,
   EmployerStatsGrid,
-} from "@/components/employerDashboard/EmployerDashboardShell";
-import EmployerInternshipsPanel from "@/components/employerDashboard/EmployerInternshipsPanel";
-import EmployerInternshipPreview from "@/components/employerDashboard/EmployerInternshipPreview";
-import EmployerApplicantsPanel from "@/components/employerDashboard/EmployerApplicantsPanel";
-import EmployerSecondaryPanels from "@/components/employerDashboard/EmployerSecondaryPanels";
+} from "@/components/EmployerDashboard/EmployerDashboardShell";
+import EmployerInternshipsPanel from "@/components/EmployerDashboard/EmployerInternshipsPanel";
+import EmployerInternshipPreview from "@/components/EmployerDashboard/EmployerInternshipPreview";
+import EmployerApplicantsPanel from "@/components/EmployerDashboard/EmployerApplicantsPanel";
+import EmployerSecondaryPanels from "@/components/EmployerDashboard/EmployerSecondaryPanels";
 
 export default function EmployerDashboard() {
   const { profile } = useUserProfile();

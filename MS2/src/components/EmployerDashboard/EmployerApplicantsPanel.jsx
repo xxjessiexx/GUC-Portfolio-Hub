@@ -1,111 +1,147 @@
-import { useMemo, useState } from "react";
-import { Bell, BriefcaseBusiness, CheckCircle2, UsersRound } from "lucide-react";
+import { Users, Star, Mail, CheckCircle2, XCircle, Clock } from "lucide-react";
 
-import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useNotifications } from "@/context/NotificationsContext";
-import { useUserProfile } from "@/context/UserProfileContext";
-import Toast from "@/components/ui/toast";
+import { AppCard } from "@/components/ui/AppCard";
+import { AppButton } from "@/components/ui/AppButton";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 
-import {
-  employerProfile,
-  employerStats,
-  internshipStats,
-  employerInternships,
-  topApplicants,
-  favoritePortfolios,
-  recommendedProjects,
-  employerNotifications,
-  messageThreads,
-} from "@/data/employerDashboardData";
+const statusMeta = {
+  nominated: {
+    label: "Nominated",
+    icon: Clock,
+    className:
+      "bg-[color:var(--gold)]/15 text-[color:var(--primary)] ring-[color:var(--gold)]/30",
+  },
+  accepted: {
+    label: "Accepted",
+    icon: CheckCircle2,
+    className:
+      "bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300",
+  },
+  rejected: {
+    label: "Rejected",
+    icon: XCircle,
+    className:
+      "bg-red-500/10 text-red-700 ring-red-500/20 dark:text-red-300",
+  },
+};
 
-import {
-  EmployerHero,
-  EmployerStatsGrid,
-} from "@/components/employerDashboard/EmployerDashboardShell";
-import EmployerInternshipsPanel from "@/components/employerDashboard/EmployerInternshipsPanel";
-import EmployerInternshipPreview from "@/components/employerDashboard/EmployerInternshipPreview";
-import EmployerApplicantsPanel from "@/components/employerDashboard/EmployerApplicantsPanel";
-import EmployerSecondaryPanels from "@/components/employerDashboard/EmployerSecondaryPanels";
-
-export default function EmployerDashboard() {
-  const { profile } = useUserProfile();
-  const { notifications } = useNotifications();
-  const [toast, setToast] = useState(null);
-  const [selectedInternship, setSelectedInternship] = useState(employerInternships[0]);
-
-  const dashboardEmployer = {
-    ...employerProfile,
-    companyName:
-      profile?.companyName ||
-      profile?.name ||
-      employerProfile.companyName,
-    companyEmail: profile?.email || employerProfile.companyEmail,
-    companyLogo: profile?.image || employerProfile.companyLogo,
-    bio: profile?.bio || employerProfile.bio,
-  };
-
-  const mergedNotifications = useMemo(() => {
-    const incoming = Array.isArray(notifications) ? notifications : [];
-    return [...employerNotifications, ...incoming].slice(0, 5);
-  }, [notifications]);
-
-  const stats = [
-    {
-      title: "Active Internships",
-      value: employerStats.activeInternships,
-      icon: BriefcaseBusiness,
-    },
-    {
-      title: "Total Applicants",
-      value: employerStats.totalApplicants,
-      icon: UsersRound,
-    },
-    {
-      title: "Accepted Students",
-      value: employerStats.acceptedStudents,
-      icon: CheckCircle2,
-    },
-    {
-      title: "Unread Alerts",
-      value: mergedNotifications.filter((note) => note.unread).length,
-      icon: Bell,
-    },
-  ];
+function ApplicantStatusBadge({ status }) {
+  const meta = statusMeta[status] || statusMeta.nominated;
+  const Icon = meta.icon;
 
   return (
-    <DashboardLayout
-      notifications={mergedNotifications}
-      workspace="employer"
-      workspaceLabel="Employer Workspace"
-      sidebarProgress={{ label: "Company profile", value: dashboardEmployer.profileCompletion }}
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black ring-1 ${meta.className}`}
     >
-      <Toast notification={toast} onClose={() => setToast(null)} />
+      <Icon className="h-3.5 w-3.5" />
+      {meta.label}
+    </span>
+  );
+}
 
-      <EmployerHero employer={dashboardEmployer} />
-      <EmployerStatsGrid stats={stats} />
-
-      <section className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-        <EmployerInternshipsPanel
-          internships={employerInternships}
-          selectedInternship={selectedInternship}
-          onSelect={setSelectedInternship}
-        />
-
-        <EmployerInternshipPreview internship={selectedInternship} />
-      </section>
-
-      <section className="mt-6">
-        <EmployerApplicantsPanel applicants={topApplicants} />
-      </section>
-
-      <EmployerSecondaryPanels
-        employer={dashboardEmployer}
-        internshipStats={internshipStats}
-        favoritePortfolios={favoritePortfolios}
-        recommendedProjects={recommendedProjects}
-        notifications={mergedNotifications}
-        messageThreads={messageThreads}
+export default function EmployerApplicantsPanel({
+  applicants = [],
+  onStatusChange,
+}) {
+  return (
+    <AppCard className="p-6">
+      <SectionHeader
+        eyebrow="Applications"
+        title="Applicant review"
+        subtitle="Review internship applicants, compare contribution scores, and update their hiring status."
       />
-    </DashboardLayout>
+
+      <div className="mt-6 space-y-4">
+        {applicants.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-[color:var(--border-soft)] bg-[color:var(--surface-soft)] p-6 text-center">
+            <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[color:var(--accent)]/15 text-[color:var(--primary)]">
+              <Users className="h-6 w-6" />
+            </div>
+            <p className="mt-3 text-sm font-black text-[color:var(--ink)]">
+              No applicants yet
+            </p>
+            <p className="mt-1 text-sm font-medium text-[color:var(--muted)]">
+              Applications will appear here once students apply.
+            </p>
+          </div>
+        ) : (
+          applicants.map((applicant) => (
+            <div
+              key={applicant.id}
+              className="rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] p-4 shadow-[var(--shadow-soft)]"
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-base font-black text-[color:var(--ink)]">
+                      {applicant.name}
+                    </h3>
+                    <ApplicantStatusBadge status={applicant.status} />
+                  </div>
+
+                  <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
+                    {applicant.major || "Student"} ·{" "}
+                    {applicant.internshipTitle || applicant.role || "Internship applicant"}
+                  </p>
+
+                  {applicant.email && (
+                    <p className="mt-2 inline-flex items-center gap-2 text-xs font-bold text-[color:var(--muted)]">
+                      <Mail className="h-3.5 w-3.5" />
+                      {applicant.email}
+                    </p>
+                  )}
+
+                  {applicant.coverLetter && (
+                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-[color:var(--muted)]">
+                      {applicant.coverLetter}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="rounded-2xl bg-[color:var(--surface-soft)] px-4 py-3 text-center ring-1 ring-[color:var(--border-soft)]">
+                    <div className="flex items-center justify-center gap-1 text-[color:var(--gold)]">
+                      <Star className="h-4 w-4 fill-current" />
+                      <span className="text-lg font-black">
+                        {applicant.contributionScore ?? applicant.score ?? 0}
+                      </span>
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">
+                      Score
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <AppButton
+                      size="sm"
+                      variant="glass"
+                      onClick={() => onStatusChange?.(applicant.id, "nominated")}
+                    >
+                      Nominate
+                    </AppButton>
+
+                    <AppButton
+                      size="sm"
+                      variant="primary"
+                      onClick={() => onStatusChange?.(applicant.id, "accepted")}
+                    >
+                      Accept
+                    </AppButton>
+
+                    <AppButton
+                      size="sm"
+                      variant="danger"
+                      onClick={() => onStatusChange?.(applicant.id, "rejected")}
+                    >
+                      Reject
+                    </AppButton>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </AppCard>
   );
 }

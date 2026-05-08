@@ -6,6 +6,7 @@ export const users = [
     email: "yasmin.khaled@student.guc.edu.eg",
     faculty: "Media Engineering and Technology",
     semester: 6,
+    password: "1123456",
     skills: ["React", "UI/UX", "Node.js"],
     status: "active",
   },
