@@ -34,6 +34,7 @@ import ManageApplicants from "./pages/ManageApplicants";
 import ProjectPage from "./pages/ProjectPage";
 import ExploreInstructors from "./pages/ExploreInstructors";
 import ExploreProjects from "@/pages/ExploreProjects";
+import ChatsSection from "@/pages/ChatsSection";
 
 export default function App() {
   const [users, setUsers] = useState(() => {

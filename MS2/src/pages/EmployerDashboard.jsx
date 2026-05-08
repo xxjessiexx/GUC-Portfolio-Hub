@@ -78,6 +78,7 @@ export default function EmployerDashboard() {
       workspace="employer"
       workspaceLabel="Employer Workspace"
       sidebarProgress={{ label: "Company profile", value: dashboardEmployer.profileCompletion }}
+      
     >
       <Toast notification={toast} onClose={() => setToast(null)} />
 
