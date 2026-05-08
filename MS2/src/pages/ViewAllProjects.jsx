@@ -75,6 +75,7 @@ export default function ViewAllProjects() {
   const [filterPinned, setFilterPinned] = useState("All");
   const [sortBy, setSortBy] = useState("Updated");
   const navigate = useNavigate();
+  
     
   const deleteProject = (id) => {
     setProjects((prev) => prev.filter((p) => p.id !== id));
@@ -265,22 +266,27 @@ export default function ViewAllProjects() {
               key={p.id}
               id={p.id}
               updated={p.updated}
+                onClick={() => navigate("/project")}
+              
 
               left={
-                <div>
-                  <h3 className="font-bold text-[16px] text-[#16253A] whitespace-nowrap leading-none">
-                    {p.name}
-                  </h3>
+  <div>
+    <h3
+      onClick={() => navigate("/project")}
+      className="font-bold text-[16px] text-[#16253A] whitespace-nowrap leading-none cursor-pointer hover:text-blue-600"
+    >
+      {p.name}
+    </h3>
 
-                  <p className="text-[#3B82F6] text-sm font-semibold mt-1">
-                    {p.course}
-                  </p>
+    <p className="text-[#3B82F6] text-sm font-semibold mt-1">
+      {p.course}
+    </p>
 
-                  <p className="text-sm text-gray-500 min-w-0">
-                    {p.description}
-                  </p>
-                </div>
-      }
+    <p className="text-sm text-gray-500 min-w-0">
+      {p.description}
+    </p>
+  </div>
+}
 
             middle={
               <div className="contents">

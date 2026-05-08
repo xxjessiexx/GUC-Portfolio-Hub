@@ -1,5 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useNavigate } from "react-router-dom";
 
 export default function SortableCard({
   id,
@@ -7,6 +8,7 @@ export default function SortableCard({
   updated,
   middle,
   right,
+  onClick,
 }) {
   const {
     attributes,
@@ -16,6 +18,7 @@ export default function SortableCard({
     transition,
     isDragging,
   } = useSortable({ id });
+  const navigate = useNavigate();
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -26,9 +29,10 @@ export default function SortableCard({
     <div
       ref={setNodeRef}
       style={style}
+       
       className={`border rounded-xl px-6 py-5 
       grid grid-cols-[2.4fr_1fr_1.4fr_0.8fr_1.2fr_1fr]
-      items-center gap-6 bg-white
+      items-center gap-6 bg-white cursor-pointer
       ${isDragging ? "shadow-xl scale-[1.02]" : ""}
     `}
     >

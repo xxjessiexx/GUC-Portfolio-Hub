@@ -30,6 +30,7 @@ import InternshipDetails from "./pages/InternshipDetails";
 import MyApplications from "./pages/MyApplications";
 import ManageInternships from "./pages/ManageInternships";
 import ManageApplicants from "./pages/ManageApplicants";
+import ProjectPage from "./pages/ProjectPage";
 
 export default function App() {
   const [users, setUsers] = useState(() => {
@@ -111,6 +112,7 @@ export default function App() {
             <Route path="/create-project" element={<CreateNewProject />} />
             <Route path="/edit-project/:projectId" element={<EditProject />} />
             <Route path="/projects/:projectId/edit" element={<EditProject />} />
+            <Route path="/project" element={<ProjectPage />} />
 
             <Route
               path="/forgot-password"
