@@ -52,6 +52,7 @@ export default function InternshipDetails() {
 
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
+  const [coverLetterError, setCoverLetterError] = useState("");
   const [savedIds, setSavedIds] = useState(() =>
     getStoredIds(SAVED_INTERNSHIPS_KEY)
   );
@@ -101,13 +102,19 @@ export default function InternshipDetails() {
   };
 
   const confirmApply = () => {
-    if (isApplied) return;
+      if (isApplied) return;
 
-    const updated = [...appliedIds, internship.id];
-    setAppliedIds(updated);
-    saveStoredIds(APPLIED_INTERNSHIPS_KEY, updated);
-    setApplyDialogOpen(false);
-  };
+      if (!coverLetter.trim()) {
+        setCoverLetterError("Cover letter is required before applying.");
+        setApplyDialogOpen(false);
+        return;
+      }
+
+      const updated = [...appliedIds, internship.id];
+      setAppliedIds(updated);
+      saveStoredIds(APPLIED_INTERNSHIPS_KEY, updated);
+      setApplyDialogOpen(false);
+    };
 
   return (
     <DashboardLayout notifications={notifications}>
@@ -297,17 +304,15 @@ export default function InternshipDetails() {
               <AppCard className="p-6">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <h3 className="text-xl font-black text-[color:var(--ink)]">
-                    Apply with Cover Letter
+                    Apply with Cover Letter <span className="ml-1 text-red-500">*</span>
                   </h3>
 
-                  <StatusBadge status="Optional" />
+                  <StatusBadge status="Required" />
                 </div>
 
                 <p className="text-sm font-semibold leading-6 text-[color:var(--muted)]">
-                  You can add a short cover letter, or leave it empty and apply
-                  directly.
+                  Write a short cover letter before submitting your application.
                 </p>
-
                 <div className="mt-5 rounded-2xl border border-white/70 bg-white/55 p-4 dark:border-white/10 dark:bg-white/[0.05]">
                   <div className="mb-3 flex items-center gap-2">
                     <FileText className="h-4 w-4 text-[color:var(--primary)]" />
@@ -318,7 +323,10 @@ export default function InternshipDetails() {
 
                   <textarea
                     value={coverLetter}
-                    onChange={(event) => setCoverLetter(event.target.value)}
+                    onChange={(event) => {
+                      setCoverLetter(event.target.value);
+                      setCoverLetterError("");
+                    }}
                     placeholder="Write a short message to the employer..."
                     maxLength={700}
                     className="min-h-36 w-full resize-none rounded-2xl border border-[color:var(--primary)]/10 bg-white/70 px-4 py-3 text-sm font-semibold leading-6 text-[color:var(--ink)] outline-none placeholder:text-[color:var(--muted)]/70 focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--ring-soft)] dark:border-white/10 dark:bg-white/[0.06]"
@@ -327,6 +335,11 @@ export default function InternshipDetails() {
                   <p className="mt-2 text-xs font-bold text-[color:var(--muted)]">
                     {coverLetter.length}/700 characters
                   </p>
+                  {coverLetterError && (
+                    <p className="mt-2 text-xs font-black text-red-500">
+                      {coverLetterError}
+                    </p>
+                  )}
                 </div>
 
                 <AppButton
