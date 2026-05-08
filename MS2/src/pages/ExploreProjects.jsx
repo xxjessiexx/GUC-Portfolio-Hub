@@ -1,6 +1,6 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
-import ExploreProjectCard from "@/components/ui/ExploreProjectCard";
+import ExploreProjectCard from "@/components/ui/Searchcommons/ExploreProjectCard";
 
 /* IMPORT DATA */
 import ProjectNameData from "@/data/ProjectNameData";
@@ -52,46 +52,61 @@ export default function ExploreProjects() {
 
   /* FILTERS */
   const filteredProjects = projects
-    .filter((project) => {
+  .filter((project) => {
 
-      const matchesSearch =
-        project.title
+    const matchesSearch =
+      project.title
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+
+      project.tags.some((tag) =>
+        tag
           .toLowerCase()
-          .includes(search.toLowerCase()) ||
-
-        project.tags.some((tag) =>
-          tag
-            .toLowerCase()
-            .includes(search.toLowerCase())
-        );
-
-      const matchesCourse =
-        selectedCourse === "All Courses" ||
-        project.course === selectedCourse;
-
-      const matchesInstructor =
-        selectedInstructor === "All Instructors" ||
-        project.instructor === selectedInstructor;
-
-      return (
-        matchesSearch &&
-        matchesCourse &&
-        matchesInstructor
+          .includes(search.toLowerCase())
       );
-    })
 
-    .sort((a, b) => {
+    const matchesCourse =
+      selectedCourse === "All Courses" ||
 
-      if (selectedSort === "A-Z") {
-        return a.title.localeCompare(b.title);
-      }
+      project.course === selectedCourse ||
 
-      if (selectedSort === "Highest Rated") {
-        return b.rating - a.rating;
-      }
+      project.program === selectedCourse;
 
-      return 0;
-    });
+    const matchesInstructor =
+      selectedInstructor === "All Instructors" ||
+      project.instructor === selectedInstructor;
+
+    return (
+      matchesSearch &&
+      matchesCourse &&
+      matchesInstructor
+    );
+  })
+
+  .sort((a, b) => {
+
+  /* NEWEST */
+  if (selectedSort === "Newest") {
+    return new Date(b.date) - new Date(a.date);
+  }
+
+  /* OLDEST */
+  if (selectedSort === "Oldest") {
+    return new Date(a.date) - new Date(b.date);
+  }
+
+  /* A-Z */
+  if (selectedSort === "A-Z") {
+    return a.title.localeCompare(b.title);
+  }
+
+  /* HIGHEST RATED */
+  if (selectedSort === "Highest Rated") {
+    return b.rating - a.rating;
+  }
+
+  return 0;
+});
 
   return (
     <DashboardLayout>
@@ -187,8 +202,12 @@ export default function ExploreProjects() {
               <option>
                 CSEN 504 - Mobile Computing
               </option>
-            </select>
+              <option>
+                Bachelor Project
+              </option>
 
+            </select>
+            
             {/* INSTRUCTORS */}
             <select
               value={selectedInstructor}

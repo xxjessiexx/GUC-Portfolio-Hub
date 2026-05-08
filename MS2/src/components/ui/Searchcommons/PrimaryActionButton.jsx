@@ -29,7 +29,7 @@ export default function PrimaryActionButton({
       `}
     >
       {text}
-      <ArrowRight size={16} />
+      
     </button>
   );
 }

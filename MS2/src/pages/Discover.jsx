@@ -51,7 +51,7 @@ export default function DiscoverPage() {
         {/* SEARCH */}
        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_260px] gap-4">
           <div className="flex-1 space-y-3">
-            <AppCard className="p-4 rounded-[28px] border border-gray-100  shadow-sm">
+            <AppCard className="p-4 rounded-[28px] border border-gray-100  shadow-sm  bg-transparent">
               <div className="flex items-center justify-between gap-4">
                 <DiscoverSearchBar
                   placeholder="Search projects, portfolios, technologies, skills, or instructors..."
@@ -82,6 +82,7 @@ export default function DiscoverPage() {
                 description="Discover student portfolios showcasing skills, experience, and achievements."
                 buttonText="Browse Portfolios"
                 image="/discover/project-card.png"
+                onClick={() => navigate("/explore-portfolio")}
                 
               />
 

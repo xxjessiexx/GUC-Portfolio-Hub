@@ -1,6 +1,9 @@
 import { Calendar, Users, Star, MoreVertical, Heart } from "lucide-react";
-import { AppCard } from "./AppCard";
+import { AppCard } from "../AppCard";
 import { useNavigate } from "react-router-dom";
+import FavoriteButton from "@/components/ui/Searchcommons/FavoriteButton";
+
+
 
 export default function ExploreProjectCard({
   project,
@@ -43,26 +46,12 @@ export default function ExploreProjectCard({
         />
 
         {/* HEART */}
-        <button
+        
+          <FavoriteButton
+          favorite={project.favorite}
           onClick={() => toggleFavorite(project.id)}
-          className="
-            absolute top-3 right-3
-            w-10 h-10
-            rounded-full
-            bg-white/90
-            flex items-center justify-center
-            shadow
-          "
-        >
-          <Heart
-            size={18}
-            className={
-              project.favorite
-                ? "fill-red-500 text-red-500"
-                : "text-gray-400"
-            }
-          />
-        </button>
+        />
+        
       </div>
 
       {/* CONTENT */}
@@ -100,6 +89,13 @@ export default function ExploreProjectCard({
             <Users size={15} />
             {project.instructor}
           </div>
+          <div className="flex items-center gap-2">
+          <Users size={16} />
+
+          <span className="text-sm font-medium">
+            {project.students} Students
+          </span>
+        </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1 text-yellow-500">
