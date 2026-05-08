@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 import AuthLayout from "@/components/auth/AuthLayout";
 import AuthHeader from "@/components/auth/AuthHeader";
@@ -124,11 +125,11 @@ export default function Register({ addUser }) {
 
     addUser(newUser);
       
-      alert(
-        role === "employer"
-          ? "Employer registration submitted for admin approval!"
-          : "Registration form is valid!"
-      );
+      toast.success(
+      role === "employer"
+    ? "Employer registration submitted for admin approval!"
+    : "Account created successfully!",
+);
 
       navigate("/login");
     }
