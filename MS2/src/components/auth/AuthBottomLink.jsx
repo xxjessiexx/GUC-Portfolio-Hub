@@ -15,13 +15,7 @@ export default function AuthBottomLink({ text, linkText, to, backTo = "/",backLa
         </Link>
       </p>
 
-      <Link
-        to={backTo}
-        className="mx-auto mt-7 flex w-fit items-center gap-2 font-bold text-[color:var(--muted)] hover:text-[color:var(--primary)]"
-      >
-      <ArrowLeft className="h-4 w-4" />
-        {backLabel}
-      </Link>
+      
     </>
   );
 }
