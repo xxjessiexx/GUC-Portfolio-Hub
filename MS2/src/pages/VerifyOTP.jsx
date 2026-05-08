@@ -7,12 +7,9 @@ import AuthSubmitButton from "@/components/auth/AuthSubmitButton";
 import AuthBottomLink from "@/components/auth/AuthBottomLink";
 
 import { useLocation } from "react-router-dom";
+//import { PinInput } from "@mantine/core";
 
-import {
-InputOTP,
-InputOTPGroup,
-InputOTPSlot,
-} from "@/components/ui/input-otp";
+import PinInputLikeMantine from "@/components/ui/PinInputLikeMantine";
 
 export default function VerifyOTP() {
 const [otp, setOtp] = useState("");
@@ -39,20 +36,16 @@ return (
 
     <form className="space-y-6" onSubmit={handleSubmit}>
         <div className="flex justify-center mt-10">
-        <InputOTP
-            maxLength={6}
-            value={otp}
-            onChange={(value) => setOtp(value)}
-        >
-            <InputOTPGroup>
-            {[...Array(6)].map((_, i) => (
-                <InputOTPSlot key={i} index={i} />
-            ))}
-            </InputOTPGroup>
-        </InputOTP>
+         <PinInputLikeMantine
+        length={6}
+        value={otp}
+        onChange={setOtp}
+      />
         </div>
             
-        <AuthSubmitButton>Continue</AuthSubmitButton>
+        <AuthSubmitButton disabled={otp.length !== 6}>
+  Continue
+</AuthSubmitButton>
     </form>
     <div className="my-8 flex items-center gap-4 font-semibold text-[color:var(--muted)]">
     <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[color:var(--secondary)]/30 to-transparent" />

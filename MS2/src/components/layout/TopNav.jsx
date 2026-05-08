@@ -76,6 +76,19 @@ export default function TopNav({
         <div className="flex items-center gap-3">
           <ThemeToggle variant="dark" />
 
+            <motion.button
+            type="button"
+            onClick={handleChatsClick}
+            whileHover={{ y: -3 }}
+            whileTap={tapScale}
+            transition={{ duration: 0.22, ease: easeOutExpo }}
+            className="relative grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/10 text-white shadow-sm transition hover:bg-white/15"
+          >
+            <MessageCircle className="h-5 w-5" />
+
+          </motion.button>
+
+          {/* FIXED: onClick is now a prop of motion.button */}
           <motion.button
             type="button"
             onClick={() => navigate("/notifications")}

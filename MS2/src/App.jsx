@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { NotificationsProvider } from "./context/NotificationsContext";
 import { UserProfileProvider } from "./context/UserProfileContext";
+import { Toaster } from "sonner";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -63,6 +64,8 @@ export default function App() {
       <NotificationsProvider>
         <UserProfileProvider currentUser={currentUser}>
           <FloatingCTA />
+           {/* 👇 ADD THIS HERE (GLOBAL TOAST SYSTEM) */}
+          <Toaster richColors position="top-right" />
 
           <Routes>
             <Route path="/" element={<Landing />} />
@@ -78,6 +81,8 @@ export default function App() {
                 />
               }
             />
+
+            <Route path="/chat" element={<ChatsSection />} />
 
             <Route
               path="/login"
