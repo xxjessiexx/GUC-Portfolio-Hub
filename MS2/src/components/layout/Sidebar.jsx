@@ -75,12 +75,12 @@ const workspaceItems = {
 
   admin: [
     { label: "Home", icon: Home, path: "/admin-dashboard" },
-    { label: "Users", icon: Users, path: null },
-    { label: "Companies", icon: ShieldCheck, path: null },
-    { label: "Courses", icon: BookOpen, path: null },
-    { label: "Link Requests", icon: Link2, path: null },
-    { label: "Flagged", icon: FileWarning, path: null },
-    { label: "Statistics", icon: BarChart3, path: null },
+    { label: "Users", icon: Users, path: "/admin/users" },
+    { label: "Companies", icon: ShieldCheck, path: "/admin/employers" },
+    { label: "Courses", icon: BookOpen, path: "/admin/courses" },
+    { label: "Link Requests", icon: Link2, path: "/admin/link-requests" },
+    { label: "Flagged", icon: FileWarning, path: "/admin/flagged-projects" },
+    { label: "Statistics", icon: BarChart3, path: "/admin/statistics" },
   ],
 };
 

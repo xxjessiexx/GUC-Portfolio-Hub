@@ -1,7 +1,7 @@
 import { useState } from "react";
 import AppShellBackground from "../components/ui/AppShellBackground";
 import {AppCard} from "../components/ui/AppCard";
-import { Button } from "../components/ui/Button";
+import { Button } from "../components/ui/button";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 

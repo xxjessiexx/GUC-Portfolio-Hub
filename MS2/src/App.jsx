@@ -38,6 +38,12 @@ import ExplorePortfolios from "./pages/ExplorePortfolios";
 import ChatsSection from "@/pages/ChatsSection";
 import EditInternship from "@/pages/EditInternship";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminEmployers from "@/pages/admin/AdminEmployers";
+import AdminCourses from "@/pages/admin/AdminCourses";
+import AdminLinkRequests from "@/pages/admin/AdminLinkRequests";
+import AdminFlaggedProjects from "@/pages/admin/AdminFlaggedProjects";
+import AdminStatistics from "@/pages/admin/AdminStatistics";
 
 export default function App() {
   const [users, setUsers] = useState(() => {
@@ -129,6 +135,59 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+  path="/admin/users"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminUsers />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/employers"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminEmployers />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/courses"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminCourses />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/link-requests"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminLinkRequests />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/flagged-projects"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminFlaggedProjects />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/statistics"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminStatistics />
+    </ProtectedRoute>
+  }
+/>
 
             <Route
               path="/chat"
