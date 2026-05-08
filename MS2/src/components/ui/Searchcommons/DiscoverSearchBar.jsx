@@ -10,7 +10,7 @@ export default function DiscoverSearchBar({
       className="
         w-full
         h-[64px]
-        bg-transparent
+        bg-white/45
         border border-gray-100
         rounded-[24px]
         shadow-sm

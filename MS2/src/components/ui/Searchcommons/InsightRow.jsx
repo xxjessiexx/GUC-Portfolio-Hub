@@ -6,7 +6,15 @@ export default function InsightRow({
   color,
 }) {
   return (
-    <div className="flex items-center justify-between">
+          <div
+        className="
+          flex items-center justify-between
+          p-4
+          rounded-2xl
+          border border-gray-100
+          bg-transparent
+        "
+      >
       <div className="flex items-center gap-4">
         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${color}`}>
           <Box size={20} />
@@ -23,7 +31,7 @@ export default function InsightRow({
         </div>
       </div>
 
-      <span className="text-xl font-black text-[#16253A]">
+      <span className="text-l font-black text-[#16253A]">
         {number}
       </span>
     </div>
