@@ -102,7 +102,7 @@ setToast(null); // auto hide
 
   return (
     
-    <DashboardLayout notifications={notifications}>
+    <DashboardLayout notifications={notifications} workspace="student" workspaceLabel="Student Workspace">
       {/* ✅ TOAST GOES HERE */}
   <Toast
   notification={toast}

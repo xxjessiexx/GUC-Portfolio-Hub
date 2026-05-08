@@ -1,16 +1,24 @@
 import { motion } from "framer-motion";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 import {
-  Home,
-  SearchIcon,
+  BarChart3,
+  Bell,
+  BookOpen,
   Briefcase,
   CheckCircle2,
+  ClipboardCheck,
+  FileWarning,
   FolderKanban,
   Heart,
+  Home,
+  Link2,
   LogOut,
   MessageSquare,
+  SearchIcon,
   Settings,
+  ShieldCheck,
   User,
+  Users,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { student } from "@/data/studentDashboardData";
@@ -27,64 +35,142 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export default function Sidebar({ open, setOpen }) {
-  const navigate = useNavigate();
-  const location = useLocation();
+const dashboardRoutes = {
+  student: "/student-dashboard",
+  instructor: "/instructor-dashboard",
+  employer: "/employer-dashboard",
+  admin: "/admin-dashboard",
+};
 
-  const items = [
+const workspaceItems = {
+  student: [
     { label: "Home", icon: Home, path: "/student-dashboard" },
-    { label: "Explore", icon: SearchIcon, path: null },
+    { label: "Explore", icon: SearchIcon, path: "/discover" },
     { label: "My Portfolio", icon: User, path: "/student-dashboard/portfolio" },
-    { label: "My Projects", icon: FolderKanban, path: null },
+    { label: "My Projects", icon: FolderKanban, path: "/view-all-projects" },
     { label: "Feedback", icon: MessageSquare, path: null },
     { label: "Internships", icon: Briefcase, path: "/internships" },
     { label: "Favorites", icon: Heart, path: null },
     { label: "Settings", icon: Settings, path: null },
-  ];
+  ],
+
+  instructor: [
+    { label: "Home", icon: Home, path: "/instructor-dashboard" },
+    { label: "Discover", icon: SearchIcon, path: "/discover" },
+    { label: "Projects", icon: FolderKanban, path: "/view-all-projects" },
+    { label: "Courses", icon: BookOpen, path: null },
+    { label: "Invitations", icon: ClipboardCheck, path: null },
+    { label: "Feedback", icon: MessageSquare, path: null },
+    { label: "Flags", icon: FileWarning, path: null },
+    { label: "Messages", icon: MessageSquare, path: null },
+  ],
+
+  employer: [
+    { label: "Home", icon: Home, path: "/employer-dashboard" },
+    { label: "Discover", icon: SearchIcon, path: "/discover" },
+    { label: "Internships", icon: Briefcase, path: "/manage-internships" },
+    { label: "Applicants", icon: Users, path: null },
+    { label: "Favorites", icon: Heart, path: null },
+    { label: "Messages", icon: MessageSquare, path: null },
+    { label: "Statistics", icon: BarChart3, path: null },
+  ],
+
+  admin: [
+    { label: "Home", icon: Home, path: "/admin-dashboard" },
+    { label: "Users", icon: Users, path: null },
+    { label: "Companies", icon: ShieldCheck, path: null },
+    { label: "Courses", icon: BookOpen, path: null },
+    { label: "Link Requests", icon: Link2, path: null },
+    { label: "Flagged", icon: FileWarning, path: null },
+    { label: "Statistics", icon: BarChart3, path: null },
+  ],
+};
+
+const workspaceDefaults = {
+  student: { label: "Portfolio completion", value: student.profileCompletion },
+  instructor: { label: "Urgent actions", value: 78 },
+  employer: { label: "Hiring readiness", value: 76 },
+  admin: { label: "Review readiness", value: 96 },
+};
+
+function isItemActive(item, location, workspace) {
+  const { label, path } = item;
+
+  if (!path) return false;
+
+  const workspaceHome = dashboardRoutes[workspace] || dashboardRoutes.student;
+
+  if (label === "Home") {
+    return location.pathname === workspaceHome;
+  }
+
+  return location.pathname === path || location.pathname.startsWith(`${path}/`);
+}
+
+export default function Sidebar({
+  open,
+  setOpen,
+  workspace = "student",
+  sidebarProgress,
+}) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const activeWorkspace = workspaceItems[workspace] ? workspace : "student";
+  const items = workspaceItems[activeWorkspace];
+
+  const progress =
+    sidebarProgress ||
+    workspaceDefaults[activeWorkspace] ||
+    workspaceDefaults.student;
 
   const handleLogout = () => {
     sessionStorage.removeItem("currentUser");
     navigate("/");
   };
 
+  const handleNavigate = (path) => {
+    if (!path) return;
+    navigate(path);
+  };
+
   return (
     <aside
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
-      className={`fixed left-0 top-20 z-40 h-[calc(100vh-80px)] border-r border-white/10 bg-[linear-gradient(180deg,#2C3947,#355872)] text-white shadow-[18px_0_70px_rgba(44,57,71,0.24)] backdrop-blur-2xl transition-all duration-300 ease-out dark:[background:var(--dashboard-sidebar-gradient)] dark:shadow-[18px_0_70px_rgba(0,0,0,0.24)] ${
+      className={`fixed left-0 top-20 z-40 h-[calc(100vh-80px)] border-r border-white/10 bg-[image:var(--dashboard-sidebar-gradient)] text-white shadow-[18px_0_70px_rgba(44,57,71,0.24)] backdrop-blur-2xl transition-all duration-300 ease-out dark:[background:var(--dashboard-sidebar-gradient)] dark:shadow-[18px_0_70px_rgba(0,0,0,0.24)] ${
         open ? "w-[280px]" : "w-[92px]"
       }`}
     >
-      <div className="pointer-events-none absolute -left-20 top-10 h-52 w-52 rounded-full bg-[#9CD5FF]/15 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 right-0 h-64 w-64 rounded-full bg-[#E6C77B]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -left-20 top-10 h-52 w-52 rounded-full bg-[color:var(--accent)]/15 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 right-0 h-64 w-64 rounded-full bg-[color:var(--gold)]/10 blur-3xl" />
 
       <div className="relative z-10 flex h-full flex-col justify-between gap-4 overflow-y-auto p-4">
         <nav className="space-y-2">
-          {items.map(({ label, icon: Icon, path }) => {
-            const active =
-              path &&
-              (location.pathname === path ||
-                (path === "/student-dashboard" && location.pathname === "/"));
+          {items.map((item) => {
+            const { label, icon: Icon, path } = item;
+            const active = isItemActive(item, location, activeWorkspace);
+            const disabled = !path;
 
             return (
               <motion.button
                 key={label}
                 type="button"
-                onClick={() => {
-                  if (label === "My Projects") {
-                    navigate("/view-all-projects");
-                  } else if (path) {
-                    navigate(path);
-                  }
-                }}
-                whileHover={{ x: open ? 3 : 0, scale: 1.015 }}
-                whileTap={tapScale}
+                title={!open ? label : undefined}
+                disabled={disabled}
+                onClick={() => handleNavigate(path)}
+                whileHover={
+                  disabled ? undefined : { x: open ? 3 : 0, scale: 1.015 }
+                }
+                whileTap={disabled ? undefined : tapScale}
                 transition={{ duration: 0.22, ease: easeOutExpo }}
                 className={`group relative flex h-12 w-full items-center rounded-2xl text-sm font-bold transition-all duration-300 ${
                   open ? "justify-start gap-3 px-4" : "justify-center px-0"
                 } ${
                   active
-                    ? "bg-white text-[#355872] shadow-[0_16px_38px_rgba(0,0,0,0.18)]"
+                    ? "bg-white text-[color:var(--primary)] shadow-[0_16px_38px_rgba(0,0,0,0.18)]"
+                    : disabled
+                    ? "cursor-not-allowed text-white/30"
                     : "text-white/70 hover:bg-white/10 hover:text-white"
                 }`}
               >
@@ -93,13 +179,13 @@ export default function Sidebar({ open, setOpen }) {
                 {open && <span className="whitespace-nowrap">{label}</span>}
 
                 {!open && (
-                  <span className="pointer-events-none absolute left-[76px] z-50 rounded-xl bg-[#102630] px-3 py-2 text-xs font-bold text-white opacity-0 shadow-xl transition group-hover:opacity-100">
+                  <span className="pointer-events-none absolute left-[76px] z-50 rounded-xl bg-[color:var(--ink)] px-3 py-2 text-xs font-bold text-white opacity-0 shadow-xl transition group-hover:opacity-100">
                     {label}
                   </span>
                 )}
 
                 {active && (
-                  <span className="absolute right-3 h-2 w-2 rounded-full bg-[#E6C77B]" />
+                  <span className="absolute right-3 h-2 w-2 rounded-full bg-[color:var(--gold)]" />
                 )}
               </motion.button>
             );
@@ -115,23 +201,23 @@ export default function Sidebar({ open, setOpen }) {
             {open ? (
               <>
                 <p className="text-sm font-black text-white">
-                  Portfolio completion
+                  {progress.label}
                 </p>
 
                 <div className="mt-3 h-3 rounded-full bg-white/10">
                   <div
-                    className="h-3 rounded-full bg-[linear-gradient(90deg,#E6C77B,#9CD5FF)]"
-                    style={{ width: `${student.profileCompletion}%` }}
+                    className="h-3 rounded-full bg-[linear-gradient(90deg,var(--gold),var(--accent))]"
+                    style={{ width: `${progress.value}%` }}
                   />
                 </div>
 
                 <p className="mt-2 text-xs font-semibold text-white/60">
-                  {student.profileCompletion}% completed
+                  {progress.value}% completed
                 </p>
               </>
             ) : (
               <div className="grid h-10 place-items-center">
-                <CheckCircle2 className="h-5 w-5 text-[#9CD5FF]" />
+                <CheckCircle2 className="h-5 w-5 text-[color:var(--accent)]" />
               </div>
             )}
           </div>
@@ -153,14 +239,14 @@ export default function Sidebar({ open, setOpen }) {
                 {open && <span className="font-bold">Logout</span>}
 
                 {!open && (
-                  <span className="pointer-events-none absolute left-[76px] z-50 rounded-xl bg-[#102630] px-3 py-2 text-xs font-bold text-white opacity-0 shadow-xl transition group-hover:opacity-100">
+                  <span className="pointer-events-none absolute left-[76px] z-50 rounded-xl bg-[color:var(--ink)] px-3 py-2 text-xs font-bold text-white opacity-0 shadow-xl transition group-hover:opacity-100">
                     Logout
                   </span>
                 )}
               </motion.button>
             </AlertDialogTrigger>
 
-            <AlertDialogContent className="z-[9999] rounded-3xl border border-white/70 bg-white p-6 shadow-[0_24px_80px_rgba(44,57,71,0.25)] dark:border-white/10 dark:bg-[#101f2d]">
+            <AlertDialogContent className="z-[9999] rounded-3xl border border-white/70 bg-white p-6 shadow-[0_24px_80px_rgba(44,57,71,0.25)] dark:border-white/10 dark:bg-[color:var(--surface-elevated)]">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-2xl font-black text-[color:var(--ink)]">
                   Log out?
@@ -178,7 +264,7 @@ export default function Sidebar({ open, setOpen }) {
 
                 <AlertDialogAction
                   onClick={handleLogout}
-                  className="rounded-2xl bg-[color:var(--primary)] font-bold text-white hover:bg-[color:var(--dark)] dark:text-[#102630]"
+                  className="rounded-2xl bg-[color:var(--primary)] font-bold text-white hover:bg-[color:var(--dark)] dark:text-[color:var(--background)]"
                 >
                   Yes, log out
                 </AlertDialogAction>

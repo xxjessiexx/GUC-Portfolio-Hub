@@ -1,17 +1,74 @@
 import { useEffect, useState } from "react";
 import { motion, useSpring } from "framer-motion";
+import { useLocation } from "react-router-dom";
 
 import TopNav from "./TopNav";
 import Sidebar from "./Sidebar";
 import DashboardFooter from "@/components/footer/DashboardFooter";
+import { useUserProfile } from "@/context/UserProfileContext";
 
-export default function DashboardLayout({ children, notifications }) {
+const workspaceLabels = {
+  student: "Student Workspace",
+  instructor: "Instructor Workspace",
+  employer: "Employer Workspace",
+  admin: "Admin Workspace",
+};
+
+function normalizeWorkspace(value) {
+  const role = String(value || "").trim().toLowerCase();
+
+  if (role.includes("admin")) return "admin";
+  if (role.includes("instructor")) return "instructor";
+  if (role.includes("employer")) return "employer";
+  if (role.includes("company")) return "employer";
+  if (role.includes("student")) return "student";
+
+  return "";
+}
+
+function inferWorkspace({ explicitWorkspace, pathname, profile }) {
+  const explicit = normalizeWorkspace(explicitWorkspace);
+  if (explicit) return explicit;
+
+  if (pathname.startsWith("/admin-dashboard")) return "admin";
+  if (pathname.startsWith("/employer-dashboard")) return "employer";
+  if (pathname.startsWith("/instructor-dashboard")) return "instructor";
+  if (pathname.startsWith("/student-dashboard")) return "student";
+
+  return (
+    normalizeWorkspace(profile?.accountRole) ||
+    normalizeWorkspace(profile?.systemRole) ||
+    normalizeWorkspace(profile?.role) ||
+    "student"
+  );
+}
+
+export default function DashboardLayout({
+  children,
+  notifications,
+  workspace,
+  workspaceLabel,
+  sidebarProgress,
+}) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+  const { profile } = useUserProfile();
 
   const blobOneX = useSpring(0, { stiffness: 45, damping: 18 });
   const blobOneY = useSpring(0, { stiffness: 45, damping: 18 });
   const blobTwoX = useSpring(0, { stiffness: 35, damping: 20 });
   const blobTwoY = useSpring(0, { stiffness: 35, damping: 20 });
+
+  const activeWorkspace = inferWorkspace({
+    explicitWorkspace: workspace,
+    pathname: location.pathname,
+    profile,
+  });
+
+  const activeWorkspaceLabel =
+    workspaceLabel ||
+    workspaceLabels[activeWorkspace] ||
+    workspaceLabels.student;
 
   useEffect(() => {
     const handleMouseMove = (event) => {
@@ -40,8 +97,18 @@ export default function DashboardLayout({ children, notifications }) {
         className="pointer-events-none fixed -bottom-52 -right-44 h-[640px] w-[640px] rounded-full bg-[radial-gradient(circle,rgba(122,170,206,0.62)_0%,rgba(230,199,123,0.16)_52%,transparent_72%)] blur-3xl"
       />
 
-      <TopNav notifications={notifications} />
-      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+      <TopNav
+        notifications={notifications}
+        workspace={activeWorkspace}
+        workspaceLabel={activeWorkspaceLabel}
+      />
+
+      <Sidebar
+        open={sidebarOpen}
+        setOpen={setSidebarOpen}
+        workspace={activeWorkspace}
+        sidebarProgress={sidebarProgress}
+      />
 
       <div className="relative z-10 min-h-screen pt-20">
         <div className="ml-[92px] w-[calc(100vw-92px)] overflow-x-hidden px-6 py-8">

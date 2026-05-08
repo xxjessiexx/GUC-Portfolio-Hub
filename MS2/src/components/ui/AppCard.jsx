@@ -1,12 +1,19 @@
-export function AppCard({ children, className = "" }) {
+import { appCardVariants } from "@/lib/uiVariants";
+import { cn } from "@/lib/utils";
+
+export function AppCard({
+  children,
+  className,
+  variant = "glass",
+  radius = "lg",
+  padding = "none",
+  hover = false,
+  ...props
+}) {
   return (
     <div
-      className={`rounded-[var(--radius-card)] border backdrop-blur-2xl ${className}`}
-      style={{
-        background: "var(--card-bg)",
-        borderColor: "var(--card-border)",
-        boxShadow: "var(--shadow-card)",
-      }}
+      className={cn(appCardVariants({ variant, radius, padding, hover }), className)}
+      {...props}
     >
       {children}
     </div>

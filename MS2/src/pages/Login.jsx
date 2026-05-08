@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import AuthLayout from "@/components/auth/AuthLayout";
 import AuthHeader from "@/components/auth/AuthHeader";
@@ -6,15 +7,27 @@ import AuthInput from "@/components/auth/AuthInput";
 import AuthSubmitButton from "@/components/auth/AuthSubmitButton";
 import AuthDivider from "@/components/auth/AuthDivider";
 import AuthBottomLink from "@/components/auth/AuthBottomLink";
-import { useNavigate } from "react-router-dom";
 
-
-
-import { Mail, Lock }from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
+import { demoUsers } from "@/data/DemoUsers";
+import { getDashboardRouteByRole, normalizeUserRole } from "@/utils/roleRoutes";
 
+function findUserByCredentials(users, email, password) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const registeredUsers = Array.isArray(users) ? users : [];
+  const sessionUsers = JSON.parse(sessionStorage.getItem("users") || "[]");
 
-export default function Login({ users, setCurrentUser }){
+  const allUsers = [...demoUsers, ...registeredUsers, ...sessionUsers];
+
+  return allUsers.find(
+    (user) =>
+      user.email?.trim().toLowerCase() === normalizedEmail &&
+      user.password === password
+  );
+}
+
+export default function Login({ users, setCurrentUser }) {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,9 +38,7 @@ export default function Login({ users, setCurrentUser }){
     const newErrors = {};
 
     if (!email.trim()) newErrors.email = "Email is required";
-   // else if (!email.endsWith("@student.guc.edu.eg")) 
-   // newErrors.email = "Please use your GUC email address";
-   // else if(!email.endsWith("@guc.edu.eg"))
+
     if (!password.trim()) newErrors.password = "Password is required";
     else if (password.length < 6)
       newErrors.password = "Password must be at least 6 characters";
@@ -38,22 +49,36 @@ export default function Login({ users, setCurrentUser }){
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    
-    if (!validate()) return;
-    const foundUser = users.find(
-    (user) => user.email === email && user.password === password
-    );
-    if (foundUser) {
-    sessionStorage.setItem("currentUser", JSON.stringify(foundUser));
-    setCurrentUser(foundUser);
-    navigate("/student-dashboard");
-  } else {
-    setErrors({
-      email: "",
-      password: "Invalid email or password",
-    });
-  }
 
+    if (!validate()) return;
+
+    const foundUser = findUserByCredentials(users, email, password);
+
+    if (!foundUser) {
+      setErrors({
+        email: "",
+        password: "Invalid email or password",
+      });
+      return;
+    }
+
+    const role = normalizeUserRole(
+  foundUser.role ||
+    foundUser.accountRole ||
+    foundUser.systemRole ||
+    foundUser.userType ||
+    "student"
+);
+    const normalizedUser = {
+      ...foundUser,
+      role,
+      systemRole: role,
+      accountRole: role,
+    };
+
+    sessionStorage.setItem("currentUser", JSON.stringify(normalizedUser));
+    setCurrentUser(normalizedUser);
+    navigate(getDashboardRouteByRole(role));
   };
 
   return (
@@ -80,22 +105,26 @@ export default function Login({ users, setCurrentUser }){
             setErrors((prev) => ({ ...prev, email: "" }));
           }}
         />
-      <AuthInput
-                  label="Password"
-                  icon={Lock}
-                  type="password"
-                  forgotPassword
-                  enableToggle
-                  showPassword={showPassword}
-                  setShowPassword={setShowPassword}
-                  tapScale={tapScale}
-                  required
-                  easeOutExpo={easeOutExpo}
-                  value={password}
-                  error={errors.password}
-                  placeholder="••••••••"
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+
+        <AuthInput
+          label="Password"
+          icon={Lock}
+          type="password"
+          forgotPassword
+          enableToggle
+          showPassword={showPassword}
+          setShowPassword={setShowPassword}
+          tapScale={tapScale}
+          required
+          easeOutExpo={easeOutExpo}
+          value={password}
+          error={errors.password}
+          placeholder="••••••••"
+          onChange={(event) => {
+            setPassword(event.target.value);
+            setErrors((prev) => ({ ...prev, password: "" }));
+          }}
+        />
 
         <AuthSubmitButton>Sign In</AuthSubmitButton>
       </form>

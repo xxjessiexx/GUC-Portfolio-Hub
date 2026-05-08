@@ -33,4 +33,14 @@ export const demoUsers = [
     bio: "Looking for strong student portfolios, clean project documentation, and internship-ready candidates.",
     avatar: "",
   },
+  {
+    id: "admin-demo-1",
+    name: "Nadine Amin",
+    email: "admin@guc.edu.eg",
+    password: "123456",
+    role: "admin",
+    title: "Platform Administrator",
+    bio: "Responsible for verifying employers, managing users and courses, reviewing flags and appeals, and monitoring platform usage.",
+    avatar: "",
+  },
 ];

@@ -1,24 +1,21 @@
 import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
 
 export default function SearchInput({
-  search,
-  setSearch,
+  value,
+  onChange,
   placeholder = "Search...",
+  className = "",
 }) {
   return (
-    <div className="relative w-72">
-      <Search
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-        size={16}
-      />
-
-      <Input
-        type="text"
+    <div
+      className={`flex items-center gap-3 rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] px-4 py-3 shadow-[var(--shadow-soft)] ${className}`}
+    >
+      <Search className="h-4 w-4 text-[color:var(--muted)]" />
+      <input
+        value={value}
+        onChange={onChange}
         placeholder={placeholder}
-        className="pl-9 bg-transparent"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        className="w-full bg-transparent text-sm font-medium text-[color:var(--ink)] outline-none placeholder:text-[color:var(--muted)]"
       />
     </div>
   );
