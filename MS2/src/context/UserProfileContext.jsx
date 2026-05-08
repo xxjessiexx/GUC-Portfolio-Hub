@@ -57,20 +57,39 @@ const defaultLinks = {
 };
 
 function normalizeRole(value) {
-  const role = String(value || "student").toLowerCase();
+  const role = String(value || "").trim().toLowerCase();
 
+  if (role.includes("admin")) return "admin";
   if (role.includes("instructor")) return "instructor";
   if (role.includes("employer") || role.includes("company")) return "employer";
-  if (role.includes("admin")) return "admin";
-  return "student";
+  if (role.includes("student")) return "student";
+
+  return "";
 }
 
 function buildProfile(currentUser) {
-  const role = normalizeRole(currentUser?.role || currentUser?.accountRole || currentUser?.systemRole);
+  const role =
+    normalizeRole(
+      currentUser?.accountRole ||
+        currentUser?.systemRole ||
+        currentUser?.role ||
+        currentUser?.userType
+    ) || "student";
+
   const fallback = roleDefaults[role] || roleDefaults.student;
+
   const major = currentUser?.major || fallback.major || "Computer Science";
-  const companyName = currentUser?.companyName || fallback.companyName || currentUser?.company || "";
-  const displayName = role === "employer" ? companyName || currentUser?.name || fallback.name : currentUser?.name || fallback.name;
+
+  const companyName =
+    currentUser?.companyName ||
+    fallback.companyName ||
+    currentUser?.company ||
+    "";
+
+  const displayName =
+    role === "employer"
+      ? companyName || currentUser?.name || fallback.name
+      : currentUser?.name || fallback.name;
 
   return {
     ...fallback,
@@ -109,7 +128,10 @@ export function UserProfileProvider({ children, currentUser }) {
 
   const updateProfile = (updates) => {
     setProfile((prev) => {
-      const updatedRole = updates.role ? normalizeRole(updates.role) : prev.role;
+      const updatedRole = updates.role
+        ? normalizeRole(updates.role) || prev.role
+        : prev.role;
+
       const updatedProfile = {
         ...prev,
         ...updates,
@@ -118,8 +140,21 @@ export function UserProfileProvider({ children, currentUser }) {
         accountRole: updatedRole,
       };
 
-      const storedUser = JSON.parse(sessionStorage.getItem("currentUser") || "{}");
-      sessionStorage.setItem("currentUser", JSON.stringify({ ...storedUser, ...updatedProfile }));
+      try {
+        const storedUser = JSON.parse(
+          sessionStorage.getItem("currentUser") || "{}"
+        );
+
+        sessionStorage.setItem(
+          "currentUser",
+          JSON.stringify({
+            ...storedUser,
+            ...updatedProfile,
+          })
+        );
+      } catch {
+        sessionStorage.setItem("currentUser", JSON.stringify(updatedProfile));
+      }
 
       return updatedProfile;
     });

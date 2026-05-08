@@ -11,6 +11,7 @@ import {
   List,
   MapPin,
   Search,
+  SlidersHorizontal,
   Send,
   Sparkles,
   X,
@@ -27,6 +28,7 @@ import StatusBadge from "@/components/common/StatusBadge";
 
 import { notifications } from "@/data/studentDashboardData";
 import { internshipsData } from "@/data/internshipsData";
+import FilterPanel from "@/components/common/FilterPanel";
 
 const SAVED_INTERNSHIPS_KEY = "guc-saved-internships";
 const APPLIED_INTERNSHIPS_KEY = "guc-applied-internships";
@@ -64,6 +66,7 @@ export default function Internships() {
   const [selectedWorkMode, setSelectedWorkMode] = useState("All Work Modes");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [sortBy, setSortBy] = useState("Sort by: Newest");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
   const [visibleCount, setVisibleCount] = useState(6);
 
@@ -249,8 +252,8 @@ export default function Internships() {
           </div>
 
           <AppCard className="p-5">
-            <div className="flex flex-wrap items-center gap-4">                
-              <div className="relative w-full">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="relative min-w-[260px] flex-1">
                 <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
 
                 <Input
@@ -263,77 +266,87 @@ export default function Internships() {
                   className="h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] pl-11 font-semibold text-[color:var(--ink)]"
                 />
               </div>
-            <div className="w-[13rem]">
-              <FilterSelect
-                value={selectedCompany}
-                onChange={(value) => {
-                  setSelectedCompany(value);
-                  setVisibleCount(6);
-                }}
-                options={companies}
-              />
-            </div>
-            
-            <div className="w-[13rem]">
-              <FilterSelect
-                value={selectedDuration}
-                onChange={(value) => {
-                  setSelectedDuration(value);
-                  setVisibleCount(6);
-                }}
-                options={durations}
-              />
-            </div>
 
-            <div className="w-[13rem]">
-              <FilterSelect
-                value={selectedWorkMode}
-                onChange={(value) => {
-                  setSelectedWorkMode(value);
-                  setVisibleCount(6);
-                }}
-                options={workModes}
-              />
-            </div>
-
-            <div className="w-[9rem]">
-              <FilterSelect
-                value={selectedStatus}
-                onChange={(value) => {
-                  setSelectedStatus(value);
-                  setVisibleCount(6);
-                }}
-                options={["All", "Featured", "Saved", "Applied"]}
-              />
-            </div>
-
-            <div className="w-[14rem]">
-              <FilterSelect
-                value={sortBy}
-                onChange={(value) => {
-                  setSortBy(value);
-                  setVisibleCount(6);
-                }}
-                options={[
-                  "Sort by: Newest",
-                  "Sort by: Oldest",
-                  "Sort by: Deadline Soon",
-                  "Sort by: Highest Rating",
-                  "Sort by: Company A-Z",
-                ]}
-              />
+              <div className="w-[15rem]">
+                <FilterSelect
+                  value={sortBy}
+                  onChange={(value) => {
+                    setSortBy(value);
+                    setVisibleCount(6);
+                  }}
+                  options={[
+                    "Sort by: Newest",
+                    "Sort by: Oldest",
+                    "Sort by: Deadline Soon",
+                    "Sort by: Highest Rating",
+                    "Sort by: Company A-Z",
+                  ]}
+                />
               </div>
 
-              {hasFilters && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/60 px-4 text-sm font-black text-red-500 transition hover:bg-red-50 md:col-span-2 xl:col-span-6"                >
-                  <X className="h-4 w-4" />
-                  Clear
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((current) => !current)}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/60 px-5 text-sm font-black text-[color:var(--primary)] shadow-sm transition hover:bg-white/80"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+              </button>
             </div>
+
+            {filtersOpen && (
+              <FilterPanel
+                title="Filter internships"
+                onClear={clearFilters}
+              >
+                <FilterSelect
+                  value={`Company: ${selectedCompany}`}
+                  onChange={(value) => {
+                    setSelectedCompany(value.replace("Company: ", ""));
+                    setVisibleCount(6);
+                  }}
+                  options={companies.map(
+                    (company) => `Company: ${company}`
+                  )}
+                />
+
+                <FilterSelect
+                  value={`Duration: ${selectedDuration}`}
+                  onChange={(value) => {
+                    setSelectedDuration(value.replace("Duration: ", ""));
+                    setVisibleCount(6);
+                  }}
+                  options={durations.map(
+                    (duration) => `Duration: ${duration}`
+                  )}
+                />
+
+                <FilterSelect
+                  value={`Work Mode: ${selectedWorkMode}`}
+                  onChange={(value) => {
+                    setSelectedWorkMode(value.replace("Work Mode: ", ""));
+                    setVisibleCount(6);
+                  }}
+                  options={workModes.map(
+                    (mode) => `Work Mode: ${mode}`
+                  )}
+                />
+
+                <FilterSelect
+                  value={`Status: ${selectedStatus}`}
+                  onChange={(value) => {
+                    setSelectedStatus(value.replace("Status: ", ""));
+                    setVisibleCount(6);
+                  }}
+                  options={[
+                    "Status: All",
+                    "Status: Featured",
+                    "Status: Saved",
+                    "Status: Applied",
+                  ]}
+                />
+              </FilterPanel>
+            )}
           </AppCard>
 
           <AppCard className="p-6">

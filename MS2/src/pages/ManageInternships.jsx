@@ -9,7 +9,9 @@ import {
   Eye,
   MapPin,
   MoreHorizontal,
+  SlidersHorizontal,
   Plus,
+  Trash2,
   Rocket,
   Search,
   Users,
@@ -28,6 +30,7 @@ import AppModal from "@/components/common/AppModal";
 
 import { notifications } from "@/data/studentDashboardData";
 import { employerInternshipsData } from "@/data/employerInternshipsData";
+import FilterPanel from "@/components/common/FilterPanel";
 
 function isDeadlinePassed(deadline) {
   const today = new Date();
@@ -49,6 +52,7 @@ export default function ManageInternships() {
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
   const [selectedLocation, setSelectedLocation] = useState("All Locations");
   const [sortBy, setSortBy] = useState("Newest");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [message, setMessage] = useState("");
   const [editingInternship, setEditingInternship] = useState(null);
@@ -206,6 +210,22 @@ export default function ManageInternships() {
     setOpenMenuId(null);
     setMessage("Internship archived successfully.");
   };
+  const [internshipToDelete, setInternshipToDelete] = useState(null);
+
+const deleteInternship = (id) => {
+  setInternshipToDelete(id);
+  setOpenMenuId(null);
+};
+
+const confirmDeleteInternship = () => {
+  setInternships((current) =>
+    current.filter((item) => item.id !== internshipToDelete)
+  );
+
+  setInternshipToDelete(null);
+
+  setMessage("Internship deleted successfully.");
+};
 
   const viewEmployerInternship = (internship) => {
     const mappedId =
@@ -306,8 +326,8 @@ export default function ManageInternships() {
           <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
             <div className="space-y-6">
               <AppCard className="p-5">
-                <div className="grid gap-4 lg:grid-cols-[1.2fr_11rem_11rem_11rem_13rem]">
-                  <div className="relative">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="relative min-w-[260px] flex-1">
                     <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
 
                     <Input
@@ -318,35 +338,70 @@ export default function ManageInternships() {
                     />
                   </div>
 
-                  <FilterSelect
-                    value={selectedDepartment}
-                    onChange={setSelectedDepartment}
-                    options={departments}
-                  />
+                  <div className="w-[14rem]">
+                    <FilterSelect
+                      value={`Sort by: ${sortBy}`}
+                      onChange={(value) => setSortBy(value.replace("Sort by: ", ""))}
+                      options={[
+                        "Sort by: Newest",
+                        "Sort by: Oldest",
+                        "Sort by: Most Applicants",
+                        "Sort by: Least Applicants",
+                      ]}
+                    />
+                  </div>
 
-                  <FilterSelect
-                    value={selectedStatus}
-                    onChange={setSelectedStatus}
-                    options={["All Statuses", "Open", "Filled", "Archived"]}
-                  />
-
-                  <FilterSelect
-                    value={selectedLocation}
-                    onChange={setSelectedLocation}
-                    options={locations}
-                  />
-
-                  <FilterSelect
-                    value={sortBy}
-                    onChange={setSortBy}
-                    options={[
-                      "Newest",
-                      "Oldest",
-                      "Most Applicants",
-                      "Least Applicants",
-                    ]}
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen((current) => !current)}
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/60 px-5 text-sm font-black text-[color:var(--primary)] shadow-sm transition hover:bg-white/80"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Filters
+                  </button>
                 </div>
+
+                {filtersOpen && (
+                  <FilterPanel
+                    title="Filter internships"
+                    onClear={() => {
+                      setSelectedDepartment("All Departments");
+                      setSelectedStatus("All Statuses");
+                      setSelectedLocation("All Locations");
+                    }}
+                  >
+                    <FilterSelect
+                      value={`Department: ${selectedDepartment}`}
+                      onChange={(value) =>
+                        setSelectedDepartment(value.replace("Department: ", ""))
+                      }
+                      options={departments.map(
+                        (department) => `Department: ${department}`
+                      )}
+                    />
+
+                    <FilterSelect
+                      value={`Status: ${selectedStatus}`}
+                      onChange={(value) =>
+                        setSelectedStatus(value.replace("Status: ", ""))
+                      }
+                      options={[
+                        "Status: All Statuses",
+                        "Status: Open",
+                        "Status: Filled",
+                        "Status: Archived",
+                      ]}
+                    />
+
+                    <FilterSelect
+                      value={`Location: ${selectedLocation}`}
+                      onChange={(value) =>
+                        setSelectedLocation(value.replace("Location: ", ""))
+                      }
+                      options={locations.map((location) => `Location: ${location}`)}
+                    />
+                  </FilterPanel>
+                )}
               </AppCard>
 
               <AppCard className="overflow-visible">
@@ -440,7 +495,7 @@ export default function ManageInternships() {
                               icon={Edit}
                               label="Edit internship"
                               onClick={() => {
-                                setEditingInternship(internship);
+                                navigate(`/edit-internship/${internship.id}`);
                                 setOpenMenuId(null);
                               }}
                             />
@@ -472,6 +527,12 @@ export default function ManageInternships() {
                               danger={canArchive}
                               disabled={!canArchive}
                               onClick={() => archiveInternship(internship)}
+                            />
+                            <ActionItem
+                              icon={Trash2}
+                              label="Delete internship"
+                              danger
+                              onClick={() => deleteInternship(internship.id)}
                             />
                           </div>
                         )}
@@ -580,8 +641,46 @@ export default function ManageInternships() {
             onSave={saveEditedInternship}
           />
         )}
-      </main>
-    </DashboardLayout>
+
+        {internshipToDelete && (
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-[32px] border border-white/40 bg-white p-8 shadow-2xl">
+              <div className="flex flex-col gap-6">
+                <div>
+                  <h2 className="text-2xl font-black text-[color:var(--ink)]">
+                    Delete internship?
+                  </h2>
+
+                  <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
+                    This action cannot be undone. The internship and all related data
+                    will be permanently removed.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setInternshipToDelete(null)}
+                    className="rounded-2xl border border-slate-200 px-5 py-3 font-black text-slate-500 transition hover:bg-slate-100"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={confirmDeleteInternship}
+                    className="rounded-2xl bg-red-500 px-5 py-3 font-black text-white transition hover:bg-red-600"
+                  >
+                    Delete internship
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        </main>
+        </DashboardLayout>
   );
 }
 

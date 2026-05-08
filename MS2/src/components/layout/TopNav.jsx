@@ -1,4 +1,11 @@
-import { Bell, BriefcaseBusiness, GraduationCap, ShieldCheck, UserCog ,MessageCircle } from "lucide-react";
+import {
+  Bell,
+  BriefcaseBusiness,
+  GraduationCap,
+  MessageCircle,
+  ShieldCheck,
+  UserCog,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -27,6 +34,18 @@ const roleLabels = {
   admin: "Administrator",
 };
 
+function normalizeWorkspace(value) {
+  const role = String(value || "").trim().toLowerCase();
+
+  if (role.includes("admin")) return "admin";
+  if (role.includes("instructor")) return "instructor";
+  if (role.includes("employer")) return "employer";
+  if (role.includes("company")) return "employer";
+  if (role.includes("student")) return "student";
+
+  return "";
+}
+
 export default function TopNav({
   notifications = [],
   workspace = "student",
@@ -36,12 +55,25 @@ export default function TopNav({
   const { profile } = useUserProfile();
   const navigate = useNavigate();
 
-  const normalizedRole = profile?.accountRole || profile?.systemRole || profile?.role || workspace || "student";
-  const activeWorkspace = workspace || normalizedRole || "student";
-  const meta = workspaceMeta[activeWorkspace] || workspaceMeta[normalizedRole] || workspaceMeta.student;
+  const normalizedRole =
+    normalizeWorkspace(profile?.accountRole) ||
+    normalizeWorkspace(profile?.systemRole) ||
+    normalizeWorkspace(profile?.role) ||
+    normalizeWorkspace(workspace) ||
+    "student";
+
+  const activeWorkspace =
+    normalizeWorkspace(workspace) || normalizedRole || "student";
+
+  const meta =
+    workspaceMeta[activeWorkspace] ||
+    workspaceMeta[normalizedRole] ||
+    workspaceMeta.student;
+
   const WorkspaceIcon = meta.icon;
 
   const displayName = profile?.companyName || profile?.name || "User";
+
   const initials =
     displayName
       .split(" ")
@@ -50,19 +82,23 @@ export default function TopNav({
       .join("")
       .slice(0, 2) || "??";
 
-  const profilePath = profilePaths[normalizedRole] || profilePaths[activeWorkspace] || profilePaths.student;
+  const profilePath =
+    profilePaths[normalizedRole] ||
+    profilePaths[activeWorkspace] ||
+    profilePaths.student;
 
   const roleLabel =
     normalizedRole === "student" && profile?.semester
       ? `Semester ${profile.semester}`
       : profile?.displayRole || roleLabels[normalizedRole] || "Guest";
-    const handleChatsClick = () => {
-    navigate("/chat"); // Keep this lowercase to match your App.jsx route
+
+  const handleChatsClick = () => {
+    navigate("/chat");
   };
+
   const handleNotificationsClick = () => {
-    navigate("/notifications"); // Keep this lowercase to match your App.jsx route
+    navigate("/notifications");
   };
-  
 
   return (
     <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-[image:var(--nav-gradient)] text-white shadow-[0_18px_55px_rgba(44,57,71,0.22)] backdrop-blur-2xl dark:[background:var(--nav-gradient)] dark:shadow-[0_18px_55px_rgba(0,0,0,0.24)]">
@@ -83,7 +119,7 @@ export default function TopNav({
         <div className="flex items-center gap-3">
           <ThemeToggle variant="dark" />
 
-            <motion.button
+          <motion.button
             type="button"
             onClick={handleChatsClick}
             whileHover={{ y: -3 }}
@@ -92,13 +128,11 @@ export default function TopNav({
             className="relative grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/10 text-white shadow-sm transition hover:bg-white/15"
           >
             <MessageCircle className="h-5 w-5" />
-
           </motion.button>
 
-          {/* FIXED: onClick is now a prop of motion.button */}
           <motion.button
             type="button"
-            onClick={() => navigate("/notifications")}
+            onClick={handleNotificationsClick}
             whileHover={{ y: -3 }}
             whileTap={tapScale}
             transition={{ duration: 0.22, ease: easeOutExpo }}
