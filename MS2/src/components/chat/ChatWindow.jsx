@@ -13,6 +13,8 @@ setChats,
 
   // SEND MESSAGE FUNCTION
 const handleSendMessage = (text) => {
+    if (!selectedChat) return;
+
 
     if (!text.trim()) return;
 
@@ -55,7 +57,7 @@ useEffect(() => {
     top: container.scrollHeight,
     behavior: "smooth",
 });
-}, [selectedChat.messages, isTyping]);
+}, [selectedChat?.messages, isTyping]);
 
 
 const sendScriptedReply = (currentChats) => {
@@ -113,6 +115,25 @@ setTimeout(() => {
 
 }, 2000);
 };
+if (!selectedChat) {
+return (
+    <div className="flex flex-1 items-center justify-center bg-[#f8f8f8]">
+
+    <div className="text-center">
+
+        <h2 className="text-3xl font-bold text-gray-700">
+            Your Messages
+        </h2>
+
+        <p className="mt-3 text-gray-500">
+            Select a conversation to start chatting
+        </p>
+
+    </div>
+
+    </div>
+);
+}
 
 return (
     <div className="flex flex-1 flex-col">

@@ -32,8 +32,12 @@ const [chats, setChats] = useState(() => {
   });
 });
 
-  // selected user/chat
-  const [selectedChatId, setSelectedChatId] = useState(1);
+  // selected user/chat, initially none
+  const [selectedChatId, setSelectedChatId] = useState(null);
+
+  useEffect(() => {
+  setSelectedChatId(null);
+}, []);
   
   useEffect(() => {
 
