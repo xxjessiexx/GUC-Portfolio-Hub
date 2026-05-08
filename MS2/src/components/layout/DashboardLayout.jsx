@@ -26,6 +26,23 @@ function normalizeWorkspace(value) {
   return "";
 }
 
+function getStoredUserRole() {
+  try {
+    const storedUser = JSON.parse(
+      sessionStorage.getItem("currentUser") || "null"
+    );
+
+    return normalizeWorkspace(
+      storedUser?.accountRole ||
+        storedUser?.systemRole ||
+        storedUser?.role ||
+        storedUser?.userType
+    );
+  } catch {
+    return "";
+  }
+}
+
 function inferWorkspace({ explicitWorkspace, pathname, profile }) {
   const explicit = normalizeWorkspace(explicitWorkspace);
   if (explicit) return explicit;
@@ -35,12 +52,18 @@ function inferWorkspace({ explicitWorkspace, pathname, profile }) {
   if (pathname.startsWith("/instructor-dashboard")) return "instructor";
   if (pathname.startsWith("/student-dashboard")) return "student";
 
-  return (
+  const profileRole =
     normalizeWorkspace(profile?.accountRole) ||
     normalizeWorkspace(profile?.systemRole) ||
     normalizeWorkspace(profile?.role) ||
-    "student"
-  );
+    normalizeWorkspace(profile?.userType);
+
+  if (profileRole) return profileRole;
+
+  const storedRole = getStoredUserRole();
+  if (storedRole) return storedRole;
+
+  return "student";
 }
 
 export default function DashboardLayout({

@@ -1,5 +1,5 @@
 export function normalizeUserRole(role) {
-  const normalized = String(role || "student").trim().toLowerCase();
+  const normalized = String(role || "").trim().toLowerCase();
 
   if (normalized.includes("admin")) return "admin";
   if (normalized.includes("instructor")) return "instructor";
@@ -7,7 +7,7 @@ export function normalizeUserRole(role) {
   if (normalized.includes("company")) return "employer";
   if (normalized.includes("student")) return "student";
 
-  return normalized;
+  return "";
 }
 
 export function getDashboardRouteByRole(role) {
@@ -20,5 +20,23 @@ export function getDashboardRouteByRole(role) {
     admin: "/admin-dashboard",
   };
 
-  return routes[normalizedRole] || "/student-dashboard";
+  return routes[normalizedRole] || "/login";
+}
+
+export function getStoredCurrentUser() {
+  try {
+    const storedUser = sessionStorage.getItem("currentUser");
+    return storedUser ? JSON.parse(storedUser) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getCurrentUserRole(user) {
+  return normalizeUserRole(
+    user?.accountRole ||
+      user?.systemRole ||
+      user?.role ||
+      user?.userType
+  );
 }

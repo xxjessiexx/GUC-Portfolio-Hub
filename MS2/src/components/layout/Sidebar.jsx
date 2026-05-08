@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 import {
   BarChart3,
-  Bell,
   BookOpen,
   Briefcase,
   CheckCircle2,
@@ -62,7 +61,6 @@ const workspaceItems = {
     { label: "Invitations", icon: ClipboardCheck, path: null },
     { label: "Feedback", icon: MessageSquare, path: null },
     { label: "Flags", icon: FileWarning, path: null },
-    { label: "Messages", icon: MessageSquare, path: null },
   ],
 
   employer: [
@@ -71,7 +69,7 @@ const workspaceItems = {
     { label: "Internships", icon: Briefcase, path: "/manage-internships" },
     { label: "Applicants", icon: Users, path: "/manage-applicants/emp-int-1" },
     { label: "Favorites", icon: Heart, path: null },
-    { label: "Messages", icon: MessageSquare, path: null },
+    { label: "Messages", icon: MessageSquare, path: "/chat" },
     { label: "Statistics", icon: BarChart3, path: null },
   ],
 
@@ -126,7 +124,7 @@ export default function Sidebar({
 
   const handleLogout = () => {
     sessionStorage.removeItem("currentUser");
-    navigate("/");
+    navigate("/", { replace: true });
   };
 
   const handleNavigate = (path) => {
