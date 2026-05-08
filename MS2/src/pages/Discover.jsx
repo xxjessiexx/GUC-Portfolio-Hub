@@ -4,11 +4,12 @@ import { AppCard } from "@/components/ui/AppCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import SearchInput from "@/components/filters/SearchInput";
 import CourseBadge from "@/components/ui/CourseBadge";
-import DiscoverCard from "@/components/ui/DiscoverCard";
+import DiscoverCard from "@/components/ui/Searchcommons/DiscoverCard";
 import { CheckCircle2 } from "lucide-react";
-import InsightRow from "@/components/ui/InsightRow";
-import TipItem from "@/components/ui/TipItem";
-import RecommendedProjectsSection from "@/components/ui/RecommendedProjectsSection";
+import InsightRow from "@/components/ui/Searchcommons/InsightRow";
+import TipItem from "@/components/ui/Searchcommons/TipItem";
+import RecommendedProjectsSection from "@/components/ui/Searchcommons/RecommendedProjectsSection";
+import DiscoverSearchBar from "@/components/ui/Searchcommons/DiscoverSearchBar";
 
 import {
   Search,
@@ -89,18 +90,9 @@ export default function DiscoverPage() {
           <div className="flex-1 space-y-3">
             <AppCard className="p-4 rounded-[28px] border border-gray-100 bg-white shadow-sm">
               <div className="flex items-center justify-between gap-4">
-                <div className="relative flex-1">
-                  <Search
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
-
-                  <input
-                    type="text"
-                    placeholder="Search projects, portfolios, technologies, skills, or instructors..."
-                    className="w-full rounded-2xl border border-gray-100 py-3 pl-12 pr-4 outline-none bg-[#FCFDFF]"
-                  />
-                </div>
+                <DiscoverSearchBar
+                  placeholder="Search projects, portfolios, technologies, skills, or instructors..."
+                />
 
                 <button className="flex items-center px-4 py-2.5 rounded-2xl border border-gray-100 bg-white font-semibold text-gray-600 hover:bg-gray-50 transition">
                   <Search size={16} />

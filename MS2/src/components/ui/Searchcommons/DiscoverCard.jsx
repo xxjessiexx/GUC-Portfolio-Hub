@@ -1,5 +1,5 @@
-import PrimaryActionButton from "@/components/ui/PrimaryActionButton";
-import { AppCard } from "./AppCard";
+import PrimaryActionButton from "@/components/ui/Searchcommons/PrimaryActionButton";
+import { AppCard } from "../AppCard";
 
 export default function DiscoverCard({
   icon: Icon,
