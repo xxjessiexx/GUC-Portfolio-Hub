@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { NotificationsProvider } from "./context/NotificationsContext";
 import { UserProfileProvider } from "./context/UserProfileContext";
+import { Toaster } from "sonner";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -32,6 +33,7 @@ import ManageInternships from "./pages/ManageInternships";
 import ManageApplicants from "./pages/ManageApplicants";
 import ProjectPage from "./pages/ProjectPage";
 import ExploreInstructors from "./pages/ExploreInstructors";
+import ExploreProjects from "@/pages/ExploreProjects";
 
 export default function App() {
   const [users, setUsers] = useState(() => {
@@ -62,6 +64,8 @@ export default function App() {
       <NotificationsProvider>
         <UserProfileProvider currentUser={currentUser}>
           <FloatingCTA />
+           {/* 👇 ADD THIS HERE (GLOBAL TOAST SYSTEM) */}
+          <Toaster richColors position="top-right" />
 
           <Routes>
             <Route path="/" element={<Landing />} />
@@ -77,6 +81,8 @@ export default function App() {
                 />
               }
             />
+
+            <Route path="/chat" element={<ChatsSection />} />
 
             <Route
               path="/login"
@@ -115,6 +121,7 @@ export default function App() {
             <Route path="/projects/:projectId/edit" element={<EditProject />} />
             <Route path="/project" element={<ProjectPage />} />
             <Route path="/explore-instructors" element={<ExploreInstructors />} />
+            <Route path="/explore-projects" element={<ExploreProjects />} />
 
             <Route
               path="/forgot-password"

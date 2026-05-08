@@ -72,6 +72,7 @@ export default function DiscoverPage() {
                 description="Browse innovative projects built by students across all disciplines."
                 buttonText="Browse Projects"
                 image="/discover/instructor-card.png"
+                onClick={() => navigate("/explore-projects")}
                 
               />
 

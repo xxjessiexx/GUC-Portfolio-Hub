@@ -13,8 +13,8 @@ export const demoUsers = [
   },
   {
     id: "instructor-demo-1",
-    name: "Dr. Sarah Hassan",
-    email: "sarah.hassan@guc.edu.eg",
+    name: "Dr. Mervat Abulkheir",
+    email: "mervat@guc.edu.eg",
     password: "123456",
     role: "instructor",
     department: "Computer Science",
