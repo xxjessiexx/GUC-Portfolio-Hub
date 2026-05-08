@@ -143,6 +143,13 @@ export default function ProjectPage() {
     time: "",
   });
 
+  /* ===== EDIT TASK ===== */
+  const [showEditPopup, setShowEditPopup] =
+    useState(false);
+
+  const [editingTask, setEditingTask] =
+    useState(null);
+
   /* ================= FUNCTIONS ================= */
 
   const updateTaskStatus = (
@@ -180,6 +187,25 @@ export default function ProjectPage() {
     });
 
     setShowTaskPopup(false);
+  };
+
+  /* ===== OPEN EDIT ===== */
+  const openEditPopup = (task) => {
+    setEditingTask(task);
+    setShowEditPopup(true);
+  };
+
+  /* ===== SAVE EDIT ===== */
+  const saveEditedTask = () => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === editingTask.id
+          ? editingTask
+          : task
+      )
+    );
+
+    setShowEditPopup(false);
   };
 
   const isPublic =
@@ -482,7 +508,19 @@ export default function ProjectPage() {
                         }
 
                         right={
-                          <div className="text-sm text-gray-500">
+                          <div className="flex items-center gap-2">
+
+                            {isCreator && (
+                              <button
+                                onClick={() =>
+                                  openEditPopup(task)
+                                }
+                                className="rounded-lg bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700 hover:bg-blue-200"
+                              >
+                                Edit
+                              </button>
+                            )}
+
                           </div>
                         }
                       />
@@ -509,7 +547,7 @@ export default function ProjectPage() {
             </DragDropList>
           )}
 
-          {/* ===== POPUP ===== */}
+          {/* ===== ADD TASK POPUP ===== */}
           {showTaskPopup && isCreator && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
 
@@ -519,7 +557,6 @@ export default function ProjectPage() {
                   Add New Task
                 </h2>
 
-                {/* TITLE */}
                 <div className="mb-4">
                   <label className="mb-1 block text-sm font-bold">
                     Task Title
@@ -539,7 +576,6 @@ export default function ProjectPage() {
                   />
                 </div>
 
-                {/* DESCRIPTION */}
                 <div className="mb-4">
                   <label className="mb-1 block text-sm font-bold">
                     Description
@@ -560,7 +596,6 @@ export default function ProjectPage() {
                   />
                 </div>
 
-                {/* ASSIGNEE */}
                 {!isBachelorProject && (
                   <div className="mb-4">
                     <label className="mb-1 block text-sm font-bold">
@@ -600,49 +635,6 @@ export default function ProjectPage() {
                   </div>
                 )}
 
-                {/* DEADLINE */}
-                <div className="mb-6">
-                  <label className="mb-1 block text-sm font-bold">
-                    Deadline Details
-                  </label>
-
-                  <input
-                    type="date"
-                    value={
-                      newTask.deadline
-                    }
-                    onChange={(e) =>
-                      setNewTask({
-                        ...newTask,
-                        deadline:
-                          e.target.value,
-                      })
-                    }
-                    className="w-full rounded-xl border p-3"
-                  />
-                </div>
-
-                {/* TIME */}
-                <div className="mt-4">
-                  <label className="mb-1 block text-sm font-bold">
-                    Deadline Time
-                  </label>
-
-                  <input
-                    type="time"
-                    value={newTask.time}
-                    onChange={(e) =>
-                      setNewTask({
-                        ...newTask,
-                        time:
-                          e.target.value,
-                      })
-                    }
-                    className="w-full rounded-xl border p-3"
-                  />
-                </div>
-
-                {/* BUTTONS */}
                 <div className="flex justify-end gap-3">
 
                   <button
@@ -666,76 +658,191 @@ export default function ProjectPage() {
             </div>
           )}
 
+          {/* ===== EDIT TASK POPUP ===== */}
+          {showEditPopup && editingTask && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+
+              <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+                <h2 className="mb-4 text-xl font-black text-[var(--ink)]">
+                  Edit Task
+                </h2>
+
+                <div className="mb-4">
+                  <label className="mb-1 block text-sm font-bold">
+                    Task Title
+                  </label>
+
+                  <input
+                    type="text"
+                    value={editingTask.title}
+                    onChange={(e) =>
+                      setEditingTask({
+                        ...editingTask,
+                        title:
+                          e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border p-3"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="mb-1 block text-sm font-bold">
+                    Description
+                  </label>
+
+                  <textarea
+                    value={
+                      editingTask.description
+                    }
+                    onChange={(e) =>
+                      setEditingTask({
+                        ...editingTask,
+                        description:
+                          e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border p-3"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="mb-1 block text-sm font-bold">
+                    Assignee
+                  </label>
+
+                  <select
+                    value={
+                      editingTask.assignee
+                    }
+                    onChange={(e) =>
+                      setEditingTask({
+                        ...editingTask,
+                        assignee:
+                          e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border p-3"
+                  >
+                    {project.team.map(
+                      (member) => (
+                        <option
+                          key={member.name}
+                          value={
+                            member.name
+                          }
+                        >
+                          {member.name}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+
+                <div className="mb-6">
+                  <label className="mb-1 block text-sm font-bold">
+                    Status
+                  </label>
+
+                  <select
+                    value={
+                      editingTask.status
+                    }
+                    onChange={(e) =>
+                      setEditingTask({
+                        ...editingTask,
+                        status:
+                          e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border p-3"
+                  >
+                    <option value="pending">
+                      Pending
+                    </option>
+
+                    <option value="in-progress">
+                      In Progress
+                    </option>
+
+                    <option value="post-poned">
+                      Post-Poned
+                    </option>
+
+                    <option value="completed">
+                      Completed
+                    </option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end gap-3">
+
+                  <button
+                    onClick={() =>
+                      setShowEditPopup(false)
+                    }
+                    className="w-1/2 rounded-xl border px-4 py-2 font-bold"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={saveEditedTask}
+                    className="w-1/2 rounded-xl bg-[var(--primary)] px-4 py-2 font-bold text-white"
+                  >
+                    Save Changes
+                  </button>
+
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ===== FEEDBACK ===== */}
           {activeTab === "feedback" && (
 
-            <>
-              {canViewComments ? (
+            <div className="space-y-6">
 
-                <div className="space-y-6">
+              <h3 className="text-xl font-black text-[var(--primary)]">
+                Instructor Feedback
+              </h3>
 
-                  <h3 className="text-xl font-black text-[var(--primary)]">
-                    Instructor Feedback
-                  </h3>
+              <div className="rounded-2xl border border-[color:var(--primary)]/20 bg-white/70 p-5">
 
-                  <div className="rounded-2xl border border-[color:var(--primary)]/20 bg-white/70 p-5">
+                <div className="flex items-center justify-between">
 
-                    <div className="flex items-center justify-between">
-
-                      {/* USER */}
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 font-black text-white">
-                          D
-                        </div>
-
-                        <div>
-                          <p className="text-sm font-black text-[var(--ink)]">
-                            Dr. Mervat Abuelkheir
-                          </p>
-
-                          <p className="text-xs text-[var(--muted)]">
-                            05/03/2026
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* RATING */}
-                      <div className="flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-sm font-black text-yellow-700">
-                        ⭐ 9 / 10
-                      </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 font-black text-white">
+                      D
                     </div>
 
-                    {/* COMMENT */}
-                    <p className="mt-4 leading-relaxed text-sm text-[var(--muted)]">
-                      Excellent implementation of
-                      microservices architecture.
-                      The UI is intuitive and
-                      responsive. Great work on
-                      the payment integration!
-                    </p>
+                    <div>
+                      <p className="text-sm font-black text-[var(--ink)]">
+                        Dr. Mervat Abuelkheir
+                      </p>
+
+                      <p className="text-xs text-[var(--muted)]">
+                        05/03/2026
+                      </p>
+                    </div>
                   </div>
 
+                  <div className="flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-sm font-black text-yellow-700">
+                    ⭐ 9 / 10
+                  </div>
                 </div>
 
-              ) : (
+                <p className="mt-4 leading-relaxed text-sm text-[var(--muted)]">
+                  Excellent implementation of
+                  microservices architecture.
+                  The UI is intuitive and
+                  responsive. Great work on
+                  the payment integration!
+                </p>
+              </div>
 
-                <div className="rounded-2xl border bg-white p-6 text-center">
-
-                  <h3 className="text-lg font-black text-[#16253A]">
-                    Private Instructor Feedback
-                  </h3>
-
-                  <p className="mt-2 text-sm text-gray-500">
-                    Only the project creator,
-                    collaborators, and assigned
-                    instructors can view feedback
-                    and comments.
-                  </p>
-
-                </div>
-
-              )}
-            </>
+            </div>
           )}
 
         </AppCard>
