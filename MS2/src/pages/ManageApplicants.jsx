@@ -398,7 +398,7 @@ export default function ManageApplicants() {
                 {filteredApplicants.map((applicant) => (
                   <div
                     key={applicant.id}
-                    className="grid gap-4 border-b border-[color:var(--primary)]/10 px-5 py-5 last:border-b-0 lg:grid-cols-[1.35fr_0.85fr_0.65fr_1.1fr_0.9fr_0.55fr_0.55fr_0.8fr_0.75fr] lg:items-center"
+                    className="grid gap-4 border-b border-[color:var(--primary)]/10 px-5 py-5 last:border-b-0 lg:grid-cols-[1.4fr_0.95fr_0.5fr_1.15fr_0.95fr_0.45fr_0.55fr_0.85fr_0.75fr] lg:items-center"
                   >
                     <button
                       type="button"

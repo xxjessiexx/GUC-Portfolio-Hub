@@ -265,7 +265,7 @@ export default function MyApplications() {
                   ))}
                 </div>
 
-                <div className="hidden grid-cols-[1.4fr_0.6fr_0.7fr_1fr_auto] border-b border-[color:var(--primary)]/10 px-6 py-4 text-sm font-black text-[color:var(--dark)] lg:grid">
+                <div className="hidden grid-cols-[1.5fr_0.7fr_0.75fr_1.15fr_0.7fr] border-b border-[color:var(--primary)]/10 px-6 py-4 text-sm font-black text-[color:var(--dark)] lg:grid lg:items-center lg:gap-4">
                   <p>Internship</p>
                   <p>Date Applied</p>
                   <p>Status</p>
@@ -286,7 +286,7 @@ export default function MyApplications() {
                   filteredApplications.map((application) => (
                     <div
                       key={application.id}
-                      className="grid gap-4 border-b border-[color:var(--primary)]/10 px-6 py-5 last:border-b-0 lg:grid-cols-[1.4fr_0.6fr_0.7fr_1fr_auto] lg:items-center"
+                      className="grid gap-4 border-b border-[color:var(--primary)]/10 px-6 py-5 last:border-b-0 lg:grid-cols-[1.5fr_0.7fr_0.75fr_1.15fr_0.7fr] lg:items-center"
                     >
                       <div className="flex gap-4">
                         <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--primary),var(--secondary))] text-white">
