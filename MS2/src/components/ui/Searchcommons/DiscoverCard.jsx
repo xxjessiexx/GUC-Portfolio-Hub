@@ -16,7 +16,7 @@ export default function DiscoverCard({
       cursor-pointer
         p-5 sm:p-6
         rounded-[28px]
-        bg-transparent
+        bg-white/85
         border border-gray-100
         shadow-sm
         hover:shadow-md

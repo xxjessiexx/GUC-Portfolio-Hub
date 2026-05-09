@@ -12,7 +12,7 @@ export default function InsightRow({
           p-4
           rounded-2xl
           border border-gray-100
-          bg-transparent
+          bg-white/85
         "
       >
       <div className="flex items-center gap-4">

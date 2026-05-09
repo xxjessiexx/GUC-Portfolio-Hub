@@ -295,7 +295,7 @@ export default function ExplorePortfolios() {
           <div className="space-y-5">
 
             {/* INSIGHTS */}
-            <AppCard className="p-6 rounded-[28px] bg-transparent border border-gray-100 shadow-sm">
+            <AppCard className="p-6 rounded-[28px] bg-white/65 border border-gray-100 shadow-sm">
 
               <div className="flex items-center gap-2 mb-6">
                 <Sparkles
@@ -343,7 +343,7 @@ export default function ExplorePortfolios() {
                 backdrop-blur-md
               "
             >
-
+                
               <h3 className="text-xl font-black text-[#16253A]">
                 Featured Students
               </h3>
