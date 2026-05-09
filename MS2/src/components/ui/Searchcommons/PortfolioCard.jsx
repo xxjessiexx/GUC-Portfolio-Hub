@@ -16,7 +16,7 @@ export default function PortfolioCard({
         p-6
         rounded-[28px]
         border border-gray-100
-        bg-transparent
+        bg-white/85
         backdrop-blur-md
         hover:shadow-md
         transition

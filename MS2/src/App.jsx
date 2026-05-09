@@ -44,6 +44,7 @@ import AdminCourses from "@/pages/admin/AdminCourses";
 import AdminLinkRequests from "@/pages/admin/AdminLinkRequests";
 import AdminFlaggedProjects from "@/pages/admin/AdminFlaggedProjects";
 import AdminStatistics from "@/pages/admin/AdminStatistics";
+import ViewInstructor from "@/pages/ViewInstructor"
 
 export default function App() {
   const [users, setUsers] = useState(() => {
@@ -114,6 +115,15 @@ export default function App() {
               element={
                 <ProtectedRoute allowedRoles={["instructor"]}>
                   <InstructorDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+              <Route
+              path="/viewINs"
+              element={
+                <ProtectedRoute allowedRoles={["student"]}>
+                  <ViewInstructor />
                 </ProtectedRoute>
               }
             />

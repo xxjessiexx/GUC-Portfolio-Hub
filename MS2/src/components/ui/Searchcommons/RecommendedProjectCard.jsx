@@ -16,7 +16,7 @@ export default function RecommendedProjectCard({
         border border-gray-100
         rounded-[24px]
         p-5
-        bg-transperant
+        bg-white/85
         hover:shadow-md
         transition
       "
