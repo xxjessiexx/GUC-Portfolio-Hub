@@ -18,10 +18,17 @@ import CourseFilter from "@/components/Filters/CourseFilter";
 import { useState } from "react";
 import Pagination from "@/components/ui/Searchcommons/Pagination";
 import { instructors } from "@/data/InstructorSearchdata";
+import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import FilterSelect from "@/components/common/FilterSelect";
+import ViewInstructor from "@/pages/ViewInstructor";
 
 export default function ExploreInstructors() {
     const [selectedCourse, setSelectedCourse] = useState("all");
     const [search, setSearch] = useState("");
+    const [selectedInstructor, setSelectedInstructor] =
+    useState(null);
+    const [filtersOpen, setFiltersOpen] =
+  useState(false);
     const filteredInstructors = instructors.filter(
   (instructor) => {
     const matchesCourse =
@@ -96,40 +103,75 @@ const totalPages = Math.ceil(
           </p>
         </div>
 
-       {/* SEARCH BAR */}
-            <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-4">
+       {/* SEARCH + FILTERS */}
+<SearchFilterToolbar
+  searchValue={search}
+  onSearchChange={setSearch}
+  searchPlaceholder="Search by instructor name or course..."
 
-            <DiscoverSearchBar
-                placeholder="Search by instructor name or course (e.g., Data Structures, AI, Algorithms)..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-            />
+  showFilters
+  filtersOpen={filtersOpen}
+  onToggleFilters={() =>
+    setFiltersOpen((current) => !current)
+  }
 
-            <CourseFilter
-                value={selectedCourse}
-                onChange={setSelectedCourse}
-                courses={[
-                    "Data Structures",
-                    "Algorithms",
-                    "Operating Systems",
-                    "Database Systems",
-                    "Software Engineering",
-                    "Machine Learning",
-                    "Deep Learning",
-                    "Artificial Intelligence",
-                    "UI/UX"
-                    ]}
-                placeholder="All Courses"
-             />
-            </div>
+  filterTitle="Filter instructors"
 
+  onClearFilters={() => {
+    setSelectedCourse("all");
+  }}
+>
+  <FilterSelect
+    value={
+      selectedCourse === "all"
+        ? "Course: All Courses"
+        : `Course: ${selectedCourse}`
+    }
+    onChange={(value) => {
+      const cleanedValue = value.replace(
+        "Course: ",
+        ""
+      );
+
+      setSelectedCourse(
+        cleanedValue === "All Courses"
+          ? "all"
+          : cleanedValue
+      );
+    }}
+    options={[
+      "Course: All Courses",
+      "Course: Data Structures",
+      "Course: Algorithms",
+      "Course: Operating Systems",
+      "Course: Database Systems",
+      "Course: Software Engineering",
+      "Course: Machine Learning",
+      "Course: Deep Learning",
+      "Course: Artificial Intelligence",
+      "Course: UI/UX",
+    ]}
+  />
+</SearchFilterToolbar>
+
+{/* TOP BAR */}
+<div className="flex items-center justify-between">
+
+  <h2 className="font-bold text-[#16253A]">
+    {filteredInstructors.length} instructors found
+  </h2>
+
+</div>
         {/* INSTRUCTORS LIST */}
         <div className="space-y-4">
           {paginatedInstructors.map((instructor) => (
             <InstructorCard
-              key={instructor.id}
-              instructor={instructor}
-            />
+  key={instructor.id}
+  instructor={instructor}
+  onView={() =>
+    setSelectedInstructor(instructor)
+  }
+/>
           ))}
         </div>
 
@@ -146,6 +188,14 @@ const totalPages = Math.ceil(
         />
       </div>
       </div>
+      {selectedInstructor && (
+  <ViewInstructor
+    instructor={selectedInstructor}
+    onClose={() =>
+      setSelectedInstructor(null)
+    }
+  />
+)}
     </DashboardLayout>
   );
 }
