@@ -76,6 +76,7 @@ export const adminModuleSeed = {
     activeUsers: 128,
     pendingReviews: 14,
     totalProjects: 312,
+    totalCourses: 4,
     approvedEmployers: 18,
     internshipsOffered: 42,
     completedInternships: 19,

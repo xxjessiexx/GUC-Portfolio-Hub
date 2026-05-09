@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import InstructorHero from "@/components/instructorDashboard/InstructorHero";
-import InstructorStatGrid from "@/components/instructorDashboard/InstructorStatGrid";
-import InstructorCoursesPanel from "@/components/instructorDashboard/InstructorCoursesPanel";
-import InstructorReviewQueue from "@/components/instructorDashboard/InstructorReviewQueue";
-import InstructorProjectsPanel from "@/components/instructorDashboard/InstructorProjectsPanel";
-import InstructorSidePanels from "@/components/instructorDashboard/InstructorSidePanels";
+import InstructorHero from "@/components/InstructorDashboard/InstructorHero";
+import InstructorStatGrid from "@/components/InstructorDashboard/InstructorStatGrid";
+import InstructorCoursesPanel from "@/components/InstructorDashboard/InstructorCoursesPanel";
+import InstructorReviewQueue from "@/components/InstructorDashboard/InstructorReviewQueue";
+import InstructorProjectsPanel from "@/components/InstructorDashboard/InstructorProjectsPanel";
+import InstructorSidePanels from "@/components/InstructorDashboard/InstructorSidePanels";
 import { useNotifications } from "@/context/NotificationsContext";
 import { useUserProfile } from "@/context/UserProfileContext";
 import { instructorDashboard } from "@/data/instructorDashboardData";

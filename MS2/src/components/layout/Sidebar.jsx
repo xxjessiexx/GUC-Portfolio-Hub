@@ -17,6 +17,8 @@ import {
   Settings,
   ShieldCheck,
   User,
+ 
+  ClipboardList,
   Users,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -47,6 +49,7 @@ const workspaceItems = {
     { label: "Explore", icon: SearchIcon, path: "/discover" },
     { label: "My Portfolio", icon: User, path: "/student-dashboard/portfolio" },
     { label: "My Projects", icon: FolderKanban, path: "/view-all-projects" },
+    { label: "My Applications", icon: ClipboardList, path: "/my-applications" },
     { label: "Feedback", icon: MessageSquare, path: null },
     { label: "Internships", icon: Briefcase, path: "/internships" },
     { label: "Favorites", icon: Heart, path: null },
