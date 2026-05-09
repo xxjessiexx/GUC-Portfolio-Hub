@@ -106,7 +106,7 @@ export default function DiscoverPage() {
           {/* RIGHT SIDEBAR */}
           <div className="w-full xl:w-[260px] shrink-0 pt-1 space-y-4">
             {/* SEARCH TIPS */}
-            <AppCard className="p-6 rounded-[28px] bg-transparent border border-gray-100 shadow-sm">
+            <AppCard className="p-6 rounded-[28px] bg-white/65 border border-gray-100 shadow-sm">
               <div className="flex items-center gap-2 mb-5">
                 <Lightbulb size={18} className="text-yellow-500" />
 
@@ -127,7 +127,7 @@ export default function DiscoverPage() {
             </AppCard>
 
             {/* TAGS */}
-            <AppCard className="p-6 rounded-[28px] bg-transparent border-gray-100 shadow-sm">
+            <AppCard className="p-6 rounded-[28px] bg-white/65 border-gray-100 shadow-sm">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <Hash size={18} className="text-[#69A7FF]" />
@@ -163,7 +163,7 @@ export default function DiscoverPage() {
             </AppCard>
 
             {/* INSIGHTS */}
-            <AppCard className="p-6 rounded-[28px] bg-transparent border border-gray-100 shadow-sm">
+            <AppCard className="p-6 rounded-[28px] bg-white/65 border border-gray-100 shadow-sm">
               <div className="flex items-center gap-2 mb-5">
                 <Box size={18} className="text-[#67D5C0]" />
 
