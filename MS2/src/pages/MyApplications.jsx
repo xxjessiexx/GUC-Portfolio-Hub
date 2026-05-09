@@ -7,14 +7,15 @@ import {
   CalendarDays,
   Clock,
   MapPin,
-  Search,
-  X,
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
+import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import FilterPanel from "@/components/common/FilterPanel";
 import { Input } from "@/components/ui/input";
+
 
 import FilterSelect from "@/components/common/FilterSelect";
 import StatusBadge from "@/components/common/StatusBadge";
@@ -116,6 +117,7 @@ export default function MyApplications() {
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
   const [selectedCompany, setSelectedCompany] = useState("All Companies");
   const [selectedDate, setSelectedDate] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const statusCounts = {
     All: applications.length,
@@ -201,60 +203,45 @@ export default function MyApplications() {
 
           <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
             <div className="space-y-6">
-              <AppCard className="p-5">
-                <div className="grid items-center gap-4 lg:grid-cols-[1.3fr_240px_240px_240px_auto]">
-                  <div className="relative">
-                    <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
+              <SearchFilterToolbar
+                searchValue={searchTerm}
+                onSearchChange={setSearchTerm}
+                searchPlaceholder="Search by company or role..."
+                showFilters
+                filtersOpen={filtersOpen}
+                onToggleFilters={() => setFiltersOpen((current) => !current)}
+                filterTitle="Filter applications"
+                onClearFilters={hasActiveFilters ? resetFilters : undefined}
+              >
+                <FilterSelect
+                  value={`Status: ${selectedStatus}`}
+                  onChange={(value) => setSelectedStatus(value.replace("Status: ", ""))}
+                  options={[
+                    "Status: All Statuses",
+                    "Status: Under Review",
+                    "Status: Pending",
+                    "Status: Accepted",
+                    "Status: Rejected",
+                  ]}
+                />
 
-                    <Input
-                      value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
-                      placeholder="Search by company or role..."
-                      className="h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] pl-11 font-semibold text-[color:var(--ink)]"
-                    />
-                  </div>
+                <FilterSelect
+                  value={`Company: ${selectedCompany}`}
+                  onChange={(value) => setSelectedCompany(value.replace("Company: ", ""))}
+                  options={companies.map((company) => `Company: ${company}`)}
+                />
 
-                  <FilterSelect
-                    value={selectedStatus}
-                    onChange={setSelectedStatus}
-                    options={[
-                      "All Statuses",
-                      "Under Review",
-                      "Pending",
-                      "Accepted",
-                      "Rejected",
-                    ]}
+                <div className="relative">
+                  <CalendarDays className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
+
+                  <Input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(event) => setSelectedDate(event.target.value)}
+                    className="h-12 w-full rounded-2xl border border-white/70 bg-[var(--input-bg)] pl-11 pr-3 text-sm font-black text-[color:var(--ink)] shadow-sm"
                   />
-
-                  <FilterSelect
-                    value={selectedCompany}
-                    onChange={setSelectedCompany}
-                    options={companies}
-                  />
-
-                  <div className="relative">
-                    <CalendarDays className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
-
-                    <Input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(event) => setSelectedDate(event.target.value)}
-                      className="h-12 w-full rounded-2xl border border-white/70 bg-[var(--input-bg)] pl-11 pr-3 text-sm font-black text-[color:var(--ink)] shadow-sm"
-                    />
-                  </div>
-
-                  {hasActiveFilters && (
-                    <button
-                      type="button"
-                      onClick={resetFilters}
-                      className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-black text-red-500 shadow-sm transition hover:-translate-y-0.5 hover:bg-red-50"
-                    >
-                      <X className="h-4 w-4" />
-                      Clear
-                    </button>
-                  )}
                 </div>
-              </AppCard>
+              </SearchFilterToolbar>
 
               <AppCard className="overflow-hidden">
                 <div className="grid grid-cols-5 border-b border-[color:var(--primary)]/10 text-center text-sm font-black">

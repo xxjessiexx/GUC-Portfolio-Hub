@@ -7,8 +7,6 @@ import {
   Eye,
   FileText,
   MessageSquare,
-  Search,
-  SlidersHorizontal,
   Star,
   Users,
   XCircle,
@@ -17,7 +15,6 @@ import {
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -32,7 +29,7 @@ import FilterSelect from "@/components/common/FilterSelect";
 import AppModal from "@/components/common/AppModal";
 
 import { notifications } from "@/data/studentDashboardData";
-import FilterPanel from "@/components/common/FilterPanel";
+import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 
 const applicantsData = [
   {
@@ -335,84 +332,55 @@ export default function ManageApplicants() {
 
           <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
             <div className="space-y-6">
-              <AppCard className="p-5">
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="relative min-w-[260px] flex-1">
-                    <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
-                    <Input
-                      value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
-                      placeholder="Search by name, skills, or university..."
-                      className="h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] pl-11 font-semibold text-[color:var(--ink)]"
-                    />
-                  </div>
+              <SearchFilterToolbar
+                searchValue={searchTerm}
+                onSearchChange={setSearchTerm}
+                searchPlaceholder="Search by name, skills, or university..."
+                showSort
+                sortValue={`Sort by: ${sortBy}`}
+                onSortChange={(value) => setSortBy(value.replace("Sort by: ", ""))}
+                sortOptions={[
+                  "Sort by: Top Score",
+                  "Sort by: Top Contributors",
+                  "Sort by: Name A-Z",
+                ]}
+                showFilters
+                filtersOpen={filtersOpen}
+                onToggleFilters={() => setFiltersOpen((current) => !current)}
+                filterTitle="Filter applicants"
+                onClearFilters={() => {
+                  setSelectedMajor("All Majors");
+                  setSelectedSemester("All Semesters");
+                  setSelectedStatus("All Statuses");
+                }}
+              >
+                <FilterSelect
+                  value={`Major: ${selectedMajor}`}
+                  onChange={(value) => setSelectedMajor(value.replace("Major: ", ""))}
+                  options={majors.map((major) => `Major: ${major}`)}
+                />
 
-                  <div className="w-[14rem]">
-                    <FilterSelect
-                      value={`Sort by: ${sortBy}`}
-                      onChange={(value) => setSortBy(value.replace("Sort by: ", ""))}
-                      options={[
-                        "Sort by: Top Score",
-                        "Sort by: Top Contributors",
-                        "Sort by: Name A-Z",
-                      ]}
-                    />
-                  </div>
+                <FilterSelect
+                  value={`Semester: ${selectedSemester}`}
+                  onChange={(value) =>
+                    setSelectedSemester(value.replace("Semester: ", ""))
+                  }
+                  options={semesters.map((semester) => `Semester: ${semester}`)}
+                />
 
-                  <button
-                    type="button"
-                    onClick={() => setFiltersOpen((current) => !current)}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/60 px-5 text-sm font-black text-[color:var(--primary)] shadow-sm transition hover:bg-white/80"
-                  >
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Filters
-                  </button>
-                </div>
-
-                {filtersOpen && (
-                  <FilterPanel
-                    title="Filter applicants"
-                    onClear={() => {
-                      setSelectedMajor("All Majors");
-                      setSelectedSemester("All Semesters");
-                      setSelectedStatus("All Statuses");
-                    }}
-                  >
-                    <FilterSelect
-                      value={`Major: ${selectedMajor}`}
-                      onChange={(value) =>
-                        setSelectedMajor(value.replace("Major: ", ""))
-                      }
-                      options={majors.map((major) => `Major: ${major}`)}
-                    />
-
-                    <FilterSelect
-                      value={`Semester: ${selectedSemester}`}
-                      onChange={(value) =>
-                        setSelectedSemester(value.replace("Semester: ", ""))
-                      }
-                      options={semesters.map(
-                        (semester) => `Semester: ${semester}`
-                      )}
-                    />
-
-                    <FilterSelect
-                      value={`Status: ${selectedStatus}`}
-                      onChange={(value) =>
-                        setSelectedStatus(value.replace("Status: ", ""))
-                      }
-                      options={[
-                        "Status: All Statuses",
-                        "Status: Shortlisted",
-                        "Status: Nominated",
-                        "Status: Accepted",
-                        "Status: Rejected",
-                        "Status: Reviewing",
-                      ]}
-                    />
-                  </FilterPanel>
-                )}
-              </AppCard>
+                <FilterSelect
+                  value={`Status: ${selectedStatus}`}
+                  onChange={(value) => setSelectedStatus(value.replace("Status: ", ""))}
+                  options={[
+                    "Status: All Statuses",
+                    "Status: Shortlisted",
+                    "Status: Nominated",
+                    "Status: Accepted",
+                    "Status: Rejected",
+                    "Status: Reviewing",
+                  ]}
+                />
+              </SearchFilterToolbar>
 
               <AppCard className="overflow-hidden">
                 <div className="hidden grid-cols-[1.35fr_0.85fr_0.65fr_1.1fr_0.9fr_0.55fr_0.55fr_0.8fr_0.75fr] border-b border-[color:var(--primary)]/10 px-5 py-4 text-sm font-black text-[color:var(--dark)] lg:grid">

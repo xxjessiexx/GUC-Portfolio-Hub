@@ -1,6 +1,9 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import ExploreProjectCard from "@/components/ui/Searchcommons/ExploreProjectCard";
+import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import FilterPanel from "@/components/common/FilterPanel";
+import FilterSelect from "@/components/common/FilterSelect";
 
 /* IMPORT DATA */
 import ProjectNameData from "@/data/ProjectNameData";
@@ -35,6 +38,7 @@ export default function ExploreProjects() {
 
   const [selectedSort, setSelectedSort] =
     useState("Newest");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   /* FAVORITES */
   const toggleFavorite = (id) => {
@@ -126,187 +130,79 @@ export default function ExploreProjects() {
         </div>
 
         {/* SEARCH + FILTERS */}
-        <AppCard
-          className="
-            p-4
-            rounded-3xl
-            bg-white/65
-            backdrop-blur-md
-            border border-white/40
-            shadow-sm
-          "
-        >
-
-          {/* SEARCH */}
-          <div className="relative">
-
-            <Search
-              size={18}
-              className="
-                absolute
-                left-4
-                top-1/2
-                -translate-y-1/2
-                text-gray-400
-              "
+          <SearchFilterToolbar
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search projects by title, keyword, or technology..."
+            showSort
+            sortValue={`Sort by: ${selectedSort}`}
+            onSortChange={(value) =>
+              setSelectedSort(value.replace("Sort by: ", ""))
+            }
+            sortOptions={[
+              "Sort by: Newest",
+              "Sort by: Oldest",
+              "Sort by: Highest Rated",
+              "Sort by: A-Z",
+            ]}
+            showFilters
+            filtersOpen={filtersOpen}
+            onToggleFilters={() =>
+              setFiltersOpen((current) => !current)
+            }
+            filterTitle="Filter projects"
+            onClearFilters={() => {
+              setSelectedCourse("All Courses");
+              setSelectedInstructor("All Instructors");
+              setSelectedDate("Anytime");
+            }}
+          >
+            <FilterSelect
+              value={`Course: ${selectedCourse}`}
+              onChange={(value) =>
+                setSelectedCourse(
+                  value.replace("Course: ", "")
+                )
+              }
+              options={[
+                "Course: All Courses",
+                "Course: CSEN 501 - Software Engineering",
+                "Course: CSEN 507 - Database Systems",
+                "Course: CSEN 504 - Mobile Computing",
+                "Course: Bachelor Project",
+              ]}
             />
 
-            <input
-              type="text"
-              value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
+            <FilterSelect
+              value={`Instructor: ${selectedInstructor}`}
+              onChange={(value) =>
+                setSelectedInstructor(
+                  value.replace("Instructor: ", "")
+                )
               }
-              placeholder="Search projects by title, keyword, or technology..."
-              className="
-                w-full
-                rounded-2xl
-                border border-gray-100
-                py-3
-                pl-12
-                pr-4
-                outline-none
-                bg-white/80
-              "
+              options={[
+                "Instructor: All Instructors",
+                "Instructor: Dr. Mostafa Ahmed",
+                "Instructor: Dr. Hossam Ali",
+                "Instructor: Dr. Sara Mahmoud",
+                "Instructor: Dr. Amr Abdelsalam",
+              ]}
             />
-          </div>
 
-          {/* FILTERS */}
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-
-            {/* COURSES */}
-            <select
-              value={selectedCourse}
-              onChange={(e) =>
-                setSelectedCourse(e.target.value)
+            <FilterSelect
+              value={`Date: ${selectedDate}`}
+              onChange={(value) =>
+                setSelectedDate(
+                  value.replace("Date: ", "")
+                )
               }
-              className="
-                px-4 py-3
-                rounded-2xl
-                border border-gray-100
-                bg-white
-                text-sm
-                font-medium
-              "
-            >
-              <option>All Courses</option>
-
-              <option>
-                CSEN 501 - Software Engineering
-              </option>
-
-              <option>
-                CSEN 507 - Database Systems
-              </option>
-
-              <option>
-                CSEN 504 - Mobile Computing
-              </option>
-              <option>
-                Bachelor Project
-              </option>
-
-            </select>
-            
-            {/* INSTRUCTORS */}
-            <select
-              value={selectedInstructor}
-              onChange={(e) =>
-                setSelectedInstructor(e.target.value)
-              }
-              className="
-                px-4 py-3
-                rounded-2xl
-                border border-gray-100
-                bg-white
-                text-sm
-                font-medium
-              "
-            >
-              <option>All Instructors</option>
-
-              <option>
-                Dr. Mostafa Ahmed
-              </option>
-
-              <option>
-                Dr. Hossam Ali
-              </option>
-
-              <option>
-                Dr. Sara Mahmoud
-              </option>
-
-              <option>
-                Dr. Amr Abdelsalam
-              </option>
-            </select>
-
-            {/* DATE */}
-            <select
-              value={selectedDate}
-              onChange={(e) =>
-                setSelectedDate(e.target.value)
-              }
-              className="
-                px-4 py-3
-                rounded-2xl
-                border border-gray-100
-                bg-white
-                text-sm
-                font-medium
-              "
-            >
-              <option>Anytime</option>
-
-              <option>This Week</option>
-
-              <option>This Month</option>
-            </select>
-
-            {/* SORT */}
-            <select
-              value={selectedSort}
-              onChange={(e) =>
-                setSelectedSort(e.target.value)
-              }
-              className="
-                px-4 py-3
-                rounded-2xl
-                border border-gray-100
-                bg-white
-                text-sm
-                font-medium
-              "
-            >
-              <option>Newest</option>
-
-              <option>Highest Rated</option>
-
-              <option>A-Z</option>
-            </select>
-
-            {/* FILTER BUTTON */}
-            <button
-              className="
-                ml-auto
-                flex items-center gap-2
-                px-5 py-3
-                rounded-2xl
-                border border-gray-100
-                bg-white
-                font-semibold
-                text-gray-600
-                hover:bg-gray-50
-                transition
-              "
-            >
-              <SlidersHorizontal size={16} />
-              Filters
-            </button>
-          </div>
-        </AppCard>
-
+              options={[
+                "Date: Anytime",
+                "Date: This Week",
+                "Date: This Month",
+              ]}
+            />
+          </SearchFilterToolbar>
         {/* TOP BAR */}
         <div className="flex items-center justify-between">
 
