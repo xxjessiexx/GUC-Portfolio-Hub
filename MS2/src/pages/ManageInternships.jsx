@@ -478,7 +478,7 @@ const confirmDeleteInternship = () => {
                 />
               </SearchFilterToolbar>
               <AppCard className="overflow-visible">
-                <div className="hidden grid-cols-[1.45fr_0.75fr_0.9fr_0.85fr_0.85fr_0.7fr_0.7fr_auto] border-b border-[color:var(--primary)]/10 px-5 py-4 text-sm font-black text-[color:var(--dark)] lg:grid">
+                <div className="hidden grid-cols-[2.2fr_1.2fr_1.4fr_1fr_1fr_0.9fr_0.9fr_80px] border-b border-[color:var(--primary)]/10 px-8 py-4 text-sm font-black text-[color:var(--dark)] lg:grid lg:items-center lg:gap-4">
                   <p>Internship</p>
                   <p>Department</p>
                   <p>Location</p>
@@ -496,7 +496,7 @@ const confirmDeleteInternship = () => {
                   return (
                     <div
                       key={internship.id}
-                      className="relative grid gap-4 border-b border-[color:var(--primary)]/10 px-5 py-5 last:border-b-0 lg:grid-cols-[1.45fr_0.75fr_0.9fr_0.85fr_0.85fr_0.7fr_0.7fr_auto] lg:items-center"
+                      className="relative grid gap-4 border-b border-[color:var(--primary)]/10 px-8 py-5 last:border-b-0 lg:grid-cols-[2.2fr_1.2fr_1.4fr_1fr_1fr_0.9fr_0.9fr_80px] lg:items-center"
                     >
                       <div>
                         <button
