@@ -2,7 +2,7 @@ import { Mail, MapPin, Eye } from "lucide-react";
 import { AppCard } from "@/components/ui/AppCard";
 import CourseBadge from "@/components/ui/CourseBadge";
 
-export default function InstructorCard({ instructor }) {
+export default function InstructorCard({ instructor,onView }) {
   return (
     <AppCard
       className="
@@ -80,21 +80,22 @@ export default function InstructorCard({ instructor }) {
         {/* BUTTON */}
         <div className="flex justify-end">
           <button
-            className="
-              h-12
-              px-6
-              rounded-full
-              border border-[#CFE2FF]
-              text-[#69A7FF]
-              font-semibold
-              flex items-center gap-2
-              hover:bg-[#EEF5FF]
-              transition
-            "
-          >
-            <Eye size={18} />
-            View Profile
-          </button>
+  onClick={onView}
+  className="
+    h-12
+    px-6
+    rounded-full
+    border border-[#CFE2FF]
+    text-[#69A7FF]
+    font-semibold
+    flex items-center gap-2
+    hover:bg-[#EEF5FF]
+    transition
+  "
+>
+  <Eye size={18} />
+  View Profile
+</button>
         </div>
 
       </div>

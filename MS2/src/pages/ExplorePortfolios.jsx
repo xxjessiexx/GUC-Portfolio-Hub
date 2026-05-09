@@ -9,6 +9,8 @@ import InsightRow from "@/components/ui/Searchcommons/InsightRow";
 import {AppCard} from "@/components/ui/AppCard";
 import PrimaryActionButton from "@/components/ui/Searchcommons/PrimaryActionButton";
 import FavoriteButton from "@/components/ui/Searchcommons/FavoriteButton";
+import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import FilterSelect from "@/components/common/FilterSelect";
 
 import {
   FolderOpen,
@@ -31,6 +33,8 @@ export default function ExplorePortfolios() {
 
   const [selectedSort, setSelectedSort] =
     useState("Most Projects");
+    const [filtersOpen, setFiltersOpen] =
+  useState(false);
 
     
     const [portfolios, setPortfolios] =
@@ -128,154 +132,70 @@ export default function ExplorePortfolios() {
           <div className="space-y-5">
 
             {/* SEARCH + FILTERS */}
-            <AppCard
-              className="
-                p-5
-                rounded-[30px]
-                border border-gray-100
-                bg-transparent
-                backdrop-blur-md
-              "
-            >
+<SearchFilterToolbar
+  searchValue={search}
+  onSearchChange={setSearch}
+  searchPlaceholder="Search by student name, email, skill..."
 
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_170px_170px_170px] gap-4">
+  showSort
+  sortValue={`Sort by: ${selectedSort}`}
+  onSortChange={(value) =>
+    setSelectedSort(value.replace("Sort by: ", ""))
+  }
+  sortOptions={[
+    "Sort by: Most Projects",
+    "Sort by: A-Z",
+  ]}
 
-                <DiscoverSearchBar
-                  placeholder="Search by student name or email..."
-                  value={search}
-                  onChange={(e) =>
-                    setSearch(e.target.value)
-                  }
-                />
+  showFilters
+  filtersOpen={filtersOpen}
+  onToggleFilters={() =>
+    setFiltersOpen((current) => !current)
+  }
 
-                {/* MAJOR */}
-                <label
-                className="
-                    h-[64px]
-                    rounded-2xl
-                    border border-gray-100
-                    bg-white
-                    px-4
-                    flex flex-col justify-center
-                "
-                >
-                <span
-                    className="
-                    text-[10px]
-                    uppercase
-                    tracking-[0.15em]
-                    font-black
-                    text-gray-400
-                    "
-                >
-                    Major
-                </span>
+  filterTitle="Filter portfolios"
 
-                <select
-                    value={selectedMajor}
-                    onChange={(e) =>
-                    setSelectedMajor(e.target.value)
-                    }
-                    className="
-                    bg-transparent
-                    outline-none
-                    font-bold
-                    text-[#16253A]
-                    "
-                >
-                    <option>All Majors</option>
-                    <option>Computer Science</option>
-                    <option>Software Engineering</option>
-                    <option>Information Systems</option>
-                    <option>Data Science</option>
-                    <option>UI/UX Design</option>
-                </select>
-                </label>
+  onClearFilters={() => {
+    setSelectedMajor("All Majors");
+    setSelectedSkill("All Skills");
+  }}
+>
+  <FilterSelect
+    value={`Major: ${selectedMajor}`}
+    onChange={(value) =>
+      setSelectedMajor(
+        value.replace("Major: ", "")
+      )
+    }
+    options={[
+      "Major: All Majors",
+      "Major: Computer Science",
+      "Major: Software Engineering",
+      "Major: Information Systems",
+      "Major: Data Science",
+      "Major: UI/UX Design",
+    ]}
+  />
 
-                {/* SKILLS */}
-                
+  <FilterSelect
+    value={`Skill: ${selectedSkill}`}
+    onChange={(value) =>
+      setSelectedSkill(
+        value.replace("Skill: ", "")
+      )
+    }
+    options={[
+      "Skill: All Skills",
+      "Skill: React",
+      "Skill: Python",
+      "Skill: Figma",
+      "Skill: SQL",
+      "Skill: Tailwind",
+    ]}
+  />
+</SearchFilterToolbar>
 
-                <label
-                    className="
-                        h-[64px]
-                        rounded-2xl
-                        border border-gray-100
-                        bg-white
-                        px-4
-                        flex flex-col justify-center
-                    "
-                    >
-                    <span
-                        className="
-                        text-[10px]
-                        uppercase
-                        tracking-[0.15em]
-                        font-black
-                        text-gray-400
-                        "
-                    >
-                        Skills
-                    </span>
-                            <select
-                                value={selectedSkill}
-                                onChange={(e) =>
-                                    setSelectedSkill(e.target.value)
-                                    }
-                    className="
-                    bg-transparent
-                    outline-none
-                    font-bold
-                    text-[#16253A]
-                    "
-                    >
-                     <option>All Skills</option>
-                        <option>React</option>
-                          <option>Python</option>
-                            <option>Figma</option>
-                             <option>SQL</option>
-                            <option>Tailwind</option>
-                     </select>
-                    </label>
-                {/* SORT */}
-                <label
-                    className="
-                        h-[64px]
-                        rounded-2xl
-                        border border-gray-100
-                        bg-white
-                        px-4
-                        flex flex-col justify-center
-                    "
-                    >
-                    <span
-                        className="
-                        text-[10px]
-                        uppercase
-                        tracking-[0.15em]
-                        font-black
-                        text-gray-400
-                        "
-                    >
-                        Sort By
-                    </span>
-                <select
-                  value={selectedSort}
-                  onChange={(e) =>
-                    setSelectedSort(e.target.value)
-                  }
-                  className="
-                    bg-transparent
-                    outline-none
-                    font-bold
-                    text-[#16253A]
-                    "
-                >
-                  <option>Most Projects</option>
-                  <option>A-Z</option>
-                </select>
-</label>
-              </div>
-            </AppCard>
+
 
             {/* PORTFOLIOS */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">

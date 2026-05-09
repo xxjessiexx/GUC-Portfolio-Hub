@@ -12,7 +12,7 @@ import RecommendedProjectsSection from "@/components/ui/Searchcommons/Recommende
 import DiscoverSearchBar from "@/components/ui/Searchcommons/DiscoverSearchBar";
 import { useNavigate } from "react-router-dom";
 import {recommendedProjects} from "@/data/discoverdata"
-
+import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import {
   Search,
   FolderOpen,
