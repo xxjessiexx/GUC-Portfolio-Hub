@@ -44,6 +44,8 @@ import AdminCourses from "@/pages/admin/AdminCourses";
 import AdminLinkRequests from "@/pages/admin/AdminLinkRequests";
 import AdminFlaggedProjects from "@/pages/admin/AdminFlaggedProjects";
 import AdminStatistics from "@/pages/admin/AdminStatistics";
+import AdminCreateCourse from "@/pages/admin/AdminCreateCourse";
+import AdminCreateAccount from "@/pages/admin/AdminCreateAccount";
 import ViewInstructor from "@/pages/ViewInstructor"
 
 export default function App() {
@@ -168,6 +170,24 @@ export default function App() {
   element={
     <ProtectedRoute allowedRoles={["admin"]}>
       <AdminCourses />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/courses/create"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminCreateCourse />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/users/create-admin"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminCreateAccount />
     </ProtectedRoute>
   }
 />
