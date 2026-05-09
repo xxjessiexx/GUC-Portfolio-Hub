@@ -31,6 +31,7 @@ import AppModal from "@/components/common/AppModal";
 import { notifications } from "@/data/studentDashboardData";
 import { employerInternshipsData } from "@/data/employerInternshipsData";
 import FilterPanel from "@/components/common/FilterPanel";
+import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 
 function isDeadlinePassed(deadline) {
   const today = new Date();
@@ -325,85 +326,58 @@ const confirmDeleteInternship = () => {
 
           <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
             <div className="space-y-6">
-              <AppCard className="p-5">
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="relative min-w-[260px] flex-1">
-                    <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
+              <SearchFilterToolbar
+                searchPlaceholder="Search internships..."
+                searchValue={searchTerm}
+                onSearchChange={setSearchTerm}
+                showSort
+                sortValue={`Sort by: ${sortBy}`}
+                onSortChange={(value) => setSortBy(value.replace("Sort by: ", ""))}
+                sortOptions={[
+                  "Sort by: Newest",
+                  "Sort by: Oldest",
+                  "Sort by: Most Applicants",
+                  "Sort by: Least Applicants",
+                ]}
+                showFilters
+                filtersOpen={filtersOpen}
+                onToggleFilters={() => setFiltersOpen((current) => !current)}
+                filterTitle="Filter internships"
+                onClearFilters={() => {
+                  setSelectedDepartment("All Departments");
+                  setSelectedStatus("All Statuses");
+                  setSelectedLocation("All Locations");
+                }}
+              >
+                <FilterSelect
+                  value={`Department: ${selectedDepartment}`}
+                  onChange={(value) =>
+                    setSelectedDepartment(value.replace("Department: ", ""))
+                  }
+                  options={departments.map((department) => `Department: ${department}`)}
+                />
 
-                    <Input
-                      value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
-                      placeholder="Search internships..."
-                      className="h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] pl-11 font-semibold text-[color:var(--ink)]"
-                    />
-                  </div>
+                <FilterSelect
+                  value={`Status: ${selectedStatus}`}
+                  onChange={(value) =>
+                    setSelectedStatus(value.replace("Status: ", ""))
+                  }
+                  options={[
+                    "Status: All Statuses",
+                    "Status: Open",
+                    "Status: Filled",
+                    "Status: Archived",
+                  ]}
+                />
 
-                  <div className="w-[14rem]">
-                    <FilterSelect
-                      value={`Sort by: ${sortBy}`}
-                      onChange={(value) => setSortBy(value.replace("Sort by: ", ""))}
-                      options={[
-                        "Sort by: Newest",
-                        "Sort by: Oldest",
-                        "Sort by: Most Applicants",
-                        "Sort by: Least Applicants",
-                      ]}
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setFiltersOpen((current) => !current)}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/60 px-5 text-sm font-black text-[color:var(--primary)] shadow-sm transition hover:bg-white/80"
-                  >
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Filters
-                  </button>
-                </div>
-
-                {filtersOpen && (
-                  <FilterPanel
-                    title="Filter internships"
-                    onClear={() => {
-                      setSelectedDepartment("All Departments");
-                      setSelectedStatus("All Statuses");
-                      setSelectedLocation("All Locations");
-                    }}
-                  >
-                    <FilterSelect
-                      value={`Department: ${selectedDepartment}`}
-                      onChange={(value) =>
-                        setSelectedDepartment(value.replace("Department: ", ""))
-                      }
-                      options={departments.map(
-                        (department) => `Department: ${department}`
-                      )}
-                    />
-
-                    <FilterSelect
-                      value={`Status: ${selectedStatus}`}
-                      onChange={(value) =>
-                        setSelectedStatus(value.replace("Status: ", ""))
-                      }
-                      options={[
-                        "Status: All Statuses",
-                        "Status: Open",
-                        "Status: Filled",
-                        "Status: Archived",
-                      ]}
-                    />
-
-                    <FilterSelect
-                      value={`Location: ${selectedLocation}`}
-                      onChange={(value) =>
-                        setSelectedLocation(value.replace("Location: ", ""))
-                      }
-                      options={locations.map((location) => `Location: ${location}`)}
-                    />
-                  </FilterPanel>
-                )}
-              </AppCard>
-
+                <FilterSelect
+                  value={`Location: ${selectedLocation}`}
+                  onChange={(value) =>
+                    setSelectedLocation(value.replace("Location: ", ""))
+                  }
+                  options={locations.map((location) => `Location: ${location}`)}
+                />
+              </SearchFilterToolbar>
               <AppCard className="overflow-visible">
                 <div className="hidden grid-cols-[1.45fr_0.75fr_0.9fr_0.85fr_0.85fr_0.7fr_0.7fr_auto] border-b border-[color:var(--primary)]/10 px-5 py-4 text-sm font-black text-[color:var(--dark)] lg:grid">
                   <p>Internship</p>
