@@ -29,7 +29,7 @@ import StatusBadge from "@/components/common/StatusBadge";
 import AppModal from "@/components/common/AppModal";
 
 import { notifications } from "@/data/studentDashboardData";
-import { employerInternshipsData } from "@/data/employerInternshipsData";
+import { internshipsData } from "@/data/internshipsData";
 import FilterPanel from "@/components/common/FilterPanel";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 
@@ -46,7 +46,7 @@ function isDeadlinePassed(deadline) {
 export default function ManageInternships() {
   const navigate = useNavigate();
 
-  const [internships, setInternships] = useState(employerInternshipsData);
+  const [internships, setInternships] = useState(internshipsData);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] =
     useState("All Departments");
@@ -144,13 +144,45 @@ export default function ManageInternships() {
     archived: internships.filter((item) => item.isArchived).length,
   };
 
+  const favoriteSkills = ["React", "Python", "Data Science", "UI/UX", "SQL"];
+
   const candidates = [
-    { name: "Mariam Khaled", major: "Data Science • GUC" },
-    { name: "Youssef Ashraf", major: "Computer Science • GUC" },
-    { name: "Nourhan Hany", major: "Information Systems • GUC" },
-    { name: "Omar Tarek", major: "Software Engineering • GUC" },
-    { name: "Farida Samir", major: "Business Informatics • GUC" },
-  ];
+    {
+      name: "Mariam Khaled",
+      major: "Data Science • GUC",
+      skills: ["Python", "SQL", "Power BI"],
+      matchReason: "Matches your favorite Data Science and SQL profiles",
+      score: 96,
+    },
+    {
+      name: "Youssef Ashraf",
+      major: "Computer Science • GUC",
+      skills: ["React", "JavaScript", "Tailwind"],
+      matchReason: "Matches your favorite React frontend profiles",
+      score: 93,
+    },
+    {
+      name: "Nourhan Hany",
+      major: "Information Systems • GUC",
+      skills: ["UI/UX", "Figma", "Research"],
+      matchReason: "Matches your favorite UI/UX portfolios",
+      score: 91,
+    },
+    {
+      name: "Omar Tarek",
+      major: "Software Engineering • GUC",
+      skills: ["Python", "Django", "APIs"],
+      matchReason: "Matches your favorite backend portfolios",
+      score: 88,
+    },
+    {
+      name: "Farida Samir",
+      major: "Business Informatics • GUC",
+      skills: ["Research", "Analytics", "SQL"],
+      matchReason: "Matches your favorite analytics profiles",
+      score: 84,
+    },
+  ].sort((a, b) => b.score - a.score);
 
   const activities = [
     {
@@ -179,23 +211,42 @@ export default function ManageInternships() {
       time: "2d ago",
     },
   ];
+  const monthlyStats = [
+  { month: "Jan", applications: 18 },
+  { month: "Feb", applications: 26 },
+  { month: "Mar", applications: 34 },
+  { month: "Apr", applications: 41 },
+  { month: "May", applications: 63 },
+];
 
-  const markAsFilled = (id) => {
+  const toggleFilledStatus = (id) => {
     setInternships((current) =>
       current.map((item) =>
-        item.id === id ? { ...item, isFilled: true, status: "Filled" } : item
+        item.id === id
+          ? {
+              ...item,
+              isFilled: !item.isFilled,
+              status: item.isFilled ? "Open" : "Filled",
+            }
+          : item
       )
     );
 
     setOpenMenuId(null);
-    setMessage("Internship marked as filled.");
+
+    setMessage(
+      internships.find((item) => item.id === id)?.isFilled
+        ? "Internship reopened for hiring."
+        : "Internship marked as filled."
+    );
   };
 
-  const archiveInternship = (internship) => {
-    if (!isDeadlinePassed(internship.deadline)) {
+  const toggleArchiveStatus = (internship) => {
+    if (!internship.isArchived && !isDeadlinePassed(internship.deadline)) {
       setMessage(
         "You cannot archive this internship before the application deadline passes."
       );
+
       setOpenMenuId(null);
       return;
     }
@@ -203,14 +254,26 @@ export default function ManageInternships() {
     setInternships((current) =>
       current.map((item) =>
         item.id === internship.id
-          ? { ...item, isArchived: true, status: "Archived" }
+          ? {
+              ...item,
+              isArchived: !item.isArchived,
+              status: item.isArchived ? "Open" : "Archived",
+            }
           : item
       )
     );
 
     setOpenMenuId(null);
-    setMessage("Internship archived successfully.");
+
+    setMessage(
+      internship.isArchived
+        ? "Internship unarchived successfully."
+        : "Internship archived successfully."
+    );
   };
+
+  
+
   const [internshipToDelete, setInternshipToDelete] = useState(null);
 
 const deleteInternship = (id) => {
@@ -229,14 +292,7 @@ const confirmDeleteInternship = () => {
 };
 
   const viewEmployerInternship = (internship) => {
-    const mappedId =
-      internship.id === "emp-int-1"
-        ? "int-1"
-        : internship.id === "emp-int-2"
-        ? "int-3"
-        : "int-2";
-
-    navigate(`/internships/${mappedId}`);
+    navigate(`/internships/${internship.id}`);
   };
 
   const saveEditedInternship = () => {
@@ -305,6 +361,49 @@ const confirmDeleteInternship = () => {
               helper="↗ 8% vs last month"
             />
           </section>
+          <AppCard className="p-6">
+            <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-2xl font-black text-[color:var(--ink)]">
+                  Applications Over Time
+                </h2>
+
+                <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
+                  Monthly application growth across your internship postings.
+                </p>
+              </div>
+
+              <span className="rounded-2xl bg-green-100 px-4 py-2 text-sm font-black text-green-700">
+                ↗ +18% this month
+              </span>
+            </div>
+
+            <div className="flex h-64 items-end gap-4 rounded-[28px] bg-white/45 p-5">
+              {monthlyStats.map((item) => (
+                <div
+                  key={item.month}
+                  className="flex flex-1 flex-col items-center gap-3"
+                >
+                  <div className="flex h-44 w-full items-end rounded-2xl bg-white/60 p-2">
+                    <div
+                      className="w-full rounded-xl bg-[color:var(--primary)]"
+                      style={{ height: `${item.applications * 2}px` }}
+                    />
+                  </div>
+
+                  <div className="text-center">
+                    <p className="text-sm font-black text-[color:var(--ink)]">
+                      {item.applications}
+                    </p>
+
+                    <p className="text-xs font-bold text-[color:var(--muted)]">
+                      {item.month}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </AppCard>
 
           {message && (
             <AppCard className="p-4">
@@ -483,24 +582,24 @@ const confirmDeleteInternship = () => {
                               }}
                             />
 
-                            {!internship.isFilled && (
-                              <ActionItem
-                                icon={CheckCircle2}
-                                label="Mark as filled"
-                                onClick={() => markAsFilled(internship.id)}
-                              />
-                            )}
+                            <ActionItem
+                              icon={CheckCircle2}
+                              label={internship.isFilled ? "Reopen hiring" : "Mark as filled"}
+                              onClick={() => toggleFilledStatus(internship.id)}
+                            />
 
                             <ActionItem
                               icon={Archive}
                               label={
-                                canArchive
+                                internship.isArchived
+                                  ? "Unarchive internship"
+                                  : canArchive
                                   ? "Archive internship"
                                   : "Archive disabled"
                               }
-                              danger={canArchive}
-                              disabled={!canArchive}
-                              onClick={() => archiveInternship(internship)}
+                              danger={canArchive || internship.isArchived}
+                              disabled={!canArchive && !internship.isArchived}
+                              onClick={() => toggleArchiveStatus(internship)}
                             />
                             <ActionItem
                               icon={Trash2}
@@ -522,10 +621,10 @@ const confirmDeleteInternship = () => {
                 <div className="mb-5 flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-black text-[color:var(--ink)]">
-                      Suggested Candidates
+                      Top Suggested Applications
                     </h2>
                     <p className="text-sm font-semibold text-[color:var(--muted)]">
-                      From your favorites
+                      Based on your favorite portfolios
                     </p>
                   </div>
 
@@ -792,26 +891,47 @@ function ActionItem({
   );
 }
 
-function Candidate({ name, major, onView }) {
+function Candidate({ name, major, skills = [], matchReason, score, onView }) {
   return (
-    <div className="mb-3 flex items-center justify-between rounded-2xl border border-white/70 bg-white/55 p-4 last:mb-0">
-      <div className="flex items-center gap-3">
-        <InitialsAvatar name={name} className="h-12 w-12" />
+    <div className="mb-3 rounded-2xl border border-white/70 bg-white/55 p-4 last:mb-0">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <InitialsAvatar name={name} className="h-12 w-12" />
 
-        <div>
-          <p className="font-black text-[color:var(--ink)]">{name}</p>
-          <p className="text-sm font-semibold text-[color:var(--muted)]">
-            {major}
-          </p>
+          <div>
+            <p className="font-black text-[color:var(--ink)]">{name}</p>
+            <p className="text-sm font-semibold text-[color:var(--muted)]">
+              {major}
+            </p>
+          </div>
         </div>
+
+        <span className="rounded-xl bg-green-100 px-3 py-1 text-xs font-black text-green-700">
+          {score}% match
+        </span>
+      </div>
+
+      <p className="mt-3 text-xs font-bold leading-5 text-[color:var(--muted)]">
+        {matchReason}
+      </p>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {skills.map((skill) => (
+          <span
+            key={skill}
+            className="rounded-full bg-[color:var(--accent)]/20 px-3 py-1 text-xs font-black text-[color:var(--primary)]"
+          >
+            {skill}
+          </span>
+        ))}
       </div>
 
       <button
         type="button"
         onClick={onView}
-        className="rounded-xl border border-white/70 bg-white/60 px-4 py-2 text-sm font-black text-[color:var(--primary)]"
+        className="mt-4 w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm font-black text-[color:var(--primary)] transition hover:bg-white"
       >
-        View
+        View application
       </button>
     </div>
   );

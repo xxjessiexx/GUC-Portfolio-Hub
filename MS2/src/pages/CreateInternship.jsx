@@ -346,7 +346,14 @@ export default function CreateInternship() {
                 <FilterSelect
                   value={formData.duration}
                   onChange={(value) => updateField("duration", value)}
-                  options={["1 Month", "2 Months", "3 Months", "6 Months"]}
+                  options={[
+                    "1 Month",
+                    "2 Months",
+                    "3 Months",
+                    "4–6 months",
+                    "3–6 months",
+                    "6 Months",
+                  ]}
                 />
                 <FieldFeedback error={errors.duration} />
               </FieldShell>

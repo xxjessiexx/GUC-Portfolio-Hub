@@ -27,7 +27,7 @@ import FilterSelect from "@/components/common/FilterSelect";
 import StatusBadge from "@/components/common/StatusBadge";
 
 import { notifications } from "@/data/studentDashboardData";
-import { employerInternshipsData } from "@/data/employerInternshipsData";
+import { internshipsData } from "@/data/internshipsData";
 
 const INTERNSHIPS_STORAGE_KEY = "guc-portfolio-internships";
 
@@ -63,11 +63,7 @@ function getStoredInternships() {
   }
 }
 
-function saveInternship(internship) {
-  const existing = getStoredInternships();
-  const updated = [internship, ...existing];
-  localStorage.setItem(INTERNSHIPS_STORAGE_KEY, JSON.stringify(updated));
-}
+
 
 function validateInternshipField(field, data) {
   switch (field) {
@@ -118,9 +114,15 @@ export default function EditInternship() {
   useEffect(() => {
   const storedInternships = getStoredInternships();
 
-  const foundInternship =
-    storedInternships.find((item) => item.id === internshipId) ||
-    employerInternshipsData.find((item) => item.id === internshipId);
+  const baseInternship = internshipsData.find((item) => item.id === internshipId);
+  const storedInternship = storedInternships.find((item) => item.id === internshipId);
+
+  const foundInternship = {
+    ...baseInternship,
+    ...storedInternship,
+    duration: storedInternship?.duration || baseInternship?.duration || "",
+    workMode: storedInternship?.workMode || baseInternship?.workMode || "Hybrid",
+  };
 
   if (!foundInternship) return;
 
@@ -278,14 +280,13 @@ export default function EditInternship() {
 
   const handleSaveDraft = () => {
     const draft = buildStoredInternship("draft");
-    saveInternship(draft);
+    updateStoredInternship(draft);
 
     setMessage({
       type: "success",
-      text: "Internship draft saved successfully.",
+      text: "Internship draft changes saved successfully.",
     });
   };
-
   const handlePublish = (event) => {
     event.preventDefault();
 
@@ -388,7 +389,13 @@ export default function EditInternship() {
                 <FilterSelect
                   value={formData.duration}
                   onChange={(value) => updateField("duration", value)}
-                  options={["1 Month", "2 Months", "3 Months", "6 Months"]}
+                  options={[
+                    "2–4 months",
+                    "3 months",
+                    "3–6 months",
+                    "4–6 months",
+                    "6 months",
+                  ]}
                 />
                 <FieldFeedback error={errors.duration} />
               </FieldShell>
