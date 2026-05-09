@@ -143,7 +143,9 @@ export default function InternshipDetails() {
               </h1>
 
               <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
-                Discover the details and apply for this opportunity.
+                {isStudent
+                  ? "Discover the details and apply for this opportunity."
+                  : "Review the internship details and application information."}
               </p>
             </div>
             {isStudent && (
