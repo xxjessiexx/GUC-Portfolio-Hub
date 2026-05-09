@@ -10,17 +10,14 @@ import {
   Grid2X2,
   List,
   MapPin,
-  Search,
-  SlidersHorizontal,
   Send,
   Sparkles,
-  X,
+ 
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
-import { Input } from "@/components/ui/input";
 
 import AppModal from "@/components/common/AppModal";
 import FilterSelect from "@/components/common/FilterSelect";
@@ -28,7 +25,7 @@ import StatusBadge from "@/components/common/StatusBadge";
 
 import { notifications } from "@/data/studentDashboardData";
 import { internshipsData } from "@/data/internshipsData";
-import FilterPanel from "@/components/common/FilterPanel";
+import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 
 const SAVED_INTERNSHIPS_KEY = "guc-saved-internships";
 const APPLIED_INTERNSHIPS_KEY = "guc-applied-internships";
@@ -251,103 +248,73 @@ export default function Internships() {
             </p>
           </div>
 
-          <AppCard className="p-5">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="relative min-w-[260px] flex-1">
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
+          <SearchFilterToolbar
+            searchValue={searchTerm}
+            onSearchChange={(value) => {
+              setSearchTerm(value);
+              setVisibleCount(6);
+            }}
+            searchPlaceholder="Search by internship title, company, skill, or location..."
+            showSort
+            sortValue={sortBy}
+            onSortChange={(value) => {
+              setSortBy(value);
+              setVisibleCount(6);
+            }}
+            sortOptions={[
+              "Sort by: Newest",
+              "Sort by: Oldest",
+              "Sort by: Deadline Soon",
+              "Sort by: Highest Rating",
+              "Sort by: Company A-Z",
+            ]}
+            showFilters
+            filtersOpen={filtersOpen}
+            onToggleFilters={() => setFiltersOpen((current) => !current)}
+            filterTitle="Filter internships"
+            onClearFilters={clearFilters}
+          >
+            <FilterSelect
+              value={`Company: ${selectedCompany}`}
+              onChange={(value) => {
+                setSelectedCompany(value.replace("Company: ", ""));
+                setVisibleCount(6);
+              }}
+              options={companies.map((company) => `Company: ${company}`)}
+            />
 
-                <Input
-                  value={searchTerm}
-                  onChange={(event) => {
-                    setSearchTerm(event.target.value);
-                    setVisibleCount(6);
-                  }}
-                  placeholder="Search by internship title, company, skill, or location..."
-                  className="h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] pl-11 font-semibold text-[color:var(--ink)]"
-                />
-              </div>
+            <FilterSelect
+              value={`Duration: ${selectedDuration}`}
+              onChange={(value) => {
+                setSelectedDuration(value.replace("Duration: ", ""));
+                setVisibleCount(6);
+              }}
+              options={durations.map((duration) => `Duration: ${duration}`)}
+            />
 
-              <div className="w-[15rem]">
-                <FilterSelect
-                  value={sortBy}
-                  onChange={(value) => {
-                    setSortBy(value);
-                    setVisibleCount(6);
-                  }}
-                  options={[
-                    "Sort by: Newest",
-                    "Sort by: Oldest",
-                    "Sort by: Deadline Soon",
-                    "Sort by: Highest Rating",
-                    "Sort by: Company A-Z",
-                  ]}
-                />
-              </div>
+            <FilterSelect
+              value={`Work Mode: ${selectedWorkMode}`}
+              onChange={(value) => {
+                setSelectedWorkMode(value.replace("Work Mode: ", ""));
+                setVisibleCount(6);
+              }}
+              options={workModes.map((mode) => `Work Mode: ${mode}`)}
+            />
 
-              <button
-                type="button"
-                onClick={() => setFiltersOpen((current) => !current)}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/60 px-5 text-sm font-black text-[color:var(--primary)] shadow-sm transition hover:bg-white/80"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                Filters
-              </button>
-            </div>
-
-            {filtersOpen && (
-              <FilterPanel
-                title="Filter internships"
-                onClear={clearFilters}
-              >
-                <FilterSelect
-                  value={`Company: ${selectedCompany}`}
-                  onChange={(value) => {
-                    setSelectedCompany(value.replace("Company: ", ""));
-                    setVisibleCount(6);
-                  }}
-                  options={companies.map(
-                    (company) => `Company: ${company}`
-                  )}
-                />
-
-                <FilterSelect
-                  value={`Duration: ${selectedDuration}`}
-                  onChange={(value) => {
-                    setSelectedDuration(value.replace("Duration: ", ""));
-                    setVisibleCount(6);
-                  }}
-                  options={durations.map(
-                    (duration) => `Duration: ${duration}`
-                  )}
-                />
-
-                <FilterSelect
-                  value={`Work Mode: ${selectedWorkMode}`}
-                  onChange={(value) => {
-                    setSelectedWorkMode(value.replace("Work Mode: ", ""));
-                    setVisibleCount(6);
-                  }}
-                  options={workModes.map(
-                    (mode) => `Work Mode: ${mode}`
-                  )}
-                />
-
-                <FilterSelect
-                  value={`Status: ${selectedStatus}`}
-                  onChange={(value) => {
-                    setSelectedStatus(value.replace("Status: ", ""));
-                    setVisibleCount(6);
-                  }}
-                  options={[
-                    "Status: All",
-                    "Status: Featured",
-                    "Status: Saved",
-                    "Status: Applied",
-                  ]}
-                />
-              </FilterPanel>
-            )}
-          </AppCard>
+            <FilterSelect
+              value={`Status: ${selectedStatus}`}
+              onChange={(value) => {
+                setSelectedStatus(value.replace("Status: ", ""));
+                setVisibleCount(6);
+              }}
+              options={[
+                "Status: All",
+                "Status: Featured",
+                "Status: Saved",
+                "Status: Applied",
+              ]}
+            />
+          </SearchFilterToolbar>
 
           <AppCard className="p-6">
             <div className="mb-5 flex items-center justify-between gap-4">

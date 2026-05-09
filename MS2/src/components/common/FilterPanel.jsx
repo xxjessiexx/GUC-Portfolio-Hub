@@ -1,3 +1,5 @@
+import { Children } from "react";
+
 export default function FilterPanel({
   title = "Filters",
   children,
@@ -22,7 +24,13 @@ export default function FilterPanel({
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">{children}</div>
+      <div className="flex flex-wrap items-center gap-4">
+        {Children.map(children, (child) => (
+          <div className="min-w-[13rem] flex-1 sm:flex-none">
+            {child}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
