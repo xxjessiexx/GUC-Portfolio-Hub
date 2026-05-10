@@ -8,17 +8,15 @@ import Pannelforprojects from "@/components/ui/Searchcommons/Pannelforprojects";
 import ProjectNameData from "@/data/ProjectNameData";
 
 import { useState } from "react";
+import {
+  getAllProjects,
+  toggleFavoriteProject,
+} from "@/data/demoStore";
 
 export default function FavoriteProjects() {
 
-  const [projects, setProjects] = useState(() => {
-    const saved =
-      localStorage.getItem("favoriteProjects");
-
-    return saved
-      ? JSON.parse(saved)
-      : ProjectNameData;
-  });
+  const [projects, setProjects] =
+  useState(getAllProjects());
 
   const [view, setView] = useState("grid");
 
@@ -40,25 +38,46 @@ export default function FavoriteProjects() {
     useState(false);
 
   const toggleFavorite = (id) => {
-    setProjects((prev) => {
+  toggleFavoriteProject(id);
 
-      const updated = prev.map((project) =>
-        project.id === id
-          ? {
-              ...project,
-              favorite: !project.favorite,
-            }
-          : project
-      );
+  setProjects(getAllProjects());
+};
 
-      localStorage.setItem(
-        "favoriteProjects",
-        JSON.stringify(updated)
-      );
+const courseOptions = [
+  "Course: All Courses",
 
-      return updated;
-    });
-  };
+  ...Array.from(
+    new Set(
+      projects
+        .map(
+          (project) =>
+            project.course ||
+            project.courseName
+        )
+        .filter(Boolean)
+    )
+  ).map(
+    (course) => `Course: ${course}`
+  ),
+];
+
+const instructorOptions = [
+  "Instructor: All Instructors",
+
+  ...Array.from(
+    new Set(
+      projects
+        .map(
+          (project) =>
+            project.instructor
+        )
+        .filter(Boolean)
+    )
+  ).map(
+    (instructor) =>
+      `Instructor: ${instructor}`
+  ),
+];
 
   const filteredProjects = projects
 
@@ -82,11 +101,19 @@ export default function FavoriteProjects() {
 
         project.course === selectedCourse ||
 
-        project.program === selectedCourse;
+        project.courseName ===
+          selectedCourse ||
+
+        project.program ===
+          selectedCourse
 
       const matchesInstructor =
         selectedInstructor === "All Instructors" ||
-        project.instructor === selectedInstructor;
+        project.instructor
+  ?.toLowerCase()
+  .includes(
+    selectedInstructor.toLowerCase()
+  )
 
       return (
         matchesSearch &&
@@ -175,13 +202,7 @@ export default function FavoriteProjects() {
               )
             }
 
-            options={[
-              "Course: All Courses",
-              "Course: CSEN 501 - Software Engineering",
-              "Course: CSEN 507 - Database Systems",
-              "Course: CSEN 504 - Mobile Computing",
-              "Course: Bachelor Project",
-            ]}
+            options={courseOptions}
           />
 
           <FilterSelect
@@ -192,13 +213,7 @@ export default function FavoriteProjects() {
               )
             }
 
-            options={[
-              "Instructor: All Instructors",
-              "Instructor: Dr. Mostafa Ahmed",
-              "Instructor: Dr. Hossam Ali",
-              "Instructor: Dr. Sara Mahmoud",
-              "Instructor: Dr. Amr Abdelsalam",
-            ]}
+            options={instructorOptions}
           />
 
           <FilterSelect

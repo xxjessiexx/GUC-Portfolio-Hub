@@ -8,7 +8,10 @@ import FilterSelect from "@/components/common/FilterSelect";
 /* IMPORT DATA */
 import ProjectNameData from "@/data/ProjectNameData";
 
-
+import {
+  getAllProjects,
+  toggleFavoriteProject,
+} from "@/data/demoStore";
 import {
   Search,
   Grid2X2,
@@ -21,14 +24,8 @@ import { useState } from "react";
 export default function ExploreProjects() {
 
   /* STATE */
-  const [projects, setProjects] = useState(() => {
-  const saved =
-    localStorage.getItem("favoriteProjects");
-
-  return saved
-    ? JSON.parse(saved)
-    : ProjectNameData;
-});
+  const [projects, setProjects] =
+  useState(getAllProjects());
 
   const [view, setView] = useState("grid");
 
@@ -47,52 +44,91 @@ export default function ExploreProjects() {
     useState("Newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const courseOptions = [
+  "Course: All Courses",
+
+  ...new Set(
+    projects.map(
+      (project) => `Course: ${project.course}`
+    )
+  ),
+];
+
+const instructorOptions = [
+  "Instructor: All Instructors",
+
+  ...new Set(
+    projects
+      .map((project) => project.instructor)
+      .filter(Boolean)
+      .map(
+        (instructor) =>
+          `Instructor: ${instructor}`
+      )
+  ),
+];
+
   /* FAVORITES */
   const toggleFavorite = (id) => {
-  setProjects((prev) => {
-    const updated = prev.map((project) =>
-      project.id === id
-        ? {
-            ...project,
-            favorite: !project.favorite,
-          }
-        : project
-    );
+  toggleFavoriteProject(id);
 
-    localStorage.setItem(
-      "favoriteProjects",
-      JSON.stringify(updated)
-    );
-
-    return updated;
-  });
+  setProjects(getAllProjects());
 };
-
   /* FILTERS */
   const filteredProjects = projects
   .filter((project) => {
 
     const matchesSearch =
-      project.title
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
+  project.title
+    ?.toLowerCase()
+    .includes(search.toLowerCase()) ||
 
-      project.tags.some((tag) =>
-        tag
-          .toLowerCase()
-          .includes(search.toLowerCase())
-      );
+  project.tags?.some((tag) =>
+    tag
+      ?.toLowerCase()
+      .includes(search.toLowerCase())
+  ) ||
+
+  project.technologies?.some((tech) =>
+    tech
+      ?.toLowerCase()
+      .includes(search.toLowerCase())
+  ) ||
+
+  project.languages?.some((lang) =>
+    lang
+      ?.toLowerCase()
+      .includes(search.toLowerCase())
+  );
 
     const matchesCourse =
-      selectedCourse === "All Courses" ||
+  selectedCourse === "All Courses" ||
 
-      project.course === selectedCourse ||
+  project.course === selectedCourse ||
 
-      project.program === selectedCourse;
+  project.courseName === selectedCourse ||
+
+  project.program === selectedCourse;
 
     const matchesInstructor =
-      selectedInstructor === "All Instructors" ||
-      project.instructor === selectedInstructor;
+  selectedInstructor ===
+    "All Instructors" ||
+
+  project.instructor
+    ?.toLowerCase()
+    .includes(
+      selectedInstructor.toLowerCase()
+    );
+
+    const courseOptions = [
+  "Course: All Courses",
+
+  ...new Set(
+    projects.map(
+      (project) => `Course: ${project.course}`
+    )
+  ),
+];
 
     return (
       matchesSearch &&
@@ -144,6 +180,7 @@ export default function ExploreProjects() {
         </div>
 
         {/* SEARCH + FILTERS */}
+        
           <SearchFilterToolbar
             searchValue={search}
             onSearchChange={setSearch}
@@ -178,13 +215,7 @@ export default function ExploreProjects() {
                   value.replace("Course: ", "")
                 )
               }
-              options={[
-                "Course: All Courses",
-                "Course: CSEN 501 - Software Engineering",
-                "Course: CSEN 507 - Database Systems",
-                "Course: CSEN 504 - Mobile Computing",
-                "Course: Bachelor Project",
-              ]}
+              options={courseOptions}
             />
 
             <FilterSelect
@@ -194,13 +225,7 @@ export default function ExploreProjects() {
                   value.replace("Instructor: ", "")
                 )
               }
-              options={[
-                "Instructor: All Instructors",
-                "Instructor: Dr. Mostafa Ahmed",
-                "Instructor: Dr. Hossam Ali",
-                "Instructor: Dr. Sara Mahmoud",
-                "Instructor: Dr. Amr Abdelsalam",
-              ]}
+              options={instructorOptions}
             />
 
             <FilterSelect

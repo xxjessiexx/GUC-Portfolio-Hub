@@ -11,6 +11,7 @@ import PrimaryActionButton from "@/components/ui/Searchcommons/PrimaryActionButt
 import FavoriteButton from "@/components/ui/Searchcommons/FavoriteButton";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import FilterSelect from "@/components/common/FilterSelect";
+import { useLocation } from "react-router-dom";
 
 import {
   FolderOpen,
@@ -22,7 +23,23 @@ import { useState } from "react";
 
 import portfoliosData from "@/data/portfoliosData";
 
-export default function ExplorePortfolios() {
+import {
+  getAllPortfolios,
+  toggleFavoritePortfolio,
+} from "@/data/demoStore";
+
+export default function ExplorePortfolios({showReport = false}) {
+  const [reportOpen, setReportOpen] =
+  useState(false);
+
+const [selectedPortfolio, setSelectedPortfolio] =
+  useState(null);
+
+  const location = useLocation();
+
+const isAdminOrInstructor =
+  location.pathname.includes("/admin") ||
+  location.pathname.includes("/instructor");
 
   const [search, setSearch] = useState("");
   const [selectedMajor, setSelectedMajor] =
@@ -37,32 +54,13 @@ export default function ExplorePortfolios() {
   useState(false);
 
     
-    const [portfolios, setPortfolios] = useState(() => {
-  const saved =
-    localStorage.getItem("favoritePortfolios");
+    const [portfolios, setPortfolios] =
+  useState(getAllPortfolios());
 
-  return saved
-    ? JSON.parse(saved)
-    : portfoliosData;
-});
   const toggleFavorite = (id) => {
-  setPortfolios((prev) => {
-    const updated = prev.map((portfolio) =>
-      portfolio.id === id
-        ? {
-            ...portfolio,
-            favorite: !portfolio.favorite,
-          }
-        : portfolio
-    );
+  toggleFavoritePortfolio(id);
 
-    localStorage.setItem(
-      "favoritePortfolios",
-      JSON.stringify(updated)
-    );
-
-    return updated;
-  });
+  setPortfolios(getAllPortfolios());
 };
 
   /* FILTERING */
@@ -218,6 +216,11 @@ export default function ExplorePortfolios() {
                   key={portfolio.id}
                   portfolio={portfolio}
                   toggleFavorite={toggleFavorite}
+                  showReport={showReport}
+                  onReport={(portfolio) => {
+                    setSelectedPortfolio(portfolio);
+                    setReportOpen(true);
+                  }}
                 />
               ))}
 
@@ -364,6 +367,16 @@ export default function ExplorePortfolios() {
 
           </div>
         </div>
+        {reportOpen && (
+        <AppModal
+          title="Report Portfolio"
+          onClose={() => setReportOpen(false)}
+        >
+          <p className="text-gray-600">
+            Report {selectedPortfolio?.name}?
+          </p>
+        </AppModal>
+      )}
       </div>
     </DashboardLayout>
   );
