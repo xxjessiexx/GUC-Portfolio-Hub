@@ -496,7 +496,7 @@ export default function Settings() {
       <SettingsCard title="AI Companion" description="These controls update the visible companion immediately, without refreshing the page." icon={Bot}>
         <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
           <TextField label="Companion name" value={assistant.name} onChange={(value) => updateAssistant("name", value)} placeholder="Atlas" />
-          <SelectField label="Companion style" value={assistant.gender} onChange={(value) => updateAssistant("gender", value)} options={[{ value: "male", label: "Male / blue" }, { value: "female", label: "Female / pink" }]} />
+          <SelectField label="Companion style" value={assistant.gender} onChange={(value) => updateAssistant("gender", value)} options={[{ value: "male", label: "Male" }, { value: "female", label: "Female" }]} />
         </div>
         <ToggleRow icon={Bot} title="Start as small circle" description="Dashboards open with the companion collapsed into its draggable circle." checked={assistant.collapsed} onChange={(value) => updateAssistant("collapsed", value)} />
         <SettingRow icon={RotateCcw} title="Reset companion position" description="Move the tiny circle and open panel back to their default dashboard position." right={<PrimaryButton variant="secondary" onClick={resetAssistantPosition}>Reset</PrimaryButton>} />

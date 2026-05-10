@@ -138,7 +138,7 @@ function ActivityBits({ activity, tiny = false }) {
           <motion.span
             // eslint-disable-next-line react/no-array-index-key
             key={index}
-            className={`${tiny ? "text-[10px]" : "text-lg"} absolute font-black text-[color:var(--ai-accent)]`}
+            className={`${tiny ? "text-[10px]" : "text-lg"} absolute font-black text-[color:var(--accent)]`}
             style={{ left: `${8 + index * 34}%`, top: `${tiny ? 2 : -8 + index * 8}%` }}
             animate={{ y: [4, -18, 4], opacity: [0, 1, 0], rotate: [-8, 10, -8] }}
             transition={{ duration: 1.2, delay: index * 0.16, repeat: Infinity }}
@@ -153,7 +153,7 @@ function ActivityBits({ activity, tiny = false }) {
   if (activity === "curious") {
     return (
       <motion.span
-        className={`absolute ${tiny ? "-right-1 -top-1 text-xs" : "-right-5 -top-3 text-2xl"} font-black text-[color:var(--ai-accent)] drop-shadow`}
+        className={`absolute ${tiny ? "-right-1 -top-1 text-xs" : "-right-5 -top-3 text-2xl"} font-black text-[color:var(--accent)] drop-shadow`}
         animate={{ y: [0, -5, 0], rotate: [-6, 8, -6] }}
         transition={{ duration: 1.6, repeat: Infinity }}
       >
@@ -177,7 +177,7 @@ function ActivityBits({ activity, tiny = false }) {
   if (activity === "dizzy") {
     return (
       <motion.span
-        className={`absolute ${tiny ? "-right-1 -top-1 text-xs" : "-right-5 -top-5 text-2xl"} font-black text-[color:var(--ai-primary)] dark:text-[color:var(--ai-accent)]`}
+        className={`absolute ${tiny ? "-right-1 -top-1 text-xs" : "-right-5 -top-5 text-2xl"} font-black text-[color:var(--primary)] dark:text-[color:var(--accent)]`}
         animate={{ rotate: [0, 360], opacity: [0.55, 1, 0.55] }}
         transition={{ duration: 0.85, repeat: Infinity, ease: "linear" }}
       >
@@ -192,7 +192,6 @@ function ActivityBits({ activity, tiny = false }) {
 function RobotMascot({
   isOpen,
   isWaving,
-  gender = "male",
   mood = "idle",
   asleep = false,
   tiny = false,
@@ -206,22 +205,6 @@ function RobotMascot({
   const dancing = activity === "dance";
   const dizzy = activity === "dizzy";
   const waving = isWaving || mood === "wave" || activity === "curious";
-
-  const companionPalette = gender === "female"
-    ? {
-        "--ai-accent": "#F6A7C8",
-        "--ai-primary": "#9B3F68",
-        "--ai-secondary": "#FAD8E8",
-        "--ai-glow": "rgba(246,167,200,0.82)",
-        "--ai-soft": "rgba(250,216,232,0.52)",
-      }
-    : {
-        "--ai-accent": "var(--accent)",
-        "--ai-primary": "var(--primary)",
-        "--ai-secondary": "var(--secondary)",
-        "--ai-glow": "rgba(156,213,255,0.86)",
-        "--ai-soft": "var(--ai-soft)",
-      };
 
   const sizeClass = tiny ? "h-12 w-12" : "h-28 w-28";
   const headClass = tiny ? "h-7 w-11 rounded-[16px] p-[4px]" : "h-16 w-24 rounded-[2rem] p-2";
@@ -240,7 +223,6 @@ function RobotMascot({
       onKeyDown={(event) => {
         if (!tiny && (event.key === "Enter" || event.key === " ")) onPet?.("pet");
       }}
-      style={companionPalette}
       className={`relative ${sizeClass} drop-shadow-[0_22px_28px_rgba(44,57,71,0.25)]`}
       animate={{
         y: asleep ? [0, 1, 0] : tiny ? [0, -2.5, 0] : dancing ? [0, -13, 0, -5, 0] : [0, -9, 0],
@@ -264,7 +246,7 @@ function RobotMascot({
 
       {!tiny && asleep && (
         <motion.span
-          className="absolute -right-5 -top-5 inline-flex items-center gap-1 rounded-full border border-white/45 bg-white/80 px-2 py-1 text-[10px] font-black text-[color:var(--ai-primary)] shadow-lg backdrop-blur-xl dark:bg-[color:var(--card-bg-strong)]/80 dark:text-[color:var(--ai-accent)]"
+          className="absolute -right-5 -top-5 inline-flex items-center gap-1 rounded-full border border-white/45 bg-white/80 px-2 py-1 text-[10px] font-black text-[color:var(--primary)] shadow-lg backdrop-blur-xl dark:bg-[color:var(--card-bg-strong)]/80 dark:text-[color:var(--accent)]"
           animate={{ y: [0, -5, 0], opacity: [0.7, 1, 0.7] }}
           transition={{ duration: 2.3, repeat: Infinity }}
         >
@@ -290,45 +272,45 @@ function RobotMascot({
       )}
 
       <motion.div
-        className={`absolute left-1/2 top-0 ${tiny ? "h-2.5 w-5" : "h-5 w-12"} -translate-x-1/2 rounded-t-[22px] bg-[linear-gradient(180deg,var(--surface-elevated),var(--ai-soft))]`}
+        className={`absolute left-1/2 top-0 ${tiny ? "h-2.5 w-5" : "h-5 w-12"} -translate-x-1/2 rounded-t-[22px] bg-[linear-gradient(180deg,var(--surface-elevated),rgba(122,170,206,0.75))]`}
         animate={{ y: [0, -2, 0] }}
         transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className={`absolute ${tiny ? "left-[2px] top-[12px] h-4 w-2.5" : "left-3 top-4 h-8 w-6"} rounded-l-3xl bg-[linear-gradient(180deg,var(--card-bg-strong),var(--ai-soft))]`} />
-      <div className={`absolute ${tiny ? "right-[2px] top-[12px] h-4 w-2.5" : "right-3 top-4 h-8 w-6"} rounded-r-3xl bg-[linear-gradient(180deg,var(--card-bg-strong),var(--ai-soft))]`} />
+      <div className={`absolute ${tiny ? "left-[2px] top-[12px] h-4 w-2.5" : "left-3 top-4 h-8 w-6"} rounded-l-3xl bg-[linear-gradient(180deg,var(--card-bg-strong),rgba(122,170,206,0.38))]`} />
+      <div className={`absolute ${tiny ? "right-[2px] top-[12px] h-4 w-2.5" : "right-3 top-4 h-8 w-6"} rounded-r-3xl bg-[linear-gradient(180deg,var(--card-bg-strong),rgba(122,170,206,0.38))]`} />
 
-      <div className={`absolute left-1/2 ${tiny ? "top-2" : "top-3"} ${headClass} -translate-x-1/2 bg-[linear-gradient(135deg,var(--card-bg-strong),var(--surface-soft),var(--ai-soft))] shadow-inner ring-1 ring-[color:var(--border-blue)]`}>
-        <div className={`relative h-full ${faceClass} bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.34),transparent_42%),linear-gradient(135deg,var(--ai-primary),var(--ai-secondary))] shadow-[inset_0_0_20px_rgba(156,213,255,0.22)] dark:bg-[radial-gradient(circle_at_50%_35%,rgba(156,213,255,0.16),transparent_42%),linear-gradient(135deg,#061923,#0c2634)]`}>
+      <div className={`absolute left-1/2 ${tiny ? "top-2" : "top-3"} ${headClass} -translate-x-1/2 bg-[linear-gradient(135deg,var(--card-bg-strong),var(--surface-soft),rgba(156,213,255,0.35))] shadow-inner ring-1 ring-[color:var(--border-blue)]`}>
+        <div className={`relative h-full ${faceClass} bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.34),transparent_42%),linear-gradient(135deg,var(--primary),var(--secondary))] shadow-[inset_0_0_20px_rgba(156,213,255,0.22)] dark:bg-[radial-gradient(circle_at_50%_35%,rgba(156,213,255,0.16),transparent_42%),linear-gradient(135deg,#061923,#0c2634)]`}>
           <motion.span
-            className={`absolute ${tiny ? "left-[9px] top-[8px]" : "left-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--ai-accent)] shadow-[0_0_16px_var(--ai-glow)]`}
+            className={`absolute ${tiny ? "left-[9px] top-[8px]" : "left-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--accent)] shadow-[0_0_16px_rgba(156,213,255,0.86)]`}
             animate={{ scaleY: asleep ? 0.16 : [1, 0.15, 1], scaleX: happy ? 1.14 : 1 }}
             transition={{ duration: 3.2, repeat: asleep ? 0 : Infinity, repeatDelay: 2.5 }}
           />
           <motion.span
-            className={`absolute ${tiny ? "right-[9px] top-[8px]" : "right-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--ai-accent)] shadow-[0_0_16px_var(--ai-glow)]`}
+            className={`absolute ${tiny ? "right-[9px] top-[8px]" : "right-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--accent)] shadow-[0_0_16px_rgba(156,213,255,0.86)]`}
             animate={{ scaleY: asleep ? 0.16 : [1, 0.15, 1], scaleX: happy ? 1.14 : 1 }}
             transition={{ duration: 3.2, repeat: asleep ? 0 : Infinity, repeatDelay: 2.5 }}
           />
           <motion.span
-            className={`absolute left-1/2 ${tiny ? "top-[15px] h-1.5 w-3" : "top-9 h-2.5 w-6"} -translate-x-1/2 rounded-b-full bg-[color:var(--ai-accent)] shadow-[0_0_14px_var(--ai-glow)]`}
+            className={`absolute left-1/2 ${tiny ? "top-[15px] h-1.5 w-3" : "top-9 h-2.5 w-6"} -translate-x-1/2 rounded-b-full bg-[color:var(--accent)] shadow-[0_0_14px_rgba(156,213,255,0.82)]`}
             animate={{ scaleX: asleep ? 0.65 : happy ? 1.55 : isOpen ? 1.25 : 1, opacity: thinking ? [0.45, 1, 0.45] : 1 }}
             transition={{ duration: 0.65, repeat: thinking ? Infinity : 0 }}
           />
         </div>
       </div>
 
-      <div className={`absolute left-1/2 ${tiny ? "top-[31px] h-4 w-7 rounded-t-lg" : "top-[4.9rem] h-12 w-16 rounded-t-[1.2rem]"} -translate-x-1/2 rounded-b-[2.5rem] bg-[linear-gradient(135deg,var(--card-bg-strong),var(--surface-soft),var(--ai-soft))] ring-1 ring-[color:var(--border-blue)]`}>
-        {!tiny && <div className="absolute bottom-5 left-4 h-3 w-8 border-b-4 border-[color:var(--ai-primary)]/35" />}
+      <div className={`absolute left-1/2 ${tiny ? "top-[31px] h-4 w-7 rounded-t-lg" : "top-[4.9rem] h-12 w-16 rounded-t-[1.2rem]"} -translate-x-1/2 rounded-b-[2.5rem] bg-[linear-gradient(135deg,var(--card-bg-strong),var(--surface-soft),rgba(156,213,255,0.32))] ring-1 ring-[color:var(--border-blue)]`}>
+        {!tiny && <div className="absolute bottom-5 left-4 h-3 w-8 border-b-4 border-[color:var(--primary)]/35" />}
       </div>
 
       <motion.div
-        className={`absolute ${tiny ? "left-[8px] top-[31px] h-4 w-2" : "left-1 top-[4.7rem] h-10 w-5"} origin-top rounded-full bg-[linear-gradient(180deg,var(--card-bg-strong),var(--ai-soft))]`}
+        className={`absolute ${tiny ? "left-[8px] top-[31px] h-4 w-2" : "left-1 top-[4.7rem] h-10 w-5"} origin-top rounded-full bg-[linear-gradient(180deg,var(--card-bg-strong),rgba(122,170,206,0.38))]`}
         animate={{ rotate: waving || dancing ? [-8, -48, -8, -36, -8] : asleep ? 16 : [-6, 5, -6] }}
         transition={{ duration: waving || dancing ? 1.1 : 3.4, repeat: asleep ? 0 : Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className={`absolute ${tiny ? "right-[8px] top-[31px] h-4 w-2" : "right-1 top-[4.7rem] h-10 w-5"} origin-top rounded-full bg-[linear-gradient(180deg,var(--card-bg-strong),var(--ai-soft))]`}
+        className={`absolute ${tiny ? "right-[8px] top-[31px] h-4 w-2" : "right-1 top-[4.7rem] h-10 w-5"} origin-top rounded-full bg-[linear-gradient(180deg,var(--card-bg-strong),rgba(122,170,206,0.38))]`}
         animate={{ rotate: dancing ? [8, 48, 8, 36, 8] : asleep ? -16 : [6, -5, 6] }}
         transition={{ duration: dancing ? 1.1 : 3.2, repeat: asleep ? 0 : Infinity, ease: "easeInOut" }}
       />
@@ -344,16 +326,16 @@ function RobotMascot({
   );
 }
 
-function TinyRobotBadge({ mood, asleep, isWaving, activity, gender = "male" }) {
+function TinyRobotBadge({ mood, asleep, isWaving, activity }) {
   return (
     <div className="relative grid h-full w-full place-items-center overflow-hidden rounded-full">
       <span className="absolute inset-0 rounded-full bg-[image:var(--gradient-brand)] opacity-35" />
       <span className="absolute inset-[3px] rounded-full border border-white/45 bg-white/28 shadow-[inset_0_1px_12px_rgba(255,255,255,0.32)] backdrop-blur-2xl dark:bg-[color:var(--card-bg-strong)]/32" />
-      <span className="absolute -right-2 -top-2 h-10 w-10 rounded-full bg-[color:var(--ai-accent)]/35 blur-xl" />
+      <span className="absolute -right-2 -top-2 h-10 w-10 rounded-full bg-[color:var(--accent)]/35 blur-xl" />
 
-      <RobotMascot tiny gender={gender} mood={mood} asleep={asleep} isWaving={isWaving} activity={activity} />
+      <RobotMascot tiny mood={mood} asleep={asleep} isWaving={isWaving} activity={activity} />
 
-      <span className="absolute bottom-1.5 right-1.5 h-2.5 w-2.5 rounded-full border border-white bg-[color:var(--ai-accent)] shadow-[0_0_12px_rgba(156,213,255,0.9)]" />
+      <span className="absolute bottom-1.5 right-1.5 h-2.5 w-2.5 rounded-full border border-white bg-[color:var(--accent)] shadow-[0_0_12px_rgba(156,213,255,0.9)]" />
     </div>
   );
 }
@@ -364,7 +346,7 @@ function ActionButton({ action, onAction, onNavigate }) {
     <button
       type="button"
       onClick={() => (path ? onNavigate(path) : onAction(action.query || action.label))}
-      className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-[color:var(--border-blue)] bg-white/70 px-3 py-1.5 text-xs font-black text-[color:var(--ai-primary)] transition hover:-translate-y-0.5 hover:bg-white dark:bg-white/10 dark:text-[color:var(--ai-accent)]"
+      className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-[color:var(--border-blue)] bg-white/70 px-3 py-1.5 text-xs font-black text-[color:var(--primary)] transition hover:-translate-y-0.5 hover:bg-white dark:bg-white/10 dark:text-[color:var(--accent)]"
       title={action.description || path || action.query || action.label}
     >
       {path ? <Compass className="h-3.5 w-3.5 shrink-0" /> : <Sparkles className="h-3.5 w-3.5 shrink-0" />}
@@ -387,7 +369,7 @@ function ChatMessage({ message, onAction, onNavigate }) {
         }`}
       >
         {isBot && message.title && (
-          <div className="mb-1 flex items-center gap-1.5 text-[12px] font-black text-[color:var(--ai-primary)] dark:text-[color:var(--ai-accent)]">
+          <div className="mb-1 flex items-center gap-1.5 text-[12px] font-black text-[color:var(--primary)] dark:text-[color:var(--accent)]">
             <Sparkles className="h-3.5 w-3.5" />
             {message.title}
           </div>
@@ -585,19 +567,23 @@ export default function FloatingAICompanion() {
 
     const onSettingsChange = (event) => {
       const next = event?.detail || {};
+
       if (typeof next.collapsed === "boolean") {
         setCollapsed(next.collapsed);
         localStorage.setItem(COLLAPSED_KEY, next.collapsed ? "true" : "false");
       }
+
       if (next.gender === "female" || next.gender === "male") {
         setCompanionGender(next.gender);
         localStorage.setItem(COMPANION_GENDER_KEY, next.gender);
       }
+
       if (typeof next.name === "string" && next.name.trim()) {
         const clean = next.name.replace(/[^a-zA-Z0-9 _-]/g, "").trim().slice(0, 22);
         setCompanionName(clean);
         localStorage.setItem(COMPANION_NAME_KEY, clean);
       }
+
       wake("happy", "dance");
     };
 
@@ -739,22 +725,6 @@ export default function FloatingAICompanion() {
     }, 120);
   };
 
-  const companionPalette = companionGender === "female"
-    ? {
-        "--ai-accent": "#F6A7C8",
-        "--ai-primary": "#9B3F68",
-        "--ai-secondary": "#FAD8E8",
-        "--ai-glow": "rgba(246,167,200,0.82)",
-        "--ai-soft": "rgba(250,216,232,0.52)",
-      }
-    : {
-        "--ai-accent": "var(--accent)",
-        "--ai-primary": "var(--primary)",
-        "--ai-secondary": "var(--secondary)",
-        "--ai-glow": "rgba(156,213,255,0.86)",
-        "--ai-soft": "var(--ai-soft)",
-      };
-
   if (collapsed) {
     return (
       <motion.button
@@ -775,13 +745,13 @@ export default function FloatingAICompanion() {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         whileHover={{ scale: 1.08, y: -2 }}
         whileTap={{ scale: 0.96 }}
-        style={{ left: launcherPosition.x, top: launcherPosition.y, touchAction: "none", ...companionPalette }}
+        style={{ left: launcherPosition.x, top: launcherPosition.y, touchAction: "none" }}
         className="group fixed z-[70] grid h-[72px] w-[72px] cursor-grab place-items-center rounded-full border border-white/45 bg-white/18 shadow-[0_18px_50px_rgba(44,57,71,0.24)] outline-none backdrop-blur-2xl transition focus-visible:ring-4 focus-visible:ring-[color:var(--ring-soft)] active:cursor-grabbing dark:bg-[color:var(--card-bg-strong)]/22"
         aria-label={`Open ${companionName} AI companion`}
         title="Drag me · click to open · double-click for dance"
       >
-        <span className="absolute inset-0 rounded-full bg-[color:var(--ai-accent)]/15 blur-xl" />
-        <TinyRobotBadge gender={companionGender} mood={mood} asleep={asleep} isWaving={mood === "wave"} activity={activity} />
+        <span className="absolute inset-0 rounded-full bg-[color:var(--accent)]/15 blur-xl" />
+        <TinyRobotBadge mood={mood} asleep={asleep} isWaving={mood === "wave"} activity={activity} />
         <span className="pointer-events-none absolute -left-32 top-1/2 hidden -translate-y-1/2 rounded-2xl border border-[color:var(--border-blue)] bg-[color:var(--surface-elevated)]/90 px-3 py-2 text-xs font-black text-[color:var(--ink)] opacity-0 shadow-[var(--shadow-card)] backdrop-blur-xl transition group-hover:opacity-100 xl:block">
           Drag me · click to open
         </span>
@@ -802,7 +772,7 @@ export default function FloatingAICompanion() {
       initial={{ opacity: 0, x: 35, y: 20, scale: 0.94 }}
       animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-      style={{ left: panelPosition.x, top: panelPosition.y, touchAction: "none", ...companionPalette }}
+      style={{ left: panelPosition.x, top: panelPosition.y, touchAction: "none" }}
       className="fixed z-[70] hidden max-w-[calc(100vw-2rem)] select-none items-end gap-3 lg:flex"
     >
       <motion.aside
@@ -823,7 +793,7 @@ export default function FloatingAICompanion() {
               title="Drag the assistant panel"
             >
               <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white/12 ring-1 ring-white/15">
-                <Bot className="h-5 w-5 text-[color:var(--ai-accent)]" />
+                <Bot className="h-5 w-5 text-[color:var(--accent)]" />
               </div>
               <div className="min-w-0">
                 <p className="truncate text-sm font-black">{companionName}</p>
@@ -922,7 +892,7 @@ export default function FloatingAICompanion() {
                     onClick={() => saveCompanionGender(option.value)}
                     className={`rounded-2xl border px-3 py-2 text-left transition ${
                       companionGender === option.value
-                        ? "border-[color:var(--ai-primary)] bg-[color:var(--ai-primary)]/10 text-[color:var(--ai-primary)] shadow-sm dark:border-[color:var(--ai-accent)] dark:text-[color:var(--ai-accent)]"
+                        ? "border-[color:var(--primary)] bg-[color:var(--primary)]/10 text-[color:var(--primary)] shadow-sm dark:border-[color:var(--accent)] dark:text-[color:var(--accent)]"
                         : "border-[color:var(--border-blue)] bg-white/55 text-[color:var(--ink)] hover:-translate-y-0.5 dark:bg-white/10"
                     }`}
                   >
@@ -948,7 +918,7 @@ export default function FloatingAICompanion() {
                 key={suggestion}
                 type="button"
                 onClick={() => ask(suggestion)}
-                className="shrink-0 rounded-full border border-[color:var(--border-blue)] bg-white/60 px-3 py-1.5 text-xs font-black text-[color:var(--ai-primary)] transition hover:-translate-y-0.5 hover:bg-white dark:bg-white/10 dark:text-[color:var(--ai-accent)]"
+                className="shrink-0 rounded-full border border-[color:var(--border-blue)] bg-white/60 px-3 py-1.5 text-xs font-black text-[color:var(--primary)] transition hover:-translate-y-0.5 hover:bg-white dark:bg-white/10 dark:text-[color:var(--accent)]"
               >
                 {suggestion}
               </button>
@@ -1019,10 +989,9 @@ export default function FloatingAICompanion() {
           aria-label={`Drag ${companionName} or click to collapse to tiny circle`}
           title="Drag me · click to return to tiny circle · double-click for dance"
         >
-          <span className="absolute inset-2 rounded-full bg-[color:var(--ai-accent)]/30 opacity-0 blur-2xl transition group-hover:opacity-100" />
+          <span className="absolute inset-2 rounded-full bg-[color:var(--accent)]/30 opacity-0 blur-2xl transition group-hover:opacity-100" />
           <RobotMascot
             isOpen
-            gender={companionGender}
             isWaving={mood === "wave"}
             mood={mood}
             asleep={asleep}
@@ -1048,7 +1017,7 @@ export default function FloatingAICompanion() {
           <button
             type="button"
             onClick={() => interact("tickle")}
-            className="grid h-7 w-7 place-items-center rounded-full text-[color:var(--ai-primary)] transition hover:bg-[color:var(--ai-primary)]/10 dark:text-[color:var(--ai-accent)]"
+            className="grid h-7 w-7 place-items-center rounded-full text-[color:var(--primary)] transition hover:bg-[color:var(--primary)]/10 dark:text-[color:var(--accent)]"
             title="Play"
           >
             <Wand2 className="h-3.5 w-3.5" />
