@@ -6,6 +6,7 @@ import {
   extraDemoInternships,
 } from "./extra-demo-internships-50"
 
+import {extraPortfolios} from "./extra-portfolio"
 export const DEMO_DATA_VERSION = "ms2-linked-demo-v6-merged-audited-2026-05-09";
 
 export const usersSeed = [
@@ -646,6 +647,7 @@ export const usersSeed = [
     "verificationStatus": "approved"
   },
   ... extraDemoEmployerUsers,
+  ...extraPortfolios,
 ];
 
 export const coursesSeed = [
