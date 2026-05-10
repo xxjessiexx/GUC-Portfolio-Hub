@@ -50,7 +50,6 @@ const workspaceItems = {
     { label: "My Portfolio", icon: User, path: "/student-dashboard/portfolio" },
     { label: "My Projects", icon: FolderKanban, path: "/view-all-projects" },
     { label: "My Applications", icon: ClipboardList, path: "/my-applications" },
-    { label: "Feedback", icon: MessageSquare, path: null },
     { label: "Internships", icon: Briefcase, path: "/internships" },
     { label: "Favorites", icon: Heart, path: null },
     { label: "Settings", icon: Settings, path: null },

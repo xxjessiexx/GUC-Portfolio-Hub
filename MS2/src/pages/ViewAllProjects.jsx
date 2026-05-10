@@ -1,162 +1,212 @@
-import { useState } from "react";
-import AppShellBackground from "../components/ui/AppShellBackground";
-import {AppCard} from "../components/ui/AppCard";
-import { Button } from "../components/ui/button";
+import { useEffect, useState } from "react";
+import { AppCard } from "../components/ui/AppCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
+import {
+  getCurrentUser,
+  getProjectsForUser,
+  getCollection,
+  updateProject,
+  deleteProject as deleteProjectFromStore,
+} from "@/data/demoStore";
+
 import { useNavigate } from "react-router-dom";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { Eye, Pencil, Trash2, Pin } from "lucide-react";
-import { Search, GraduationCap,  ChevronDown ,Globe,Lock} from "lucide-react";
+import { Pencil, Trash2, Pin, ChevronDown, Globe, Lock } from "lucide-react";
 import CourseBadge from "@/components/ui/CourseBadge";
 import DragDropList from "@/components/ui/DragDropList";
 import SortableCard from "@/components/ui/SortableCard";
-import SearchInput from "@/components/filters/SearchInput";
-import CourseFilter from "@/components/filters/CourseFilter";
-import VisibilityFilter from "@/components/filters/VisibilityFilter";
-import PinnedFilter from "@/components/filters/PinnedFilter";
-import SortFilter from "@/components/filters/SortFilter";
 
-const initialProjects = [
-  {
-    id: 1,
-    name: "Smart Campus Assistant",
-    course: "CSEN 704",
-    description: "Mobile-first campus help and navigation platform.",
-    visibility: "Public",
-    pinned: true,
-    rating: 4.8,
-    comments: 5,
-    updated: "06 Mar 2026",
-  },
-  {
-    id: 2,
-    name: "Lane Detection System",
-    course: "Bachelor Project",
-    description: "Real-time lane detection using computer vision.",
-    visibility: "Public",
-    pinned: true,
-    rating: 4.6,
-    comments: 2,
-    updated: "01 Mar 2026",
-  },
-  {
-    id: 3,
-    name: "E-Commerce Platform",
-    course: "Software Engineering",
-    description: "Full-stack e-commerce platform.",
-    visibility: "Private",
-    pinned: false,
-    rating: 4.4,
-    comments: 4,
-    updated: "21 Feb 2026",
-  },
-  {
-    id: 4,
-    name: "AI Content Recommender",
-    course: "Machine Learning",
-    description: "Recommendation engine for educational content.",
-    visibility: "Public",
-    pinned: false,
-    rating: 4.9,
-    comments: 6,
-    updated: "11 Feb 2026",
-  },
-];
+import SearchInput from "@/components/Filters/SearchInput";
+import CourseFilter from "@/components/Filters/CourseFilter";
+import VisibilityFilter from "@/components/Filters/VisibilityFilter";
+import PinnedFilter from "@/components/Filters/PinnedFilter";
+import SortFilter from "@/components/Filters/SortFilter";
+
+const normalizeVisibility = (value) => {
+  if (!value) return "Public";
+  return String(value).toLowerCase() === "private" ? "Private" : "Public";
+};
+
+const getProjectName = (project) =>
+  project.name || project.title || "Untitled Project";
+
+const getProjectDescription = (project) =>
+  project.description ||
+  project.shortDescription ||
+  project.summary ||
+  "No description added yet.";
+
+const getProjectCourse = (project, courses) => {
+  if (project.course) return project.course;
+  if (project.courseCode) return project.courseCode;
+  if (project.courseName) return project.courseName;
+
+  const course = courses.find((c) => c.id === project.courseId);
+
+  return (
+    course?.code ||
+    course?.courseCode ||
+    course?.name ||
+    course?.title ||
+    project.courseId ||
+    "No course"
+  );
+};
+
+const getProjectUpdated = (project) => {
+  const value = project.updated || project.updatedAt || project.createdAt;
+
+  if (!value) return "Not updated yet";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const getProjectRating = (project) =>
+  project.rating ?? project.averageRating ?? "—";
+
+const getProjectComments = (project) => {
+  if (typeof project.comments === "number") return project.comments;
+  if (Array.isArray(project.comments)) return project.comments.length;
+  if (Array.isArray(project.feedback)) return project.feedback.length;
+  if (typeof project.commentsCount === "number") return project.commentsCount;
+  return 0;
+};
 
 export default function ViewAllProjects() {
-  const [projects, setProjects] = useState(initialProjects);
+  const [projects, setProjects] = useState([]);
+  const [courses, setCourses] = useState([]);
+
   const [search, setSearch] = useState("");
   const [filterVisibility, setFilterVisibility] = useState("All");
   const [filterCourse, setFilterCourse] = useState("All");
   const [filterPinned, setFilterPinned] = useState("All");
   const [sortBy, setSortBy] = useState("Updated");
+
   const navigate = useNavigate();
-  
-    
-  const deleteProject = (id) => {
-    setProjects((prev) => prev.filter((p) => p.id !== id));
+
+  const refreshProjects = () => {
+    const currentUser = getCurrentUser();
+
+    if (!currentUser?.id) {
+      setProjects([]);
+      setCourses([]);
+      return;
+    }
+
+    setProjects(getProjectsForUser(currentUser.id) || []);
+    setCourses(getCollection("courses") || []);
   };
 
-    // 🔍 Filtering logic
-    const filteredProjects = projects.filter((p) => {
+  useEffect(() => {
+    refreshProjects();
+  }, []);
+
+  const deleteProject = (id) => {
+    deleteProjectFromStore(id);
+    refreshProjects();
+  };
+
+  const filteredProjects = projects
+    .filter((p) => {
+      const name = getProjectName(p);
+      const course = getProjectCourse(p, courses);
+      const visibility = normalizeVisibility(p.visibility);
+      const pinned = Boolean(p.pinned || p.isPinned);
+
       return (
-        p.name.toLowerCase().includes(search.toLowerCase()) &&(filterCourse === "All" ||
- p.course.toUpperCase().includes(filterCourse)) &&
-        (filterVisibility === "All" || p.visibility === filterVisibility)&&
+        name.toLowerCase().includes(search.toLowerCase()) &&
+        (filterCourse === "All" ||
+          course.toUpperCase().includes(filterCourse.toUpperCase())) &&
+        (filterVisibility === "All" || visibility === filterVisibility) &&
         (filterPinned === "All" ||
-        (filterPinned === "Pinned" && p.pinned) ||
-        (filterPinned === "Unpinned" && !p.pinned))
+          (filterPinned === "Pinned" && pinned) ||
+          (filterPinned === "Unpinned" && !pinned))
       );
     })
-     .sort((a, b) => {
-    if (sortBy === "Alphabetical") {
-      return a.name.localeCompare(b.name);
-    }
+    .sort((a, b) => {
+      if (sortBy === "Alphabetical") {
+        return getProjectName(a).localeCompare(getProjectName(b));
+      }
 
-    if (sortBy === "Updated") {
-      return new Date(b.updated) - new Date(a.updated);
-    }
+      if (sortBy === "Updated") {
+        return (
+          new Date(b.updatedAt || b.updated || b.createdAt || 0) -
+          new Date(a.updatedAt || a.updated || a.createdAt || 0)
+        );
+      }
 
-    return 0;
-  });
-  
+      return 0;
+    });
 
-  const pinnedProjects = filteredProjects.filter((p) => p.pinned);
+  const pinnedProjects = filteredProjects.filter(
+    (p) => p.pinned || p.isPinned
+  );
 
-    // 📌 Toggle pin
-    const togglePin = (id) => {
-      setProjects((prev) =>
-        prev.map((p) =>
-          p.id === id ? { ...p, pinned: !p.pinned } : p
-        )
-      );
-    };
+  const togglePin = (id) => {
+    const project = projects.find((p) => p.id === id);
+    if (!project) return;
 
-    // 👁 Toggle visibility
-    const toggleVisibility = (id) => {
-      setProjects((prev) =>
-        prev.map((p) =>
-          p.id === id
-            ? {
-              ...p,
-              visibility: p.visibility === "Public" ? "Private" : "Public",
-              }
-            : p
-        )
-      );
-    };
+    const nextPinned = !(project.pinned || project.isPinned);
 
-  
+    updateProject(id, {
+      pinned: nextPinned,
+      isPinned: nextPinned,
+      updatedAt: new Date().toISOString(),
+    });
+
+    refreshProjects();
+  };
+
+  const toggleVisibility = (id, value) => {
+    updateProject(id, {
+      visibility: String(value).toLowerCase(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    refreshProjects();
+  };
+
+  const openProject = (id) => {
+    navigate(`/project?projectId=${id}`);
+  };
+
+  const editProject = (id) => {
+    navigate(`/edit-project/${id}`);
+  };
 
   return (
     <DashboardLayout>
       <div className="p-8 space-y-6">
-        <SectionHeader 
-            title="My Projects"
-            subtitle="Manage, edit, and organize your projects."
-            action={
-      <div className="-m-2">
-        <span
-          onClick={() => navigate("/create-project")}
-          className="inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
-          bg-[#2C4E80] shadow-md hover:bg-[#243f69] transition-all cursor-pointer"
-        >
-          + Create Project
-        </span>
-      </div>
-            }
-          />
-          
-    
+        <SectionHeader
+          title="My Projects"
+          subtitle="Manage, edit, and organize your projects."
+          action={
+            <div className="-m-2">
+              <span
+                onClick={() => navigate("/create-project")}
+                className="inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
+                bg-[#2C4E80] shadow-md hover:bg-[#243f69] transition-all cursor-pointer"
+              >
+                + Create Project
+              </span>
+            </div>
+          }
+        />
 
         {/* Filters */}
-      <AppCard className="p-4 flex items-center gap-4 flex-wrap rounded-2xl bg-white/60 backdrop-blur-md">
-
-                  <SearchInput
+        <AppCard className="p-4 flex items-center gap-4 flex-wrap rounded-2xl bg-white/60 backdrop-blur-md">
+          <SearchInput
             search={search}
             setSearch={setSearch}
             placeholder="Search my projects"
@@ -179,15 +229,15 @@ export default function ViewAllProjects() {
             onChange={setFilterPinned}
             options={["Pinned", "Unpinned"]}
           />
+
           <SortFilter
             value={sortBy}
             onChange={setSortBy}
             options={["None", "Updated", "Alphabetical"]}
           />
-      </AppCard>
+        </AppCard>
 
-
-        {/* 📌 Pinned */}
+        {/* Pinned */}
         {pinnedProjects.length > 0 && (
           <AppCard className="p-4">
             <Label className="mb-1 text-xl font-bold text-[#243B6B]">
@@ -198,234 +248,234 @@ export default function ViewAllProjects() {
               Projects highlighted at the top of your portfolio
             </p>
 
-            <div className="flex gap-4">
+            <div className="flex gap-4 flex-wrap">
               {pinnedProjects.map((p) => (
                 <div
                   key={p.id}
-                  className="border rounded-2xl p-3 flex justify-between items-start w-80"
+                  onClick={() => openProject(p.id)}
+                  className="border rounded-2xl p-3 flex justify-between items-start w-80 cursor-pointer hover:bg-slate-50 transition"
                 >
-                  <div>
-                    <h3 className="font-extrabold text-[15px] text-[#243B6B] whitespace-nowrap">{p.name}</h3>
-                  <CourseBadge course={p.course} />
+                  <div className="min-w-0">
+                    <h3 className="font-extrabold text-[15px] text-[#243B6B] truncate max-w-[230px]">
+                      {getProjectName(p)}
+                    </h3>
+
+                    <CourseBadge course={getProjectCourse(p, courses)} />
                   </div>
 
-                <button
-                  onClick={() => togglePin(p.id)}
-                  className={` mt-2 flex items-center justify-center w-10 h-10 rounded-full border transition ${
-                    p.pinned
-                      ? "bg-yellow-100 border-yellow-300 text-yellow-600"
-                      : "bg-white border-gray-200 text-gray-400 hover:bg-gray-100"
-                  }`}
-                        >
-                  <Pin size={16} strokeWidth={2.5} className="rotate-45" />
-                </button>
-              </div>
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      togglePin(p.id);
+                    }}
+                    className={`mt-2 flex items-center justify-center w-10 h-10 rounded-full border transition ${
+                      p.pinned || p.isPinned
+                        ? "bg-yellow-100 border-yellow-300 text-yellow-600"
+                        : "bg-white border-gray-200 text-gray-400 hover:bg-gray-100"
+                    }`}
+                  >
+                    <Pin size={16} strokeWidth={2.5} className="rotate-45" />
+                  </button>
+                </div>
               ))}
             </div>
           </AppCard>
         )}
 
-        {/* 📊 All Projects */}
+        {/* All Projects */}
         <AppCard className="p-4">
-          <Label className=" mb-4 ml-3 text-xl font-bold text-[#243B6B]">All My Projects</Label>
-                <div className="grid grid-cols-[3.5fr_1.2fr_1.7fr_1.2fr_1.5fr_1fr] px-10 py-3 text-xs font-semibold text-gray-500 uppercase">
-                  <span className="pl-12">Project</span>
+          <Label className="mb-4 ml-3 text-xl font-bold text-[#243B6B]">
+            All My Projects
+          </Label>
 
-                  <span className="-ml-14">
-                    Updated
-                  </span>
+          {filteredProjects.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-10 text-center">
+              <h3 className="text-lg font-bold text-[#243B6B]">
+                No projects found
+              </h3>
+              <p className="mt-2 text-sm text-slate-500">
+                Create a project or adjust your filters.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-[3.5fr_1.2fr_1.7fr_1.2fr_1.5fr_1fr] px-10 py-3 text-xs font-semibold text-gray-500 uppercase">
+                <span className="pl-12">Project</span>
 
-                  <span className="-ml-6">
-                    Portfolio Visibility
-                  </span>
+                <span className="-ml-14">Updated</span>
 
-                  <span className="-ml-6">
-                    Pinned to Top
-                  </span>
+                <span className="-ml-6">Portfolio Visibility</span>
 
-                  <span className="-ml-4">
-                    Rating / Comments
-                  </span>
+                <span className="-ml-6">Pinned to Top</span>
 
-                  <span className="pl-7">
-                    Actions
-                  </span>
-                </div>
-          
-            
-        <DragDropList
-          items={filteredProjects}
-          setItems={setProjects}
-        >
+                <span className="-ml-4">Rating / Comments</span>
 
-        <div className="space-y-4">
+                <span className="pl-7">Actions</span>
+              </div>
 
-          {filteredProjects.map((p) => (
+              <DragDropList items={filteredProjects} setItems={setProjects}>
+                <div className="space-y-4">
+                  {filteredProjects.map((p) => {
+                    const visibility = normalizeVisibility(p.visibility);
+                    const pinned = Boolean(p.pinned || p.isPinned);
 
-            <SortableCard
-              key={p.id}
-              id={p.id}
-              updated={p.updated}
-                onClick={() => navigate("/project")}
-              
+                    return (
+                      <SortableCard
+                        key={p.id}
+                        id={p.id}
+                        updated={getProjectUpdated(p)}
+                        onClick={() => openProject(p.id)}
+                        left={
+                          <div>
+                            <h3
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openProject(p.id);
+                              }}
+                              className="font-bold text-[16px] text-[#16253A] max-w-md truncate leading-none cursor-pointer hover:text-blue-600"
+                            >
+                              {getProjectName(p)}
+                            </h3>
 
-              left={
-  <div>
-    <h3
-      onClick={() => navigate("/project")}
-      className="font-bold text-[16px] text-[#16253A] whitespace-nowrap leading-none cursor-pointer hover:text-blue-600"
-    >
-      {p.name}
-    </h3>
+                            <p className="text-[#3B82F6] text-sm font-semibold mt-1">
+                              {getProjectCourse(p, courses)}
+                            </p>
 
-    <p className="text-[#3B82F6] text-sm font-semibold mt-1">
-      {p.course}
-    </p>
+                            <p className="text-sm text-gray-500 min-w-0 line-clamp-2 max-w-xl">
+                              {getProjectDescription(p)}
+                            </p>
+                          </div>
+                        }
+                        middle={
+                          <div className="contents">
+                            {/* Visibility */}
+                            <div className="flex justify-center">
+                              <div className="relative w-fit">
+                                <select
+                                  value={visibility}
+                                  onClick={(event) => event.stopPropagation()}
+                                  onChange={(e) =>
+                                    toggleVisibility(p.id, e.target.value)
+                                  }
+                                  className={`appearance-none pl-10 pr-8 py-2 rounded-xl border text-sm font-medium cursor-pointer ${
+                                    visibility === "Public"
+                                      ? "bg-green-50 text-green-700 border-green-200"
+                                      : "bg-gray-100 text-gray-600 border-gray-200"
+                                  }`}
+                                >
+                                  <option value="Public">Public</option>
+                                  <option value="Private">Private</option>
+                                </select>
 
-    <p className="text-sm text-gray-500 min-w-0">
-      {p.description}
-    </p>
-  </div>
-}
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                  {visibility === "Public" ? (
+                                    <Globe size={16} className="text-green-600" />
+                                  ) : (
+                                    <Lock size={16} className="text-gray-500" />
+                                  )}
+                                </span>
 
-            middle={
-              <div className="contents">
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                  <ChevronDown
+                                    size={14}
+                                    className="text-gray-400"
+                                  />
+                                </span>
+                              </div>
+                            </div>
 
-                {/* VISIBILITY */}
-                <div className="flex justify-center">
-                  <div className="relative w-fit">
+                            {/* Pin */}
+                            <div className="flex justify-center">
+                              <button
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  togglePin(p.id);
+                                }}
+                                className={`flex items-center justify-center w-10 h-10 rounded-full border transition ${
+                                  pinned
+                                    ? "bg-yellow-100 border-yellow-300 text-yellow-600"
+                                    : "bg-white border-gray-200 text-gray-400 hover:bg-gray-100"
+                                }`}
+                              >
+                                <Pin
+                                  size={16}
+                                  strokeWidth={2.5}
+                                  className="rotate-45"
+                                />
+                              </button>
+                            </div>
 
-                  <select
-                    value={p.visibility}
-                    onChange={(e) => {
-                    const value = e.target.value;
+                            {/* Rating */}
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <span className="font-medium">
+                                {getProjectRating(p)}
+                              </span>
 
-                    setProjects((prev) =>
-                      prev.map((proj) =>
-                        proj.id === p.id
-                            ? { ...proj, visibility: value }
-                            : proj
-                        )
+                              <span className="text-yellow-400">★</span>
+
+                              <span className="text-gray-400">•</span>
+
+                              <span>{getProjectComments(p)} comments</span>
+                            </div>
+                          </div>
+                        }
+                        right={
+                          <div className="flex gap-2 justify-end -mr-4">
+                            <button
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                editProject(p.id);
+                              }}
+                              className="p-2 rounded border hover:bg-gray-100"
+                            >
+                              <Pencil size={16} />
+                            </button>
+
+                            <button
+                              onClick={(event) => {
+                                event.stopPropagation();
+
+                                if (
+                                  confirm(
+                                    "Are you sure you want to delete this project?"
+                                  )
+                                ) {
+                                  deleteProject(p.id);
+                                }
+                              }}
+                              className="p-2 rounded border hover:bg-red-100 text-red-500"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+
+                            <button
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                togglePin(p.id);
+                              }}
+                              className={`flex items-center justify-center w-10 h-10 rounded-full border transition ${
+                                pinned
+                                  ? "bg-yellow-100 border-yellow-300 text-yellow-600"
+                                  : "bg-white border-gray-200 text-gray-400 hover:bg-gray-100"
+                              }`}
+                            >
+                              <Pin
+                                size={16}
+                                strokeWidth={2.5}
+                                className="rotate-45"
+                              />
+                            </button>
+                          </div>
+                        }
+                      />
                     );
-                  }}
-
-         className={`appearance-none pl-10 pr-8 py-2 rounded-xl border text-sm font-medium cursor-pointer
-            ${
-              p.visibility === "Public"
-                ? "bg-green-50 text-green-700 border-green-200"
-                : "bg-gray-100 text-gray-600 border-gray-200"
-            }`}
-                 >
-                 <option value="Public">Public</option>
-                  <option value="Private">Private</option>
-                </select>
-
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                      {p.visibility === "Public" ? (
-                        <Globe size={16} className="text-green-600" />
-                      ) : (
-                        <Lock size={16} className="text-gray-500" />
-                      )}
-                    </span>
-
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                      <ChevronDown size={14} className="text-gray-400" />
-                    </span>
-
-                  </div>
+                  })}
                 </div>
-
-            {/* PIN */}
-            <div className="flex justify-center">
-              <button
-                onClick={() => togglePin(p.id)}
-                className={`flex items-center justify-center w-10 h-10 rounded-full border transition ${
-                  p.pinned
-                    ? "bg-yellow-100 border-yellow-300 text-yellow-600"
-                    : "bg-white border-gray-200 text-gray-400 hover:bg-gray-100"
-                }`}
-              >
-                <Pin
-                  size={16}
-                  strokeWidth={2.5}
-                  className="rotate-45"
-                />
-              </button>
-            </div>
-
-            {/* RATING */}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span className="font-medium">
-                {p.rating}
-              </span>
-
-              <span className="text-yellow-400">
-                ★
-              </span>
-
-              <span className="text-gray-400">
-                •
-              </span>
-
-              <span>
-                {p.comments} comments
-              </span>
-            </div>
-
-          </div>
-        }
-
-        right={
-          <div className="flex gap-2 justify-end -mr-4">
-
-            <button className="p-2 rounded border hover:bg-gray-100">
-              <Pencil size={16} />
-            </button>
-
-            <button
-              onClick={() => {
-                if (
-                  confirm("Are you sure you want to delete this project?")
-                ) {
-                  deleteProject(p.id);
-                }
-              }}
-              className="p-2 rounded border hover:bg-red-100 text-red-500"
-            >
-              <Trash2 size={16} />
-            </button>
-
-            <button
-              onClick={() => togglePin(p.id)}
-              className={`flex items-center justify-center w-10 h-10 rounded-full border transition ${
-                p.pinned
-                  ? "bg-yellow-100 border-yellow-300 text-yellow-600"
-                  : "bg-white border-gray-200 text-gray-400 hover:bg-gray-100"
-              }`}
-            >
-              <Pin
-                size={16}
-                strokeWidth={2.5}
-                className="rotate-45"
-              />
-            </button>
-
-          </div>
-        }
-
-      />
-
-    ))}
-
-  </div>
-
-</DragDropList>
-
-        
-
-           
+              </DragDropList>
+            </>
+          )}
         </AppCard>
-       </div>
+      </div>
     </DashboardLayout>
   );
 }

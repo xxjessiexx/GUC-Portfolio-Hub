@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowUpDown,
@@ -26,7 +26,14 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import { Input } from "@/components/ui/input";
 import { useUserProfile } from "@/context/UserProfileContext";
-import { projects as dashboardProjects } from "@/data/studentDashboardData";
+import {
+  getCurrentUser,
+  getUserById,
+  getProjectsForUser,
+  getCollection,
+  updateProject,
+  deleteProject as deleteProjectFromStore,
+} from "@/data/demoStore";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,126 +44,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-const PROJECTS_STORAGE_KEY = "guc-portfolio-projects";
-const PORTFOLIO_OVERRIDES_KEY = "guc-portfolio-project-overrides";
-const PORTFOLIO_HIDDEN_MOCKS_KEY = "guc-portfolio-hidden-mock-projects";
-
-const mockPortfolioProjects = [
-  {
-    id: "mock-smart-campus",
-    title: "Smart Campus Assistant",
-    course: "Web Application",
-    type: "Course Project",
-    description:
-      "AI-powered assistant for campus navigation, event discovery, student support, and academic reminders.",
-    visibility: "Public",
-    status: "Published",
-    rating: 4.9,
-    technologies: ["React", "Node.js", "MongoDB", "Tailwind CSS"],
-    collaborators: ["Mariam Adel", "Omar Tarek"],
-    instructors: ["dr.aya@guc.edu.eg"],
-    github: "github.com/yasminkhaled/smart-campus",
-    demo: "smart-campus.demo",
-    createdAt: "2026-05-12T12:00:00.000Z",
-    updatedAt: "2026-05-12T12:00:00.000Z",
-    pinned: true,
-    isMock: true,
-  },
-  {
-    id: "mock-lane-detection",
-    title: "Lane Detection System",
-    course: "Computer Vision",
-    type: "Research Project",
-    description:
-      "Real-time lane detection pipeline for autonomous driving using OpenCV preprocessing and deep learning experiments.",
-    visibility: "Public",
-    status: "In Progress",
-    rating: 4.7,
-    technologies: ["Python", "OpenCV", "YOLOv8", "PyTorch"],
-    collaborators: ["Raven Team"],
-    instructors: ["mrs.lab@guc.edu.eg"],
-    github: "github.com/yasminkhaled/lane-detection",
-    demo: "bfmc-preview.local",
-    createdAt: "2026-05-05T12:00:00.000Z",
-    updatedAt: "2026-05-08T12:00:00.000Z",
-    pinned: true,
-    isMock: true,
-  },
-  {
-    id: "mock-study-buddy",
-    title: "Smart Study Buddy",
-    course: "CSEN 501 - Software Engineering",
-    type: "Course Project",
-    description:
-      "A course project with clean presentation, instructor feedback, collaborator management, and submission tracking.",
-    visibility: "Public",
-    status: "Submitted",
-    rating: 4.8,
-    technologies: ["React", "Node.js", "MongoDB"],
-    collaborators: ["Yasmin Khaled"],
-    instructors: ["dr.aya@guc.edu.eg"],
-    github: "github.com/yasminkhaled/smart-study-buddy",
-    demo: "study-buddy.demo",
-    createdAt: "2026-05-02T12:00:00.000Z",
-    updatedAt: "2026-05-06T12:00:00.000Z",
-    pinned: true,
-    isMock: true,
-  },
-  {
-    id: "mock-taskflow",
-    title: "TaskFlow",
-    course: "Course Project",
-    type: "Course Project",
-    description:
-      "A productivity dashboard for managing tasks, team priorities, deadlines, and analytics in one clean workspace.",
-    visibility: "Public",
-    status: "Draft",
-    rating: 4.4,
-    technologies: ["React", "TypeScript", "Firebase", "Chart.js"],
-    collaborators: [],
-    instructors: [],
-    github: "github.com/yasminkhaled/taskflow",
-    demo: "",
-    createdAt: "2026-04-28T12:00:00.000Z",
-    updatedAt: "2026-05-02T12:00:00.000Z",
-    pinned: false,
-    isMock: true,
-  },
-  {
-    id: "mock-campus-navigator",
-    title: "Campus Navigator",
-    course: "Bachelor Project",
-    type: "Bachelor Project",
-    description:
-      "A mobile-first campus navigation and academic support application designed for a better student experience.",
-    visibility: "Public",
-    status: "Submitted",
-    rating: 4.6,
-    technologies: ["Flutter", "Firebase"],
-    collaborators: ["Nour Samir"],
-    instructors: ["course.supervisor@guc.edu.eg"],
-    github: "github.com/yasminkhaled/campus-navigator",
-    demo: "",
-    createdAt: "2026-04-12T12:00:00.000Z",
-    updatedAt: "2026-04-15T12:00:00.000Z",
-    pinned: false,
-    isMock: true,
-  },
-];
-
-function readJson(key, fallback) {
-  try {
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeJson(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
 
 function normalizeUrl(value) {
   if (!value) return "";
@@ -218,96 +105,10 @@ function getProfileLinks(profile) {
   };
 }
 
-function normalizeSavedProject(project) {
-  const technologies =
-    project.technologies || project.tags || project.languages || [];
-
-  return {
-    id: project.id,
-    title: project.title || "Untitled Project",
-    course:
-      project.courseName ||
-      project.course ||
-      (project.type === "thesis" ? "Bachelor Project" : "Course Project"),
-    type:
-      project.type === "course"
-        ? "Course Project"
-        : project.type === "thesis"
-        ? "Bachelor Project"
-        : project.type || "Project",
-    description:
-      project.description ||
-      "Project details were saved locally and can be edited later.",
-    visibility:
-      project.visibility === "public" || project.visibility === "Public"
-        ? "Public"
-        : "Private",
-    status: project.status || "Draft",
-    rating: Number(project.rating || 4.5),
-    technologies,
-    collaborators: project.collaborators || [],
-    instructors: project.instructors || [],
-    github: project.github || "",
-    demo: project.demo || project.video?.name || "",
-    createdAt: project.createdAt || new Date().toISOString(),
-    updatedAt: project.updatedAt || project.createdAt || new Date().toISOString(),
-    pinned: Boolean(project.pinned),
-    isMock: false,
-  };
-}
-
-function normalizeDashboardProject(project) {
-  return {
-    id: `dashboard-${project.id}`,
-    title: project.title,
-    course: project.course,
-    type: project.type,
-    description:
-      project.feedback || "Imported from your student dashboard demo data.",
-    visibility: project.visibility,
-    status: project.status,
-    rating: Number(project.rating || 4.5),
-    technologies: project.languages || [],
-    collaborators: project.collaborators || [],
-    instructors: [],
-    github: project.github || "",
-    demo: project.demo || "",
-    createdAt: "2026-05-01T12:00:00.000Z",
-    updatedAt: "2026-05-05T12:00:00.000Z",
-    pinned: false,
-    isMock: true,
-  };
-}
-
 function applyOverrides(project, overrides) {
   return {
     ...project,
     ...(overrides[project.id] || {}),
-  };
-}
-
-function createEditableProjectFromMock(project) {
-  const now = new Date().toISOString();
-
-  return {
-    id: `project-${Date.now()}`,
-    title: project.title,
-    type: getProjectBucket(project) === "bachelor" ? "thesis" : "course",
-    courseName: project.course,
-    thesisFile: null,
-    description: project.description,
-    github: project.github,
-    demo: project.demo,
-    video: null,
-    technologies: project.technologies,
-    collaborators: project.collaborators,
-    instructors: project.instructors,
-    visibility: "public",
-    status: project.status || "draft",
-    pinned: project.pinned,
-    rating: project.rating,
-    createdAt: now,
-    updatedAt: now,
   };
 }
 
@@ -522,7 +323,10 @@ function StatTile({ label, value }) {
   );
 }
 
-function PortfolioHeader({ page, onOpenSaveDialog }) {
+function PortfolioHeader({ page, viewMode = "own", viewedName = "", onOpenSaveDialog }) {
+  const isManage = page === "manage";
+  const isPublic = viewMode === "public";
+
   return (
     <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
@@ -531,18 +335,22 @@ function PortfolioHeader({ page, onOpenSaveDialog }) {
         </p>
 
         <h1 className="mt-2 text-5xl font-black tracking-tight text-[color:var(--ink)]">
-          {page === "manage" ? "Manage Portfolio" : "My Portfolio"}
+          {isManage
+            ? "Manage Portfolio"
+            : isPublic
+            ? `${viewedName || "Student"}'s Portfolio`
+            : "My Portfolio"}
         </h1>
 
         <p className="mt-3 max-w-3xl text-base font-semibold leading-7 text-[color:var(--muted)]">
-          {page === "manage"
+          {isManage
             ? "Control your public portfolio, pin featured work, remove projects, edit entries, and save changes when you are done."
             : "Showcase your public work, featured projects, instructor scores, skills, and portfolio links."}
         </p>
       </div>
 
       <div className="flex flex-wrap gap-3">
-        {page === "preview" ? (
+        {isPublic ? null : page === "preview" ? (
           <PrimaryButton to="/manage-portfolio" className="px-7">
             <Edit3 className="h-4 w-4" />
             Manage Portfolio
@@ -564,7 +372,7 @@ function PortfolioHeader({ page, onOpenSaveDialog }) {
   );
 }
 
-function PortfolioTopCard({ profile, stats, page }) {
+function PortfolioTopCard({ profile, stats, page, canManageProfile = false }) {
   const links = getProfileLinks(profile);
   const profileImage = getProfileImage(profile);
   const skills = profile?.skills || [];
@@ -598,10 +406,12 @@ function PortfolioTopCard({ profile, stats, page }) {
               "Passionate about building impactful digital solutions."}
           </p>
 
-          <PrimaryButton to="/edit-student-profile" className="mt-5 w-full max-w-[210px]">
-            <Edit3 className="h-4 w-4" />
-            Manage Profile
-          </PrimaryButton>
+          {canManageProfile ? (
+            <PrimaryButton to="/edit-student-profile" className="mt-5 w-full max-w-[210px]">
+              <Edit3 className="h-4 w-4" />
+              Manage Profile
+            </PrimaryButton>
+          ) : null}
         </div>
 
         <div className="flex h-full flex-col justify-end gap-4">
@@ -1500,30 +1310,112 @@ function SaveChangesDialog({ open, onCancel, onDiscard, onSave }) {
   );
 }
 
+
+function getCourseLabelFromStore(project, courses) {
+  if (project.course) return project.course;
+  if (project.courseCode) return project.courseCode;
+  if (project.courseName) return project.courseName;
+
+  const course = courses.find((item) => item.id === project.courseId);
+
+  return (
+    course?.code ||
+    course?.courseCode ||
+    course?.name ||
+    course?.title ||
+    project.courseId ||
+    "Course Project"
+  );
+}
+
+function getUserDisplayName(userId, users) {
+  const user = users.find((item) => item.id === userId);
+  return user?.name || user?.email || userId;
+}
+
+function normalizeStoreProject(project, courses, users) {
+  const technologies =
+    project.technologies ||
+    project.tags ||
+    project.languages ||
+    project.skills ||
+    [];
+
+  const collaboratorIds =
+    project.collaboratorIds ||
+    project.collaboratorsIds ||
+    project.collaboratorIDs ||
+    [];
+
+  const instructorIds =
+    project.instructorIds ||
+    project.instructorsIds ||
+    project.instructorIDs ||
+    [];
+
+  const collaborators =
+    Array.isArray(project.collaborators) && project.collaborators.length > 0
+      ? project.collaborators
+      : collaboratorIds.map((id) => getUserDisplayName(id, users));
+
+  const instructors =
+    Array.isArray(project.instructors) && project.instructors.length > 0
+      ? project.instructors
+      : instructorIds.map((id) => getUserDisplayName(id, users));
+
+  const course = getCourseLabelFromStore(project, courses);
+
+  return {
+    id: project.id,
+    title: project.title || project.name || "Untitled Project",
+    course,
+    type:
+      project.type === "thesis" ||
+      project.type === "Bachelor Project" ||
+      course.toLowerCase().includes("bachelor")
+        ? "Bachelor Project"
+        : project.type === "course"
+        ? "Course Project"
+        : project.type || "Course Project",
+    description:
+      project.description ||
+      project.shortDescription ||
+      project.summary ||
+      "No description added yet.",
+    visibility:
+      String(project.visibility || "public").toLowerCase() === "public"
+        ? "Public"
+        : "Private",
+    status: project.status || "Draft",
+    rating: Number(project.rating || project.averageRating || 4.5),
+    technologies,
+    collaborators,
+    instructors,
+    github: project.github || project.githubUrl || "",
+    demo: project.demo || project.demoUrl || project.video?.name || "",
+    createdAt: project.createdAt || new Date().toISOString(),
+    updatedAt:
+      project.updatedAt ||
+      project.updated ||
+      project.createdAt ||
+      new Date().toISOString(),
+    pinned: Boolean(project.pinned || project.isPinned),
+    isMock: false,
+  };
+}
+
 export function PortfolioPageShell({ page = "preview" }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { profile } = useUserProfile();
 
-  const [storedProjects, setStoredProjects] = useState(() =>
-    readJson(PROJECTS_STORAGE_KEY, [])
-  );
+  const [storeProjects, setStoreProjects] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [viewedUser, setViewedUser] = useState(null);
+  const [viewMode, setViewMode] = useState("own");
 
-  const [overrides, setOverrides] = useState(() =>
-    readJson(PORTFOLIO_OVERRIDES_KEY, {})
-  );
-
-  const [hiddenMocks, setHiddenMocks] = useState(() =>
-    readJson(PORTFOLIO_HIDDEN_MOCKS_KEY, [])
-  );
-
-  const [draftOverrides, setDraftOverrides] = useState(() =>
-    readJson(PORTFOLIO_OVERRIDES_KEY, {})
-  );
-
-  const [draftHiddenMocks, setDraftHiddenMocks] = useState(() =>
-    readJson(PORTFOLIO_HIDDEN_MOCKS_KEY, [])
-  );
-
+  const [draftOverrides, setDraftOverrides] = useState({});
   const [draftDeletedProjectIds, setDraftDeletedProjectIds] = useState([]);
 
   const [previewProject, setPreviewProject] = useState(null);
@@ -1534,36 +1426,68 @@ export function PortfolioPageShell({ page = "preview" }) {
   const [projectType, setProjectType] = useState("all");
   const [sortBy, setSortBy] = useState("date");
 
-  const activeOverrides = page === "manage" ? draftOverrides : overrides;
-  const activeHiddenMocks = page === "manage" ? draftHiddenMocks : hiddenMocks;
+  const refreshPortfolioData = () => {
+    const currentUser = getCurrentUser();
+    const queryUserId = searchParams.get("userId");
+
+    const targetUserId =
+      page === "manage" ? currentUser?.id : queryUserId || currentUser?.id;
+
+    const isPublicView =
+      page !== "manage" && Boolean(queryUserId) && queryUserId !== currentUser?.id;
+
+    setViewMode(isPublicView ? "public" : "own");
+
+    if (!targetUserId) {
+      setStoreProjects([]);
+      setCourses([]);
+      setUsers([]);
+      setViewedUser(null);
+      return;
+    }
+
+    const allCourses = getCollection("courses") || [];
+    const allUsers = getCollection("users") || [];
+    const targetUser = getUserById(targetUserId);
+
+    setCourses(allCourses);
+    setUsers(allUsers);
+    setViewedUser(targetUser || currentUser || null);
+    setStoreProjects(getProjectsForUser(targetUserId) || []);
+  };
+
+  useEffect(() => {
+    refreshPortfolioData();
+  }, [page, searchParams]);
+
+  const activeOverrides = page === "manage" ? draftOverrides : {};
+
+  const portfolioProfile = useMemo(() => {
+    const currentUser = getCurrentUser();
+    const isOwnProfile = viewedUser?.id === currentUser?.id;
+
+    if (isOwnProfile) {
+      return {
+        ...viewedUser,
+        ...profile,
+        name: profile?.name || viewedUser?.name,
+        role: profile?.role || viewedUser?.role,
+        bio: profile?.bio || viewedUser?.bio,
+        skills: profile?.skills || viewedUser?.skills || [],
+      };
+    }
+
+    return viewedUser || profile;
+  }, [profile, viewedUser]);
 
   const allProjects = useMemo(() => {
-    const savedProjects = storedProjects
+    return storeProjects
       .filter((project) =>
         page === "manage" ? !draftDeletedProjectIds.includes(project.id) : true
       )
-      .map(normalizeSavedProject);
-
-    const importedDashboardProjects = dashboardProjects.map(
-      normalizeDashboardProject
-    );
-
-    const mockAndDemo = [...importedDashboardProjects, ...mockPortfolioProjects]
-      .filter((project) => !activeHiddenMocks.includes(project.id))
+      .map((project) => normalizeStoreProject(project, courses, users))
       .map((project) => applyOverrides(project, activeOverrides));
-
-    const savedWithOverrides = savedProjects.map((project) =>
-      applyOverrides(project, activeOverrides)
-    );
-
-    return [...savedWithOverrides, ...mockAndDemo];
-  }, [
-    storedProjects,
-    activeOverrides,
-    activeHiddenMocks,
-    draftDeletedProjectIds,
-    page,
-  ]);
+  }, [storeProjects, courses, users, activeOverrides, draftDeletedProjectIds, page]);
 
   const publicProjects = useMemo(() => {
     return allProjects.filter((project) => project.visibility === "Public");
@@ -1640,12 +1564,19 @@ export function PortfolioPageShell({ page = "preview" }) {
     }));
   };
 
+  const handleOpenProject = (project) => {
+    navigate(`/project?projectId=${project.id}`);
+  };
+
   const handleTogglePin = (project) => {
     if (page !== "manage") return;
 
     const nextPinned = !project.pinned;
 
-    updateDraftOverride(project.id, { pinned: nextPinned });
+    updateDraftOverride(project.id, {
+      pinned: nextPinned,
+      isPinned: nextPinned,
+    });
 
     setPreviewProject((current) =>
       current?.id === project.id ? { ...current, pinned: nextPinned } : current
@@ -1653,24 +1584,7 @@ export function PortfolioPageShell({ page = "preview" }) {
   };
 
   const handleEditProject = (project) => {
-    if (!project.isMock) {
-      navigate(`/edit-project/${project.id}`);
-      return;
-    }
-
-    const editableProject = createEditableProjectFromMock(project);
-    const updatedProjects = [editableProject, ...storedProjects];
-
-    writeJson(PROJECTS_STORAGE_KEY, updatedProjects);
-    setStoredProjects(updatedProjects);
-
-    const updatedHiddenMocks = [...new Set([...hiddenMocks, project.id])];
-    writeJson(PORTFOLIO_HIDDEN_MOCKS_KEY, updatedHiddenMocks);
-    setHiddenMocks(updatedHiddenMocks);
-    setDraftHiddenMocks(updatedHiddenMocks);
-
-    setPreviewProject(null);
-    navigate(`/edit-project/${editableProject.id}`);
+    navigate(`/edit-project/${project.id}`);
   };
 
   const handleConfirmDelete = () => {
@@ -1678,13 +1592,9 @@ export function PortfolioPageShell({ page = "preview" }) {
 
     const project = projectToDelete;
 
-    if (project.isMock) {
-      setDraftHiddenMocks((current) => [...new Set([...current, project.id])]);
-    } else {
-      setDraftDeletedProjectIds((current) => [
-        ...new Set([...current, project.id]),
-      ]);
-    }
+    setDraftDeletedProjectIds((current) => [
+      ...new Set([...current, project.id]),
+    ]);
 
     if (previewProject?.id === project.id) {
       setPreviewProject(null);
@@ -1694,38 +1604,35 @@ export function PortfolioPageShell({ page = "preview" }) {
   };
 
   const handleSaveChanges = () => {
-    const nextStoredProjects = storedProjects.filter(
-      (project) => !draftDeletedProjectIds.includes(project.id)
-    );
-
-    const nextOverrides = { ...draftOverrides };
-
-    draftDeletedProjectIds.forEach((projectId) => {
-      delete nextOverrides[projectId];
+    Object.entries(draftOverrides).forEach(([projectId, patch]) => {
+      updateProject(projectId, {
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      });
     });
 
-    writeJson(PROJECTS_STORAGE_KEY, nextStoredProjects);
-    writeJson(PORTFOLIO_OVERRIDES_KEY, nextOverrides);
-    writeJson(PORTFOLIO_HIDDEN_MOCKS_KEY, draftHiddenMocks);
+    draftDeletedProjectIds.forEach((projectId) => {
+      deleteProjectFromStore(projectId);
+    });
 
-    setStoredProjects(nextStoredProjects);
-    setOverrides(nextOverrides);
-    setHiddenMocks(draftHiddenMocks);
-    setDraftOverrides(nextOverrides);
+    setDraftOverrides({});
     setDraftDeletedProjectIds([]);
     setShowSaveDialog(false);
 
+    refreshPortfolioData();
     navigate("/portfolio");
   };
 
   const handleDiscardChanges = () => {
-    setDraftOverrides(overrides);
-    setDraftHiddenMocks(hiddenMocks);
+    setDraftOverrides({});
     setDraftDeletedProjectIds([]);
     setShowSaveDialog(false);
 
+    refreshPortfolioData();
     navigate("/portfolio");
   };
+
+  const canManageProfile = page === "manage" && viewMode !== "public";
 
   return (
     <DashboardLayout>
@@ -1753,15 +1660,22 @@ export function PortfolioPageShell({ page = "preview" }) {
       <div className="space-y-6">
         <PortfolioHeader
           page={page}
+          viewMode={viewMode}
+          viewedName={portfolioProfile?.name}
           onOpenSaveDialog={() => setShowSaveDialog(true)}
         />
 
-        <PortfolioTopCard profile={profile} stats={stats} page={page} />
+        <PortfolioTopCard
+          profile={portfolioProfile}
+          stats={stats}
+          page={page}
+          canManageProfile={canManageProfile}
+        />
 
         <PinnedProjectsCarousel
           projects={pinnedProjects}
           page={page}
-          onOpenProject={setPreviewProject}
+          onOpenProject={handleOpenProject}
           onTogglePin={handleTogglePin}
           onEditProject={handleEditProject}
           onDeleteRequest={setProjectToDelete}
@@ -1780,7 +1694,7 @@ export function PortfolioPageShell({ page = "preview" }) {
           title="All Public Projects"
           projects={filteredProjects}
           page={page}
-          onOpenProject={setPreviewProject}
+          onOpenProject={handleOpenProject}
           onTogglePin={handleTogglePin}
           onEditProject={handleEditProject}
           onDeleteRequest={setProjectToDelete}

@@ -4,6 +4,8 @@ import { NotificationsProvider } from "./context/NotificationsContext";
 import { UserProfileProvider } from "./context/UserProfileContext";
 import { Toaster } from "sonner";
 
+import { initializeDemoStore } from "@/data/demoStore";
+
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
@@ -49,6 +51,9 @@ import AdminCreateAccount from "@/pages/admin/AdminCreateAccount";
 import ViewInstructor from "@/pages/ViewInstructor"
 
 export default function App() {
+  useEffect(() => {
+    initializeDemoStore();
+  }, []);
   const [users, setUsers] = useState(() => {
     const stored = sessionStorage.getItem("users");
     return stored ? JSON.parse(stored) : [];

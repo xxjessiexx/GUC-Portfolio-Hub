@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BarChart3,
@@ -13,111 +13,409 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
-import FilterPanel from "@/components/common/FilterPanel";
 import { Input } from "@/components/ui/input";
-
 
 import FilterSelect from "@/components/common/FilterSelect";
 import StatusBadge from "@/components/common/StatusBadge";
 
-import { notifications } from "@/data/studentDashboardData";
+import { getCurrentUser, getCollection } from "@/data/demoStore";
 
-const applications = [
-  {
-    id: "app-1",
-    internshipId: "int-1",
-    company: "Greenbyte Solutions",
-    title: "Software Engineering Intern",
-    location: "Cairo, Egypt",
-    duration: "4–6 months",
-    dateApplied: "2026-05-08",
-    displayDate: "May 8, 2026",
-    status: "Under Review",
-    nextStep: "Application under review",
-    note: "We will update you soon.",
-  },
-  {
-    id: "app-2",
-    internshipId: "int-2",
-    company: "CodeWave Labs",
-    title: "Frontend Developer Intern",
-    location: "Remote",
-    duration: "3 months",
-    dateApplied: "2026-05-07",
-    displayDate: "May 7, 2026",
-    status: "Pending",
-    nextStep: "Technical interview pending",
-    note: "Waiting for employer confirmation.",
-  },
-  {
-    id: "app-3",
-    internshipId: "int-3",
-    company: "DesignLab Cairo",
-    title: "UI/UX Design Intern",
-    location: "Cairo, Egypt",
-    duration: "2 months",
-    dateApplied: "2026-05-05",
-    displayDate: "May 5, 2026",
-    status: "Accepted",
-    nextStep: "Accept offer by May 20",
-    note: "Confirm your acceptance.",
-  },
-  {
-    id: "app-4",
-    internshipId: "int-1",
-    company: "Nova Labs",
-    title: "Product Design Intern",
-    location: "New Cairo, Egypt",
-    duration: "3–6 months",
-    dateApplied: "2026-05-02",
-    displayDate: "May 2, 2026",
-    status: "Rejected",
-    nextStep: "Feedback available",
-    note: "Check your email for details.",
-  },
-  {
-    id: "app-5",
-    internshipId: "int-2",
-    company: "DataPeak",
-    title: "Data Analyst Intern",
-    location: "Remote",
-    duration: "3 months",
-    dateApplied: "2026-04-28",
-    displayDate: "Apr 28, 2026",
-    status: "Under Review",
-    nextStep: "Portfolio review",
-    note: "The team is reviewing your work.",
-  },
-];
+function normalizeStatus(status) {
+  const value = String(status || "Pending").toLowerCase();
 
-const savedApplications = [
-  {
-    id: "saved-1",
-    internshipId: "int-1",
-    title: "Software Engineering Intern",
-    company: "Greenbyte Solutions",
-  },
-  {
-    id: "saved-2",
-    internshipId: "int-2",
-    title: "Frontend Developer Intern",
-    company: "CodeWave Labs",
-  },
-  {
-    id: "saved-3",
-    internshipId: "int-3",
-    title: "UI/UX Design Intern",
-    company: "DesignLab Cairo",
-  },
+  if (value === "accepted" || value === "approved") return "Accepted";
+  if (value === "rejected" || value === "declined") return "Rejected";
+
+  if (
+    value === "under_review" ||
+    value === "under review" ||
+    value === "review" ||
+    value === "reviewing"
+  ) {
+    return "Under Review";
+  }
+
+  return "Pending";
+}
+
+function formatDisplayDate(value) {
+  if (!value) return "Unknown";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatDateInputValue(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value).slice(0, 10);
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
+function getEmployerName(internship, users) {
+  if (internship?.company) return internship.company;
+  if (internship?.companyName) return internship.companyName;
+
+  const employerId =
+    internship?.employerId || internship?.companyId || internship?.ownerId || "";
+
+  const employer = users.find((user) => user.id === employerId);
+
+  return employer?.companyName || employer?.name || "Unknown Company";
+}
+function toArray(value) {
+  if (!value) return [];
+
+  if (Array.isArray(value)) return value;
+
+  if (typeof value === "object") return Object.values(value);
+
+  return [];
+}
+function getApplicationDate(application) {
+  return (
+    application?.dateApplied ||
+    application?.appliedAt ||
+    application?.createdAt ||
+    application?.submittedAt ||
+    application?.updatedAt ||
+    ""
+  );
+}
+
+function getStudentMatchValues(currentUser) {
+  return [
+    currentUser?.id,
+    currentUser?.email,
+    currentUser?.name,
+    currentUser?.studentId,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase());
+}
+
+function applicationBelongsToCurrentStudent(application, currentUser) {
+  const studentValues = getStudentMatchValues(currentUser);
+
+  const possibleApplicationValues = [
+    application?.studentId,
+    application?.applicantId,
+    application?.userId,
+    application?.ownerId,
+    application?.createdBy,
+    application?.studentEmail,
+    application?.applicantEmail,
+    application?.email,
+    application?.studentName,
+    application?.applicantName,
+    application?.name,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase());
+
+  return possibleApplicationValues.some((value) => studentValues.includes(value));
+}
+
+function normalizeApplicationFromStore(application, internship, users) {
+  const status = normalizeStatus(application?.status);
+  const dateApplied = getApplicationDate(application);
+
+  return {
+    id:
+      application?.id ||
+      `${internship?.id || application?.internshipId || "internship"}-${
+        application?.studentId ||
+        application?.applicantId ||
+        application?.studentEmail ||
+        application?.email ||
+        Date.now()
+      }`,
+
+    internshipId: application?.internshipId || internship?.id,
+
+    company: getEmployerName(internship || application || {}, users),
+
+    title:
+      internship?.title ||
+      internship?.role ||
+      internship?.position ||
+      application?.title ||
+      application?.role ||
+      "Internship Application",
+
+    location:
+      internship?.location ||
+      internship?.workLocation ||
+      application?.location ||
+      "Not specified",
+
+    duration:
+      internship?.duration ||
+      internship?.period ||
+      application?.duration ||
+      "Not specified",
+
+    dateApplied,
+
+    displayDate: formatDisplayDate(dateApplied),
+
+    status,
+
+    nextStep:
+      application?.nextStep ||
+      application?.nextAction ||
+      (status === "Accepted"
+        ? "Offer accepted"
+        : status === "Rejected"
+        ? "Application closed"
+        : status === "Under Review"
+        ? "Application under review"
+        : "Waiting for employer response"),
+
+    note:
+      application?.note ||
+      application?.feedback ||
+      application?.message ||
+      application?.reason ||
+      (status === "Accepted"
+        ? "Check the internship details for next steps."
+        : status === "Rejected"
+        ? "You can keep browsing other internships."
+        : status === "Under Review"
+        ? "The employer is reviewing your application."
+        : "We will update you once the employer responds."),
+  };
+}
+
+function getApplicationsForCurrentStudent() {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser?.id) return [];
+
+  const applications = [
+    ...(getCollection("applications") || []),
+    ...(getCollection("internshipApplications") || []),
+  ];
+
+  const internships = getCollection("internships") || [];
+  const users = getCollection("users") || [];
+
+  const topLevelApplications = applications
+    .filter((application) =>
+      applicationBelongsToCurrentStudent(application, currentUser)
+    )
+    .map((application) => {
+      const internship = internships.find(
+        (item) => item.id === application.internshipId
+      );
+
+      return normalizeApplicationFromStore(application, internship, users);
+    });
+
+  const nestedApplications = internships.flatMap((internship) => {
+   const possibleNestedApplications = [
+  ...toArray(internship.applications),
+  ...toArray(internship.applicants),
+  ...toArray(internship.candidates),
 ];
+    
+
+    return possibleNestedApplications
+      .map((application) => {
+        if (typeof application === "string") {
+          return {
+            id: `${internship.id}-${application}`,
+            internshipId: internship.id,
+            studentId: application,
+            status: "Pending",
+            createdAt: internship.createdAt || internship.updatedAt || "",
+          };
+        }
+
+        return {
+          ...application,
+          internshipId: application.internshipId || internship.id,
+        };
+      })
+      .filter((application) =>
+        applicationBelongsToCurrentStudent(application, currentUser)
+      )
+      .map((application) =>
+        normalizeApplicationFromStore(application, internship, users)
+      );
+  });
+
+  const mergedApplications = [...topLevelApplications, ...nestedApplications];
+
+  return Array.from(
+    new Map(
+      mergedApplications.map((application) => [
+        `${application.internshipId}-${application.id}`,
+        application,
+      ])
+    ).values()
+  );
+}
+
+function getSavedInternshipsForCurrentStudent() {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser?.id) return [];
+
+  const internships = getCollection("internships") || [];
+  const bookmarks = getCollection("bookmarks") || [];
+  const users = getCollection("users") || [];
+
+  const savedIdsFromUser = [
+    ...(currentUser.savedInternshipIds || []),
+    ...(currentUser.bookmarkedInternshipIds || []),
+    ...(currentUser.savedInternships || []),
+  ];
+
+  const savedIdsFromBookmarks = bookmarks
+    .filter((bookmark) => {
+      const userId =
+        bookmark.userId ||
+        bookmark.studentId ||
+        bookmark.ownerId ||
+        bookmark.createdBy;
+
+      const type = String(
+        bookmark.type ||
+          bookmark.itemType ||
+          bookmark.collection ||
+          ""
+      ).toLowerCase();
+
+      return (
+        String(userId || "").toLowerCase() ===
+          String(currentUser.id).toLowerCase() &&
+        (type === "internship" || bookmark.internshipId || bookmark.itemId)
+      );
+    })
+    .map((bookmark) => bookmark.internshipId || bookmark.itemId);
+
+  const savedIdsFromInternships = internships
+    .filter((internship) => {
+      const savedBy = internship.savedBy || internship.bookmarkedBy || [];
+
+      return savedBy
+        .map((value) => String(value).toLowerCase())
+        .some((value) => getStudentMatchValues(currentUser).includes(value));
+    })
+    .map((internship) => internship.id);
+
+  const savedIds = [
+    ...new Set([
+      ...savedIdsFromUser,
+      ...savedIdsFromBookmarks,
+      ...savedIdsFromInternships,
+    ]),
+  ];
+
+  return savedIds
+    .map((internshipId) => {
+      const internship = internships.find((item) => item.id === internshipId);
+
+      if (!internship) return null;
+
+      return {
+        id: `saved-${internship.id}`,
+        internshipId: internship.id,
+        title: internship.title || internship.role || internship.position || "Internship",
+        company: getEmployerName(internship, users),
+      };
+    })
+    .filter(Boolean);
+}
+
+function getNotificationsForCurrentUser() {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser?.id) return [];
+
+  const notifications = getCollection("notifications") || [];
+
+  return notifications.filter((notification) => {
+    const userId =
+      notification.userId ||
+      notification.recipientId ||
+      notification.ownerId ||
+      notification.toUserId;
+
+    return !userId || userId === currentUser.id;
+  });
+}
+
+function getUpcomingInterviews(applications) {
+  return applications
+    .filter((application) => application.status === "Accepted")
+    .slice(0, 2)
+    .map((application, index) => {
+      const date = new Date(application.dateApplied);
+
+      if (!Number.isNaN(date.getTime())) {
+        date.setDate(date.getDate() + 7 + index * 2);
+      }
+
+      const day = Number.isNaN(date.getTime())
+        ? "--"
+        : date.toLocaleDateString("en", { day: "2-digit" });
+
+      const month = Number.isNaN(date.getTime())
+        ? "TBD"
+        : date.toLocaleDateString("en", { month: "short" });
+
+      const time = Number.isNaN(date.getTime())
+        ? "Interview date to be announced"
+        : `${formatDisplayDate(date.toISOString())} • ${
+            index === 0 ? "2:00 PM" : "11:00 AM"
+          }`;
+
+      return {
+        id: `interview-${application.id}`,
+        day,
+        month,
+        company: application.company,
+        role: application.title,
+        time,
+      };
+    });
+}
 
 export default function MyApplications() {
+  const [applications, setApplications] = useState([]);
+  const [savedApplications, setSavedApplications] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+
   const [activeTab, setActiveTab] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
   const [selectedCompany, setSelectedCompany] = useState("All Companies");
   const [selectedDate, setSelectedDate] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const refreshApplications = () => {
+    setApplications(getApplicationsForCurrentStudent());
+    setSavedApplications(getSavedInternshipsForCurrentStudent());
+    setNotifications(getNotificationsForCurrentUser());
+  };
+
+  useEffect(() => {
+    refreshApplications();
+  }, []);
 
   const statusCounts = {
     All: applications.length,
@@ -132,6 +430,10 @@ export default function MyApplications() {
     "All Companies",
     ...new Set(applications.map((app) => app.company)),
   ];
+
+  const upcomingInterviews = useMemo(() => {
+    return getUpcomingInterviews(applications);
+  }, [applications]);
 
   const hasActiveFilters =
     searchTerm ||
@@ -166,7 +468,8 @@ export default function MyApplications() {
         application.company === selectedCompany;
 
       const matchesDate =
-        !selectedDate || application.dateApplied === selectedDate;
+        !selectedDate ||
+        formatDateInputValue(application.dateApplied) === selectedDate;
 
       return (
         matchesSearch &&
@@ -176,7 +479,14 @@ export default function MyApplications() {
         matchesDate
       );
     });
-  }, [activeTab, searchTerm, selectedStatus, selectedCompany, selectedDate]);
+  }, [
+    applications,
+    activeTab,
+    searchTerm,
+    selectedStatus,
+    selectedCompany,
+    selectedDate,
+  ]);
 
   const resetFilters = () => {
     setSearchTerm("");
@@ -215,7 +525,9 @@ export default function MyApplications() {
               >
                 <FilterSelect
                   value={`Status: ${selectedStatus}`}
-                  onChange={(value) => setSelectedStatus(value.replace("Status: ", ""))}
+                  onChange={(value) =>
+                    setSelectedStatus(value.replace("Status: ", ""))
+                  }
                   options={[
                     "Status: All Statuses",
                     "Status: Under Review",
@@ -227,7 +539,9 @@ export default function MyApplications() {
 
                 <FilterSelect
                   value={`Company: ${selectedCompany}`}
-                  onChange={(value) => setSelectedCompany(value.replace("Company: ", ""))}
+                  onChange={(value) =>
+                    setSelectedCompany(value.replace("Company: ", ""))
+                  }
                   options={companies.map((company) => `Company: ${company}`)}
                 />
 
@@ -396,21 +710,22 @@ export default function MyApplications() {
                   </h2>
                 </div>
 
-                <InterviewCard
-                  day="22"
-                  month="May"
-                  company="Greenbyte Solutions"
-                  role="Software Engineering Intern"
-                  time="May 22, 2026 • 2:00 PM"
-                />
-
-                <InterviewCard
-                  day="24"
-                  month="May"
-                  company="CodeWave Labs"
-                  role="Frontend Developer Intern"
-                  time="May 24, 2026 • 11:00 AM"
-                />
+                {upcomingInterviews.length > 0 ? (
+                  upcomingInterviews.map((interview) => (
+                    <InterviewCard
+                      key={interview.id}
+                      day={interview.day}
+                      month={interview.month}
+                      company={interview.company}
+                      role={interview.role}
+                      time={interview.time}
+                    />
+                  ))
+                ) : (
+                  <p className="text-sm font-semibold text-[color:var(--muted)]">
+                    No upcoming interviews yet.
+                  </p>
+                )}
               </AppCard>
 
               <AppCard className="p-6">
@@ -422,22 +737,28 @@ export default function MyApplications() {
                 </div>
 
                 <div className="space-y-3">
-                  {savedApplications.map((item) => (
-                    <Link key={item.id} to={`/internships/${item.internshipId}`}>
-                      <div className="flex items-center justify-between rounded-2xl border border-white/70 bg-white/55 p-4 transition hover:bg-white/75">
-                        <div>
-                          <p className="font-black text-[color:var(--ink)]">
-                            {item.title}
-                          </p>
-                          <p className="text-sm font-semibold text-[color:var(--muted)]">
-                            {item.company}
-                          </p>
-                        </div>
+                  {savedApplications.length > 0 ? (
+                    savedApplications.map((item) => (
+                      <Link key={item.id} to={`/internships/${item.internshipId}`}>
+                        <div className="flex items-center justify-between rounded-2xl border border-white/70 bg-white/55 p-4 transition hover:bg-white/75">
+                          <div>
+                            <p className="font-black text-[color:var(--ink)]">
+                              {item.title}
+                            </p>
+                            <p className="text-sm font-semibold text-[color:var(--muted)]">
+                              {item.company}
+                            </p>
+                          </div>
 
-                        <Bookmark className="h-4 w-4 fill-[color:var(--primary)] text-[color:var(--primary)]" />
-                      </div>
-                    </Link>
-                  ))}
+                          <Bookmark className="h-4 w-4 fill-[color:var(--primary)] text-[color:var(--primary)]" />
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="text-sm font-semibold text-[color:var(--muted)]">
+                      No saved internships yet.
+                    </p>
+                  )}
                 </div>
 
                 <Link
