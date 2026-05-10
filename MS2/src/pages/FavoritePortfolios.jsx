@@ -192,13 +192,41 @@ const skillOptions = [
         </SearchFilterToolbar>
 
         {/* PORTFOLIOS */}
-      <div className="[&_button]:hidden">
-        <Pannelforportfolios
-          portfolios={filteredPortfolios}
-          view={view}
-          toggleFavorite={toggleFavorite}
-        />
-      </div>
+      {filteredPortfolios.length > 0 ? (
+
+  <Pannelforportfolios
+  portfolios={filteredPortfolios}
+  view={view}
+  toggleFavorite={toggleFavorite}
+  hideViewMore={
+    filteredPortfolios.length < 3
+  }
+/>
+) : (
+
+  <div
+    className="
+      flex items-center justify-center
+      py-24
+      rounded-[32px]
+      border border-dashed border-gray-200
+      bg-white/60
+    "
+  >
+    <p
+      className="
+        text-xl
+        font-semibold
+        text-gray-400
+        text-center
+      "
+    >
+      Explore more portfolios to add to your
+      favorite list 
+    </p>
+  </div>
+
+)}
       </div>
     </DashboardLayout>
   );

@@ -232,13 +232,42 @@ const instructorOptions = [
           />
         </SearchFilterToolbar>
         
-       <div className="[&_button]:hidden">    
-        <Pannelforprojects
-          projects={filteredProjects}
-          view={view}
-          toggleFavorite={toggleFavorite}
-        />
-        </div> 
+       {filteredProjects.length > 0 ? (
+
+  <Pannelforprojects
+  projects={filteredProjects}
+  view={view}
+  toggleFavorite={toggleFavorite}
+  hideViewMore={
+    filteredProjects.length < 3
+  }
+/>
+
+) : (
+
+  <div
+    className="
+      flex items-center justify-center
+      py-24
+      rounded-[32px]
+      border border-dashed border-gray-200
+      bg-white/60
+    "
+  >
+    <p
+      className="
+        text-xl
+        font-semibold
+        text-gray-400
+        text-center
+      "
+    >
+      Explore more projects to add to your
+      favorite list 
+    </p>
+  </div>
+
+)}
       </div>
     </DashboardLayout>
   );

@@ -35,11 +35,6 @@ export default function ExplorePortfolios({showReport = false}) {
 const [selectedPortfolio, setSelectedPortfolio] =
   useState(null);
 
-  const location = useLocation();
-
-const isAdminOrInstructor =
-  location.pathname.includes("/admin") ||
-  location.pathname.includes("/instructor");
 
   const [search, setSearch] = useState("");
   const [selectedMajor, setSelectedMajor] =
