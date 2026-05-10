@@ -1,20 +1,29 @@
 
-import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function PrimaryActionButton({
   text,
   onClick,
   className = "",
+  children,
 }) {
   const navigate = useNavigate();
+
+  const handleClick = () => {
+
+    if (onClick) {
+      onClick();
+      return;
+    }
+
+    if (text === "Find Instructors") {
+      navigate("/explore-instructors");
+    }
+  };
+
   return (
     <button
-      onClick={() => {
-        if (text === "Find Instructors") {
-          navigate("/explore-instructors");
-        }
-      }}
+      onClick={handleClick}
       className={`
         flex items-center gap-2
         px-5 py-3
@@ -29,7 +38,8 @@ export default function PrimaryActionButton({
       `}
     >
       {text}
-      
+
+      {children}
     </button>
   );
 }

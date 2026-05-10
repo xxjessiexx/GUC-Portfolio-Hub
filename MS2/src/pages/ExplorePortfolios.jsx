@@ -12,6 +12,8 @@ import FavoriteButton from "@/components/ui/Searchcommons/FavoriteButton";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import FilterSelect from "@/components/common/FilterSelect";
 import { useLocation } from "react-router-dom";
+import { useNavigate }
+from "react-router-dom";
 
 import {
   FolderOpen,
@@ -29,6 +31,7 @@ import {
 } from "@/data/demoStore";
 
 export default function ExplorePortfolios({showReport = false}) {
+  const navigate = useNavigate();
   const [reportOpen, setReportOpen] =
   useState(false);
 
@@ -266,14 +269,14 @@ const [selectedPortfolio, setSelectedPortfolio] =
 
             {/* FEATURED */}
             <AppCard
-              className="
-                p-6
-                rounded-[30px]
-                border border-gray-100
-                bg-transparent
-                backdrop-blur-md
-              "
-            >
+            className="
+              p-6
+              rounded-[28px]
+              bg-white/65
+              border border-gray-100
+              shadow-sm
+            "
+          >
                 
               <h3 className="text-xl font-black text-[#16253A]">
                 Featured Students
@@ -291,8 +294,10 @@ const [selectedPortfolio, setSelectedPortfolio] =
                     className="
                       flex items-center justify-between
                       p-3
-                      rounded-2xl
+                      rounded-[20px]
+                      bg-white
                       border border-gray-100
+                      shadow-sm
                     "
                   >
 
@@ -340,24 +345,27 @@ const [selectedPortfolio, setSelectedPortfolio] =
               </div>
 
               <PrimaryActionButton
-              text="View All Portfolios"
-                className="
-                  mt-6
-                  w-full
-                  h-14
-                  rounded-2xl
-                  bg-[#284C7A]
-                  text-white
-                  font-bold
-                  flex items-center justify-center gap-2
-                  hover:bg-[#1E3C63]
-                  transition
-                "
-              >
-                View All Portfolios
+            onClick={() =>
+              navigate("/featured-students")
+            }
+            text="View All Portfolios"
+            className="
+              mt-6
+              w-full
+              h-14
+              rounded-2xl
+              bg-[#284C7A]
+              text-white
+              font-bold
+              flex items-center justify-center gap-2
+              hover:bg-[#1E3C63]
+              transition
+            "
+          >
+            
 
-                <ArrowRight size={18} />
-              </PrimaryActionButton>
+            
+          </PrimaryActionButton>
             </AppCard>
 
           </div>
