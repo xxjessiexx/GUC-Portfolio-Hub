@@ -34,6 +34,37 @@ const COMPANION_GENDER_KEY = "guc-ai-companion-gender";
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const defaultCompanionName = (gender) => (gender === "female" ? "Nova" : "Atlas");
 
+function getCompanionPaletteStyle(gender) {
+  const baseGlow = {
+    "--companion-screen-glow": "rgba(156,213,255,0.22)",
+    "--companion-eye-glow": "rgba(156,213,255,0.86)",
+    "--companion-mouth-glow": "rgba(156,213,255,0.82)",
+    "--companion-dot-glow": "rgba(156,213,255,0.9)",
+  };
+
+  if (gender !== "female") return baseGlow;
+
+  return {
+    ...baseGlow,
+    "--primary": "#5D748A",
+    "--secondary": "#DFA6BF",
+    "--accent": "#E88AAD",
+    "--card-bg-strong": "rgba(255,250,253,0.96)",
+    "--surface-soft": "rgba(246,226,236,0.72)",
+    "--surface-elevated": "rgba(255,252,254,0.97)",
+    "--border-blue": "rgba(223,166,191,0.42)",
+    "--ring-soft": "rgba(232,138,173,0.18)",
+    "--input-bg": "rgba(255,255,255,0.78)",
+    "--gradient-brand":
+      "linear-gradient(135deg,#355872 0%,#7AAACE 58%,#E8A7C1 100%)",
+    "--companion-screen-glow": "rgba(232,138,173,0.18)",
+    "--companion-eye-glow": "rgba(232,138,173,0.78)",
+    "--companion-mouth-glow": "rgba(232,138,173,0.72)",
+    "--companion-dot-glow": "rgba(232,138,173,0.78)",
+  };
+}
+
+
 function readJson(key, fallback) {
   if (typeof window === "undefined") return fallback;
   try {
@@ -281,19 +312,19 @@ function RobotMascot({
       <div className={`absolute ${tiny ? "right-[2px] top-[12px] h-4 w-2.5" : "right-3 top-4 h-8 w-6"} rounded-r-3xl bg-[linear-gradient(180deg,var(--card-bg-strong),rgba(122,170,206,0.38))]`} />
 
       <div className={`absolute left-1/2 ${tiny ? "top-2" : "top-3"} ${headClass} -translate-x-1/2 bg-[linear-gradient(135deg,var(--card-bg-strong),var(--surface-soft),rgba(156,213,255,0.35))] shadow-inner ring-1 ring-[color:var(--border-blue)]`}>
-        <div className={`relative h-full ${faceClass} bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.34),transparent_42%),linear-gradient(135deg,var(--primary),var(--secondary))] shadow-[inset_0_0_20px_rgba(156,213,255,0.22)] dark:bg-[radial-gradient(circle_at_50%_35%,rgba(156,213,255,0.16),transparent_42%),linear-gradient(135deg,#061923,#0c2634)]`}>
+        <div className={`relative h-full ${faceClass} bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.34),transparent_42%),linear-gradient(135deg,var(--primary),var(--secondary))] shadow-[inset_0_0_20px_var(--companion-screen-glow)] dark:bg-[radial-gradient(circle_at_50%_35%,rgba(156,213,255,0.16),transparent_42%),linear-gradient(135deg,#061923,#0c2634)]`}>
           <motion.span
-            className={`absolute ${tiny ? "left-[9px] top-[8px]" : "left-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--accent)] shadow-[0_0_16px_rgba(156,213,255,0.86)]`}
+            className={`absolute ${tiny ? "left-[9px] top-[8px]" : "left-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--accent)] shadow-[0_0_16px_var(--companion-eye-glow)]`}
             animate={{ scaleY: asleep ? 0.16 : [1, 0.15, 1], scaleX: happy ? 1.14 : 1 }}
             transition={{ duration: 3.2, repeat: asleep ? 0 : Infinity, repeatDelay: 2.5 }}
           />
           <motion.span
-            className={`absolute ${tiny ? "right-[9px] top-[8px]" : "right-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--accent)] shadow-[0_0_16px_rgba(156,213,255,0.86)]`}
+            className={`absolute ${tiny ? "right-[9px] top-[8px]" : "right-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--accent)] shadow-[0_0_16px_var(--companion-eye-glow)]`}
             animate={{ scaleY: asleep ? 0.16 : [1, 0.15, 1], scaleX: happy ? 1.14 : 1 }}
             transition={{ duration: 3.2, repeat: asleep ? 0 : Infinity, repeatDelay: 2.5 }}
           />
           <motion.span
-            className={`absolute left-1/2 ${tiny ? "top-[15px] h-1.5 w-3" : "top-9 h-2.5 w-6"} -translate-x-1/2 rounded-b-full bg-[color:var(--accent)] shadow-[0_0_14px_rgba(156,213,255,0.82)]`}
+            className={`absolute left-1/2 ${tiny ? "top-[15px] h-1.5 w-3" : "top-9 h-2.5 w-6"} -translate-x-1/2 rounded-b-full bg-[color:var(--accent)] shadow-[0_0_14px_var(--companion-mouth-glow)]`}
             animate={{ scaleX: asleep ? 0.65 : happy ? 1.55 : isOpen ? 1.25 : 1, opacity: thinking ? [0.45, 1, 0.45] : 1 }}
             transition={{ duration: 0.65, repeat: thinking ? Infinity : 0 }}
           />
@@ -335,7 +366,7 @@ function TinyRobotBadge({ mood, asleep, isWaving, activity }) {
 
       <RobotMascot tiny mood={mood} asleep={asleep} isWaving={isWaving} activity={activity} />
 
-      <span className="absolute bottom-1.5 right-1.5 h-2.5 w-2.5 rounded-full border border-white bg-[color:var(--accent)] shadow-[0_0_12px_rgba(156,213,255,0.9)]" />
+      <span className="absolute bottom-1.5 right-1.5 h-2.5 w-2.5 rounded-full border border-white bg-[color:var(--accent)] shadow-[0_0_12px_var(--companion-dot-glow)]" />
     </div>
   );
 }
@@ -565,14 +596,34 @@ export default function FloatingAICompanion() {
       wake("happy", "dance");
     };
 
+    const onSettingsChange = (event) => {
+      const next = event?.detail || {};
+      if (typeof next.collapsed === "boolean") {
+        setCollapsed(next.collapsed);
+        localStorage.setItem(COLLAPSED_KEY, next.collapsed ? "true" : "false");
+      }
+      if (next.gender === "female" || next.gender === "male") {
+        setCompanionGender(next.gender);
+        localStorage.setItem(COMPANION_GENDER_KEY, next.gender);
+      }
+      if (typeof next.name === "string" && next.name.trim()) {
+        const clean = next.name.replace(/[^a-zA-Z0-9 _-]/g, "").trim().slice(0, 22);
+        setCompanionName(clean);
+        localStorage.setItem(COMPANION_NAME_KEY, clean);
+      }
+      wake("happy", "dance");
+    };
+
     window.addEventListener("resize", onResize);
     window.addEventListener("guc-ai-companion-reset-position", onReset);
+    window.addEventListener("guc-ai-companion-settings-change", onSettingsChange);
     return () => {
       window.clearInterval(interval);
       window.clearTimeout(idleTimer.current);
       window.clearTimeout(activityTimer.current);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("guc-ai-companion-reset-position", onReset);
+      window.removeEventListener("guc-ai-companion-settings-change", onSettingsChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collapsed, asleep]);
@@ -721,7 +772,12 @@ export default function FloatingAICompanion() {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         whileHover={{ scale: 1.08, y: -2 }}
         whileTap={{ scale: 0.96 }}
-        style={{ left: launcherPosition.x, top: launcherPosition.y, touchAction: "none" }}
+        style={{
+          left: launcherPosition.x,
+          top: launcherPosition.y,
+          touchAction: "none",
+          ...getCompanionPaletteStyle(companionGender),
+        }}
         className="group fixed z-[70] grid h-[72px] w-[72px] cursor-grab place-items-center rounded-full border border-white/45 bg-white/18 shadow-[0_18px_50px_rgba(44,57,71,0.24)] outline-none backdrop-blur-2xl transition focus-visible:ring-4 focus-visible:ring-[color:var(--ring-soft)] active:cursor-grabbing dark:bg-[color:var(--card-bg-strong)]/22"
         aria-label={`Open ${companionName} AI companion`}
         title="Drag me · click to open · double-click for dance"
@@ -748,7 +804,12 @@ export default function FloatingAICompanion() {
       initial={{ opacity: 0, x: 35, y: 20, scale: 0.94 }}
       animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-      style={{ left: panelPosition.x, top: panelPosition.y, touchAction: "none" }}
+      style={{
+        left: panelPosition.x,
+        top: panelPosition.y,
+        touchAction: "none",
+        ...getCompanionPaletteStyle(companionGender),
+      }}
       className="fixed z-[70] hidden max-w-[calc(100vw-2rem)] select-none items-end gap-3 lg:flex"
     >
       <motion.aside
