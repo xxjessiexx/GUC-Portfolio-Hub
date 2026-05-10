@@ -6,7 +6,7 @@ import FilterPanel from "@/components/common/FilterPanel";
 import FilterSelect from "@/components/common/FilterSelect";
 import Pannelforportfolios from "@/components/ui/Searchcommons/Pannelforportfolios";
 import PortfolioData from "@/data/portfoliosData";
-
+import { useNavigate } from "react-router-dom";
 
 /* IMPORT DATA */
 import ProjectNameData from "@/data/ProjectNameData";
@@ -125,7 +125,7 @@ export default function FavoriteList() {
 
   return 0;
 });
-
+const navigate = useNavigate();
   return (
     <DashboardLayout>
 
@@ -147,21 +147,97 @@ export default function FavoriteList() {
           
 
         {/* PROJECTS */}
-        <Pannelforprojects
+        {filteredProjects.filter(
+  (project) => project.favorite
+).length > 0 ? (
+
+  
+  <Pannelforprojects
   projects={filteredProjects
     .filter((project) => project.favorite)
     .slice(0, 3)}
   view={view}
   toggleFavorite={toggleFavorite}
+  hideViewMore={
+    filteredProjects.filter(
+      (project) => project.favorite
+    ).length < 3
+  }
 />
 
-<Pannelforportfolios
+) : (
+
+  <div
+    className="
+      flex items-center justify-center
+      py-16
+      rounded-[32px]
+      border border-dashed border-gray-200
+      bg-white/60
+    "
+  >
+    <p className="text-lg font-semibold text-gray-400">
+  <span
+    onClick={() => navigate("/explore-projects")}
+    className="
+      text-[#69A7FF]
+      cursor-pointer
+      hover:underline
+    "
+  >
+    Explore more projects
+  </span>{" "}
+  to add to your favorite list 
+</p>
+  </div>
+
+)}
+
+{portfolios.filter(
+  (portfolio) => portfolio.favorite
+).length > 0 ? (
+
+  
+  <Pannelforportfolios
   portfolios={portfolios
     .filter((portfolio) => portfolio.favorite)
     .slice(0, 3)}
   view={view}
   toggleFavorite={togglePortfolioFavorite}
+  hideViewMore={
+    portfolios.filter(
+      (portfolio) => portfolio.favorite
+    ).length < 3
+  }
 />
+
+) : (
+
+  <div
+    className="
+      flex items-center justify-center
+      py-16
+      rounded-[32px]
+      border border-dashed border-gray-200
+      bg-white/60
+    "
+  >
+    <p className="text-lg font-semibold text-gray-400">
+  <span
+    onClick={() => navigate("/explore-portfolio")}
+    className="
+      text-[#69A7FF]
+      cursor-pointer
+      hover:underline
+    "
+  >
+    Explore more portfolios
+  </span>{" "}
+  to add to your favorite list 
+</p>
+  </div>
+
+)}
       </div>
     </DashboardLayout>
   );

@@ -480,21 +480,27 @@ export default function App() {
                 <ProtectedRoute
                   allowedRoles={["student", "instructor", "employer", "admin"]}
                 >
-                  <ExploreProjects />
+                  <ExploreProjects
+                  showReport={
+                    currentUser?.role === "admin" ||
+                    currentUser?.role === "instructor"
+                  }
+                 />
                 </ProtectedRoute>
               }
             />
 
             <Route
-              path="/explore-portfolio"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["student", "instructor", "employer", "admin"]}
-                >
-                  <ExplorePortfolios />
-                </ProtectedRoute>
-              }
-            />
+            path="/explore-portfolio"
+            element={
+              <ProtectedRoute
+                allowedRoles={["student", "instructor", "employer", "admin"]}
+              >
+                <ExplorePortfolios
+                />
+              </ProtectedRoute>
+            }
+          />
 
             <Route
               path="/edit-internship/:internshipId"

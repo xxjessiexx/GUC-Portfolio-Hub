@@ -1,14 +1,17 @@
-import { Calendar, Users, Star, MoreVertical, Heart } from "lucide-react";
+import { Calendar, Users, Star, MoreVertical, Flag} from "lucide-react";
 import { AppCard } from "../AppCard";
 import { useNavigate } from "react-router-dom";
 import FavoriteButton from "@/components/ui/Searchcommons/FavoriteButton";
-
-
+import AuthBottomLink from "@/components/auth/AuthBottomLink";
+import AuthSubmitButton from "@/components/auth/AuthSubmitButton";
+import AuthInput from "@/components/auth/AuthInput";
 
 export default function ExploreProjectCard({
   project,
   view,
   toggleFavorite,
+  showReport = false,
+  onReport,
 }) {
   const navigate = useNavigate();
 
@@ -47,10 +50,44 @@ export default function ExploreProjectCard({
 
         {/* HEART */}
         
-          <FavoriteButton
-          favorite={project.favorite}
-          onClick={() => toggleFavorite(project.id)}
-        />
+          <div className="absolute top-3 right-4 z-10">
+    {showReport ? (
+
+      <button
+        onClick={() => onReport?.(project)}
+        className="
+          w-11 h-11
+          rounded-full
+          bg-white
+          border border-gray-100
+          shadow-sm
+          flex items-center justify-center
+          hover:bg-[#FFF3EE]
+          transition
+        "
+      >
+        <Flag
+        size={18}
+        className={
+          project.reported
+            ? "fill-[#FFB089] text-[#FF8A65]"
+            : "text-[#FF8A65]"
+        }
+      />
+      </button>
+
+    ) : (
+
+      <FavoriteButton
+        favorite={project.favorite}
+        onClick={() =>
+          toggleFavorite(project.id)
+        }
+      />
+
+    )}
+</div>
+
         
       </div>
 

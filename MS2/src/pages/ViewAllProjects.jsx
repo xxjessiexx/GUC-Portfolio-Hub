@@ -4,6 +4,8 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import FilterSelect from "@/components/common/FilterSelect";
+import DeleteConfirmationModal
+from "@/components/ui/DeleteConfirmationModal";
 
 import {
   getCurrentUser,
@@ -95,6 +97,8 @@ export default function ViewAllProjects() {
   const [filterPinned, setFilterPinned] = useState("All");
   const [sortBy, setSortBy] = useState("Updated");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] =
+  useState(null);
 
   const navigate = useNavigate();
 
@@ -474,21 +478,20 @@ export default function ViewAllProjects() {
                             </button>
 
                             <button
-                              onClick={(event) => {
-                                event.stopPropagation();
-
-                                if (
-                                  confirm(
-                                    "Are you sure you want to delete this project?"
-                                  )
-                                ) {
-                                  deleteProject(p.id);
-                                }
-                              }}
-                              className="p-2 rounded border hover:bg-red-100 text-red-500"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setProjectToDelete(p.id);
+                                }}
+                                className="
+                                  p-2
+                                  rounded
+                                  border
+                                  hover:bg-red-100
+                                  text-red-500
+                                "
+                              >
+                                <Trash2 size={16} />
+                              </button>
 
                             <button
                               onClick={(event) => {
@@ -518,6 +521,22 @@ export default function ViewAllProjects() {
           )}
         </AppCard>
       </div>
+      <DeleteConfirmationModal
+  open={!!projectToDelete}
+  title="Delete project?"
+  description="
+    This action cannot be undone.
+    The project will be permanently removed.
+  "
+  onCancel={() =>
+    setProjectToDelete(null)
+  }
+  onConfirm={() => {
+    deleteProject(projectToDelete);
+    setProjectToDelete(null);
+  }}
+  confirmText="Delete project"
+/>
     </DashboardLayout>
   );
 }

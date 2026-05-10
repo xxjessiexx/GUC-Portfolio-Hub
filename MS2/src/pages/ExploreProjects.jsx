@@ -4,6 +4,10 @@ import ExploreProjectCard from "@/components/ui/Searchcommons/ExploreProjectCard
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import FilterPanel from "@/components/common/FilterPanel";
 import FilterSelect from "@/components/common/FilterSelect";
+import { AdminActionDialog }
+from "@/components/adminModule/AdminActionDialog";
+import Toast from "@/components/ui/toast";
+import SideToast from "@/components/ui/SideToast";
 
 /* IMPORT DATA */
 import ProjectNameData from "@/data/ProjectNameData";
@@ -21,9 +25,19 @@ import {
 
 import { useState } from "react";
 
-export default function ExploreProjects() {
+export default function ExploreProjects({showReport = false,}) {
 
   /* STATE */
+
+  const [reportOpen, setReportOpen] =
+  useState(false);
+
+const [selectedProject, setSelectedProject] =
+  useState(null);
+
+const [reportReason, setReportReason] =
+  useState("");
+
   const [projects, setProjects] =
   useState(getAllProjects());
 
@@ -43,6 +57,11 @@ export default function ExploreProjects() {
   const [selectedSort, setSelectedSort] =
     useState("Newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [notification, setNotification] =
+  useState(null);
+
+const [reportedProjects, setReportedProjects] =
+  useState([]);
 
   const courseOptions = [
   "Course: All Courses",
@@ -295,15 +314,79 @@ const instructorOptions = [
 
           {filteredProjects.map((project) => (
             <ExploreProjectCard
-              key={project.id}
-              project={project}
-              view={view}
-              toggleFavorite={toggleFavorite}
-            />
+            key={project.id}
+            project={{
+            ...project,
+            reported: reportedProjects.includes(
+              project.id
+            ),
+          }}
+            view={view}
+            toggleFavorite={toggleFavorite}
+            showReport={showReport}
+           onReport={(project) => {
+          setSelectedProject(project);
+          setReportOpen(true);
+        }}
+          />
           ))}
 
         </div>
       </div>
+
+      <AdminActionDialog
+  open={reportOpen}
+  title="Report Project"
+  description="
+    Please provide a reason for reporting
+    this project.
+  "
+  confirmLabel="Submit Report"
+  cancelLabel="Cancel"
+  tone="danger"
+  noteLabel="Report Description"
+  notePlaceholder="
+    Explain why this project should
+    be reviewed...
+  "
+  noteRequired
+  noteValue={reportReason}
+  onNoteChange={setReportReason}
+  onCancel={() => {
+    setReportOpen(false);
+    setReportReason("");
+    setSelectedProject(null);
+  }}
+  onConfirm={() => {
+
+  setReportedProjects((prev) => [
+    ...prev,
+    selectedProject.id,
+  ]);
+
+  setNotification({
+    title: "Project reported",
+    text:
+      "Your report has been submitted successfully for review.",
+    time: "Just now",
+  });
+
+  setReportOpen(false);
+
+  setReportReason("");
+
+  setSelectedProject(null);
+
+  setTimeout(() => {
+    setNotification(null);
+  }, 3000);
+}}
+/>
+<SideToast
+  open={!!notification}
+  title={notification?.title}
+  description={notification?.text}
+/>
     </DashboardLayout>
   );
 }
