@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CheckCircle2,
   FileText,
@@ -39,17 +39,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import {
+  getCurrentUser,
+  getCollection,
+  createProject,
+} from "@/data/demoStore";
 
 const PROJECTS_STORAGE_KEY = "guc-portfolio-projects";
 const PROJECT_FILES_DB = "guc-portfolio-files-db";
 const PROJECT_FILES_STORE = "projectFiles";
 
-const COURSES = [
-          "CSEN704",
-          "Software Engineering",
-          "Machine Learning",
-          "Bachelor Project",
-        ];
+const FALLBACK_COURSES = [
+  "CSEN704",
+  "Software Engineering",
+  "Machine Learning",
+  "Bachelor Project",
+];
 
 const initialProjectData = {
   title: "",
@@ -608,6 +613,20 @@ function validateInviteEmail(value, existing) {
 }
 
 export default function CreateNewProject() {
+  const [availableCourses, setAvailableCourses] = useState(FALLBACK_COURSES);
+
+  useEffect(() => {
+    const courses = getCollection("courses") || [];
+
+    const courseLabels = courses
+      .map((course) => course.code || course.courseCode || course.name || course.title)
+      .filter(Boolean);
+
+    if (courseLabels.length > 0) {
+      setAvailableCourses(courseLabels);
+    }
+  }, []);
+
   const [formData, setFormData] = useState(initialProjectData);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -957,6 +976,44 @@ const removeDraft = (draftId) => {
     return Object.values(nextErrors).every((value) => !value);
   };
 
+  const findCourseIdByLabel = (courseLabel) => {
+    const courses = getCollection("courses") || [];
+
+    const matchedCourse = courses.find((course) => {
+      const possibleLabels = [
+        course.code,
+        course.courseCode,
+        course.name,
+        course.title,
+      ]
+        .filter(Boolean)
+        .map((value) => String(value).toLowerCase());
+
+      return possibleLabels.includes(String(courseLabel).toLowerCase());
+    });
+
+    return matchedCourse?.id || "";
+  };
+
+  const findUserIdsByEmails = (emails = [], role) => {
+    const users = getCollection("users") || [];
+
+    return emails
+      .map((email) => {
+        const cleanEmail = String(email).trim().toLowerCase();
+
+        const matchedUser = users.find((user) => {
+          const sameEmail = String(user.email || "").toLowerCase() === cleanEmail;
+          const sameRole = role ? user.role === role : true;
+
+          return sameEmail && sameRole;
+        });
+
+        return matchedUser?.id;
+      })
+      .filter(Boolean);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -1013,26 +1070,74 @@ const removeDraft = (draftId) => {
     )
   );
 
+      const currentUser = getCurrentUser();
+
+      if (!currentUser?.id) {
+        throw new Error("No logged-in user found.");
+      }
+
+      const selectedCourseName =
+        formData.type === "course"
+          ? formData.courseName.trim()
+          : "Bachelor Project";
+
+      const courseId = findCourseIdByLabel(selectedCourseName);
+
+      const collaboratorIds = findUserIdsByEmails(
+        formData.collaborators,
+        "student"
+      );
+
+      const instructorIds = findUserIdsByEmails(
+        formData.instructors,
+        "instructor"
+      );
+
       const storedProject = {
         id: projectId,
+
+        ownerId: currentUser.id,
+        authorId: currentUser.id,
+        studentId: currentUser.id,
+        collaboratorIds,
+        instructorIds,
+
         title: formData.title.trim(),
+        name: formData.title.trim(),
+
         type: formData.type,
-        courseName:
-        formData.type === "course" ? formData.courseName.trim() : "",
+        courseId,
+        courseName: selectedCourseName,
+        course: selectedCourseName,
+
         thesisDrafts: savedThesisDrafts,
         description: formData.description.trim(),
+
         github: formData.github.trim(),
+        githubUrl: formData.github.trim(),
+
         video: createStoredFileReference(savedVideo),
+
         technologies: formData.tags,
+        tags: formData.tags,
+
         collaborators: formData.collaborators,
         instructors: formData.instructors,
+
         visibility: formData.visibility,
         status: "draft",
+
+        pinned: false,
+        isPinned: false,
+
+        rating: 0,
+        comments: [],
+
         createdAt: now,
         updatedAt: now,
       };
 
-      saveProject(storedProject);
+      createProject(storedProject);
 
       setFormData(initialProjectData);
       setErrors({});
@@ -1179,7 +1284,7 @@ const removeDraft = (draftId) => {
                 </SelectTrigger>
 
                 <SelectContent className="rounded-2xl border-white/70 bg-[var(--surface-elevated)] text-[color:var(--ink)] shadow-[var(--shadow-card)] backdrop-blur-2xl">
-                  {COURSES.map((course) => (
+                  {availableCourses.map((course) => (
                     <SelectItem key={course} value={course}>
                       {course}
                     </SelectItem>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -12,7 +12,6 @@ import {
   MapPin,
   Send,
   Sparkles,
- 
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -23,37 +22,277 @@ import AppModal from "@/components/common/AppModal";
 import FilterSelect from "@/components/common/FilterSelect";
 import StatusBadge from "@/components/common/StatusBadge";
 
-import { notifications } from "@/data/studentDashboardData";
-import { internshipsData } from "@/data/internshipsData";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 
-const SAVED_INTERNSHIPS_KEY = "guc-saved-internships";
-const APPLIED_INTERNSHIPS_KEY = "guc-applied-internships";
-const COVER_LETTERS_KEY = "guc-cover-letters";
+import {
+  getCurrentUser,
+  getCollection,
+  applyToInternship,
+  toggleSavedInternship,
+} from "@/data/demoStore";
 
-function getStoredIds(key) {
-  try {
-    return JSON.parse(localStorage.getItem(key)) || [];
-  } catch {
-    return [];
-  }
+function normalizeArray(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === "object") return Object.values(value);
+  return [];
 }
 
-function setStoredIds(key, ids) {
-  localStorage.setItem(key, JSON.stringify(ids));
+function getEmployerName(internship, users) {
+  if (internship.company) return internship.company;
+  if (internship.companyName) return internship.companyName;
+
+  const employerId =
+    internship.employerId || internship.companyId || internship.ownerId || "";
+
+  const employer = users.find((user) => user.id === employerId);
+
+  return employer?.companyName || employer?.name || "Unknown Company";
 }
 
-function getStoredObject(key) {
-  try {
-    return JSON.parse(localStorage.getItem(key)) || {};
-  } catch {
-    return {};
-  }
-}
-
-function getPostedNumber(postedAt) {
-  const match = postedAt.match(/\d+/);
+function getPostedNumber(postedAt = "") {
+  const match = String(postedAt).match(/\d+/);
   return match ? Number(match[0]) : 0;
+}
+
+function formatPostedAt(value) {
+  if (!value) return "Posted recently";
+
+  if (String(value).toLowerCase().includes("ago")) {
+    return value;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const diffMs = Date.now() - date.getTime();
+  const diffDays = Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "1 day ago";
+
+  return `${diffDays} days ago`;
+}
+
+function normalizeInternship(internship, users) {
+  const skills =
+    internship.skills ||
+    internship.requiredSkills ||
+    internship.tags ||
+    internship.technologies ||
+    [];
+
+  const responsibilities =
+    internship.responsibilities ||
+    internship.tasks ||
+    internship.duties ||
+    [
+      "Contribute to team projects and product features.",
+      "Collaborate with mentors and teammates.",
+      "Document progress and communicate clearly.",
+    ];
+
+  const requirements =
+    internship.requirements ||
+    internship.qualifications ||
+    [
+      "Strong interest in the internship field.",
+      "Good communication and teamwork skills.",
+      "Ability to learn and work independently.",
+    ];
+
+  const createdAt =
+    internship.createdAt ||
+    internship.postedDate ||
+    internship.postedAt ||
+    internship.updatedAt ||
+    "";
+
+  return {
+    id: internship.id,
+    title:
+      internship.title || internship.role || internship.position || "Internship",
+    company: getEmployerName(internship, users),
+    location: internship.location || internship.workLocation || "Not specified",
+    duration: internship.duration || internship.period || "Not specified",
+    workMode: internship.workMode || internship.mode || internship.type || "On-site",
+    department: internship.department || internship.field || "General",
+    skills,
+    featured: Boolean(internship.featured || internship.isFeatured),
+    postedAt: formatPostedAt(createdAt),
+    deadline:
+      internship.deadline ||
+      internship.applicationDeadline ||
+      internship.closesAt ||
+      "2026-06-30",
+    rating: Number(internship.rating || internship.companyRating || 4.5),
+    overview:
+      internship.overview ||
+      internship.description ||
+      internship.summary ||
+      "This internship provides hands-on experience, mentorship, and exposure to real project work.",
+    responsibilities,
+    requirements,
+  };
+}
+
+function getStudentMatchValues(currentUser) {
+  return [
+    currentUser?.id,
+    currentUser?.email,
+    currentUser?.name,
+    currentUser?.studentId,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase());
+}
+
+function applicationBelongsToCurrentStudent(application, currentUser) {
+  const studentValues = getStudentMatchValues(currentUser);
+
+  const possibleApplicationValues = [
+    application?.studentId,
+    application?.applicantId,
+    application?.userId,
+    application?.ownerId,
+    application?.createdBy,
+    application?.studentEmail,
+    application?.applicantEmail,
+    application?.email,
+    application?.studentName,
+    application?.applicantName,
+    application?.name,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).toLowerCase());
+
+  return possibleApplicationValues.some((value) =>
+    studentValues.includes(value)
+  );
+}
+
+function getAppliedInternshipIdsForCurrentUser() {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser?.id) return [];
+
+  const applications = [
+    ...(getCollection("applications") || []),
+    ...(getCollection("internshipApplications") || []),
+  ];
+
+  const internships = getCollection("internships") || [];
+
+  const topLevelAppliedIds = applications
+    .filter((application) =>
+      applicationBelongsToCurrentStudent(application, currentUser)
+    )
+    .map((application) => application.internshipId)
+    .filter(Boolean);
+
+  const nestedAppliedIds = internships.flatMap((internship) => {
+    const nestedApplications = [
+      ...normalizeArray(internship.applications),
+      ...normalizeArray(internship.applicants),
+      ...normalizeArray(internship.candidates),
+    ];
+
+    return nestedApplications
+      .map((application) => {
+        if (typeof application === "string") {
+          return {
+            internshipId: internship.id,
+            studentId: application,
+          };
+        }
+
+        return {
+          ...application,
+          internshipId: application.internshipId || internship.id,
+        };
+      })
+      .filter((application) =>
+        applicationBelongsToCurrentStudent(application, currentUser)
+      )
+      .map((application) => application.internshipId)
+      .filter(Boolean);
+  });
+
+  return [...new Set([...topLevelAppliedIds, ...nestedAppliedIds])];
+}
+
+function getSavedInternshipIdsForCurrentUser() {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser?.id) return [];
+
+  const internships = getCollection("internships") || [];
+  const bookmarks = getCollection("bookmarks") || [];
+
+  const savedIdsFromUser = [
+    ...(currentUser.savedInternshipIds || []),
+    ...(currentUser.bookmarkedInternshipIds || []),
+    ...(currentUser.savedInternships || []),
+  ];
+
+  const savedIdsFromBookmarks = bookmarks
+    .filter((bookmark) => {
+      const userId =
+        bookmark.userId ||
+        bookmark.studentId ||
+        bookmark.ownerId ||
+        bookmark.createdBy;
+
+      const type = String(
+        bookmark.type || bookmark.itemType || bookmark.collection || ""
+      ).toLowerCase();
+
+      return (
+        String(userId || "").toLowerCase() ===
+          String(currentUser.id).toLowerCase() &&
+        (type === "internship" || bookmark.internshipId || bookmark.itemId)
+      );
+    })
+    .map((bookmark) => bookmark.internshipId || bookmark.itemId);
+
+  const savedIdsFromInternships = internships
+    .filter((internship) => {
+      const savedBy = internship.savedBy || internship.bookmarkedBy || [];
+
+      return savedBy
+        .map((value) => String(value).toLowerCase())
+        .some((value) => getStudentMatchValues(currentUser).includes(value));
+    })
+    .map((internship) => internship.id);
+
+  return [
+    ...new Set([
+      ...savedIdsFromUser,
+      ...savedIdsFromBookmarks,
+      ...savedIdsFromInternships,
+    ]),
+  ];
+}
+
+function getNotificationsForCurrentUser() {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser?.id) return [];
+
+  const notifications = getCollection("notifications") || [];
+
+  return notifications.filter((notification) => {
+    const userId =
+      notification.userId ||
+      notification.recipientId ||
+      notification.ownerId ||
+      notification.toUserId;
+
+    return !userId || userId === currentUser.id;
+  });
 }
 
 export default function Internships() {
@@ -67,36 +306,50 @@ export default function Internships() {
   const [viewMode, setViewMode] = useState("grid");
   const [visibleCount, setVisibleCount] = useState(6);
 
-  const [savedIds, setSavedIds] = useState(() =>
-    getStoredIds(SAVED_INTERNSHIPS_KEY)
-  );
-  const [appliedIds, setAppliedIds] = useState(() =>
-    getStoredIds(APPLIED_INTERNSHIPS_KEY)
-  );
+  const [internships, setInternships] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [savedIds, setSavedIds] = useState([]);
+  const [appliedIds, setAppliedIds] = useState([]);
 
   const [previewInternship, setPreviewInternship] = useState(null);
   const [applyInternship, setApplyInternship] = useState(null);
   const [coverLetter, setCoverLetter] = useState("");
 
+  const refreshInternships = () => {
+    const users = getCollection("users") || [];
+    const storeInternships = getCollection("internships") || [];
+
+    setInternships(
+      storeInternships.map((internship) => normalizeInternship(internship, users))
+    );
+    setSavedIds(getSavedInternshipIdsForCurrentUser());
+    setAppliedIds(getAppliedInternshipIdsForCurrentUser());
+    setNotifications(getNotificationsForCurrentUser());
+  };
+
+  useEffect(() => {
+    refreshInternships();
+  }, []);
+
   const companies = [
     "All Companies",
-    ...new Set(internshipsData.map((item) => item.company)),
+    ...new Set(internships.map((item) => item.company)),
   ];
 
   const durations = [
     "All Durations",
-    ...new Set(internshipsData.map((item) => item.duration)),
+    ...new Set(internships.map((item) => item.duration)),
   ];
 
   const workModes = [
     "All Work Modes",
-    ...new Set(internshipsData.map((item) => item.workMode)),
+    ...new Set(internships.map((item) => item.workMode)),
   ];
 
-  const featuredInternships = internshipsData.filter((item) => item.featured);
+  const featuredInternships = internships.filter((item) => item.featured);
 
   const filteredInternships = useMemo(() => {
-    const filtered = internshipsData.filter((internship) => {
+    const filtered = internships.filter((internship) => {
       const searchableText = [
         internship.title,
         internship.company,
@@ -162,6 +415,7 @@ export default function Internships() {
       return 0;
     });
   }, [
+    internships,
     searchTerm,
     selectedCompany,
     selectedDuration,
@@ -175,39 +429,23 @@ export default function Internships() {
   const visibleInternships = filteredInternships.slice(0, visibleCount);
 
   const toggleSave = (id) => {
-    const updated = savedIds.includes(id)
-      ? savedIds.filter((savedId) => savedId !== id)
-      : [...savedIds, id];
-
-    setSavedIds(updated);
-    setStoredIds(SAVED_INTERNSHIPS_KEY, updated);
+    toggleSavedInternship(id);
+    refreshInternships();
   };
 
   const openApplyModal = (internship) => {
-    const storedLetters = getStoredObject(COVER_LETTERS_KEY);
-    setCoverLetter(storedLetters[internship.id] || "");
+    setCoverLetter("");
     setApplyInternship(internship);
   };
 
   const confirmApply = () => {
     if (!applyInternship) return;
 
-    const updatedApplied = appliedIds.includes(applyInternship.id)
-      ? appliedIds
-      : [...appliedIds, applyInternship.id];
-
-    const storedLetters = getStoredObject(COVER_LETTERS_KEY);
-    const updatedLetters = {
-      ...storedLetters,
-      [applyInternship.id]: coverLetter,
-    };
-
-    setAppliedIds(updatedApplied);
-    setStoredIds(APPLIED_INTERNSHIPS_KEY, updatedApplied);
-    localStorage.setItem(COVER_LETTERS_KEY, JSON.stringify(updatedLetters));
+    applyToInternship(applyInternship.id, coverLetter);
 
     setApplyInternship(null);
     setCoverLetter("");
+    refreshInternships();
   };
 
   const clearFilters = () => {
