@@ -61,7 +61,17 @@ const [reportReason, setReportReason] =
   useState(null);
 
 const [reportedProjects, setReportedProjects] =
-  useState([]);
+  useState(() => {
+
+    const saved =
+      localStorage.getItem(
+        "reportedProjects"
+      );
+
+    return saved
+      ? JSON.parse(saved)
+      : [];
+  });
 
   const courseOptions = [
   "Course: All Courses",
@@ -95,6 +105,12 @@ const instructorOptions = [
 };
   /* FILTERS */
   const filteredProjects = projects
+
+  .filter(
+    (project) =>
+      !reportedProjects.includes(project.id)
+  )
+
   .filter((project) => {
 
     const matchesSearch =
@@ -359,10 +375,57 @@ const instructorOptions = [
   }}
   onConfirm={() => {
 
-  setReportedProjects((prev) => [
-    ...prev,
+  const updatedArray = [
+    ...reportedProjects,
     selectedProject.id,
-  ]);
+  ];
+
+  setReportedProjects(updatedArray);
+
+  localStorage.setItem(
+    "reportedProjects",
+    JSON.stringify(updatedArray)
+  );
+
+  /* SAVE FLAGGED PROJECT */
+
+  const savedFlags =
+    JSON.parse(
+      localStorage.getItem(
+        "flaggedProjects"
+      )
+    ) || [];
+
+  const newFlaggedProject = {
+    id: selectedProject.id,
+
+    title: selectedProject.title,
+
+    student:
+      selectedProject.students ||
+      selectedProject.instructor ||
+      "Unknown",
+
+    course: selectedProject.course,
+
+    reason: reportReason,
+
+    flaggedBy: "Instructor Review",
+
+    status: "flagged",
+
+    active: false,
+  };
+
+  localStorage.setItem(
+    "flaggedProjects",
+    JSON.stringify([
+      ...savedFlags,
+      newFlaggedProject,
+    ])
+  );
+
+  /* TOAST */
 
   setNotification({
     title: "Project reported",
