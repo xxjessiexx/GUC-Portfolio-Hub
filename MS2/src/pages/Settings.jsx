@@ -14,6 +14,7 @@ import {
   Mail,
   Moon,
   Palette,
+  RotateCcw,
   Save,
   Shield,
   Sun,
@@ -27,38 +28,37 @@ import { useUserProfile } from "@/context/UserProfileContext";
 import { getCurrentUser, setCurrentUser, updateUser } from "@/data/demoStore";
 
 const AI_KEYS = {
-  enabled: "guc-ai-companion-enabled",
   collapsed: "guc-ai-companion-collapsed",
-  emotions: "guc-ai-companion-emotions",
-  sleeping: "guc-ai-companion-sleeping-mode",
-  hearts: "guc-ai-companion-hearts",
+  legacyEnabled: "guc-ai-companion-enabled",
   name: "guc-ai-companion-name",
   gender: "guc-ai-companion-gender",
+  launcherPosition: "guc-ai-companion-launcher-position",
+  panelPosition: "guc-ai-companion-panel-position",
 };
 
 const roleMeta = {
   student: {
     label: "Student",
     title: "Student Settings",
-    subtitle: "Manage your account, portfolio visibility, notifications, and workspace preferences.",
+    subtitle: "Account, visibility, notifications, appearance, and assistant preferences.",
     icon: GraduationCap,
   },
   instructor: {
     label: "Instructor",
     title: "Instructor Settings",
-    subtitle: "Manage your academic profile, visibility, notifications, and workspace preferences.",
+    subtitle: "Academic profile, visibility, notifications, appearance, and assistant preferences.",
     icon: User,
   },
   employer: {
     label: "Employer",
     title: "Employer Settings",
-    subtitle: "Manage your company profile, visibility, notifications, and workspace preferences.",
+    subtitle: "Company profile, visibility, notifications, appearance, and assistant preferences.",
     icon: Building2,
   },
   admin: {
     label: "Admin",
     title: "Admin Settings",
-    subtitle: "Manage account preferences, platform notifications, appearance, and assistant behavior.",
+    subtitle: "Account, platform notifications, appearance, and assistant preferences.",
     icon: Shield,
   },
 };
@@ -80,14 +80,14 @@ function normalizeRole(value) {
   return "student";
 }
 
-function localBool(key, fallback) {
+function readLocalBool(key, fallback) {
   if (typeof window === "undefined") return fallback;
   const value = localStorage.getItem(key);
   if (value === null) return fallback;
   return value === "true";
 }
 
-function localText(key, fallback = "") {
+function readLocalText(key, fallback = "") {
   if (typeof window === "undefined") return fallback;
   const value = localStorage.getItem(key);
   return value ?? fallback;
@@ -104,20 +104,26 @@ function fromListString(value) {
     .filter(Boolean);
 }
 
-function defaultPreferences(role, user = {}) {
+function getDefaultAssistantName(gender) {
+  return gender === "female" ? "Nova" : "Atlas";
+}
+
+function getDefaultPreferences(role, user = {}) {
+  const stored = user.preferences || {};
+
   return {
     visibility: {
       profileVisibility: role === "student" ? "public" : "listed",
       showEmail: false,
-      showProjects: true,
+      showProjects: role !== "admin",
       allowMessages: role !== "admin",
       allowEmployerContact: role === "student",
       showCourses: role === "instructor",
       showInternships: role === "employer",
-      ...(user.preferences?.visibility || user.preferences?.privacy || {}),
+      ...(stored.visibility || stored.privacy || {}),
     },
     notifications: {
-      muteAll: Boolean(user.notificationMuted || user.preferences?.notifications?.mutedAll),
+      muteAll: Boolean(user.notificationMuted || stored.notifications?.muteAll || stored.notifications?.mutedAll),
       inApp: true,
       email: false,
       messages: true,
@@ -125,13 +131,13 @@ function defaultPreferences(role, user = {}) {
       internshipUpdates: role === "student" || role === "employer",
       courseUpdates: role === "student" || role === "instructor",
       adminAnnouncements: true,
-      ...(user.preferences?.notifications || {}),
+      ...(stored.notifications || {}),
     },
-    workspace: {
+    appearance: {
       compactMode: false,
       reduceMotion: false,
       highContrast: false,
-      ...(user.preferences?.workspace || user.preferences?.accessibility || {}),
+      ...(stored.appearance || stored.workspace || stored.accessibility || {}),
     },
   };
 }
@@ -166,19 +172,31 @@ function buildInitialForm(user, profile) {
     behance: source.behance || links.behance || "",
     googleScholar: source.googleScholar || links.googleScholar || "",
     companyWebsite: source.companyWebsite || links.companyWebsite || links.website || "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   };
+}
+
+function applySavedAppearance(preferences) {
+  if (typeof document === "undefined" || typeof localStorage === "undefined") return;
+  const appearance = preferences?.appearance || {};
+  document.documentElement.classList.toggle("guc-compact-mode", Boolean(appearance.compactMode));
+  document.documentElement.classList.toggle("guc-reduce-motion", Boolean(appearance.reduceMotion));
+  document.documentElement.classList.toggle("guc-high-contrast", Boolean(appearance.highContrast));
+  localStorage.setItem("guc-portfolio-appearance-preferences", JSON.stringify(appearance));
 }
 
 function TextField({ label, value, onChange, placeholder, type = "text", hint }) {
   return (
     <label className="block">
-      <span className="text-xs font-black uppercase tracking-[0.18em] text-[color:var(--muted)]">{label}</span>
+      <span className="text-xs font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</span>
       <input
         type={type}
         value={value || ""}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="mt-2 w-full rounded-2xl border border-[color:var(--border-soft)] bg-white/75 px-4 py-3 text-sm font-semibold text-[color:var(--ink)] outline-none transition placeholder:text-[color:var(--muted)]/60 focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent)]/20 dark:bg-white/5"
+        className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border-soft)] bg-white/75 px-4 text-sm font-semibold text-[color:var(--ink)] outline-none transition placeholder:text-[color:var(--muted)]/60 focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent)]/20 dark:bg-white/5"
       />
       {hint ? <span className="mt-2 block text-xs font-semibold text-[color:var(--muted)]">{hint}</span> : null}
     </label>
@@ -188,7 +206,7 @@ function TextField({ label, value, onChange, placeholder, type = "text", hint })
 function TextArea({ label, value, onChange, placeholder }) {
   return (
     <label className="block">
-      <span className="text-xs font-black uppercase tracking-[0.18em] text-[color:var(--muted)]">{label}</span>
+      <span className="text-xs font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</span>
       <textarea
         value={value || ""}
         onChange={(event) => onChange(event.target.value)}
@@ -203,11 +221,11 @@ function TextArea({ label, value, onChange, placeholder }) {
 function SelectField({ label, value, onChange, options }) {
   return (
     <label className="block">
-      <span className="text-xs font-black uppercase tracking-[0.18em] text-[color:var(--muted)]">{label}</span>
+      <span className="text-xs font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</span>
       <select
         value={value || ""}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-2xl border border-[color:var(--border-soft)] bg-white/75 px-4 py-3 text-sm font-black text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent)]/20 dark:bg-[color:var(--surface)]"
+        className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border-soft)] bg-white/75 px-4 text-sm font-black text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent)]/20 dark:bg-[color:var(--surface)]"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>{option.label}</option>
@@ -226,7 +244,7 @@ function SettingsCard({ title, description, icon: Icon, children }) {
         </div>
         <div>
           <h2 className="text-xl font-black text-[color:var(--ink)]">{title}</h2>
-          {description ? <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-[color:var(--muted)]">{description}</p> : null}
+          {description ? <p className="mt-1 max-w-3xl text-sm font-semibold leading-6 text-[color:var(--muted)]">{description}</p> : null}
         </div>
       </div>
       <div className="space-y-4">{children}</div>
@@ -263,13 +281,18 @@ function ToggleRow({ icon, title, description, checked, onChange, disabled = fal
   );
 }
 
-function SaveBar({ dirty, saving, onSave }) {
+function SaveBar({ dirty, saving, onSave, onCancel }) {
   return (
     <div className="sticky bottom-4 z-20 mt-8 flex justify-end">
       <div className="flex items-center gap-3 rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--card-bg-strong)] p-2 shadow-[var(--shadow-card)] backdrop-blur-xl">
-        <span className="hidden px-3 text-sm font-bold text-[color:var(--muted)] sm:inline">
-          {dirty ? "Unsaved changes" : "All changes saved"}
-        </span>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={!dirty || saving}
+          className="rounded-2xl px-4 py-3 text-sm font-black text-[color:var(--muted)] transition hover:bg-[color:var(--surface-soft)] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Cancel
+        </button>
         <button
           type="button"
           onClick={onSave}
@@ -277,7 +300,7 @@ function SaveBar({ dirty, saving, onSave }) {
           className="inline-flex items-center gap-2 rounded-2xl bg-[var(--gradient-brand)] px-5 py-3 text-sm font-black text-white shadow-[var(--shadow-brand)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
         >
           <Save className="h-4 w-4" />
-          {saving ? "Saving" : "Save settings"}
+          {saving ? "Saving" : dirty ? "Save changes" : "Saved"}
         </button>
       </div>
     </div>
@@ -294,33 +317,46 @@ export default function Settings() {
 
   const [activeTab, setActiveTab] = useState("account");
   const [form, setForm] = useState(() => buildInitialForm(user, profile));
-  const [preferences, setPreferences] = useState(() => defaultPreferences(role, user));
-  const [assistant, setAssistant] = useState(() => ({
-    enabled: localBool(AI_KEYS.enabled, true),
-    collapsed: localBool(AI_KEYS.collapsed, true),
-    emotions: localBool(AI_KEYS.emotions, true),
-    sleeping: localBool(AI_KEYS.sleeping, true),
-    hearts: localBool(AI_KEYS.hearts, true),
-    name: localText(AI_KEYS.name, localText(AI_KEYS.gender, "male") === "female" ? "Nova" : "Atlas"),
-    gender: localText(AI_KEYS.gender, "male"),
-  }));
+  const [preferences, setPreferences] = useState(() => getDefaultPreferences(role, user));
+  const [assistant, setAssistant] = useState(() => {
+    const gender = readLocalText(AI_KEYS.gender, "male") === "female" ? "female" : "male";
+    return {
+      collapsed: readLocalBool(AI_KEYS.collapsed, true),
+      name: readLocalText(AI_KEYS.name, getDefaultAssistantName(gender)),
+      gender,
+    };
+  });
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
+  const resetFormFromStore = () => {
+    const nextUser = getCurrentUser() || profile || {};
+    const nextRole = normalizeRole(nextUser.role || profile?.role);
+    setUserState(nextUser);
+    setForm(buildInitialForm(nextUser, profile));
+    setPreferences(getDefaultPreferences(nextRole, nextUser));
+    const gender = readLocalText(AI_KEYS.gender, "male") === "female" ? "female" : "male";
+    setAssistant({
+      collapsed: readLocalBool(AI_KEYS.collapsed, true),
+      name: readLocalText(AI_KEYS.name, getDefaultAssistantName(gender)),
+      gender,
+    });
+    setDirty(false);
+  };
+
   useEffect(() => {
-    const refresh = () => {
-      const nextUser = getCurrentUser() || profile || {};
-      setUserState(nextUser);
-      setForm(buildInitialForm(nextUser, profile));
-      setPreferences(defaultPreferences(normalizeRole(nextUser.role || profile?.role), nextUser));
-      setDirty(false);
-    };
+    applySavedAppearance(preferences);
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => resetFormFromStore();
     window.addEventListener("demo-current-user-change", refresh);
     window.addEventListener("demo-db-change", refresh);
     return () => {
       window.removeEventListener("demo-current-user-change", refresh);
       window.removeEventListener("demo-db-change", refresh);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
   const updateForm = (key, value) => {
@@ -340,7 +376,14 @@ export default function Settings() {
   };
 
   const updateAssistant = (key, value) => {
-    setAssistant((current) => ({ ...current, [key]: value }));
+    setAssistant((current) => {
+      const next = { ...current, [key]: value };
+      if (key === "gender") {
+        const previousDefault = getDefaultAssistantName(current.gender);
+        if (!current.name || current.name === previousDefault) next.name = getDefaultAssistantName(value);
+      }
+      return next;
+    });
     setDirty(true);
   };
 
@@ -388,29 +431,50 @@ export default function Settings() {
   }, [form, preferences, role]);
 
   const saveSettings = () => {
+    if (form.newPassword || form.confirmPassword || form.currentPassword) {
+      if (!form.currentPassword) {
+        toast.error("Current password required");
+        return;
+      }
+      if (user?.password && form.currentPassword !== user.password) {
+        toast.error("Current password is incorrect");
+        return;
+      }
+      if (form.newPassword.length < 6) {
+        toast.error("New password must be at least 6 characters");
+        return;
+      }
+      if (form.newPassword !== form.confirmPassword) {
+        toast.error("Passwords do not match");
+        return;
+      }
+    }
+
     setSaving(true);
     try {
+      const passwordUpdate = form.newPassword ? { password: form.newPassword } : {};
       let saved = null;
-      if (user?.id) {
-        saved = updateUser(user.id, savedPayload);
-      }
+      if (user?.id) saved = updateUser(user.id, { ...savedPayload, ...passwordUpdate });
 
-      const nextUser = saved || { ...user, ...savedPayload };
+      const nextUser = saved || { ...user, ...savedPayload, ...passwordUpdate };
       setCurrentUser(nextUser);
       updateProfile(nextUser);
-
-      localStorage.setItem(AI_KEYS.enabled, String(Boolean(assistant.enabled)));
-      localStorage.setItem(AI_KEYS.collapsed, String(Boolean(assistant.collapsed)));
-      localStorage.setItem(AI_KEYS.emotions, String(Boolean(assistant.emotions)));
-      localStorage.setItem(AI_KEYS.sleeping, String(Boolean(assistant.sleeping)));
-      localStorage.setItem(AI_KEYS.hearts, String(Boolean(assistant.hearts)));
-      localStorage.setItem(AI_KEYS.name, assistant.name || (assistant.gender === "female" ? "Nova" : "Atlas"));
-      localStorage.setItem(AI_KEYS.gender, assistant.gender || "male");
-      localStorage.setItem("guc-portfolio-workspace-preferences", JSON.stringify(preferences.workspace));
-
       setUserState(nextUser);
+
+      localStorage.removeItem(AI_KEYS.legacyEnabled);
+      localStorage.setItem(AI_KEYS.collapsed, String(Boolean(assistant.collapsed)));
+      localStorage.setItem(AI_KEYS.name, assistant.name || getDefaultAssistantName(assistant.gender));
+      localStorage.setItem(AI_KEYS.gender, assistant.gender || "male");
+      window.dispatchEvent(new CustomEvent("guc-ai-companion-settings-change", { detail: assistant }));
+
+      localStorage.setItem("guc-portfolio-notification-preferences", JSON.stringify(preferences.notifications));
+      localStorage.setItem("guc-portfolio-visibility-preferences", JSON.stringify(preferences.visibility));
+      applySavedAppearance(preferences);
+      window.dispatchEvent(new CustomEvent("guc-settings-updated", { detail: { preferences, user: nextUser } }));
+
+      setForm((current) => ({ ...current, currentPassword: "", newPassword: "", confirmPassword: "" }));
       setDirty(false);
-      toast.success("Settings saved", { description: "Your settings were updated in the seed/demo database." });
+      toast.success("Settings saved", { description: "Your changes were saved to demoStore and applied to the app." });
     } catch (error) {
       toast.error("Could not save settings", { description: error?.message || "Please try again." });
     } finally {
@@ -419,13 +483,32 @@ export default function Settings() {
   };
 
   const exportData = () => {
-    const blob = new Blob([JSON.stringify({ user: savedPayload, assistant, exportedAt: new Date().toISOString() }, null, 2)], { type: "application/json" });
+    const blob = new Blob([
+      JSON.stringify(
+        {
+          user: savedPayload,
+          assistant,
+          theme,
+          exportedAt: new Date().toISOString(),
+        },
+        null,
+        2
+      ),
+    ], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.download = `${role}-settings.json`;
     link.click();
     URL.revokeObjectURL(url);
+    toast.success("Settings exported");
+  };
+
+  const resetAssistantPosition = () => {
+    localStorage.removeItem(AI_KEYS.launcherPosition);
+    localStorage.removeItem(AI_KEYS.panelPosition);
+    window.dispatchEvent(new Event("guc-ai-companion-reset-position"));
+    toast.success("Assistant position reset");
   };
 
   const renderRoleFields = () => {
@@ -473,54 +556,47 @@ export default function Settings() {
   const content = {
     account: (
       <div className="space-y-5">
-        <SettingsCard title="Profile information" description="Only the essential fields that identify this account across the platform." icon={User}>
-          <div className="grid gap-4 lg:grid-cols-[120px_minmax(0,1fr)]">
-            <div className="flex items-start justify-center lg:justify-start">
+        <SettingsCard title="Profile information" description="These fields update the current user in demoStore and refresh the top navigation/profile context." icon={User}>
+          <div className="grid gap-4 lg:grid-cols-[96px_minmax(0,1fr)]">
+            <div className="flex justify-center lg:justify-start">
               <div className="h-24 w-24 overflow-hidden rounded-3xl border border-[color:var(--border-blue)] bg-[color:var(--surface-soft)] shadow-[var(--shadow-card)]">
-                {form.image ? <img src={form.image} alt={form.name || "Profile"} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center"><RoleIcon className="h-8 w-8 text-[color:var(--primary)]" /></div>}
+                {form.image ? <img src={form.image} alt={form.name || "Profile"} className="h-full w-full object-cover" /> : <div className="grid h-full w-full place-items-center"><RoleIcon className="h-8 w-8 text-[color:var(--primary)]" /></div>}
               </div>
             </div>
             <div className="space-y-4">
               <div className="grid gap-4 lg:grid-cols-2">
                 <TextField label={role === "employer" ? "Contact person / display name" : "Full name"} value={form.name} onChange={(value) => updateForm("name", value)} />
                 <TextField label="Email" type="email" value={form.email} onChange={(value) => updateForm("email", value)} />
-                <TextField label="Profile image URL" value={form.image} onChange={(value) => updateForm("image", value)} placeholder="https://..." />
-                <TextField label="LinkedIn" value={form.linkedin} onChange={(value) => updateForm("linkedin", value)} placeholder="https://linkedin.com/in/..." />
               </div>
-              {renderRoleFields()}
-              <TextArea label={role === "employer" ? "Company bio" : "Bio"} value={form.bio} onChange={(value) => updateForm("bio", value)} placeholder="Write a short description..." />
+              <TextField label="Image URL" value={form.image} onChange={(value) => updateForm("image", value)} placeholder="https://..." />
+              <TextArea label="Bio" value={form.bio} onChange={(value) => updateForm("bio", value)} placeholder="Write a short profile bio..." />
             </div>
           </div>
+          {renderRoleFields()}
         </SettingsCard>
 
-        <SettingsCard title="Account access" description="Simple demo security controls. No visual clutter, no fake analytics." icon={KeyRound}>
-          <SettingRow icon={Mail} title="Primary email" description={form.email || "No email saved"} />
-          <ToggleRow icon={Lock} title="Two-step verification" description="Demo toggle only. Useful for showing a realistic account setting without adding backend auth." checked={preferences.workspace.twoFactorEnabled} onChange={(value) => updatePreference("workspace", "twoFactorEnabled", value)} />
+        <SettingsCard title="Password" description="Demo password update. It changes the password stored for this user in demoStore." icon={KeyRound}>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <TextField label="Current password" type="password" value={form.currentPassword} onChange={(value) => updateForm("currentPassword", value)} />
+            <TextField label="New password" type="password" value={form.newPassword} onChange={(value) => updateForm("newPassword", value)} />
+            <TextField label="Confirm password" type="password" value={form.confirmPassword} onChange={(value) => updateForm("confirmPassword", value)} />
+          </div>
         </SettingsCard>
       </div>
     ),
     visibility: (
-      <SettingsCard title="Visibility" description="Control what other users can see. This replaces the previous messy privacy section with clear, direct choices." icon={Eye}>
-        <SelectField
-          label={role === "employer" ? "Company profile visibility" : "Profile visibility"}
-          value={preferences.visibility.profileVisibility}
-          onChange={(value) => updatePreference("visibility", "profileVisibility", value)}
-          options={[
-            { value: "public", label: "Public" },
-            { value: "listed", label: "GUC users only" },
-            { value: "private", label: "Private" },
-          ]}
-        />
-        <ToggleRow icon={Mail} title="Show email on profile" description="Let people see the email attached to this account." checked={preferences.visibility.showEmail} onChange={(value) => updatePreference("visibility", "showEmail", value)} />
-        <ToggleRow icon={Eye} title={role === "employer" ? "Show active internships" : "Show projects"} description={role === "employer" ? "Display published internships on the company profile." : "Display project work on the public profile."} checked={role === "employer" ? preferences.visibility.showInternships : preferences.visibility.showProjects} onChange={(value) => updatePreference("visibility", role === "employer" ? "showInternships" : "showProjects", value)} />
+      <SettingsCard title="Visibility" description="Saved with the user preferences in demoStore, so profile and discovery pages can read one consistent setting." icon={Eye}>
+        <SelectField label="Profile visibility" value={preferences.visibility.profileVisibility} onChange={(value) => updatePreference("visibility", "profileVisibility", value)} options={[{ value: "public", label: "Public" }, { value: "guc", label: "GUC only" }, { value: "private", label: "Private" }, { value: "listed", label: "Listed" }]} />
+        <ToggleRow icon={Mail} title="Show email" description="Allow your email/contact email to appear on public-facing profile surfaces." checked={preferences.visibility.showEmail} onChange={(value) => updatePreference("visibility", "showEmail", value)} />
+        {role !== "admin" ? <ToggleRow icon={Eye} title={role === "employer" ? "Show active internships" : "Show projects"} description={role === "employer" ? "Display internships on the company profile." : "Display project work on your profile/portfolio."} checked={role === "employer" ? preferences.visibility.showInternships : preferences.visibility.showProjects} onChange={(value) => updatePreference("visibility", role === "employer" ? "showInternships" : "showProjects", value)} /> : null}
         <ToggleRow icon={Mail} title="Allow messages" description="Allow other stakeholders to contact this account inside the platform." checked={preferences.visibility.allowMessages} onChange={(value) => updatePreference("visibility", "allowMessages", value)} />
         {role === "student" ? <ToggleRow icon={Building2} title="Allow employer contact" description="Employers can reach out about internship opportunities." checked={preferences.visibility.allowEmployerContact} onChange={(value) => updatePreference("visibility", "allowEmployerContact", value)} /> : null}
         {role === "instructor" ? <ToggleRow icon={GraduationCap} title="Show courses" description="Show taught courses on the instructor profile." checked={preferences.visibility.showCourses} onChange={(value) => updatePreference("visibility", "showCourses", value)} /> : null}
       </SettingsCard>
     ),
     notifications: (
-      <SettingsCard title="Notifications" description="A clean version of requirement-based notification preferences: all mute plus the main categories users expect." icon={Bell}>
-        <ToggleRow icon={Bell} title="Mute all notifications" description="Stops non-critical notifications while keeping the preferences below saved." checked={preferences.notifications.muteAll} onChange={(value) => updatePreference("notifications", "muteAll", value)} />
+      <SettingsCard title="Notifications" description="These preferences are stored in demoStore and mirrored to localStorage for notification UI/helpers." icon={Bell}>
+        <ToggleRow icon={Bell} title="Mute all notifications" description="Stops non-critical notifications while keeping your category choices saved." checked={preferences.notifications.muteAll} onChange={(value) => updatePreference("notifications", "muteAll", value)} />
         <div className="grid gap-4 lg:grid-cols-2">
           <ToggleRow icon={Bell} title="In-app notifications" checked={preferences.notifications.inApp} disabled={preferences.notifications.muteAll} onChange={(value) => updatePreference("notifications", "inApp", value)} />
           <ToggleRow icon={Mail} title="Email notifications" checked={preferences.notifications.email} disabled={preferences.notifications.muteAll} onChange={(value) => updatePreference("notifications", "email", value)} />
@@ -532,33 +608,29 @@ export default function Settings() {
       </SettingsCard>
     ),
     appearance: (
-      <SettingsCard title="Appearance" description="Small display preferences only. No fake dashboard controls." icon={Palette}>
-        <ToggleRow icon={theme === "dark" ? Moon : Sun} title="Dark mode" description="Match the app to your preferred visual mode." checked={theme === "dark"} onChange={(value) => { setTheme(value ? "dark" : "light"); setDirty(true); }} />
-        <ToggleRow icon={Palette} title="Compact mode" description="Slightly tighter spacing for dense dashboards." checked={preferences.workspace.compactMode} onChange={(value) => updatePreference("workspace", "compactMode", value)} />
-        <ToggleRow icon={Palette} title="Reduce motion" description="Reduce decorative animations where supported." checked={preferences.workspace.reduceMotion} onChange={(value) => updatePreference("workspace", "reduceMotion", value)} />
-        <ToggleRow icon={Palette} title="High contrast" description="Store the preference so theme components can read it later." checked={preferences.workspace.highContrast} onChange={(value) => updatePreference("workspace", "highContrast", value)} />
+      <SettingsCard title="Appearance" description="Display preferences that are applied immediately where the app already supports them." icon={Palette}>
+        <ToggleRow icon={theme === "dark" ? Moon : Sun} title="Dark mode" description="Changes the global app theme immediately." checked={theme === "dark"} onChange={(value) => { setTheme(value ? "dark" : "light"); setDirty(true); }} />
+        <ToggleRow icon={Palette} title="Compact mode" description="Saved as a global appearance preference for dense pages." checked={preferences.appearance.compactMode} onChange={(value) => updatePreference("appearance", "compactMode", value)} />
+        <ToggleRow icon={Palette} title="Reduce motion" description="Saved and applied as a global reduced-motion class." checked={preferences.appearance.reduceMotion} onChange={(value) => updatePreference("appearance", "reduceMotion", value)} />
+        <ToggleRow icon={Palette} title="High contrast" description="Saved and applied as a global high-contrast class." checked={preferences.appearance.highContrast} onChange={(value) => updatePreference("appearance", "highContrast", value)} />
       </SettingsCard>
     ),
     assistant: (
-      <SettingsCard title="AI Companion" description="Keep the companion useful without making the settings page about the companion." icon={Bot}>
+      <SettingsCard title="AI Companion" description="Real controls for the existing companion: name, style, collapsed state, and position reset." icon={Bot}>
         <div className="grid gap-4 lg:grid-cols-2">
           <TextField label="Companion name" value={assistant.name} onChange={(value) => updateAssistant("name", value)} placeholder="Atlas" />
           <SelectField label="Companion style" value={assistant.gender} onChange={(value) => updateAssistant("gender", value)} options={[{ value: "male", label: "Male" }, { value: "female", label: "Female" }]} />
         </div>
-        <ToggleRow icon={Bot} title="Show AI companion" description="Turn the companion on or off across dashboards." checked={assistant.enabled} onChange={(value) => updateAssistant("enabled", value)} />
-        <ToggleRow icon={Bot} title="Start as small circle" description="Open dashboards with the companion collapsed into its draggable circle." checked={assistant.collapsed} onChange={(value) => updateAssistant("collapsed", value)} />
-        <div className="grid gap-4 lg:grid-cols-3">
-          <ToggleRow icon={Bot} title="Emotions" checked={assistant.emotions} onChange={(value) => updateAssistant("emotions", value)} />
-          <ToggleRow icon={Moon} title="Sleeping mode" checked={assistant.sleeping} onChange={(value) => updateAssistant("sleeping", value)} />
-          <ToggleRow icon={Bot} title="Hearts" checked={assistant.hearts} onChange={(value) => updateAssistant("hearts", value)} />
-        </div>
+        <ToggleRow icon={Bot} title="Start as small circle" description="Dashboards open with the companion collapsed into its draggable circle." checked={assistant.collapsed} onChange={(value) => updateAssistant("collapsed", value)} />
+        <SettingRow icon={RotateCcw} title="Reset companion position" description="Move the tiny circle and open panel back to their default dashboard position." right={<button type="button" onClick={resetAssistantPosition} className="rounded-2xl border border-[color:var(--border-blue)] px-4 py-2 text-sm font-black text-[color:var(--primary)] transition hover:bg-[color:var(--surface-soft)]">Reset</button>} />
       </SettingsCard>
     ),
     data: (
-      <SettingsCard title="Data" description="Simple data controls for the demo database. No danger-zone theatrics." icon={Download}>
-        <SettingRow icon={Download} title="Export my settings" description="Download the current profile and settings as a JSON file." right={<button type="button" onClick={exportData} className="rounded-2xl border border-[color:var(--border-blue)] px-4 py-2 text-sm font-black text-[color:var(--primary)] transition hover:bg-[color:var(--surface-soft)]">Export</button>} />
-        <SettingRow icon={LinkIcon} title="Connected links" description="Portfolio, LinkedIn, GitHub, and company links are saved with the user in demoStore.">
+      <SettingsCard title="Data" description="Simple demo data control, not a fake analytics page." icon={Download}>
+        <SettingRow icon={Download} title="Export my settings" description="Download the current profile, preferences, theme, and companion settings as JSON." right={<button type="button" onClick={exportData} className="rounded-2xl border border-[color:var(--border-blue)] px-4 py-2 text-sm font-black text-[color:var(--primary)] transition hover:bg-[color:var(--surface-soft)]">Export</button>} />
+        <SettingRow icon={LinkIcon} title="Connected links" description="These save directly on the user record in demoStore.">
           <div className="grid gap-4 lg:grid-cols-2">
+            <TextField label="LinkedIn" value={form.linkedin} onChange={(value) => updateForm("linkedin", value)} placeholder="https://linkedin.com/in/..." />
             <TextField label="Portfolio / website" value={form.portfolio} onChange={(value) => updateForm("portfolio", value)} placeholder="https://..." />
             {role === "student" ? <TextField label="Behance" value={form.behance} onChange={(value) => updateForm("behance", value)} placeholder="https://behance.net/..." /> : null}
             {role === "instructor" ? <TextField label="Google Scholar" value={form.googleScholar} onChange={(value) => updateForm("googleScholar", value)} placeholder="https://scholar.google.com/..." /> : null}
@@ -571,7 +643,7 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-7 flex flex-col gap-4 rounded-[30px] border border-[color:var(--border-soft)] bg-[color:var(--card-bg-strong)] p-5 shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-[color:var(--border-blue)] bg-[color:var(--surface-soft)]">
@@ -585,8 +657,8 @@ export default function Settings() {
           </div>
         </header>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <aside className="rounded-[28px] border border-[color:var(--border-soft)] bg-[color:var(--card-bg-strong)] p-3 shadow-[var(--shadow-card)] lg:sticky lg:top-6">
+        <div className="grid items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+          <aside className="rounded-[28px] border border-[color:var(--border-soft)] bg-[color:var(--card-bg-strong)] p-3 shadow-[var(--shadow-card)] lg:sticky lg:top-28">
             <nav className="space-y-1">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
@@ -608,7 +680,7 @@ export default function Settings() {
 
           <main>
             {content[activeTab]}
-            <SaveBar dirty={dirty} saving={saving} onSave={saveSettings} />
+            <SaveBar dirty={dirty} saving={saving} onSave={saveSettings} onCancel={resetFormFromStore} />
           </main>
         </div>
       </div>

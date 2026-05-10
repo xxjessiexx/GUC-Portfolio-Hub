@@ -565,14 +565,34 @@ export default function FloatingAICompanion() {
       wake("happy", "dance");
     };
 
+    const onSettingsChange = (event) => {
+      const next = event?.detail || {};
+      if (typeof next.collapsed === "boolean") {
+        setCollapsed(next.collapsed);
+        localStorage.setItem(COLLAPSED_KEY, next.collapsed ? "true" : "false");
+      }
+      if (next.gender === "female" || next.gender === "male") {
+        setCompanionGender(next.gender);
+        localStorage.setItem(COMPANION_GENDER_KEY, next.gender);
+      }
+      if (typeof next.name === "string" && next.name.trim()) {
+        const clean = next.name.replace(/[^a-zA-Z0-9 _-]/g, "").trim().slice(0, 22);
+        setCompanionName(clean);
+        localStorage.setItem(COMPANION_NAME_KEY, clean);
+      }
+      wake("happy", "dance");
+    };
+
     window.addEventListener("resize", onResize);
     window.addEventListener("guc-ai-companion-reset-position", onReset);
+    window.addEventListener("guc-ai-companion-settings-change", onSettingsChange);
     return () => {
       window.clearInterval(interval);
       window.clearTimeout(idleTimer.current);
       window.clearTimeout(activityTimer.current);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("guc-ai-companion-reset-position", onReset);
+      window.removeEventListener("guc-ai-companion-settings-change", onSettingsChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collapsed, asleep]);
