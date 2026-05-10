@@ -34,6 +34,21 @@ const COMPANION_GENDER_KEY = "guc-ai-companion-gender";
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const defaultCompanionName = (gender) => (gender === "female" ? "Nova" : "Atlas");
 
+const getCompanionPaletteStyle = (gender) => {
+  if (gender !== "female") return undefined;
+
+  return {
+    "--primary": "#B75C8D",
+    "--secondary": "#F3A4C8",
+    "--accent": "#FF8FC7",
+    "--card-bg-strong": "rgba(255, 247, 251, 0.96)",
+    "--surface-soft": "rgba(255, 226, 240, 0.84)",
+    "--surface-elevated": "rgba(255, 250, 253, 0.96)",
+    "--border-blue": "rgba(255, 143, 199, 0.42)",
+    "--ring-soft": "rgba(255, 143, 199, 0.2)",
+  };
+};
+
 function readJson(key, fallback) {
   if (typeof window === "undefined") return fallback;
   try {
@@ -192,6 +207,7 @@ function ActivityBits({ activity, tiny = false }) {
 function RobotMascot({
   isOpen,
   isWaving,
+  companionGender = "male",
   mood = "idle",
   asleep = false,
   tiny = false,
@@ -205,6 +221,7 @@ function RobotMascot({
   const dancing = activity === "dance";
   const dizzy = activity === "dizzy";
   const waving = isWaving || mood === "wave" || activity === "curious";
+  const paletteStyle = getCompanionPaletteStyle(companionGender);
 
   const sizeClass = tiny ? "h-12 w-12" : "h-28 w-28";
   const headClass = tiny ? "h-7 w-11 rounded-[16px] p-[4px]" : "h-16 w-24 rounded-[2rem] p-2";
@@ -224,6 +241,7 @@ function RobotMascot({
         if (!tiny && (event.key === "Enter" || event.key === " ")) onPet?.("pet");
       }}
       className={`relative ${sizeClass} drop-shadow-[0_22px_28px_rgba(44,57,71,0.25)]`}
+      style={paletteStyle}
       animate={{
         y: asleep ? [0, 1, 0] : tiny ? [0, -2.5, 0] : dancing ? [0, -13, 0, -5, 0] : [0, -9, 0],
         rotate: dizzy ? [0, -8, 8, -8, 0] : dancing ? [-5, 6, -6, 5, -5] : thinking ? [0, -2, 2, 0] : isOpen ? [0, -1, 1, 0] : [0, 1.5, -1.5, 0],
@@ -281,7 +299,7 @@ function RobotMascot({
       <div className={`absolute ${tiny ? "right-[2px] top-[12px] h-4 w-2.5" : "right-3 top-4 h-8 w-6"} rounded-r-3xl bg-[linear-gradient(180deg,var(--card-bg-strong),rgba(122,170,206,0.38))]`} />
 
       <div className={`absolute left-1/2 ${tiny ? "top-2" : "top-3"} ${headClass} -translate-x-1/2 bg-[linear-gradient(135deg,var(--card-bg-strong),var(--surface-soft),rgba(156,213,255,0.35))] shadow-inner ring-1 ring-[color:var(--border-blue)]`}>
-        <div className={`relative h-full ${faceClass} bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.34),transparent_42%),linear-gradient(135deg,var(--primary),var(--secondary))] shadow-[inset_0_0_20px_rgba(156,213,255,0.22)] dark:bg-[radial-gradient(circle_at_50%_35%,rgba(156,213,255,0.16),transparent_42%),linear-gradient(135deg,#061923,#0c2634)]`}>
+        <div className={`relative h-full ${faceClass} bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.34),transparent_42%),linear-gradient(135deg,var(--primary),var(--secondary))] shadow-[inset_0_0_20px_rgba(156,213,255,0.22)] ${companionGender === "female" ? "" : "dark:bg-[radial-gradient(circle_at_50%_35%,rgba(156,213,255,0.16),transparent_42%),linear-gradient(135deg,#061923,#0c2634)]"}`}>
           <motion.span
             className={`absolute ${tiny ? "left-[9px] top-[8px]" : "left-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--accent)] shadow-[0_0_16px_rgba(156,213,255,0.86)]`}
             animate={{ scaleY: asleep ? 0.16 : [1, 0.15, 1], scaleX: happy ? 1.14 : 1 }}
@@ -326,14 +344,19 @@ function RobotMascot({
   );
 }
 
-function TinyRobotBadge({ mood, asleep, isWaving, activity }) {
+function TinyRobotBadge({ mood, asleep, isWaving, activity, companionGender = "male" }) {
+  const paletteStyle = getCompanionPaletteStyle(companionGender);
+
   return (
-    <div className="relative grid h-full w-full place-items-center overflow-hidden rounded-full">
+    <div
+      className="relative grid h-full w-full place-items-center overflow-hidden rounded-full"
+      style={paletteStyle}
+    >
       <span className="absolute inset-0 rounded-full bg-[image:var(--gradient-brand)] opacity-35" />
       <span className="absolute inset-[3px] rounded-full border border-white/45 bg-white/28 shadow-[inset_0_1px_12px_rgba(255,255,255,0.32)] backdrop-blur-2xl dark:bg-[color:var(--card-bg-strong)]/32" />
       <span className="absolute -right-2 -top-2 h-10 w-10 rounded-full bg-[color:var(--accent)]/35 blur-xl" />
 
-      <RobotMascot tiny mood={mood} asleep={asleep} isWaving={isWaving} activity={activity} />
+      <RobotMascot tiny mood={mood} asleep={asleep} isWaving={isWaving} activity={activity} companionGender={companionGender} />
 
       <span className="absolute bottom-1.5 right-1.5 h-2.5 w-2.5 rounded-full border border-white bg-[color:var(--accent)] shadow-[0_0_12px_rgba(156,213,255,0.9)]" />
     </div>
@@ -751,7 +774,7 @@ export default function FloatingAICompanion() {
         title="Drag me · click to open · double-click for dance"
       >
         <span className="absolute inset-0 rounded-full bg-[color:var(--accent)]/15 blur-xl" />
-        <TinyRobotBadge mood={mood} asleep={asleep} isWaving={mood === "wave"} activity={activity} />
+        <TinyRobotBadge mood={mood} asleep={asleep} isWaving={mood === "wave"} activity={activity} companionGender={companionGender} />
         <span className="pointer-events-none absolute -left-32 top-1/2 hidden -translate-y-1/2 rounded-2xl border border-[color:var(--border-blue)] bg-[color:var(--surface-elevated)]/90 px-3 py-2 text-xs font-black text-[color:var(--ink)] opacity-0 shadow-[var(--shadow-card)] backdrop-blur-xl transition group-hover:opacity-100 xl:block">
           Drag me · click to open
         </span>
@@ -997,6 +1020,7 @@ export default function FloatingAICompanion() {
             asleep={asleep}
             heartBurst={heartBurst}
             activity={activity}
+            companionGender={companionGender}
             onPet={(type) => interact(type)}
             onTickle={() => interact("tickle")}
           />
