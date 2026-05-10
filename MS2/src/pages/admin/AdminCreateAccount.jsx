@@ -11,6 +11,7 @@ import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
 import { Input } from "@/components/ui/input";
 import { useAdminModuleData } from "@/hooks/useAdminModuleData";
+import { AdminPageHeader } from "@/components/adminModule/AdminPageHeader";
 
 const emptyAdmin = { name: "", email: "", username: "", password: "", note: "" };
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
@@ -56,20 +57,14 @@ export default function AdminCreateAccount() {
         </motion.div>
 
         <motion.div variants={cardMotion}>
-          <AppCard variant="dark" radius="xl" padding="lg" className="overflow-hidden py-6">
-            <div className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-[color:var(--accent)]/20 blur-3xl" />
-            <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-[color:var(--gold)]">Admin access</p>
-                <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Create admin account</h1>
-                <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/65">Provision another administrator using the required username and password flow.</p>
-              </div>
-              <div className="rounded-3xl border border-white/10 bg-white/10 px-4 py-3 text-white backdrop-blur-xl">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-white/55">Req 53</p>
-                <p className="mt-1 text-sm font-bold text-white/80">Username + password creation</p>
-              </div>
-            </div>
-          </AppCard>
+          <AdminPageHeader
+            eyebrow="Admin Access"
+            title="Create Admin Account"
+            description="Provision another administrator using the required username and password flow."
+            actionLabel="Back to Users"
+            actionTo="/admin/users"
+            icon={ArrowLeft}
+          />
         </motion.div>
 
         <form onSubmit={submit} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
@@ -110,9 +105,30 @@ export default function AdminCreateAccount() {
               </div>
             </AdminMotionCard>
 
-            <motion.div variants={cardMotion} className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <AppButton type="button" variant="glass" onClick={() => { setForm(emptyAdmin); setSubmitted(false); }}><RotateCcw className="size-4" />Reset</AppButton>
-              <AppButton type="submit" variant="brand"><UserPlus className="size-4" />Create admin</AppButton>
+            <motion.div
+              variants={cardMotion}
+              className="flex flex-col-reverse gap-3 rounded-[28px] border border-white/70 bg-white/45 p-4 shadow-[0_18px_45px_rgba(53,88,114,0.08)] sm:flex-row sm:justify-end"
+            >
+              <AppButton
+                type="button"
+                variant="glass"
+                className="rounded-2xl px-6 py-3 font-black"
+                onClick={() => {
+                  setForm(emptyAdmin);
+                  setSubmitted(false);
+                }}
+              >
+                <RotateCcw className="size-4" />
+                Reset
+              </AppButton>
+
+              <AppButton
+                type="submit"
+                className="rounded-2xl bg-[color:var(--primary)] px-6 py-3 font-black text-white shadow-[0_14px_30px_rgba(31,58,92,0.22)] transition hover:-translate-y-0.5 hover:bg-[color:var(--primary)]/90"
+              >
+                <UserPlus className="size-4" />
+                Create admin
+              </AppButton>
             </motion.div>
           </div>
 

@@ -50,6 +50,7 @@ import AdminCreateCourse from "@/pages/admin/AdminCreateCourse";
 import AdminCreateAccount from "@/pages/admin/AdminCreateAccount";
 import ViewInstructor from "@/pages/ViewInstructor"
 import FavoriteList from "@/pages/FavoriteList"
+import AdminOverview from "@/pages/admin/AdminOverview";
 
 export default function App() {
   useEffect(() => {
@@ -188,7 +189,14 @@ export default function App() {
     </ProtectedRoute>
   }
 />
-
+<Route
+  path="/admin/overview"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminOverview />
+    </ProtectedRoute>
+  }
+/>
 <Route
   path="/admin/users/create-admin"
   element={
