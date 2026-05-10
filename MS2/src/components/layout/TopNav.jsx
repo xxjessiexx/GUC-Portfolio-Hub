@@ -9,6 +9,8 @@ import {
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 
+import { useNotifications } from "@/context/NotificationsContext";
+
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 import { useUserProfile } from "@/context/UserProfileContext";
@@ -47,11 +49,11 @@ function normalizeWorkspace(value) {
 }
 
 export default function TopNav({
-  notifications = [],
   workspace = "student",
   workspaceLabel,
 }) {
-  const unread = notifications.filter((n) => n.unread).length;
+  const { unreadCount } = useNotifications();
+  const unread = unreadCount;
   const { profile } = useUserProfile();
   const navigate = useNavigate();
 

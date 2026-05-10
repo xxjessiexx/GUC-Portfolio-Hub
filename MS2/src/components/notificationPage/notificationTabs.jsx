@@ -5,16 +5,17 @@ import { MessageCircle, Bell, Mail, UserPlus } from "lucide-react";
 import { useNotifications } from "@/context/NotificationsContext";
 
 export default function NotificationsTabs({ notifications }) {
-const { setNotifications } = useNotifications();
+const {
+  markAsRead,
+  deleteNotification,
+} = useNotifications();
+
 const handleDelete = (id) => {
-  setNotifications((prev) => prev.filter((n) => n.id !== id));
+  deleteNotification(id);
 };
+
 const handleMarkAsRead = (id) => {
-  setNotifications((prev) =>
-    prev.map((n) =>
-      n.id === id ? { ...n, unread: false } : n
-    )
-  );
+  markAsRead(id);
 };
 
 const [activeTab, setActiveTab] = useState("all");

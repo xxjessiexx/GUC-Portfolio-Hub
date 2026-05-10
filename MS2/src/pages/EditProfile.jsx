@@ -8,7 +8,7 @@ import ProfileSelectField from "@/components/profile/ProfileSelectField";
 import SkillsEditor from "@/components/profile/SkillsEditor";
 import DangerActions from "@/components/profile/DangerActions";
 
-import { notifications } from "@/data/studentDashboardData";
+
 import { useUserProfile } from "@/context/UserProfileContext";
 
 export default function EditProfile() {
@@ -22,7 +22,7 @@ export default function EditProfile() {
   const majorOptions = ["Computer Science"];
 
   return (
-    <DashboardLayout notifications={notifications}>
+    <DashboardLayout >
       <div className="space-y-6">
         <SectionHeader
           title="Profile Information"

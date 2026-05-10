@@ -10,7 +10,6 @@ import EditableProfileField from "@/components/profile/EditableProfileField";
 import SkillsEditor from "@/components/profile/SkillsEditor";
 import DangerActions from "@/components/profile/DangerActions";
 
-import { notifications } from "@/data/studentDashboardData";
 import { useUserProfile } from "@/context/UserProfileContext";
 
 import {
@@ -172,7 +171,7 @@ export default function EditInstructorProfile() {
   };
 
   return (
-    <DashboardLayout notifications={notifications}>
+    <DashboardLayout >
       <div className="space-y-6">
         <SectionHeader
           title="Instructor Profile Information"
