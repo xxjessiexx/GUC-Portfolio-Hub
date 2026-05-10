@@ -8,12 +8,18 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 import { useNotifications } from "@/context/NotificationsContext";
 
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
 import { useUserProfile } from "@/context/UserProfileContext";
+
+import {
+  CHAT_STORE_EVENT,
+  getUnreadChatCountForCurrentUser,
+} from "@/data/demoStore";
 
 const workspaceMeta = {
   student: { label: "Student Workspace", icon: GraduationCap },
@@ -57,6 +63,10 @@ export default function TopNav({
   const { profile } = useUserProfile();
   const navigate = useNavigate();
 
+  const [chatUnread, setChatUnread] = useState(() =>
+    getUnreadChatCountForCurrentUser()
+  );
+
   const normalizedRole =
     normalizeWorkspace(profile?.accountRole) ||
     normalizeWorkspace(profile?.systemRole) ||
@@ -94,6 +104,22 @@ export default function TopNav({
       ? `Semester ${profile.semester}`
       : profile?.displayRole || roleLabels[normalizedRole] || "Guest";
 
+  useEffect(() => {
+    const refreshChatUnread = () => {
+      setChatUnread(getUnreadChatCountForCurrentUser());
+    };
+
+    refreshChatUnread();
+
+    window.addEventListener(CHAT_STORE_EVENT, refreshChatUnread);
+    window.addEventListener("storage", refreshChatUnread);
+
+    return () => {
+      window.removeEventListener(CHAT_STORE_EVENT, refreshChatUnread);
+      window.removeEventListener("storage", refreshChatUnread);
+    };
+  }, [profile?.id, workspace]);
+
   const handleChatsClick = () => {
     navigate("/chat");
   };
@@ -121,16 +147,24 @@ export default function TopNav({
         <div className="flex items-center gap-3">
           <ThemeToggle variant="dark" />
 
-          <motion.button
-            type="button"
-            onClick={handleChatsClick}
-            whileHover={{ y: -3 }}
-            whileTap={tapScale}
-            transition={{ duration: 0.22, ease: easeOutExpo }}
-            className="relative grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/10 text-white shadow-sm transition hover:bg-white/15"
-          >
-            <MessageCircle className="h-5 w-5" />
-          </motion.button>
+          {normalizedRole !== "admin" && (
+  <motion.button
+    type="button"
+    onClick={handleChatsClick}
+    whileHover={{ y: -3 }}
+    whileTap={tapScale}
+    transition={{ duration: 0.22, ease: easeOutExpo }}
+    className="relative grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/10 text-white shadow-sm transition hover:bg-white/15"
+  >
+    <MessageCircle className="h-5 w-5" />
+
+    {chatUnread > 0 && (
+      <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-[color:var(--gold)] text-xs font-black text-[color:var(--primary)] shadow-[0_8px_18px_rgba(230,199,123,0.35)]">
+        {chatUnread}
+      </span>
+    )}
+  </motion.button>
+)}
 
           <motion.button
             type="button"

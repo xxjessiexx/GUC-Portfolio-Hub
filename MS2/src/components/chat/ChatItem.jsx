@@ -1,11 +1,21 @@
+import {
+  getChatDisplayMeta,
+  getCurrentUser,
+} from "@/data/demoStore";
+
 export default function ChatItem({
   chat,
   isActive,
   onClick,
 }) {
+  const currentUser = getCurrentUser();
+
+  const displayChat = getChatDisplayMeta(chat, currentUser?.id);
 
   const lastMessage =
-    chat.messages[chat.messages.length - 1];
+    chat.messages?.[chat.messages.length - 1];
+
+  const isUnread = (chat.unreadBy || []).includes(currentUser?.id);
 
   return (
     <div
@@ -14,43 +24,43 @@ export default function ChatItem({
       ${isActive ? "bg-blue-100" : "hover:bg-gray-50"}
       `}
     >
-
       {/* Avatar */}
       <div className="relative">
-
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--dark),var(--primary))] shadow-[0_18px_55px_rgba(44,57,71,0.22)] text-xl font-bold text-white">
-          {chat.avatar}
+        <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(135deg,var(--dark),var(--primary))] shadow-[0_18px_55px_rgba(44,57,71,0.22)] text-xl font-bold text-white">
+          {displayChat.image ? (
+            <img
+              src={displayChat.image}
+              alt={displayChat.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            displayChat.avatar
+          )}
         </div>
 
-        {chat.unread > 0 && (
+        {isUnread && (
           <div className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-[color:var(--gold)] text-xs font-black text-[color:var(--primary)] shadow-[0_8px_18px_rgba(230,199,123,0.35)]">
-            {chat.unread}
+            1
           </div>
         )}
-
       </div>
 
       {/* Info */}
       <div className="flex-1 overflow-hidden">
-
         <div className="flex items-center justify-between">
-
           <h2 className="font-semibold">
-            {chat.name}
+            {displayChat.name}
           </h2>
 
           <span className="text-sm text-gray-400">
-            {lastMessage.time}
+            {lastMessage?.time}
           </span>
-
         </div>
 
         <p className="truncate text-sm text-gray-500">
-          {lastMessage.text}
+          {lastMessage?.text}
         </p>
-
       </div>
-
     </div>
   );
 }

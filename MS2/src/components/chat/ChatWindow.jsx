@@ -1,175 +1,131 @@
 import ChatHeader from "./ChatHeader";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
+
+import {
+  addChatMessage,
+  addScriptedChatReply,
+  getCurrentUser,
+} from "@/data/demoStore";
 
 export default function ChatWindow({
-selectedChat,
-chats,
-setChats,
+  selectedChat,
 }) {
+  const messagesContainerRef = useRef(null);
+  const currentUser = getCurrentUser();
 
-    const messagesContainerRef = useRef(null);
+  const [isTyping, setIsTyping] = useState(false);
 
-  // SEND MESSAGE FUNCTION
-const handleSendMessage = (text) => {
+  const getOtherParticipantId = () => {
+    return (selectedChat?.participantIds || []).find(
+      (participantId) => String(participantId) !== String(currentUser?.id)
+    );
+  };
+
+  const shouldUseScriptedReply = () => {
+    if (!selectedChat) return false;
+
+    // Only Omar Adel / employer chat should auto-reply
+    if (selectedChat.id !== "chat-student-employer") return false;
+
+    // Only the student should receive Omar's scripted replies
+    if (currentUser?.id !== "student-demo-1") return false;
+
+    const replies = selectedChat.scriptedReplies || [];
+    const replyIndex = selectedChat.scriptedReplyIndex || 0;
+
+    return Boolean(replies[replyIndex]);
+  };
+
+  const handleSendMessage = (text) => {
     if (!selectedChat) return;
-
     if (!text.trim()) return;
 
-    const newMessage = {
-    id: Date.now(),
-    text,
-    sender: "me",
-    time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-    }),
-    };
+    addChatMessage(selectedChat.id, text, currentUser?.id);
 
-    const updatedChats = chats.map((chat) => {
+    if (!shouldUseScriptedReply()) return;
 
-    if (chat.id === selectedChat.id) {
+    const replies = selectedChat.scriptedReplies || [];
+    const replyIndex = selectedChat.scriptedReplyIndex || 0;
+    const nextReply = replies[replyIndex];
+    const otherParticipantId = getOtherParticipantId();
 
-        return {
-        ...chat,
-        messages: [...chat.messages, newMessage],
-        };
-    }
+    if (!nextReply || !otherParticipantId) return;
 
-    return chat;
-    });
+    setIsTyping(true);
 
-    setChats(updatedChats);
-    // ONLY Fatima gets replies
-if (selectedChat.id === 3) {
-sendScriptedReply(updatedChats);
-}
-};
-const [isTyping, setIsTyping] = useState(false);
+    window.setTimeout(() => {
+      addScriptedChatReply(selectedChat.id, nextReply, otherParticipantId, {
+        markAsUnread: false,
+        createNotification: false,
+      });
 
-useEffect(() => {
+      setIsTyping(false);
+    }, 1800);
+  };
+
+  useEffect(() => {
+    setIsTyping(false);
+  }, [selectedChat?.id]);
+
+  useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
 
     container.scrollTo({
-    top: container.scrollHeight,
-    behavior: "smooth",
-});
-}, [selectedChat?.messages, isTyping]);
-
-
-const sendScriptedReply = (currentChats) => {
-
-setIsTyping(true);
-
-setTimeout(() => {
-
-    const currentChat = currentChats.find(
-    (chat) => chat.id === selectedChat.id
-    );
-
-    const currentReply =
-    currentChat.scriptedReplies[
-        currentChat.replyIndex
-    ];
-
-    if (!currentReply) {
-    setIsTyping(false);
-    return;
-    }
-
-    const replyMessage = {
-    id: Date.now(),
-    text: currentReply,
-    sender: "other",
-    time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-    }),
-    };
-
-    const updatedChats = currentChats.map((chat) => {
-
-    if (chat.id === selectedChat.id) {
-
-        return {
-        ...chat,
-
-        messages: [
-            ...chat.messages,
-            replyMessage,
-        ],
-
-        replyIndex: chat.replyIndex + 1,
-        };
-    }
-
-    return chat;
+      top: container.scrollHeight,
+      behavior: "smooth",
     });
+  }, [selectedChat?.id, selectedChat?.messages?.length, isTyping]);
 
-    setChats(updatedChats);
-
-    setIsTyping(false);
-
-}, 2000);
-};
-if (!selectedChat) {
-return (
-    <div className="flex flex-1 items-center justify-center bg-[#f8f8f8]">
-
-    <div className="text-center">
-
-        <h2 className="text-3xl font-bold text-gray-700">
+  if (!selectedChat) {
+    return (
+      <div className="flex flex-1 items-center justify-center bg-[#f8f8f8]">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-gray-700">
             Your Messages
-        </h2>
+          </h2>
 
-        <p className="mt-3 text-gray-500">
+          <p className="mt-3 text-gray-500">
             Select a conversation to start chatting
-        </p>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-    </div>
-
-    </div>
-);
-}
-
-return (
+  return (
     <div className="flex flex-1 flex-col">
-
-    <ChatHeader selectedChat={selectedChat} />
+      <ChatHeader selectedChat={selectedChat} />
 
       {/* Messages */}
-    <div
-    ref={messagesContainerRef}
-    className="flex-1 overflow-y-auto bg-[#f8f8f8] p-8"
->
-
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto bg-[#f8f8f8] p-8"
+      >
         <div className="flex flex-col gap-6">
+          {(selectedChat.messages || []).map((message) => (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              currentUserId={currentUser?.id}
+            />
+          ))}
 
-{selectedChat.messages.map((message) => (
-    <MessageBubble
-    key={message.id}
-    message={message}
-    />
-))}
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="flex items-center gap-1 rounded-3xl bg-[#ececec] px-5 py-4">
+                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500 [animation-delay:-0.2s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500 [animation-delay:-0.1s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500" />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
-{isTyping && (
-<div className="flex justify-start">
-    <div className="flex items-center gap-1 rounded-3xl bg-gray-200 px-5 py-3">
-    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500 [animation-delay:-0.2s]"></span>
-    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500 [animation-delay:-0.1s]"></span>
-    <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500"></span>
+      <MessageInput onSend={handleSendMessage} />
     </div>
-</div>
-)}
-
-
-</div>
-    </div>
-
-    <MessageInput onSend={handleSendMessage} />
-
-    </div>
-);
+  );
 }

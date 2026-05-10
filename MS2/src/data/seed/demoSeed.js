@@ -2781,9 +2781,9 @@ export const notificationsSeed = [
   {
     "id": "notif-invite-1",
     "userId": "student-demo-1",
-    "type": "project-invite",
-    "title": "Collaboration invite accepted",
-    "text": "Farida accepted your invite for Project Portfolio Web Platform.",
+    "type": "invite",
+    "title": "Collaboration invite received",
+    "text": "Farida has invited you to join Project Portfolio Web Platform.",
     "unread": true,
     "createdAt": "2026-05-08T12:00:00.000Z",
     "relatedProjectId": "project-portfolio-hub",
@@ -2826,8 +2826,8 @@ export const notificationsSeed = [
     "id": "notif-feedback-1",
     "userId": "student-demo-1",
     "type": "feedback",
-    "title": "Instructor feedback added",
-    "text": "Dr. Mervat added feedback to your portfolio project.",
+    "title": "Instructor comment added",
+    "text": "Dr. Mervat added a comment to your portfolio project tasks.",
     "unread": false,
     "createdAt": "2026-05-07T12:00:00.000Z",
     "relatedProjectId": "project-portfolio-hub",
@@ -2854,16 +2854,16 @@ export const notificationsSeed = [
     "time": "9/5/2026 at 6:30 pm",
     "createdAt": "2026-05-09T18:30:00.000Z"
   },
-  {
-    "id": "notif-link-request-admin",
-    "userId": "admin-demo-1",
-    "title": "Course link request",
-    "text": "Dr. Mervat requested to link Bachelor Project in DMET 401.",
-    "unread": true,
-    "type": "admin",
-    "time": "9/5/2026 at 6:30 pm",
-    "createdAt": "2026-05-09T18:30:00.000Z"
-  },
+  //{
+    //"id": "notif-link-request-admin",
+    //"userId": "admin-demo-1",
+    //"title": "Course link request",
+    //"text": "Dr. Mervat requested to link Bachelor Project in DMET 401.",
+    //"unread": true,
+    //"type": "admin",
+    //"time": "9/5/2026 at 6:30 pm",
+    //"createdAt": "2026-05-09T18:30:00.000Z"
+  //},
   {
     "id": "notif-collab-message",
     "userId": "student-demo-1",
@@ -2873,7 +2873,19 @@ export const notificationsSeed = [
     "type": "message",
     "time": "9/5/2026 at 6:30 pm",
     "createdAt": "2026-05-09T18:30:00.000Z"
-  }
+  },
+  {
+  id: "notif-instructor-invite-1",
+  userId: "instructor-demo-1",
+  type: "invite",
+  title: "Project supervision invite",
+  text: "Yasmin Khaled invited you to supervise Autonomous Vehicle Perception System.",
+  unread: true,
+  createdAt: "2026-05-09T10:30:00.000Z",
+  relatedProjectId: "project-bfmc-raven",
+  relatedUserId: "student-demo-1",
+  time: "May 9, 2026 at 10:30 am"
+}
 ];
 
 export const chatsSeed = [
@@ -2900,15 +2912,12 @@ export const chatsSeed = [
         "createdAt": "2026-05-08T15:00:00.000Z",
         "time": "15:00"
       },
-      {
-        "id": "msg-2",
-        "senderId": "student-demo-1",
-        "sender": "me",
-        "text": "Absolutely, I can share the portfolio link and project details.",
-        "createdAt": "2026-05-08T15:10:00.000Z",
-        "time": "15:10"
-      }
-    ]
+    ], //here we need some scripted relpies so that i can chat with the employeer , any other chat i will only be able to send without replies
+    "scriptedReplyIndex": 0,
+    "scriptedReplies": [
+      "Absolutely, Yasmin. Your autonomous vehicle work is exactly the kind of practical AI experience we look for. Could you send me your availability for a quick interview?",
+      "Great, thank you. I’ll share your profile with our technical team and we can continue from there."
+    ],
   },
   {
     "id": "chat-student-collab",
@@ -2919,7 +2928,7 @@ export const chatsSeed = [
     ],
     "name": "Farida Tarek",
     "avatar": "F",
-    "online": true,
+    "online": false,
     "unread": 1,
     "unreadBy": [
       "student-demo-1"
@@ -2955,7 +2964,7 @@ export const chatsSeed = [
         "text": "Please add the dataset attribution before the final public showcase.",
         "createdAt": "2026-05-04T12:10:00.000Z",
         "time": "12:10"
-      }
+      } //add sending something from student-demo-1 to this chat after instructor-demo-1 reply 
     ]
   }
 ];

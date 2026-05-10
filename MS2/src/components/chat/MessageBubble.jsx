@@ -1,8 +1,8 @@
 export default function MessageBubble({
   message,
+  currentUserId,
 }) {
-
-  const isMe = message.sender === "me";
+  const isMe = message.senderId === currentUserId;
 
   return (
     <div
@@ -12,9 +12,7 @@ export default function MessageBubble({
           : "justify-start"
       }`}
     >
-
       <div>
-
         <div
           className={`max-w-[500px] rounded-3xl px-6 py-4
           
@@ -27,17 +25,15 @@ export default function MessageBubble({
         >
           {message.text}
 
-            <p
-          className={`mt-1 text-[11px] text-gray-400
+          <p
+            className={`mt-1 text-[11px] text-gray-400
           ${isMe ? "text-right" : "text-left"}
           `}
-        >
-          {message.time}
-        </p>
+          >
+            {message.time}
+          </p>
         </div>
-
       </div>
-
     </div>
   );
 }

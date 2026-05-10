@@ -8,7 +8,10 @@ import {
   extraDemoInternships,
 } from "@/data/seed/extra-demo-internships-50";
 
+
 const DB_KEY = "guc_demo_database_v8";
+const CHAT_RESET_VERSION = "chat-reset-v7";
+const CHAT_RESET_KEY = "guc_demo_chat_reset_version";
 const CURRENT_USER_KEY = "currentUser";
 const LEGACY_USERS_KEY = "users";
 const PROJECTS_STORAGE_KEY = "guc-portfolio-projects";
@@ -166,23 +169,58 @@ export function initializeDemoStore({ force = false } = {}) {
 
   if (force) {
     const reset = freshDb();
+
     writeLocal(DB_KEY, reset);
-    syncCompatibilityKeys(reset);
+    localStorage.setItem(CHAT_RESET_KEY, CHAT_RESET_VERSION);
+    sessionStorage.removeItem(CURRENT_USER_KEY);
+
+    syncCompatibilityKeys(reset, null);
     dispatchStoreChange();
+    dispatchUserChange();
+
     return reset;
   }
 
   const stored = readLocal(DB_KEY, null);
+
   if (stored?.version === DEMO_DATA_VERSION && Array.isArray(stored.users)) {
+    const alreadyResetChats =
+      localStorage.getItem(CHAT_RESET_KEY) === CHAT_RESET_VERSION;
+
+    if (!alreadyResetChats) {
+      const seedDb = freshDb();
+
+      const updatedDb = {
+        ...stored,
+
+        // Reset chat-related demo state back to seed.
+        // This removes old test messages and old message notifications.
+        // It keeps users/projects/internships/applications untouched.
+        chats: seedDb.chats || [],
+        notifications: seedDb.notifications || [],
+      };
+
+      writeLocal(DB_KEY, updatedDb);
+      localStorage.setItem(CHAT_RESET_KEY, CHAT_RESET_VERSION);
+
+      syncCompatibilityKeys(updatedDb);
+      dispatchStoreChange();
+
+      return updatedDb;
+    }
+
     syncCompatibilityKeys(stored);
     return stored;
   }
 
-  // Do not import old random arrays/localStorage as source of truth. Start from the audited seed.
   const next = freshDb();
+
   writeLocal(DB_KEY, next);
+  localStorage.setItem(CHAT_RESET_KEY, CHAT_RESET_VERSION);
+
   syncCompatibilityKeys(next);
   dispatchStoreChange();
+
   return next;
 }
 
@@ -682,14 +720,12 @@ export function deleteInternship(internshipId) {
 }
 
 export function getNotificationsForUser(userId = getCurrentUser()?.id) {
+  if (!userId) return [];
 
   const all = getCollection("notifications");
 
-  console.log("CURRENT USER ID:", userId);
-  console.log("ALL NOTIFICATIONS:", all);
-
   return all.filter(
-    (notification) => notification.userId === userId
+    (notification) => String(notification.userId) === String(userId)
   );
 }
 
@@ -704,24 +740,325 @@ export function addNotification(notification) {
   return item;
 }
 
+//chats
+//chats
+export const CHAT_STORE_EVENT = "demo-chats-updated";
+
+function notifyChatsChanged() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(CHAT_STORE_EVENT));
+  }
+}
+
+function makeChatMessageId(chatId) {
+  const randomPart =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID().slice(0, 8)
+      : Math.random().toString(36).slice(2, 10);
+
+  return `msg-${String(chatId)}-${Date.now()}-${randomPart}`;
+}
+
+function getInitials(name) {
+  return (
+    String(name || "")
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?"
+  );
+}
+
+export function getChatDisplayMeta(chat, userId = getCurrentUser()?.id) {
+  if (!chat) {
+    return {
+      name: "Unknown user",
+      avatar: "?",
+      image: "",
+      online: false,
+    };
+  }
+
+  const otherParticipantId = (chat.participantIds || []).find(
+    (participantId) => String(participantId) !== String(userId)
+  );
+
+  const otherUser = getUserById(otherParticipantId);
+
+  const displayName =
+  otherUser?.name ||
+  otherUser?.fullName ||
+  otherUser?.displayName ||
+  otherUser?.companyName ||
+  chat.name ||
+  "Unknown user";
+
+  return {
+    id: otherParticipantId,
+    name: displayName,
+    avatar: otherUser?.avatar || getInitials(displayName),
+    image: otherUser?.image || otherUser?.profileImage || "",
+    online: Boolean(chat.online),
+  };
+}
+
 export function getChatsForCurrentUser(userId = getCurrentUser()?.id) {
-  return getCollection("chats").filter((chat) => chat.participantIds?.includes(userId));
+  if (!userId) return [];
+
+  return getCollection("chats").filter((chat) =>
+    (chat.participantIds || []).some(
+      (participantId) => String(participantId) === String(userId)
+    )
+  );
 }
 
 export function setChatsForCurrentUser(chats, userId = getCurrentUser()?.id) {
+  if (!userId) return;
+
   const db = getDemoDb();
-  const incoming = chats.filter((chat) => chat.participantIds?.includes(userId));
-  const incomingIds = new Set(incoming.map((chat) => chat.id));
-  const untouched = (db.chats || []).filter((chat) => !incomingIds.has(chat.id));
-  setDemoDb({ ...db, chats: [...incoming, ...untouched] });
+
+  const incoming = chats.filter((chat) =>
+    (chat.participantIds || []).some(
+      (participantId) => String(participantId) === String(userId)
+    )
+  );
+
+  const incomingIds = new Set(incoming.map((chat) => String(chat.id)));
+
+  const untouched = (db.chats || []).filter(
+    (chat) => !incomingIds.has(String(chat.id))
+  );
+
+  setDemoDb({
+    ...db,
+    chats: [...incoming, ...untouched],
+  });
+
+  notifyChatsChanged();
+}
+
+export function getUnreadChatCountForCurrentUser(userId = getCurrentUser()?.id) {
+  if (!userId) return 0;
+
+  return getChatsForCurrentUser(userId).filter((chat) =>
+    (chat.unreadBy || []).some(
+      (readerId) => String(readerId) === String(userId)
+    )
+  ).length;
+}
+
+export function markChatAsRead(chatId, userId = getCurrentUser()?.id) {
+  if (!chatId || !userId) return;
+
+  const db = getDemoDb();
+
+  const updatedChats = (db.chats || []).map((chat) => {
+    if (String(chat.id) !== String(chatId)) return chat;
+
+    return {
+      ...chat,
+      unreadBy: (chat.unreadBy || []).filter(
+        (readerId) => String(readerId) !== String(userId)
+      ),
+    };
+  });
+
+  setDemoDb({
+    ...db,
+    chats: updatedChats,
+  });
+
+  notifyChatsChanged();
 }
 
 export function addChatMessage(chatId, text, senderId = getCurrentUser()?.id) {
+  if (!chatId || !senderId || !text?.trim()) return null;
+
   const db = getDemoDb();
-  const message = { id: makeId("msg", chatId), senderId, sender: "me", text, createdAt: new Date().toISOString(), time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) };
-  setDemoDb({ ...db, chats: db.chats.map((chat) => chat.id !== chatId ? chat : { ...chat, messages: [...(chat.messages || []), message] }) });
+
+  const targetChat = (db.chats || []).find(
+    (chat) => String(chat.id) === String(chatId)
+  );
+
+  if (!targetChat) return null;
+
+  const now = new Date();
+
+  const message = {
+    id: `msg-${String(chatId)}-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`,
+    senderId,
+    sender: "me",
+    text: text.trim(),
+    createdAt: now.toISOString(),
+    time: now.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
+
+  const otherParticipantIds = (targetChat.participantIds || []).filter(
+    (participantId) => String(participantId) !== String(senderId)
+  );
+
+  const senderUser = getUserById(senderId);
+
+  const senderName =
+  senderUser?.name ||
+  senderUser?.fullName ||
+  senderUser?.displayName ||
+  senderUser?.companyName ||
+  "Someone";
+
+  const messagePreview =
+    text.trim().length > 90 ? `${text.trim().slice(0, 90)}...` : text.trim();
+
+  const newNotifications = otherParticipantIds.map((receiverId) => ({
+    id: `notif-message-${String(chatId)}-${String(receiverId)}-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`,
+    userId: receiverId,
+    type: "message",
+    title: `New message from ${senderName}`,
+    text: messagePreview,
+    unread: true,
+    time: now.toLocaleString(),
+    createdAt: now.toISOString(),
+    chatId,
+    fromUserId: senderId,
+  }));
+
+  const updatedChats = (db.chats || []).map((chat) => {
+    if (String(chat.id) !== String(chatId)) return chat;
+
+    return {
+      ...chat,
+      messages: [...(chat.messages || []), message],
+      unreadBy: Array.from(
+        new Set([
+          ...(chat.unreadBy || []).filter(
+            (readerId) => String(readerId) !== String(senderId)
+          ),
+          ...otherParticipantIds,
+        ])
+      ),
+    };
+  });
+
+  setDemoDb({
+    ...db,
+    chats: updatedChats,
+    notifications: [...(db.notifications || []), ...newNotifications],
+  });
+
+  notifyChatsChanged();
+
   return message;
 }
+
+export function addScriptedChatReply(
+  chatId,
+  text,
+  senderId,
+  { markAsUnread = false, createNotification = false } = {}
+) {
+  if (!chatId || !senderId || !text?.trim()) return null;
+
+  const db = getDemoDb();
+
+  const targetChat = (db.chats || []).find(
+    (chat) => String(chat.id) === String(chatId)
+  );
+
+  if (!targetChat) return null;
+
+  const now = new Date();
+
+  const message = {
+    id: `msg-${String(chatId)}-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`,
+    senderId,
+    sender: "other",
+    text: text.trim(),
+    createdAt: now.toISOString(),
+    time: now.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
+
+  const otherParticipantIds = (targetChat.participantIds || []).filter(
+    (participantId) => String(participantId) !== String(senderId)
+  );
+
+  const senderUser = getUserById(senderId);
+
+  const senderName =
+    senderUser?.name ||
+    senderUser?.fullName ||
+    senderUser?.displayName ||
+    senderUser?.companyName ||
+    "Someone";
+
+  const messagePreview =
+    text.trim().length > 90 ? `${text.trim().slice(0, 90)}...` : text.trim();
+
+  const newNotifications = createNotification
+    ? otherParticipantIds.map((receiverId) => ({
+        id: `notif-message-${String(chatId)}-${String(receiverId)}-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 8)}`,
+        userId: receiverId,
+        type: "message",
+        title: `New message from ${senderName}`,
+        text: messagePreview,
+        unread: true,
+        time: now.toLocaleString(),
+        createdAt: now.toISOString(),
+        chatId,
+        fromUserId: senderId,
+      }))
+    : [];
+
+  const updatedChats = (db.chats || []).map((chat) => {
+    if (String(chat.id) !== String(chatId)) return chat;
+
+    const currentReplyIndex = chat.scriptedReplyIndex || 0;
+
+    return {
+      ...chat,
+      messages: [...(chat.messages || []), message],
+      scriptedReplyIndex: currentReplyIndex + 1,
+      unreadBy: markAsUnread
+        ? Array.from(
+            new Set([
+              ...(chat.unreadBy || []).filter(
+                (readerId) => String(readerId) !== String(senderId)
+              ),
+              ...otherParticipantIds,
+            ])
+          )
+        : chat.unreadBy || [],
+    };
+  });
+
+  setDemoDb({
+    ...db,
+    chats: updatedChats,
+    notifications: [...(db.notifications || []), ...newNotifications],
+  });
+
+  notifyChatsChanged();
+
+  return message;
+}
+//chats
+//chats
+
 
 export function getRecommendedProjectsForUser(userId = getCurrentUser()?.id) {
   const user = getUserById(userId);
