@@ -39,7 +39,7 @@ export default function DiscoverPage() {
       <div className="p-4 xl:p-5 space-y-3 min-h-screen">
         {/* HEADER */}
         <div>
-          <h1 className="text-3xl xl:text-4xl font-black text-[#0F2233]">
+          <h1 className="text-4xl xl:text-4xl font-black text-[#0F2233]">
             Discover
           </h1>
 

@@ -89,11 +89,8 @@ const totalPages = Math.ceil(
 
         {/* HEADER */}
         <div>
-          <p className="uppercase tracking-[0.3em] text-xs font-black text-gray-400">
-            Instructors
-          </p>
 
-          <h1 className="mt-2 text-5xl font-black text-[#16253A]">
+          <h1 className="mt-2 text-4xl font-black text-[#16253A]">
             Find Instructors
           </h1>
 

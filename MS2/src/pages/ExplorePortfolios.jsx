@@ -129,7 +129,7 @@ export default function ExplorePortfolios() {
 
         {/* HEADER */}
         <div>
-          <h1 className="text-5xl font-black text-[#16253A]">
+          <h1 className="text-4xl font-black text-[#16253A]">
             Explore Portfolios
           </h1>
 

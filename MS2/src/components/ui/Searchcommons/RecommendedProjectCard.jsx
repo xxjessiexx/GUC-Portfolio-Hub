@@ -23,7 +23,7 @@ export default function RecommendedProjectCard({
     >
       {/* TOP */}
       <div className="flex items-start justify-between">
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-4 flex-1 min-w-0">
 
           {/* ICON */}
           <div
@@ -38,14 +38,22 @@ export default function RecommendedProjectCard({
           </div>
 
           {/* TITLE */}
-          <div>
+          <div className="min-w-0">
             <h3 className="text-[20px] font-black text-[#16253A] leading-tight ">
               {project.title}
             </h3>
 
-            <p className="mt-1 text-[15px] text-gray-500 font-semibold ">
-              {project.course}
-            </p>
+            <p
+  className="
+    mt-1
+    text-[15px]
+    text-gray-500
+    font-semibold
+    whitespace-nowrap
+  "
+>
+  {project.course}
+</p>
           </div>
         </div>
 

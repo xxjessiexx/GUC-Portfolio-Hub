@@ -130,7 +130,7 @@ export default function ExploreProjects() {
     <DashboardLayout>
 
       {/* MAIN */}
-      <div className="min-h-screen p-8 space-y-6">
+      <div className=" space-y-6">
 
         {/* HEADER */}
         <div>
