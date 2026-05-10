@@ -4,6 +4,8 @@ import ExploreProjectCard from "@/components/ui/Searchcommons/ExploreProjectCard
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import FilterPanel from "@/components/common/FilterPanel";
 import FilterSelect from "@/components/common/FilterSelect";
+import Pannelforportfolios from "@/components/ui/Searchcommons/Pannelforportfolios";
+import PortfolioData from "@/data/portfoliosData";
 
 
 /* IMPORT DATA */
@@ -21,9 +23,24 @@ import {
 import { useState } from "react";
 
 export default function FavoriteList() {
+ const [portfolios, setPortfolios] = useState(() => {
+  const saved =
+    localStorage.getItem("favoritePortfolios");
+
+  return saved
+    ? JSON.parse(saved)
+    : PortfolioData;
+});
 
   /* STATE */
-  const [projects, setProjects] = useState(ProjectNameData);
+  const [projects, setProjects] = useState(() => {
+  const saved =
+    localStorage.getItem("favoriteProjects");
+
+  return saved
+    ? JSON.parse(saved)
+    : ProjectNameData;
+});
 
   const [view, setView] = useState("grid");
 
@@ -55,6 +72,19 @@ export default function FavoriteList() {
       )
     );
   };
+
+  const togglePortfolioFavorite = (id) => {
+  setPortfolios((prev) =>
+    prev.map((portfolio) =>
+      portfolio.id === id
+        ? {
+            ...portfolio,
+            favorite: !portfolio.favorite,
+          }
+        : portfolio
+    )
+  );
+};
 
   /* FILTERS */
   const filteredProjects = projects
@@ -132,119 +162,23 @@ export default function FavoriteList() {
         </div>
 
         {/* SEARCH + FILTERS */}
-          <SearchFilterToolbar
-            searchValue={search}
-            onSearchChange={setSearch}
-            searchPlaceholder="Search projects by title, keyword, or technology..."
-            showSort
-            sortValue={`Sort by: ${selectedSort}`}
-            onSortChange={(value) =>
-              setSelectedSort(value.replace("Sort by: ", ""))
-            }
-            sortOptions={[
-              "Sort by: Newest",
-              "Sort by: Oldest",
-              "Sort by: Highest Rated",
-              "Sort by: A-Z",
-            ]}
-            showFilters
-            filtersOpen={filtersOpen}
-            onToggleFilters={() =>
-              setFiltersOpen((current) => !current)
-            }
-            filterTitle="Filter projects"
-            onClearFilters={() => {
-              setSelectedCourse("All Courses");
-              setSelectedInstructor("All Instructors");
-              setSelectedDate("Anytime");
-            }}
-          >
-            <FilterSelect
-              value={`Course: ${selectedCourse}`}
-              onChange={(value) =>
-                setSelectedCourse(
-                  value.replace("Course: ", "")
-                )
-              }
-              options={[
-                "Course: All Courses",
-                "Course: CSEN 501 - Software Engineering",
-                "Course: CSEN 507 - Database Systems",
-                "Course: CSEN 504 - Mobile Computing",
-                "Course: Bachelor Project",
-              ]}
-            />
-
-            <FilterSelect
-              value={`Instructor: ${selectedInstructor}`}
-              onChange={(value) =>
-                setSelectedInstructor(
-                  value.replace("Instructor: ", "")
-                )
-              }
-              options={[
-                "Instructor: All Instructors",
-                "Instructor: Dr. Mostafa Ahmed",
-                "Instructor: Dr. Hossam Ali",
-                "Instructor: Dr. Sara Mahmoud",
-                "Instructor: Dr. Amr Abdelsalam",
-              ]}
-            />
-
-            <FilterSelect
-              value={`Date: ${selectedDate}`}
-              onChange={(value) =>
-                setSelectedDate(
-                  value.replace("Date: ", "")
-                )
-              }
-              options={[
-                "Date: Anytime",
-                "Date: This Week",
-                "Date: This Month",
-              ]}
-            />
-          </SearchFilterToolbar>
-        {/* TOP BAR */}
-        <div className="flex items-center justify-between">
-
-          <h2 className="font-bold text-[#16253A]">
-            {filteredProjects.length} projects found
-          </h2>
-
-          {/* VIEW BUTTONS */}
-          <div className="flex gap-2">
-
-            <button
-              onClick={() => setView("grid")}
-              className={`p-3 rounded-xl border transition ${
-                view === "grid"
-                  ? "bg-[#2C4E80] text-white"
-                  : "bg-white"
-              }`}
-            >
-              <Grid2X2 size={18} />
-            </button>
-
-            <button
-              onClick={() => setView("list")}
-              className={`p-3 rounded-xl border transition ${
-                view === "list"
-                  ? "bg-[#2C4E80] text-white"
-                  : "bg-white"
-              }`}
-            >
-              <List size={18} />
-            </button>
-
-          </div>
-        </div>
+          
 
         {/* PROJECTS */}
         <Pannelforprojects
-  projects={filteredProjects}
+  projects={filteredProjects
+    .filter((project) => project.favorite)
+    .slice(0, 3)}
   view={view}
   toggleFavorite={toggleFavorite}
+/>
+
+<Pannelforportfolios
+  portfolios={portfolios
+    .filter((portfolio) => portfolio.favorite)
+    .slice(0, 3)}
+  view={view}
+  toggleFavorite={togglePortfolioFavorite}
 />
       </div>
     </DashboardLayout>

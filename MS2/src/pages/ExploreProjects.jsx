@@ -21,7 +21,14 @@ import { useState } from "react";
 export default function ExploreProjects() {
 
   /* STATE */
-  const [projects, setProjects] = useState(ProjectNameData);
+  const [projects, setProjects] = useState(() => {
+  const saved =
+    localStorage.getItem("favoriteProjects");
+
+  return saved
+    ? JSON.parse(saved)
+    : ProjectNameData;
+});
 
   const [view, setView] = useState("grid");
 
@@ -42,17 +49,24 @@ export default function ExploreProjects() {
 
   /* FAVORITES */
   const toggleFavorite = (id) => {
-    setProjects((prev) =>
-      prev.map((project) =>
-        project.id === id
-          ? {
-              ...project,
-              favorite: !project.favorite,
-            }
-          : project
-      )
+  setProjects((prev) => {
+    const updated = prev.map((project) =>
+      project.id === id
+        ? {
+            ...project,
+            favorite: !project.favorite,
+          }
+        : project
     );
-  };
+
+    localStorage.setItem(
+      "favoriteProjects",
+      JSON.stringify(updated)
+    );
+
+    return updated;
+  });
+};
 
   /* FILTERS */
   const filteredProjects = projects

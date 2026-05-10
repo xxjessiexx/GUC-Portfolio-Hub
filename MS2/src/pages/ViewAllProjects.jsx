@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { AppCard } from "../components/ui/AppCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import FilterSelect from "@/components/common/FilterSelect";
 
 import {
   getCurrentUser,
@@ -92,6 +94,7 @@ export default function ViewAllProjects() {
   const [filterCourse, setFilterCourse] = useState("All");
   const [filterPinned, setFilterPinned] = useState("All");
   const [sortBy, setSortBy] = useState("Updated");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -205,37 +208,76 @@ export default function ViewAllProjects() {
         />
 
         {/* Filters */}
-        <AppCard className="p-4 flex items-center gap-4 flex-wrap rounded-2xl bg-white/60 backdrop-blur-md">
-          <SearchInput
-            search={search}
-            setSearch={setSearch}
-            placeholder="Search my projects"
-          />
+        <SearchFilterToolbar
+  searchValue={search}
+  onSearchChange={setSearch}
+  searchPlaceholder="Search my projects..."
+  showSort
+  sortValue={`Sort: ${sortBy}`}
+  onSortChange={(value) =>
+    setSortBy(value.replace("Sort: ", ""))
+  }
+  sortOptions={[
+    "Sort: None",
+    "Sort: Updated",
+    "Sort: Alphabetical",
+  ]}
+  showFilters
+  filtersOpen={filtersOpen}
+  onToggleFilters={() =>
+    setFiltersOpen((prev) => !prev)
+  }
+  filterTitle="Project Filters"
+  onClearFilters={() => {
+    setFilterCourse("All");
+    setFilterVisibility("All");
+    setFilterPinned("All");
+  }}
+>
+  <FilterSelect
+    value={`Course: ${filterCourse}`}
+    onChange={(value) =>
+      setFilterCourse(
+        value.replace("Course: ", "")
+      )
+    }
+    options={[
+      "Course: All",
+      "Course: CSEN",
+      "Course: MET",
+      "Course: DMET",
+      "Course: BI",
+    ]}
+  />
 
-          <CourseFilter
-            value={filterCourse}
-            onChange={setFilterCourse}
-            options={["CSEN", "MET", "DMET", "BI"]}
-          />
+  <FilterSelect
+    value={`Visibility: ${filterVisibility}`}
+    onChange={(value) =>
+      setFilterVisibility(
+        value.replace("Visibility: ", "")
+      )
+    }
+    options={[
+      "Visibility: All",
+      "Visibility: Public",
+      "Visibility: Private",
+    ]}
+  />
 
-          <VisibilityFilter
-            value={filterVisibility}
-            onChange={setFilterVisibility}
-            options={["Public", "Private"]}
-          />
-
-          <PinnedFilter
-            value={filterPinned}
-            onChange={setFilterPinned}
-            options={["Pinned", "Unpinned"]}
-          />
-
-          <SortFilter
-            value={sortBy}
-            onChange={setSortBy}
-            options={["None", "Updated", "Alphabetical"]}
-          />
-        </AppCard>
+  <FilterSelect
+    value={`Pinned: ${filterPinned}`}
+    onChange={(value) =>
+      setFilterPinned(
+        value.replace("Pinned: ", "")
+      )
+    }
+    options={[
+      "Pinned: All",
+      "Pinned: Pinned",
+      "Pinned: Unpinned",
+    ]}
+  />
+</SearchFilterToolbar>
 
         {/* Pinned */}
         {pinnedProjects.length > 0 && (

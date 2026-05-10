@@ -2,15 +2,16 @@ import { ArrowRight } from "lucide-react";
 
 import { AppCard } from "@/components/ui/AppCard";
 
-import ExploreProjectCard from "./ExploreProjectCard";
+import PortfolioCard from "./PortfolioCard";
 import { useNavigate } from "react-router-dom";
 
-export default function Pannelforprojects({
-  projects,
+export default function Pannelforportfolios({
+  portfolios,
   view = "grid",
   toggleFavorite,
 }) {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+
   return (
     <AppCard
       className="
@@ -23,7 +24,6 @@ export default function Pannelforprojects({
     >
       {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
-
         <div>
           <h2
             className="
@@ -32,12 +32,12 @@ export default function Pannelforprojects({
               text-[#16253A]
             "
           >
-           Your Favorite Projects
+            Your Favorite Portfolios
           </h2>
         </div>
 
         <button
-  onClick={() => navigate("/favorite-projects")}
+  onClick={() => navigate("/favorite-portfolios")}
   className="
     text-[#69A7FF]
     font-semibold
@@ -55,24 +55,25 @@ export default function Pannelforprojects({
       <div
         className={
           view === "grid"
-            ? `
-              grid
-              grid-cols-1
-              sm:grid-cols-2
-              lg:grid-cols-3
-              gap-5
-            `
-            : "flex flex-col gap-5"
+      ? `
+        grid
+        grid-cols-1
+        md:grid-cols-2
+        xl:grid-cols-3
+        gap-5
+        items-start
+      `
+      : "flex flex-col gap-5"
         }
       >
-        {projects.map((project) => (
-          <ExploreProjectCard
-            key={project.id}
-            project={project}
-            view={view}
-            toggleFavorite={toggleFavorite}
-          />
-        ))}
+        {portfolios.map((portfolio) => (
+  <div key={portfolio.id} className="w-full min-w-0">
+    <PortfolioCard
+      portfolio={portfolio}
+      toggleFavorite={toggleFavorite}
+    />
+  </div>
+))}
       </div>
     </AppCard>
   );

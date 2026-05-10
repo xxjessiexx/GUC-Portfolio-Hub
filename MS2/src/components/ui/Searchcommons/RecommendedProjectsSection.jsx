@@ -19,11 +19,11 @@ export default function RecommendedProjectsSection({
       {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-black text-[#16253A]">
-            ✨ Recommended Projects
+          <h2 className="text-2xl font-black text-[#16253A] ml-3">
+            Recommended Projects
           </h2>
 
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-500 mt-1 ml-4">
             Curated projects you might find interesting.
           </p>
         </div>
@@ -38,7 +38,7 @@ export default function RecommendedProjectsSection({
         >
           View More Recommendations
 
-          <ArrowRight size={16} />
+          
         </button>
       </div>
 

@@ -39,11 +39,11 @@ export default function RecommendedProjectCard({
 
           {/* TITLE */}
           <div>
-            <h3 className="text-[20px] font-black text-[#16253A] leading-tight">
+            <h3 className="text-[20px] font-black text-[#16253A] leading-tight ">
               {project.title}
             </h3>
 
-            <p className="mt-1 text-[15px] text-gray-500 font-semibold">
+            <p className="mt-1 text-[15px] text-gray-500 font-semibold ">
               {project.course}
             </p>
           </div>
@@ -62,7 +62,7 @@ export default function RecommendedProjectCard({
     text-gray-500
     mt-4
     leading-7
-    min-h-[72px]
+    min-h-[96px]
   "
 >
   {project.description}
@@ -83,34 +83,27 @@ export default function RecommendedProjectCard({
       <div
   className="
     flex items-center justify-between
-    flex-wrap gap-4
     mt-6
     text-sm
     text-gray-500
     font-medium
   "
 >
-        <div className="flex items-center gap-1">
-          <Star size={15} className="text-yellow-500" />
-          {project.rating}
-        </div>
+  <div className="flex items-center gap-1">
+    <Star size={15} className="text-yellow-500" />
+    {project.rating}
+  </div>
 
-        <div className="flex items-center gap-1">
-          <Users size={15} />
+  <div className="flex items-center gap-1">
+    <Users size={15} />
+    <span>{project.contributors} Contributors</span>
+  </div>
 
-          <span className="leading-5 ">
-            {project.contributors} Contributors
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1 ml-6">
-          <GitBranch size={15} />
-
-          <span className="leading-5 ml-4">
-            {project.updated}
-          </span>
-        </div>
-      </div>
+  <div className="flex items-center gap-1">
+    <GitBranch size={15} />
+    <span>{project.updated}</span>
+  </div>
+</div>
     </div>
   );
 }
