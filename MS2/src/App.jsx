@@ -50,6 +50,8 @@ import AdminCreateCourse from "@/pages/admin/AdminCreateCourse";
 import AdminCreateAccount from "@/pages/admin/AdminCreateAccount";
 import ViewInstructor from "@/pages/ViewInstructor"
 import FavoriteList from "@/pages/FavoriteList"
+import FavoritePortfolios from "./pages/FavoritePortfolios";
+import FavoriteProjects from "./pages/FavoriteProjects";
 import AdminOverview from "@/pages/admin/AdminOverview";
 
 export default function App() {
@@ -137,6 +139,23 @@ export default function App() {
               }
             />
 
+            <Route
+              path="/favorite-portfolios"
+              element={
+                <ProtectedRoute allowedRoles={["student", "employer"]}>
+                  <FavoritePortfolios />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+          path="/favorite-projects"
+          element={
+            <ProtectedRoute allowedRoles={["student", "employer"]}>
+              <FavoriteProjects />
+            </ProtectedRoute>
+          }
+        />
             <Route
               path="/employer-dashboard"
               element={

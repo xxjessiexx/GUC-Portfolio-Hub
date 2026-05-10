@@ -51,7 +51,7 @@ const workspaceItems = {
     { label: "My Projects", icon: FolderKanban, path: "/view-all-projects" },
     { label: "My Applications", icon: ClipboardList, path: "/my-applications" },
     { label: "Internships", icon: Briefcase, path: "/internships" },
-    { label: "Favorites", icon: Heart, path: null },
+    { label: "Favorites", icon: Heart,  path: "/fav-list" },
     { label: "Settings", icon: Settings, path: null },
   ],
 
@@ -70,7 +70,7 @@ const workspaceItems = {
     { label: "Explore", icon: SearchIcon, path: "/discover" },
     { label: "Internships", icon: Briefcase, path: "/manage-internships" },
     { label: "Applicants", icon: Users, path: "/manage-applicants/emp-int-1" },
-    { label: "Favorites", icon: Heart, path: null },
+    { label: "Favorites", icon: Heart, path:"/fav-list" },
     { label: "Messages", icon: MessageSquare, path: "/chat" },
     { label: "Statistics", icon: BarChart3, path: null },
   ],

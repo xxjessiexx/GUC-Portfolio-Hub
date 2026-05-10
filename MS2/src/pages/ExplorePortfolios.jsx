@@ -37,19 +37,32 @@ export default function ExplorePortfolios() {
   useState(false);
 
     
-    const [portfolios, setPortfolios] =
-  useState(portfoliosData);
+    const [portfolios, setPortfolios] = useState(() => {
+  const saved =
+    localStorage.getItem("favoritePortfolios");
+
+  return saved
+    ? JSON.parse(saved)
+    : portfoliosData;
+});
   const toggleFavorite = (id) => {
-  setPortfolios((prev) =>
-    prev.map((portfolio) =>
+  setPortfolios((prev) => {
+    const updated = prev.map((portfolio) =>
       portfolio.id === id
         ? {
             ...portfolio,
             favorite: !portfolio.favorite,
           }
         : portfolio
-    )
-  );
+    );
+
+    localStorage.setItem(
+      "favoritePortfolios",
+      JSON.stringify(updated)
+    );
+
+    return updated;
+  });
 };
 
   /* FILTERING */
@@ -116,7 +129,7 @@ export default function ExplorePortfolios() {
 
         {/* HEADER */}
         <div>
-          <h1 className="text-5xl font-black text-[#16253A]">
+          <h1 className="text-4xl font-black text-[#16253A]">
             Explore Portfolios
           </h1>
 
