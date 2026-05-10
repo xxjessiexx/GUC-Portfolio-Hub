@@ -1,17 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion, useDragControls } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Bot,
   ChevronDown,
   Compass,
-  Cookie,
-  GripHorizontal,
   Heart,
   MessageCircle,
   Moon,
   Send,
   Sparkles,
-  Wand2,
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -26,44 +23,12 @@ import { getCurrentUser, normalizeRole } from "@/data/demoStore";
 const COLLAPSED_KEY = "guc-ai-companion-collapsed";
 const LEGACY_ENABLED_KEY = "guc-ai-companion-enabled";
 const POSITION_KEY = "guc-ai-companion-launcher-position";
-const PANEL_POSITION_KEY = "guc-ai-companion-panel-position";
-const CHAT_KEY = "guc-ai-companion-chat-v8";
+const CHAT_KEY = "guc-ai-companion-chat-v5";
 const COMPANION_NAME_KEY = "guc-ai-companion-name";
 const COMPANION_GENDER_KEY = "guc-ai-companion-gender";
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const defaultCompanionName = (gender) => (gender === "female" ? "Nova" : "Atlas");
-
-function getCompanionPaletteStyle(gender) {
-  const baseGlow = {
-    "--companion-screen-glow": "rgba(156,213,255,0.22)",
-    "--companion-eye-glow": "rgba(156,213,255,0.86)",
-    "--companion-mouth-glow": "rgba(156,213,255,0.82)",
-    "--companion-dot-glow": "rgba(156,213,255,0.9)",
-  };
-
-  if (gender !== "female") return baseGlow;
-
-  return {
-    ...baseGlow,
-    "--primary": "#5D748A",
-    "--secondary": "#DFA6BF",
-    "--accent": "#E88AAD",
-    "--card-bg-strong": "rgba(255,250,253,0.96)",
-    "--surface-soft": "rgba(246,226,236,0.72)",
-    "--surface-elevated": "rgba(255,252,254,0.97)",
-    "--border-blue": "rgba(223,166,191,0.42)",
-    "--ring-soft": "rgba(232,138,173,0.18)",
-    "--input-bg": "rgba(255,255,255,0.78)",
-    "--gradient-brand":
-      "linear-gradient(135deg,#355872 0%,#7AAACE 58%,#E8A7C1 100%)",
-    "--companion-screen-glow": "rgba(232,138,173,0.18)",
-    "--companion-eye-glow": "rgba(232,138,173,0.78)",
-    "--companion-mouth-glow": "rgba(232,138,173,0.72)",
-    "--companion-dot-glow": "rgba(232,138,173,0.78)",
-  };
-}
-
 
 function readJson(key, fallback) {
   if (typeof window === "undefined") return fallback;
@@ -88,37 +53,21 @@ function getDefaultLauncherPosition() {
   };
 }
 
-function getDefaultPanelPosition() {
-  if (typeof window === "undefined") return { x: 740, y: 210 };
-  return {
-    x: Math.max(24, window.innerWidth - 548),
-    y: Math.max(98, Math.min(window.innerHeight - 560, window.innerHeight * 0.34)),
-  };
-}
-
-function getSafePosition(value, size = 88, minY = 92) {
+function getSafePosition(value) {
   const fallback = getDefaultLauncherPosition();
   if (typeof window === "undefined") return fallback;
 
   return {
-    x: clamp(Number(value?.x ?? fallback.x), 12, Math.max(12, window.innerWidth - size)),
-    y: clamp(Number(value?.y ?? fallback.y), minY, Math.max(minY, window.innerHeight - size)),
-  };
-}
-
-function getSafePanelPosition(value) {
-  const fallback = getDefaultPanelPosition();
-  if (typeof window === "undefined") return fallback;
-
-  return {
-    x: clamp(Number(value?.x ?? fallback.x), 16, Math.max(16, window.innerWidth - 516)),
-    y: clamp(Number(value?.y ?? fallback.y), 88, Math.max(88, window.innerHeight - 560)),
+    x: clamp(Number(value?.x ?? fallback.x), 12, Math.max(12, window.innerWidth - 88)),
+    y: clamp(Number(value?.y ?? fallback.y), 92, Math.max(92, window.innerHeight - 88)),
   };
 }
 
 function getInitialCollapsed() {
   if (typeof window === "undefined") return false;
 
+  // Old versions stored this and made him disappear forever.
+  // Keep the user's intention, but convert it into the new tiny-circle UX.
   if (localStorage.getItem(LEGACY_ENABLED_KEY) === "false") {
     localStorage.removeItem(LEGACY_ENABLED_KEY);
     localStorage.setItem(COLLAPSED_KEY, "true");
@@ -147,95 +96,19 @@ function getInitialMessages() {
   ];
 }
 
-function getMoodLine(mood, asleep, userName, petName, activity) {
-  if (asleep) return `${petName} is taking a tiny desk nap. Click to wake.`;
-  if (activity === "dance") return `${petName} is doing a little dashboard dance.`;
-  if (activity === "dizzy") return "Careful! Too much shaking made me dizzy.";
-  if (activity === "snack") return "Snack accepted. Productivity restored.";
-  if (activity === "curious") return "I noticed you here. Need directions?";
-  if (activity === "listening") return "I am listening. Ask me anything about the website.";
-  if (mood === "love") return `Sending tiny hearts, ${userName} ♡`;
+function getMoodLine(mood, asleep, name) {
+  if (asleep) return "Zzz... click me when you need help.";
+  if (mood === "love") return `Sending tiny hearts, ${name} ♡`;
   if (mood === "thinking") return "Checking the seed database...";
   if (mood === "happy") return "Found something useful.";
-  if (mood === "wave") return `Hi ${userName}! Need help here?`;
-  return `Drag ${petName}, pet ${petName}, or ask a question.`;
+  if (mood === "wave") return `Hi ${name}! Need help here?`;
+  return "Click my robot body to tuck me back into the circle.";
 }
 
-function ActivityBits({ activity, tiny = false }) {
-  if (activity === "dance") {
-    return (
-      <div className="pointer-events-none absolute inset-0">
-        {["♪", "♫", "♪"].map((note, index) => (
-          <motion.span
-            // eslint-disable-next-line react/no-array-index-key
-            key={index}
-            className={`${tiny ? "text-[10px]" : "text-lg"} absolute font-black text-[color:var(--accent)]`}
-            style={{ left: `${8 + index * 34}%`, top: `${tiny ? 2 : -8 + index * 8}%` }}
-            animate={{ y: [4, -18, 4], opacity: [0, 1, 0], rotate: [-8, 10, -8] }}
-            transition={{ duration: 1.2, delay: index * 0.16, repeat: Infinity }}
-          >
-            {note}
-          </motion.span>
-        ))}
-      </div>
-    );
-  }
-
-  if (activity === "curious") {
-    return (
-      <motion.span
-        className={`absolute ${tiny ? "-right-1 -top-1 text-xs" : "-right-5 -top-3 text-2xl"} font-black text-[color:var(--accent)] drop-shadow`}
-        animate={{ y: [0, -5, 0], rotate: [-6, 8, -6] }}
-        transition={{ duration: 1.6, repeat: Infinity }}
-      >
-        ?
-      </motion.span>
-    );
-  }
-
-  if (activity === "snack") {
-    return (
-      <motion.span
-        className={`absolute ${tiny ? "-right-1 -top-1" : "-right-5 -top-4"} grid ${tiny ? "h-5 w-5" : "h-9 w-9"} place-items-center rounded-full border border-white/55 bg-white/75 text-amber-700 shadow-lg backdrop-blur-xl dark:bg-[color:var(--card-bg-strong)]/80`}
-        animate={{ scale: [0.9, 1.08, 0.9], rotate: [-6, 6, -6] }}
-        transition={{ duration: 1.15, repeat: Infinity }}
-      >
-        <Cookie className={tiny ? "h-3 w-3" : "h-5 w-5"} />
-      </motion.span>
-    );
-  }
-
-  if (activity === "dizzy") {
-    return (
-      <motion.span
-        className={`absolute ${tiny ? "-right-1 -top-1 text-xs" : "-right-5 -top-5 text-2xl"} font-black text-[color:var(--primary)] dark:text-[color:var(--accent)]`}
-        animate={{ rotate: [0, 360], opacity: [0.55, 1, 0.55] }}
-        transition={{ duration: 0.85, repeat: Infinity, ease: "linear" }}
-      >
-        @
-      </motion.span>
-    );
-  }
-
-  return null;
-}
-
-function RobotMascot({
-  isOpen,
-  isWaving,
-  mood = "idle",
-  asleep = false,
-  tiny = false,
-  heartBurst = false,
-  activity = "idle",
-  onPet,
-  onTickle,
-}) {
-  const happy = mood === "happy" || mood === "love" || activity === "snack";
-  const thinking = mood === "thinking" || activity === "listening";
-  const dancing = activity === "dance";
-  const dizzy = activity === "dizzy";
-  const waving = isWaving || mood === "wave" || activity === "curious";
+function RobotMascot({ isOpen, isWaving, mood = "idle", asleep = false, tiny = false, heartBurst = false }) {
+  const happy = mood === "happy" || mood === "love";
+  const thinking = mood === "thinking";
+  const waving = isWaving || mood === "wave";
 
   const sizeClass = tiny ? "h-12 w-12" : "h-28 w-28";
   const headClass = tiny ? "h-7 w-11 rounded-[16px] p-[4px]" : "h-16 w-24 rounded-[2rem] p-2";
@@ -244,26 +117,13 @@ function RobotMascot({
 
   return (
     <motion.div
-      role="button"
-      tabIndex={tiny ? -1 : 0}
-      onPointerEnter={() => !tiny && onPet?.("curious")}
-      onDoubleClick={(event) => {
-        event.stopPropagation();
-        onTickle?.();
-      }}
-      onKeyDown={(event) => {
-        if (!tiny && (event.key === "Enter" || event.key === " ")) onPet?.("pet");
-      }}
       className={`relative ${sizeClass} drop-shadow-[0_22px_28px_rgba(44,57,71,0.25)]`}
       animate={{
-        y: asleep ? [0, 1, 0] : tiny ? [0, -2.5, 0] : dancing ? [0, -13, 0, -5, 0] : [0, -9, 0],
-        rotate: dizzy ? [0, -8, 8, -8, 0] : dancing ? [-5, 6, -6, 5, -5] : thinking ? [0, -2, 2, 0] : isOpen ? [0, -1, 1, 0] : [0, 1.5, -1.5, 0],
-        scale: activity === "snack" ? [1, 1.04, 1] : 1,
+        y: asleep ? [0, 1, 0] : tiny ? [0, -2.5, 0] : [0, -9, 0],
+        rotate: thinking ? [0, -2, 2, 0] : isOpen ? [0, -1, 1, 0] : [0, 1.5, -1.5, 0],
       }}
-      transition={{ duration: dancing ? 1.2 : thinking ? 1.2 : tiny ? 3.8 : 4.8, repeat: Infinity, ease: "easeInOut" }}
+      transition={{ duration: thinking ? 1.2 : tiny ? 3.8 : 4.8, repeat: Infinity, ease: "easeInOut" }}
     >
-      <ActivityBits activity={activity} tiny={tiny} />
-
       {!tiny && mood === "love" && (
         <motion.span
           className="absolute -right-4 -top-4 text-2xl text-rose-400"
@@ -311,21 +171,21 @@ function RobotMascot({
       <div className={`absolute ${tiny ? "left-[2px] top-[12px] h-4 w-2.5" : "left-3 top-4 h-8 w-6"} rounded-l-3xl bg-[linear-gradient(180deg,var(--card-bg-strong),rgba(122,170,206,0.38))]`} />
       <div className={`absolute ${tiny ? "right-[2px] top-[12px] h-4 w-2.5" : "right-3 top-4 h-8 w-6"} rounded-r-3xl bg-[linear-gradient(180deg,var(--card-bg-strong),rgba(122,170,206,0.38))]`} />
 
-      <div className={`absolute left-1/2 ${tiny ? "top-2" : "top-3"} ${headClass} -translate-x-1/2 bg-[linear-gradient(135deg,var(--card-bg-strong),var(--surface-soft),var(--ai-soft))] shadow-inner ring-1 ring-[color:var(--border-blue)]`}>
-        <div className={`relative h-full ${faceClass} bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.34),transparent_42%),linear-gradient(135deg,var(--ai-primary),var(--ai-secondary))] shadow-[inset_0_0_20px_rgba(156,213,255,0.22)] dark:bg-[radial-gradient(circle_at_50%_35%,rgba(156,213,255,0.16),transparent_42%),linear-gradient(135deg,#061923,#0c2634)]`}>
+      <div className={`absolute left-1/2 ${tiny ? "top-2" : "top-3"} ${headClass} -translate-x-1/2 bg-[linear-gradient(135deg,var(--card-bg-strong),var(--surface-soft),rgba(156,213,255,0.35))] shadow-inner ring-1 ring-[color:var(--border-blue)]`}>
+        <div className={`relative h-full ${faceClass} bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.34),transparent_42%),linear-gradient(135deg,var(--primary),var(--secondary))] shadow-[inset_0_0_20px_rgba(156,213,255,0.22)] dark:bg-[radial-gradient(circle_at_50%_35%,rgba(156,213,255,0.16),transparent_42%),linear-gradient(135deg,#061923,#0c2634)]`}>
           <motion.span
-            className={`absolute ${tiny ? "left-[9px] top-[8px]" : "left-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--ai-accent)] shadow-[0_0_16px_var(--ai-glow)]`}
-            animate={{ scaleY: asleep ? 0.16 : [1, 0.15, 1], scaleX: happy ? 1.14 : 1 }}
+            className={`absolute ${tiny ? "left-[9px] top-[8px]" : "left-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--accent)] shadow-[0_0_16px_rgba(156,213,255,0.86)]`}
+            animate={{ scaleY: asleep ? 0.16 : [1, 0.15, 1], scaleX: happy ? 1.08 : 1 }}
             transition={{ duration: 3.2, repeat: asleep ? 0 : Infinity, repeatDelay: 2.5 }}
           />
           <motion.span
-            className={`absolute ${tiny ? "right-[9px] top-[8px]" : "right-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--ai-accent)] shadow-[0_0_16px_var(--ai-glow)]`}
-            animate={{ scaleY: asleep ? 0.16 : [1, 0.15, 1], scaleX: happy ? 1.14 : 1 }}
+            className={`absolute ${tiny ? "right-[9px] top-[8px]" : "right-5 top-5"} ${eyeClass} rounded-full bg-[color:var(--accent)] shadow-[0_0_16px_rgba(156,213,255,0.86)]`}
+            animate={{ scaleY: asleep ? 0.16 : [1, 0.15, 1], scaleX: happy ? 1.08 : 1 }}
             transition={{ duration: 3.2, repeat: asleep ? 0 : Infinity, repeatDelay: 2.5 }}
           />
           <motion.span
-            className={`absolute left-1/2 ${tiny ? "top-[15px] h-1.5 w-3" : "top-9 h-2.5 w-6"} -translate-x-1/2 rounded-b-full bg-[color:var(--ai-accent)] shadow-[0_0_14px_var(--ai-glow)]`}
-            animate={{ scaleX: asleep ? 0.65 : happy ? 1.55 : isOpen ? 1.25 : 1, opacity: thinking ? [0.45, 1, 0.45] : 1 }}
+            className={`absolute left-1/2 ${tiny ? "top-[15px] h-1.5 w-3" : "top-9 h-2.5 w-6"} -translate-x-1/2 rounded-b-full bg-[color:var(--accent)] shadow-[0_0_14px_rgba(156,213,255,0.82)]`}
+            animate={{ scaleX: asleep ? 0.65 : happy ? 1.35 : isOpen ? 1.25 : 1, opacity: thinking ? [0.45, 1, 0.45] : 1 }}
             transition={{ duration: 0.65, repeat: thinking ? Infinity : 0 }}
           />
         </div>
@@ -337,13 +197,13 @@ function RobotMascot({
 
       <motion.div
         className={`absolute ${tiny ? "left-[8px] top-[31px] h-4 w-2" : "left-1 top-[4.7rem] h-10 w-5"} origin-top rounded-full bg-[linear-gradient(180deg,var(--card-bg-strong),rgba(122,170,206,0.38))]`}
-        animate={{ rotate: waving || dancing ? [-8, -48, -8, -36, -8] : asleep ? 16 : [-6, 5, -6] }}
-        transition={{ duration: waving || dancing ? 1.1 : 3.4, repeat: asleep ? 0 : Infinity, ease: "easeInOut" }}
+        animate={{ rotate: waving ? [-8, -44, -8, -34, -8] : asleep ? 16 : [-6, 5, -6] }}
+        transition={{ duration: waving ? 1.1 : 3.4, repeat: asleep ? 0 : Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className={`absolute ${tiny ? "right-[8px] top-[31px] h-4 w-2" : "right-1 top-[4.7rem] h-10 w-5"} origin-top rounded-full bg-[linear-gradient(180deg,var(--card-bg-strong),rgba(122,170,206,0.38))]`}
-        animate={{ rotate: dancing ? [8, 48, 8, 36, 8] : asleep ? -16 : [6, -5, 6] }}
-        transition={{ duration: dancing ? 1.1 : 3.2, repeat: asleep ? 0 : Infinity, ease: "easeInOut" }}
+        animate={{ rotate: asleep ? -16 : [6, -5, 6] }}
+        transition={{ duration: 3.2, repeat: asleep ? 0 : Infinity, ease: "easeInOut" }}
       />
 
       {!tiny && (
@@ -357,16 +217,16 @@ function RobotMascot({
   );
 }
 
-function TinyRobotBadge({ mood, asleep, isWaving, activity }) {
+function TinyRobotBadge({ mood, asleep, isWaving }) {
   return (
     <div className="relative grid h-full w-full place-items-center overflow-hidden rounded-full">
       <span className="absolute inset-0 rounded-full bg-[image:var(--gradient-brand)] opacity-35" />
       <span className="absolute inset-[3px] rounded-full border border-white/45 bg-white/28 shadow-[inset_0_1px_12px_rgba(255,255,255,0.32)] backdrop-blur-2xl dark:bg-[color:var(--card-bg-strong)]/32" />
       <span className="absolute -right-2 -top-2 h-10 w-10 rounded-full bg-[color:var(--accent)]/35 blur-xl" />
 
-      <RobotMascot tiny mood={mood} asleep={asleep} isWaving={isWaving} activity={activity} />
+      <RobotMascot tiny mood={mood} asleep={asleep} isWaving={isWaving} />
 
-      <span className="absolute bottom-1.5 right-1.5 h-2.5 w-2.5 rounded-full border border-white bg-[color:var(--ai-accent)] shadow-[0_0_12px_rgba(156,213,255,0.9)]" />
+      <span className="absolute bottom-1.5 right-1.5 h-2.5 w-2.5 rounded-full border border-white bg-[color:var(--accent)] shadow-[0_0_12px_rgba(156,213,255,0.9)]" />
     </div>
   );
 }
@@ -400,7 +260,6 @@ function ChatMessage({ message, onAction, onNavigate }) {
         }`}
       >
         {isBot && message.title && (
-          <div className="mb-1 flex items-center gap-1.5 text-[12px] font-black text-[color:var(--primary)] dark:text-[color:var(--accent)]">
           <div className="mb-1 flex items-center gap-1.5 text-[12px] font-black text-[color:var(--primary)] dark:text-[color:var(--accent)]">
             <Sparkles className="h-3.5 w-3.5" />
             {message.title}
@@ -438,23 +297,17 @@ export default function FloatingAICompanion() {
   const dragStart = useRef({ x: 0, y: 0 });
   const dragged = useRef(false);
   const idleTimer = useRef(null);
-  const activityTimer = useRef(null);
-  const tinyPositionRef = useRef(null);
-  const panelPositionRef = useRef(null);
-  const panelDragControls = useDragControls();
 
   const currentUser = useMemo(() => getCurrentUser(), []);
   const role = normalizeRole(currentUser?.role || currentUser?.accountRole || currentUser?.systemRole || "student");
-  const userFirstName = currentUser?.firstName || currentUser?.name?.split(" ")?.[0] || "there";
+  const name = currentUser?.firstName || currentUser?.name?.split(" ")?.[0] || "there";
   const quickPrompts = useMemo(() => getAssistantQuickPrompts(role), [role]);
 
   const [collapsed, setCollapsed] = useState(getInitialCollapsed);
   const [launcherPosition, setLauncherPosition] = useState(() => getSafePosition(readJson(POSITION_KEY, null)));
-  const [panelPosition, setPanelPosition] = useState(() => getSafePanelPosition(readJson(PANEL_POSITION_KEY, null)));
   const [messages, setMessages] = useState(getInitialMessages);
   const [input, setInput] = useState("");
   const [mood, setMood] = useState("wave");
-  const [activity, setActivity] = useState("curious");
   const [asleep, setAsleep] = useState(false);
   const [heartBurst, setHeartBurst] = useState(false);
   const [greetingHidden, setGreetingHidden] = useState(false);
@@ -471,56 +324,21 @@ export default function FloatingAICompanion() {
     return storedName?.trim() || defaultCompanionName(storedGender === "female" ? "female" : "male");
   });
 
-  const setTemporaryActivity = (nextActivity, nextMood = "happy", duration = 2800) => {
-    window.clearTimeout(activityTimer.current);
-    setActivity(nextActivity);
-    setMood(nextMood);
-    activityTimer.current = window.setTimeout(() => {
-      setActivity("idle");
-      if (!asleep) setMood("idle");
-    }, duration);
-  };
-
-  const wake = (nextMood = "wave", nextActivity = "idle") => {
+  const wake = (nextMood = "wave") => {
     setAsleep(false);
     setMood(nextMood);
-    setActivity(nextActivity);
     window.clearTimeout(idleTimer.current);
     idleTimer.current = window.setTimeout(() => {
       setMood("sleep");
-      setActivity("idle");
       setAsleep(true);
-    }, 42000);
-  };
-
-  const interact = (type) => {
-    setAsleep(false);
-    if (type === "pet") {
-      setHeartBurst(true);
-      setTemporaryActivity("snack", "love", 2200);
-      window.setTimeout(() => setHeartBurst(false), 1300);
-      return;
-    }
-    if (type === "tickle") {
-      setTemporaryActivity("dance", "happy", 3600);
-      return;
-    }
-    if (type === "shake") {
-      setTemporaryActivity("dizzy", "thinking", 2100);
-      return;
-    }
-    if (type === "curious") {
-      if (!asleep && activity === "idle") setTemporaryActivity("curious", "wave", 1800);
-      return;
-    }
-    setTemporaryActivity("listening", "wave", 2200);
+    }, 32000);
   };
 
   const persistCollapsed = (value) => {
     setCollapsed(value);
     localStorage.setItem(COLLAPSED_KEY, value ? "true" : "false");
     localStorage.removeItem(LEGACY_ENABLED_KEY);
-    if (!value) wake("wave", "curious");
+    if (!value) wake("wave");
   };
 
   const saveCompanionName = (value) => {
@@ -528,7 +346,7 @@ export default function FloatingAICompanion() {
     const next = clean || defaultCompanionName(companionGender);
     setCompanionName(next);
     localStorage.setItem(COMPANION_NAME_KEY, next);
-    wake("happy", "dance");
+    wake("happy");
   };
 
   const saveCompanionGender = (value) => {
@@ -537,12 +355,13 @@ export default function FloatingAICompanion() {
     setCompanionGender(nextGender);
     localStorage.setItem(COMPANION_GENDER_KEY, nextGender);
 
+    // If the user has not customized the name yet, switch to the matching default name.
     if (!localStorage.getItem(COMPANION_NAME_KEY) || companionName === previousDefault) {
       const nextName = defaultCompanionName(nextGender);
       setCompanionName(nextName);
       localStorage.setItem(COMPANION_NAME_KEY, nextName);
     }
-    wake("wave", "dance");
+    wake("wave");
   };
 
   useEffect(() => {
@@ -551,28 +370,13 @@ export default function FloatingAICompanion() {
   }, [messages]);
 
   useEffect(() => {
-    wake("wave", "curious");
+    wake("wave");
     const interval = window.setInterval(() => {
-      if (asleep) return;
-      const actionPool = collapsed
-        ? ["idle", "wave", "curious", "sleep", "love"]
-        : ["idle", "wave", "happy", "love", "dance", "curious", "listening"];
-      const next = actionPool[Math.floor(Math.random() * actionPool.length)];
-      if (next === "sleep") {
-        setMood("sleep");
-        setActivity("idle");
-        setAsleep(true);
-      } else if (next === "dance") {
-        setTemporaryActivity("dance", "happy", 3200);
-      } else if (next === "curious") {
-        setTemporaryActivity("curious", "wave", 2600);
-      } else if (next === "listening") {
-        setTemporaryActivity("listening", "wave", 2400);
-      } else {
-        setMood(next);
-        setActivity("idle");
+      if (!collapsed && !asleep) {
+        const moods = ["idle", "wave", "happy", "love"];
+        setMood(moods[Math.floor(Math.random() * moods.length)]);
       }
-    }, collapsed ? 7000 : 8500);
+    }, 12000);
 
     const onResize = () => {
       setLauncherPosition((prev) => {
@@ -580,55 +384,13 @@ export default function FloatingAICompanion() {
         writeJson(POSITION_KEY, next);
         return next;
       });
-      setPanelPosition((prev) => {
-        const next = getSafePanelPosition(prev);
-        writeJson(PANEL_POSITION_KEY, next);
-        return next;
-      });
-    };
-
-    const onReset = () => {
-      const tiny = getDefaultLauncherPosition();
-      const panel = getDefaultPanelPosition();
-      setLauncherPosition(tiny);
-      setPanelPosition(panel);
-      writeJson(POSITION_KEY, tiny);
-      writeJson(PANEL_POSITION_KEY, panel);
-      wake("happy", "dance");
-    };
-
-    const onSettingsChange = (event) => {
-      const next = event?.detail || {};
-
-      if (typeof next.collapsed === "boolean") {
-        setCollapsed(next.collapsed);
-        localStorage.setItem(COLLAPSED_KEY, next.collapsed ? "true" : "false");
-      }
-
-      if (next.gender === "female" || next.gender === "male") {
-        setCompanionGender(next.gender);
-        localStorage.setItem(COMPANION_GENDER_KEY, next.gender);
-      }
-
-      if (typeof next.name === "string" && next.name.trim()) {
-        const clean = next.name.replace(/[^a-zA-Z0-9 _-]/g, "").trim().slice(0, 22);
-        setCompanionName(clean);
-        localStorage.setItem(COMPANION_NAME_KEY, clean);
-      }
-
-      wake("happy", "dance");
     };
 
     window.addEventListener("resize", onResize);
-    window.addEventListener("guc-ai-companion-reset-position", onReset);
-    window.addEventListener("guc-ai-companion-settings-change", onSettingsChange);
     return () => {
       window.clearInterval(interval);
       window.clearTimeout(idleTimer.current);
-      window.clearTimeout(activityTimer.current);
       window.removeEventListener("resize", onResize);
-      window.removeEventListener("guc-ai-companion-reset-position", onReset);
-      window.removeEventListener("guc-ai-companion-settings-change", onSettingsChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collapsed, asleep]);
@@ -637,7 +399,7 @@ export default function FloatingAICompanion() {
     const cleanQuestion = String(rawQuestion || "").trim();
     if (!cleanQuestion) return;
 
-    wake("thinking", "listening");
+    wake("thinking");
     setInput("");
     setGreetingHidden(true);
     setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: "user", text: cleanQuestion }]);
@@ -648,13 +410,14 @@ export default function FloatingAICompanion() {
       if (requestedName) {
         window.setTimeout(() => {
           saveCompanionName(requestedName);
+          setMood("happy");
           setMessages((prev) => [
             ...prev,
             {
               id: `b-${Date.now()}`,
               role: "assistant",
               title: "Renamed",
-              text: `Done — my name is ${requestedName} now. Double-click me if you want me to do a tiny dance.`,
+              text: `Done — my name is ${requestedName} now.`,
               mood: "happy",
               meta: { source: "AI companion preferences" },
             },
@@ -670,6 +433,7 @@ export default function FloatingAICompanion() {
       window.setTimeout(() => {
         saveCompanionGender(nextGender);
         const visibleName = localStorage.getItem(COMPANION_NAME_KEY) || defaultCompanionName(nextGender);
+        setMood("wave");
         setMessages((prev) => [
           ...prev,
           {
@@ -688,7 +452,6 @@ export default function FloatingAICompanion() {
     window.setTimeout(() => {
       const answer = answerAssistantQuestion(cleanQuestion);
       setMood(answer.mood || "happy");
-      setActivity("idle");
       if (answer.mood === "love" || /thank|cute|love|heart/i.test(cleanQuestion)) {
         setHeartBurst(true);
         window.setTimeout(() => setHeartBurst(false), 1300);
@@ -698,7 +461,7 @@ export default function FloatingAICompanion() {
   };
 
   const goTo = (path) => {
-    wake("wave", "curious");
+    wake("wave");
     if (!path || path.includes(":")) return;
     navigate(path);
     persistCollapsed(true);
@@ -709,53 +472,18 @@ export default function FloatingAICompanion() {
     ask(input);
   };
 
+  const updateLauncherPosition = (event, info) => {
+    const next = getSafePosition({ x: info.point.x - 36, y: info.point.y - 36 });
+    setLauncherPosition(next);
+    writeJson(POSITION_KEY, next);
+    window.setTimeout(() => {
+      dragged.current = false;
+    }, 90);
+  };
+
   const openFromLauncher = () => {
     if (dragged.current) return;
     persistCollapsed(false);
-  };
-
-  const handleTinyDragStart = (event) => {
-    tinyPositionRef.current = launcherPosition;
-    dragStart.current = { x: event.clientX, y: event.clientY };
-    dragged.current = false;
-    interact("curious");
-  };
-
-  const handleTinyDrag = (event, info) => {
-    if (Math.abs(info.offset.x) + Math.abs(info.offset.y) > 8) dragged.current = true;
-  };
-
-  const handleTinyDragEnd = (event, info) => {
-    const base = tinyPositionRef.current || launcherPosition;
-    const next = getSafePosition({ x: base.x + info.offset.x, y: base.y + info.offset.y });
-    setLauncherPosition(next);
-    writeJson(POSITION_KEY, next);
-    if (Math.abs(info.velocity.x) + Math.abs(info.velocity.y) > 950) interact("shake");
-    window.setTimeout(() => {
-      dragged.current = false;
-    }, 120);
-  };
-
-  const handlePanelDragStart = () => {
-    panelPositionRef.current = panelPosition;
-    dragged.current = false;
-    interact("curious");
-  };
-
-  const handlePanelDrag = (event, info) => {
-    if (Math.abs(info.offset.x) + Math.abs(info.offset.y) > 8) dragged.current = true;
-  };
-
-  const handlePanelDragEnd = (event, info) => {
-    const base = panelPositionRef.current || panelPosition;
-    const next = getSafePanelPosition({ x: base.x + info.offset.x, y: base.y + info.offset.y });
-    setPanelPosition(next);
-    writeJson(PANEL_POSITION_KEY, next);
-    if (Math.abs(info.velocity.x) + Math.abs(info.velocity.y) > 950) interact("shake");
-    window.setTimeout(() => {
-      dragged.current = false;
-    }, 120);
-  };
   };
 
   if (collapsed) {
@@ -764,31 +492,31 @@ export default function FloatingAICompanion() {
         type="button"
         drag
         dragMomentum={false}
-        dragElastic={0.04}
-        onDragStart={handleTinyDragStart}
-        onDrag={handleTinyDrag}
-        onDragEnd={handleTinyDragEnd}
-        onClick={openFromLauncher}
-        onDoubleClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          interact("tickle");
+        dragElastic={0.05}
+        onPointerDown={(event) => {
+          dragStart.current = { x: event.clientX, y: event.clientY };
+          dragged.current = false;
         }}
+        onDrag={(event) => {
+          const dx = Math.abs(event.clientX - dragStart.current.x);
+          const dy = Math.abs(event.clientY - dragStart.current.y);
+          if (dx + dy > 8) dragged.current = true;
+        }}
+        onDragEnd={updateLauncherPosition}
+        onClick={openFromLauncher}
         initial={{ opacity: 0, scale: 0.5, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         whileHover={{ scale: 1.08, y: -2 }}
         whileTap={{ scale: 0.96 }}
-        style={{ left: launcherPosition.x, top: launcherPosition.y, touchAction: "none" }}
+        style={{ left: launcherPosition.x, top: launcherPosition.y }}
         className="group fixed z-[70] grid h-[72px] w-[72px] cursor-grab place-items-center rounded-full border border-white/45 bg-white/18 shadow-[0_18px_50px_rgba(44,57,71,0.24)] outline-none backdrop-blur-2xl transition focus-visible:ring-4 focus-visible:ring-[color:var(--ring-soft)] active:cursor-grabbing dark:bg-[color:var(--card-bg-strong)]/22"
         aria-label={`Open ${companionName} AI companion`}
-        title="Drag me · click to open · double-click for dance"
+        title="Drag me or click to open"
       >
         <span className="absolute inset-0 rounded-full bg-[color:var(--accent)]/15 blur-xl" />
-        <TinyRobotBadge mood={mood} asleep={asleep} isWaving={mood === "wave"} activity={activity} />
-        <span className="absolute inset-0 rounded-full bg-[color:var(--accent)]/15 blur-xl" />
-        <TinyRobotBadge mood={mood} asleep={asleep} isWaving={mood === "wave"} activity={activity} />
-        <span className="pointer-events-none absolute -left-32 top-1/2 hidden -translate-y-1/2 rounded-2xl border border-[color:var(--border-blue)] bg-[color:var(--surface-elevated)]/90 px-3 py-2 text-xs font-black text-[color:var(--ink)] opacity-0 shadow-[var(--shadow-card)] backdrop-blur-xl transition group-hover:opacity-100 xl:block">
-          Drag me · click to open
+        <TinyRobotBadge mood={mood} asleep={asleep} isWaving={mood === "wave"} />
+        <span className="pointer-events-none absolute -left-28 top-1/2 hidden -translate-y-1/2 rounded-2xl border border-[color:var(--border-blue)] bg-[color:var(--surface-elevated)]/90 px-3 py-2 text-xs font-black text-[color:var(--ink)] opacity-0 shadow-[var(--shadow-card)] backdrop-blur-xl transition group-hover:opacity-100 xl:block">
+          Drag me · open AI guide
         </span>
       </motion.button>
     );
@@ -796,47 +524,51 @@ export default function FloatingAICompanion() {
 
   return (
     <motion.div
-      drag
-      dragControls={panelDragControls}
-      dragListener={false}
-      dragMomentum={false}
-      dragElastic={0.04}
-      onDragStart={handlePanelDragStart}
-      onDrag={handlePanelDrag}
-      onDragEnd={handlePanelDragEnd}
       initial={{ opacity: 0, x: 35, y: 20, scale: 0.94 }}
       animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-      style={{ left: panelPosition.x, top: panelPosition.y, touchAction: "none" }}
-      className="fixed z-[70] hidden max-w-[calc(100vw-2rem)] select-none items-end gap-3 lg:flex"
+      className="fixed right-8 top-[44vh] z-[70] hidden max-w-[calc(100vw-2rem)] select-none lg:block"
     >
+      <AnimatePresence>
+        {!greetingHidden && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.94 }}
+            className="absolute -left-40 top-2 w-44 rounded-[24px] border border-[color:var(--border-blue)] bg-[color:var(--surface-elevated)]/95 p-3 text-sm font-bold text-[color:var(--ink)] shadow-[var(--shadow-card)] backdrop-blur-xl"
+          >
+            <button
+              type="button"
+              onClick={() => setGreetingHidden(true)}
+              className="absolute right-2 top-2 text-[color:var(--muted)] hover:text-[color:var(--ink)]"
+              aria-label="Hide greeting bubble"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+            {getMoodLine(mood, asleep, name)}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.aside
         initial={{ opacity: 0, x: 28, scale: 0.94 }}
         animate={{ opacity: 1, x: 0, scale: 1 }}
         exit={{ opacity: 0, x: 28, scale: 0.94 }}
         transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-        className="w-[390px] overflow-hidden rounded-[32px] border border-[color:var(--border-blue)] bg-[color:var(--card-bg-strong)] shadow-[0_28px_90px_rgba(44,57,71,0.24)] backdrop-blur-2xl dark:shadow-[0_28px_90px_rgba(0,0,0,0.42)]"
+        className="absolute bottom-24 right-0 w-[390px] overflow-hidden rounded-[32px] border border-[color:var(--border-blue)] bg-[color:var(--card-bg-strong)] shadow-[0_28px_90px_rgba(44,57,71,0.24)] backdrop-blur-2xl dark:shadow-[0_28px_90px_rgba(0,0,0,0.42)]"
       >
         <div className="relative overflow-hidden bg-[image:var(--gradient-brand)] p-4 text-white">
           <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/15 blur-2xl" />
           <div className="relative flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onPointerDown={(event) => panelDragControls.start(event)}
-              className="flex min-w-0 flex-1 cursor-grab items-center gap-3 rounded-2xl text-left active:cursor-grabbing"
-              aria-label={`Drag ${companionName} panel`}
-              title="Drag the assistant panel"
-            >
+            <div className="flex items-center gap-3">
               <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white/12 ring-1 ring-white/15">
                 <Bot className="h-5 w-5 text-[color:var(--accent)]" />
-                <Bot className="h-5 w-5 text-[color:var(--accent)]" />
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-black">{companionName}</p>
-                <p className="truncate text-xs font-semibold text-white/62">{companionGender === "female" ? "Female" : "Male"} interactive desk pet · {role} mode</p>
+              <div>
+                <p className="text-sm font-black">{companionName}</p>
+                <p className="text-xs font-semibold text-white/62">{companionGender === "female" ? "Female" : "Male"} desk pet · {role} mode</p>
               </div>
-              <GripHorizontal className="ml-auto h-4 w-4 shrink-0 text-white/55" />
-            </button>
+            </div>
 
             <div className="flex items-center gap-2">
               <button
@@ -850,10 +582,14 @@ export default function FloatingAICompanion() {
               </button>
               <button
                 type="button"
-                onClick={() => interact("pet")}
+                onClick={() => {
+                  wake("love");
+                  setHeartBurst(true);
+                  window.setTimeout(() => setHeartBurst(false), 1300);
+                }}
                 className="grid h-9 w-9 place-items-center rounded-xl bg-white/10 text-white transition hover:bg-white/15"
-                aria-label="Pet companion"
-                title="Pet / send hearts"
+                aria-label="Send hearts"
+                title="Send hearts"
               >
                 <Heart className="h-4 w-4 fill-current" />
               </button>
@@ -881,7 +617,7 @@ export default function FloatingAICompanion() {
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-black text-[color:var(--ink)]">Desk pet identity</p>
-                  <p className="text-xs font-semibold text-[color:var(--muted)]">Rename, choose persona, then drag me anywhere on the dashboard.</p>
+                  <p className="text-xs font-semibold text-[color:var(--muted)]">Keep the old cute robot design, but personalize who he/she is.</p>
                 </div>
                 <button
                   type="button"
@@ -929,7 +665,6 @@ export default function FloatingAICompanion() {
                     className={`rounded-2xl border px-3 py-2 text-left transition ${
                       companionGender === option.value
                         ? "border-[color:var(--primary)] bg-[color:var(--primary)]/10 text-[color:var(--primary)] shadow-sm dark:border-[color:var(--accent)] dark:text-[color:var(--accent)]"
-                        ? "border-[color:var(--primary)] bg-[color:var(--primary)]/10 text-[color:var(--primary)] shadow-sm dark:border-[color:var(--accent)] dark:text-[color:var(--accent)]"
                         : "border-[color:var(--border-blue)] bg-white/55 text-[color:var(--ink)] hover:-translate-y-0.5 dark:bg-white/10"
                     }`}
                   >
@@ -956,7 +691,6 @@ export default function FloatingAICompanion() {
                 type="button"
                 onClick={() => ask(suggestion)}
                 className="shrink-0 rounded-full border border-[color:var(--border-blue)] bg-white/60 px-3 py-1.5 text-xs font-black text-[color:var(--primary)] transition hover:-translate-y-0.5 hover:bg-white dark:bg-white/10 dark:text-[color:var(--accent)]"
-                className="shrink-0 rounded-full border border-[color:var(--border-blue)] bg-white/60 px-3 py-1.5 text-xs font-black text-[color:var(--primary)] transition hover:-translate-y-0.5 hover:bg-white dark:bg-white/10 dark:text-[color:var(--accent)]"
               >
                 {suggestion}
               </button>
@@ -968,9 +702,9 @@ export default function FloatingAICompanion() {
               value={input}
               onChange={(event) => {
                 setInput(event.target.value);
-                wake("idle", "listening");
+                wake("idle");
               }}
-              onFocus={() => wake("wave", "listening")}
+              onFocus={() => wake("wave")}
               placeholder="Ask about projects, courses, companies..."
               className="min-w-0 flex-1 bg-transparent px-2 text-sm font-semibold text-[color:var(--ink)] outline-none placeholder:text-[color:var(--muted)]"
             />
@@ -985,97 +719,19 @@ export default function FloatingAICompanion() {
         </div>
       </motion.aside>
 
-      <div className="relative flex flex-col items-center gap-2">
-        <AnimatePresence>
-          {!greetingHidden && (
-            <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.94 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.94 }}
-              className="absolute -left-44 -top-20 w-48 rounded-[24px] border border-[color:var(--border-blue)] bg-[color:var(--surface-elevated)]/95 p-3 text-sm font-bold text-[color:var(--ink)] shadow-[var(--shadow-card)] backdrop-blur-xl"
-            >
-              <button
-                type="button"
-                onClick={() => setGreetingHidden(true)}
-                className="absolute right-2 top-2 text-[color:var(--muted)] hover:text-[color:var(--ink)]"
-                aria-label="Hide greeting bubble"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-              {getMoodLine(mood, asleep, userFirstName, companionName, activity)}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <button
-          type="button"
-          onPointerDown={(event) => {
-            if (event.detail > 1) return;
-            panelDragControls.start(event);
-          }}
-          onClick={(event) => {
-            if (dragged.current) return;
-            event.stopPropagation();
-            persistCollapsed(true);
-          }}
-          onDoubleClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            interact("tickle");
-          }}
-          className="group relative block cursor-grab rounded-[34px] p-1 outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--ring-soft)] active:cursor-grabbing"
-          aria-label={`Drag ${companionName} or click to collapse to tiny circle`}
-          title="Drag me · click to return to tiny circle · double-click for dance"
-        >
-          <span className="absolute inset-2 rounded-full bg-[color:var(--accent)]/30 opacity-0 blur-2xl transition group-hover:opacity-100" />
-          <span className="absolute inset-2 rounded-full bg-[color:var(--accent)]/30 opacity-0 blur-2xl transition group-hover:opacity-100" />
-          <RobotMascot
-            isOpen
-            isWaving={mood === "wave"}
-            mood={mood}
-            asleep={asleep}
-            heartBurst={heartBurst}
-            activity={activity}
-            onPet={(type) => interact(type)}
-            onTickle={() => interact("tickle")}
-          />
-          <span className="absolute bottom-1 right-2 grid h-10 w-10 place-items-center rounded-2xl border border-white/50 bg-[image:var(--gradient-brand)] text-white shadow-[0_14px_30px_rgba(44,57,71,0.24)]">
-            <MessageCircle className="h-4 w-4" />
-          </span>
-        </button>
-
-        <div className="flex items-center gap-1 rounded-full border border-[color:var(--border-blue)] bg-[color:var(--surface-elevated)]/90 px-2 py-1 shadow-sm backdrop-blur-xl">
-          <button
-            type="button"
-            onClick={() => interact("pet")}
-            className="grid h-7 w-7 place-items-center rounded-full text-rose-400 transition hover:bg-rose-400/10"
-            title="Pet"
-          >
-            <Heart className="h-3.5 w-3.5 fill-current" />
-          </button>
-          <button
-            type="button"
-            onClick={() => interact("tickle")}
-            className="grid h-7 w-7 place-items-center rounded-full text-[color:var(--primary)] transition hover:bg-[color:var(--primary)]/10 dark:text-[color:var(--accent)]"
-            className="grid h-7 w-7 place-items-center rounded-full text-[color:var(--primary)] transition hover:bg-[color:var(--primary)]/10 dark:text-[color:var(--accent)]"
-            title="Play"
-          >
-            <Wand2 className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setAsleep(true);
-              setMood("sleep");
-              setActivity("idle");
-            }}
-            className="grid h-7 w-7 place-items-center rounded-full text-[color:var(--muted)] transition hover:bg-[color:var(--muted)]/10"
-            title="Nap"
-          >
-            <Moon className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
+      <button
+        type="button"
+        onClick={() => persistCollapsed(true)}
+        className="group relative block rounded-[34px] p-1 outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--ring-soft)]"
+        aria-label={`Collapse ${companionName} to tiny circle`}
+        title="Click me to return to tiny circle"
+      >
+        <span className="absolute inset-2 rounded-full bg-[color:var(--accent)]/30 opacity-0 blur-2xl transition group-hover:opacity-100" />
+        <RobotMascot isOpen isWaving={mood === "wave"} mood={mood} asleep={asleep} heartBurst={heartBurst} />
+        <span className="absolute bottom-1 right-2 grid h-10 w-10 place-items-center rounded-2xl border border-white/50 bg-[image:var(--gradient-brand)] text-white shadow-[0_14px_30px_rgba(44,57,71,0.24)]">
+          <MessageCircle className="h-4 w-4" />
+        </span>
+      </button>
     </motion.div>
   );
 }
