@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import {  useState } from "react";
 import { Bell, BriefcaseBusiness, CheckCircle2, UsersRound } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -14,7 +14,6 @@ import {
   topApplicants,
   favoritePortfolios,
   recommendedProjects,
-  employerNotifications,
   messageThreads,
 } from "@/data/employerDashboardData";
 
@@ -44,10 +43,7 @@ export default function EmployerDashboard() {
     bio: profile?.bio || employerProfile.bio,
   };
 
-  const mergedNotifications = useMemo(() => {
-    const incoming = Array.isArray(notifications) ? notifications : [];
-    return [...employerNotifications, ...incoming].slice(0, 5);
-  }, [notifications]);
+
 
   const stats = [
     {
@@ -67,14 +63,13 @@ export default function EmployerDashboard() {
     },
     {
       title: "Unread Alerts",
-      value: mergedNotifications.filter((note) => note.unread).length,
+      value: notifications.filter((note) => note.unread).length,
       icon: Bell,
     },
   ];
 
   return (
     <DashboardLayout
-      notifications={mergedNotifications}
       workspace="employer"
       workspaceLabel="Employer Workspace"
       sidebarProgress={{ label: "Company profile", value: dashboardEmployer.profileCompletion }}
@@ -104,7 +99,7 @@ export default function EmployerDashboard() {
         internshipStats={internshipStats}
         favoritePortfolios={favoritePortfolios}
         recommendedProjects={recommendedProjects}
-        notifications={mergedNotifications}
+        notifications={notifications}
         messageThreads={messageThreads}
       />
     </DashboardLayout>

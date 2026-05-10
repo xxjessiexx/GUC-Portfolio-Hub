@@ -9,6 +9,7 @@ export default function Pannelforportfolios({
   portfolios,
   view = "grid",
   toggleFavorite,
+  hideViewMore = false
 }) {
     const navigate = useNavigate();
 
@@ -36,8 +37,12 @@ export default function Pannelforportfolios({
           </h2>
         </div>
 
-        <button
-  onClick={() => navigate("/favorite-portfolios")}
+        {!hideViewMore && (
+
+  <button
+  onClick={() =>
+    navigate("/favorite-portfolios")
+  }
   className="
     text-[#69A7FF]
     font-semibold
@@ -45,10 +50,12 @@ export default function Pannelforportfolios({
     hover:underline
   "
 >
-  View More Recommendations
+  View More Portfolios
 
   
 </button>
+
+)}
       </div>
 
       {/* CARDS */}

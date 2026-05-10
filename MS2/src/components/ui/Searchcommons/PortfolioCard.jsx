@@ -26,72 +26,52 @@ export default function PortfolioCard({
     >
 
       {/* TOP */}
-      <div className="flex items-start gap-4">
+      {/* TOP */}
+<div className="relative">
 
-        <img
-          src={portfolio.image}
-          alt={portfolio.name}
-          className="
-            w-20 h-20
-            rounded-full
-            object-cover
-          "
-        />
+  {/* REPORT / FAVORITE BUTTON */}
+  
+      <FavoriteButton
+        favorite={portfolio.favorite}
+        onClick={() =>
+          toggleFavorite(portfolio.id)
+        }
+      />
 
-        <div className="flex flex-col items-end">
-
-  <div
-    className="
-      flex items-center gap-2
-      px-3 py-1
-      rounded-full
-      bg-[#EEF5FF]
-      text-[#69A7FF]
-      text-xs
-      font-bold
-    "
-  >
-    <FolderOpen size={13} />
-    {portfolio.projects} Projects
+    
   </div>
 
-  <div className="mt-3">
+  {/* IMAGE + PROJECT COUNT */}
+  <div className="flex items-start gap-4">
 
-  {showReport ? (
-
-    <button
-      onClick={() => onReport?.(portfolio)}
+    <img
+      src={portfolio.image}
+      alt={portfolio.name}
       className="
-        w-14 h-14
+        w-20 h-20
         rounded-full
-        bg-white
-        border border-gray-100
-        shadow-sm
-        flex items-center justify-center
-        hover:bg-[#FFF3EE]
-        transition
+        object-cover
       "
-    >
-      <Flag
-        size={24}
-        className="text-[#FF8A65]"
-      />
-    </button>
-
-  ) : (
-
-    <FavoriteButton
-      favorite={portfolio.favorite}
-      onClick={() =>
-        toggleFavorite(portfolio.id)
-      }
     />
 
-  )}
+    <div
+      className="
+        flex items-center gap-2
+        px-3 py-1
+        rounded-full
+        bg-[#EEF5FF]
+        text-[#69A7FF]
+        text-xs
+        font-bold
+      "
+    >
+      <FolderOpen size={13} />
+      {portfolio.projects} Projects
+    </div>
 
-</div>
-</div>
-      </div>
+  </div>
+
+
 
       {/* INFO */}
       <div className="mt-5">

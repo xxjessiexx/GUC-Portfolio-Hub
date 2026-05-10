@@ -22,7 +22,7 @@ import Toast from "@/components/ui/toast";
 export default function StudentDashboard() {
 
 
-const { notifications, setNotifications} = useNotifications();
+const { notifications} = useNotifications();
 const [toast, setToast] = useState(null);
 
   const { profile } = useUserProfile();
@@ -72,33 +72,7 @@ const [toast, setToast] = useState(null);
 }
 
 
-  useEffect(() => {
-  const alreadyTriggered = sessionStorage.getItem("notificationShown");
 
-  if (alreadyTriggered) return; // 
-
-  const timer = setTimeout(() => {
-    const newNotification = {
-      id: "n-" + Date.now(),
-      type: "message",
-      title: "IT WORKED",
-      text: "You just received a new message!",
-      unread: true,
-      time: formatDateTime(),
-    };
-
-    setNotifications((prev) => [newNotification, ...prev]);
-    setToast(newNotification); // ✅ show popup
-
-setTimeout(() => {
-setToast(null); // auto hide
-}, 3000);
-
-    sessionStorage.setItem("notificationShown", "true"); // ✅ mark as shown
-  }, 3000);
-
-  return () => clearTimeout(timer);
-}, []);
 
   return (
     

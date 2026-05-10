@@ -125,10 +125,15 @@ export default function Register({ addUser }) {
 
     addUser(newUser);
       
-      toast.success(
-      role === "employer"
+toast.success(
+  role === "employer"
     ? "Employer registration submitted for admin approval!"
     : "Account created successfully!",
+  {
+    className:
+      "!border-white/10 !bg-[linear-gradient(135deg,var(--dark),var(--primary))] !text-white !shadow-[0_18px_55px_rgba(44,57,71,0.22)]",
+    descriptionClassName: "!text-white/70",
+  }
 );
 
       sessionStorage.setItem("lastRegisteredRole", role);

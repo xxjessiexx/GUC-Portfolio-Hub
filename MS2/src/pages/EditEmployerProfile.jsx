@@ -18,7 +18,7 @@ import EmployerProfileSummary from "@/components/profile/EmployerProfileSummary"
 import EditableProfileField from "@/components/profile/EditableProfileField";
 import DangerActions from "@/components/profile/DangerActions";
 
-import { notifications } from "@/data/studentDashboardData";
+
 import { useUserProfile } from "@/context/UserProfileContext";
 
 export default function EditEmployerProfile() {
@@ -111,7 +111,7 @@ export default function EditEmployerProfile() {
   };
 
   return (
-    <DashboardLayout notifications={notifications}>
+    <DashboardLayout >
       <div className="space-y-6">
         <SectionHeader
           title="Company Profile Information"

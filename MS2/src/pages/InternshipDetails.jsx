@@ -23,7 +23,6 @@ import {
   getCurrentUser,
   getInternshipById,
   getInternships,
-  getNotificationsForUser,
   applyToInternship,
   toggleSavedInternship,
 } from "@/data/demoStore";
@@ -153,7 +152,6 @@ export default function InternshipDetails() {
 
   const [internship, setInternship] = useState(null);
   const [allInternships, setAllInternships] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
   const [coverLetterError, setCoverLetterError] = useState("");
@@ -178,7 +176,6 @@ export default function InternshipDetails() {
 
     setInternship(loadedInternship);
     setAllInternships(getInternships().map(normalizeInternshipDetails));
-    setNotifications(getNotificationsForUser(currentUser?.id));
   };
 
   useEffect(() => {
@@ -195,7 +192,7 @@ export default function InternshipDetails() {
 
   if (!internship) {
     return (
-      <DashboardLayout notifications={notifications}>
+      <DashboardLayout>
         <main className="px-6 py-10">
           <AppCard className="p-8">
             <h1 className="text-3xl font-black text-[color:var(--ink)]">
@@ -246,7 +243,7 @@ export default function InternshipDetails() {
   };
 
   return (
-    <DashboardLayout notifications={notifications}>
+    <DashboardLayout >
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">

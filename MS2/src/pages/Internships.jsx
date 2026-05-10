@@ -277,23 +277,6 @@ function getSavedInternshipIdsForCurrentUser() {
   ];
 }
 
-function getNotificationsForCurrentUser() {
-  const currentUser = getCurrentUser();
-
-  if (!currentUser?.id) return [];
-
-  const notifications = getCollection("notifications") || [];
-
-  return notifications.filter((notification) => {
-    const userId =
-      notification.userId ||
-      notification.recipientId ||
-      notification.ownerId ||
-      notification.toUserId;
-
-    return !userId || userId === currentUser.id;
-  });
-}
 
 export default function Internships() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -307,7 +290,6 @@ export default function Internships() {
   const [visibleCount, setVisibleCount] = useState(6);
 
   const [internships, setInternships] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [savedIds, setSavedIds] = useState([]);
   const [appliedIds, setAppliedIds] = useState([]);
 
@@ -324,7 +306,7 @@ export default function Internships() {
     );
     setSavedIds(getSavedInternshipIdsForCurrentUser());
     setAppliedIds(getAppliedInternshipIdsForCurrentUser());
-    setNotifications(getNotificationsForCurrentUser());
+    
   };
 
   useEffect(() => {
@@ -467,7 +449,7 @@ export default function Internships() {
     sortBy !== "Sort by: Newest";
 
   return (
-    <DashboardLayout notifications={notifications}>
+    <DashboardLayout >
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <div>

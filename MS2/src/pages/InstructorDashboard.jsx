@@ -22,7 +22,6 @@ export default function InstructorDashboard() {
     <DashboardLayout
       workspace="instructor"
       workspaceLabel="Instructor Workspace"
-      notifications={notifications}
       sidebarProgress={{
         title: "Review capacity",
         value: instructorDashboard.reviewCapacity,

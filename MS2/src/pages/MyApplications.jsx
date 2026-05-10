@@ -341,23 +341,6 @@ function getSavedInternshipsForCurrentStudent() {
     .filter(Boolean);
 }
 
-function getNotificationsForCurrentUser() {
-  const currentUser = getCurrentUser();
-
-  if (!currentUser?.id) return [];
-
-  const notifications = getCollection("notifications") || [];
-
-  return notifications.filter((notification) => {
-    const userId =
-      notification.userId ||
-      notification.recipientId ||
-      notification.ownerId ||
-      notification.toUserId;
-
-    return !userId || userId === currentUser.id;
-  });
-}
 
 function getUpcomingInterviews(applications) {
   return applications
@@ -398,7 +381,6 @@ function getUpcomingInterviews(applications) {
 export default function MyApplications() {
   const [applications, setApplications] = useState([]);
   const [savedApplications, setSavedApplications] = useState([]);
-  const [notifications, setNotifications] = useState([]);
 
   const [activeTab, setActiveTab] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
@@ -410,7 +392,6 @@ export default function MyApplications() {
   const refreshApplications = () => {
     setApplications(getApplicationsForCurrentStudent());
     setSavedApplications(getSavedInternshipsForCurrentStudent());
-    setNotifications(getNotificationsForCurrentUser());
   };
 
   useEffect(() => {
@@ -497,7 +478,7 @@ export default function MyApplications() {
   };
 
   return (
-    <DashboardLayout notifications={notifications}>
+    <DashboardLayout >
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <div>
