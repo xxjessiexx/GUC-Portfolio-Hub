@@ -1,6 +1,6 @@
 // src/components/ui/Searchcommons/PortfolioCard.jsx
 
-import { FolderOpen, ArrowRight } from "lucide-react";
+import { FolderOpen, ArrowRight ,Flag} from "lucide-react";
 
 import {AppCard} from "@/components/ui/AppCard";
 import CourseBadge from "@/components/ui/CourseBadge";
@@ -9,6 +9,8 @@ import FavoriteButton from "./FavoriteButton";
 
 export default function PortfolioCard({
   portfolio,toggleFavorite,
+  showReport = false,
+  onReport,
 }) { const navigate = useNavigate();
   return (
     <AppCard
@@ -54,12 +56,40 @@ export default function PortfolioCard({
   </div>
 
   <div className="mt-3">
+
+  {showReport ? (
+
+    <button
+      onClick={() => onReport?.(portfolio)}
+      className="
+        w-14 h-14
+        rounded-full
+        bg-white
+        border border-gray-100
+        shadow-sm
+        flex items-center justify-center
+        hover:bg-[#FFF3EE]
+        transition
+      "
+    >
+      <Flag
+        size={24}
+        className="text-[#FF8A65]"
+      />
+    </button>
+
+  ) : (
+
     <FavoriteButton
       favorite={portfolio.favorite}
-      onClick={() => toggleFavorite(portfolio.id)}
+      onClick={() =>
+        toggleFavorite(portfolio.id)
+      }
     />
-  </div>
 
+  )}
+
+</div>
 </div>
       </div>
 

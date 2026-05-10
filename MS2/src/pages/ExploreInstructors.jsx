@@ -20,19 +20,38 @@ import { instructors } from "@/data/InstructorSearchdata";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import FilterSelect from "@/components/common/FilterSelect";
 import ViewInstructor from "@/pages/ViewInstructor";
+import { getAllInstructors } from "@/data/demoStore";
 
 export default function ExploreInstructors() {
     const [selectedCourse, setSelectedCourse] = useState("all");
     const [search, setSearch] = useState("");
+    const [instructors, setInstructors] =
+  useState(getAllInstructors());
     const [selectedInstructor, setSelectedInstructor] =
     useState(null);
     const [filtersOpen, setFiltersOpen] =
   useState(false);
+
+  const courseOptions = [
+  "Course: All Courses",
+
+  ...Array.from(
+    new Set(
+      instructors.flatMap(
+        (instructor) =>
+          instructor.courses || []
+      )
+    )
+  ).map(
+    (course) => `Course: ${course}`
+  ),
+];
+
     const filteredInstructors = instructors.filter(
   (instructor) => {
     const matchesCourse =
       selectedCourse === "all" ||
-      instructor.courses.some((course) =>
+      instructor.courses?.some((course) =>
         course
           .toLowerCase()
           .includes(selectedCourse.toLowerCase())
@@ -55,7 +74,7 @@ export default function ExploreInstructors() {
       normalizedName.includes(normalizedSearch) ||
 
       instructor.department
-        .toLowerCase()
+  ?.toLowerCase()
         .includes(normalizedSearch) ||
 
       instructor.courses.some((course) =>
@@ -135,18 +154,7 @@ const totalPages = Math.ceil(
           : cleanedValue
       );
     }}
-    options={[
-      "Course: All Courses",
-      "Course: Data Structures",
-      "Course: Algorithms",
-      "Course: Operating Systems",
-      "Course: Database Systems",
-      "Course: Software Engineering",
-      "Course: Machine Learning",
-      "Course: Deep Learning",
-      "Course: Artificial Intelligence",
-      "Course: UI/UX",
-    ]}
+    options={courseOptions}
   />
 </SearchFilterToolbar>
 

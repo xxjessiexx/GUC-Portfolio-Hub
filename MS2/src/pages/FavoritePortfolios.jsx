@@ -8,18 +8,15 @@ import Pannelforportfolios from "@/components/ui/Searchcommons/Pannelforportfoli
 import PortfolioData from "@/data/portfoliosData";
 
 import { useState } from "react";
-
+import {
+  getAllPortfolios,
+  toggleFavoritePortfolio,
+} from "@/data/demoStore";
 export default function FavoritePortfolios() {
 
   /* STATE */
-  const [portfolios, setPortfolios] = useState(() => {
-    const saved =
-      localStorage.getItem("favoritePortfolios");
-
-    return saved
-      ? JSON.parse(saved)
-      : PortfolioData;
-  });
+  const [portfolios, setPortfolios] =
+  useState(getAllPortfolios());
 
   const [view, setView] = useState("grid");
 
@@ -39,26 +36,35 @@ export default function FavoritePortfolios() {
 
   /* FAVORITES */
   const toggleFavorite = (id) => {
-    setPortfolios((prev) => {
+  toggleFavoritePortfolio(id);
 
-      const updated = prev.map((portfolio) =>
-        portfolio.id === id
-          ? {
-              ...portfolio,
-              favorite: !portfolio.favorite,
-            }
-          : portfolio
-      );
+  setPortfolios(getAllPortfolios());
+};
 
-      localStorage.setItem(
-        "favoritePortfolios",
-        JSON.stringify(updated)
-      );
+const majorOptions = [
+  "Major: All Majors",
 
-      return updated;
-    });
-  };
+  ...Array.from(
+    new Set(
+      portfolios
+        .map((portfolio) => portfolio.major)
+        .filter(Boolean)
+    )
+  ).map((major) => `Major: ${major}`),
+];
 
+const skillOptions = [
+  "Skill: All Skills",
+
+  ...Array.from(
+    new Set(
+      portfolios.flatMap(
+        (portfolio) =>
+          portfolio.skills || []
+      )
+    )
+  ).map((skill) => `Skill: ${skill}`),
+];
   /* FILTERS */
   const filteredPortfolios = portfolios
 
@@ -79,7 +85,7 @@ export default function FavoritePortfolios() {
           .toLowerCase()
           .includes(search.toLowerCase()) ||
 
-        portfolio.skills.some((skill) =>
+        portfolio.skills?.some((skill) =>
           skill
             .toLowerCase()
             .includes(search.toLowerCase())
@@ -91,7 +97,7 @@ export default function FavoritePortfolios() {
 
       const matchesSkill =
         selectedSkill === "All Skills" ||
-        portfolio.skills.includes(selectedSkill);
+        portfolio.skills?.includes(selectedSkill);
 
       return (
         matchesSearch &&
@@ -170,14 +176,7 @@ export default function FavoritePortfolios() {
               )
             }
 
-            options={[
-              "Major: All Majors",
-              "Major: Computer Science",
-              "Major: Software Engineering",
-              "Major: Information Systems",
-              "Major: Data Science",
-              "Major: UI/UX Design",
-            ]}
+            options={majorOptions}
           />
 
           <FilterSelect
@@ -188,14 +187,7 @@ export default function FavoritePortfolios() {
               )
             }
 
-            options={[
-              "Skill: All Skills",
-              "Skill: React",
-              "Skill: Python",
-              "Skill: Figma",
-              "Skill: SQL",
-              "Skill: Tailwind",
-            ]}
+            options={skillOptions}
           />
         </SearchFilterToolbar>
 

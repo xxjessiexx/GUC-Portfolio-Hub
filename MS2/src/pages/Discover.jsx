@@ -36,8 +36,9 @@ export default function DiscoverPage() {
   const navigate = useNavigate();
   return (
     <DashboardLayout>
-      <div className="p-4 xl:p-5 space-y-3 min-h-screen">
+      
         {/* HEADER */}
+        <div className=" space-y-6">
         <div>
           <h1 className="text-4xl xl:text-4xl font-black text-[#0F2233]">
             Discover

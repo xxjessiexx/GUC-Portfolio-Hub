@@ -11,7 +11,12 @@ import PortfolioData from "@/data/portfoliosData";
 /* IMPORT DATA */
 import ProjectNameData from "@/data/ProjectNameData";
 import Pannelforprojects from "@/components/ui/Searchcommons/Pannelforprojects";
-
+import {
+  getAllProjects,
+  getAllPortfolios,
+  toggleFavoriteProject,
+  toggleFavoritePortfolio,
+} from "@/data/demoStore";
 
 import {
   Search,
@@ -23,25 +28,11 @@ import {
 import { useState } from "react";
 
 export default function FavoriteList() {
- const [portfolios, setPortfolios] = useState(() => {
-  const saved =
-    localStorage.getItem("favoritePortfolios");
-
-  return saved
-    ? JSON.parse(saved)
-    : PortfolioData;
-});
-
+ const [portfolios, setPortfolios] =
+  useState(getAllPortfolios());
   /* STATE */
-  const [projects, setProjects] = useState(() => {
-  const saved =
-    localStorage.getItem("favoriteProjects");
-
-  return saved
-    ? JSON.parse(saved)
-    : ProjectNameData;
-});
-
+  const [projects, setProjects] =
+  useState(getAllProjects());
   const [view, setView] = useState("grid");
 
   const [search, setSearch] = useState("");
@@ -61,29 +52,15 @@ export default function FavoriteList() {
 
   /* FAVORITES */
   const toggleFavorite = (id) => {
-    setProjects((prev) =>
-      prev.map((project) =>
-        project.id === id
-          ? {
-              ...project,
-              favorite: !project.favorite,
-            }
-          : project
-      )
-    );
-  };
+  toggleFavoriteProject(id);
+
+  setProjects(getAllProjects());
+};
 
   const togglePortfolioFavorite = (id) => {
-  setPortfolios((prev) =>
-    prev.map((portfolio) =>
-      portfolio.id === id
-        ? {
-            ...portfolio,
-            favorite: !portfolio.favorite,
-          }
-        : portfolio
-    )
-  );
+  toggleFavoritePortfolio(id);
+
+  setPortfolios(getAllPortfolios());
 };
 
   /* FILTERS */
@@ -95,7 +72,7 @@ export default function FavoriteList() {
         .toLowerCase()
         .includes(search.toLowerCase()) ||
 
-      project.tags.some((tag) =>
+      project.tags?.some((tag) =>
         tag
           .toLowerCase()
           .includes(search.toLowerCase())
@@ -105,12 +82,17 @@ export default function FavoriteList() {
       selectedCourse === "All Courses" ||
 
       project.course === selectedCourse ||
+      project.courseName === selectedCourse ||
 
       project.program === selectedCourse;
 
     const matchesInstructor =
       selectedInstructor === "All Instructors" ||
-      project.instructor === selectedInstructor;
+      project.instructor
+  ?.toLowerCase()
+  .includes(
+    selectedInstructor.toLowerCase()
+  )
 
     return (
       matchesSearch &&
