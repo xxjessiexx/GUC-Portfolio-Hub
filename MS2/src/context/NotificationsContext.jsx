@@ -26,8 +26,11 @@ export function NotificationsProvider({ children }) {
       setNotifications([]);
       return;
     }
+    console.log(currentUser);
 
     const userNotifications = getNotificationsForUser(currentUser.id);
+
+    console.log(userNotifications);
 
     setNotifications(userNotifications);
   };

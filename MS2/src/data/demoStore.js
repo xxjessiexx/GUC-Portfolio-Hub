@@ -682,7 +682,15 @@ export function deleteInternship(internshipId) {
 }
 
 export function getNotificationsForUser(userId = getCurrentUser()?.id) {
-  return getCollection("notifications").filter((notification) => notification.userId === userId);
+
+  const all = getCollection("notifications");
+
+  console.log("CURRENT USER ID:", userId);
+  console.log("ALL NOTIFICATIONS:", all);
+
+  return all.filter(
+    (notification) => notification.userId === userId
+  );
 }
 
 export function markNotification(notificationId, unread) {
