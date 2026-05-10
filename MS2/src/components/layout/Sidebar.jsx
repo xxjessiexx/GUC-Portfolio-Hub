@@ -50,6 +50,7 @@ const workspaceItems = {
     { label: "My Portfolio", icon: User, path: "/student-dashboard/portfolio" },
     { label: "My Projects", icon: FolderKanban, path: "/view-all-projects" },
     { label: "My Applications", icon: ClipboardList, path: "/my-applications" },
+     { label: "Invitations", icon: ClipboardCheck, path: null },
     { label: "Internships", icon: Briefcase, path: "/internships" },
     { label: "Favorites", icon: Heart,  path: "/fav-list" },
     { label: "Settings", icon: Settings, path: "/settings" },
@@ -59,10 +60,9 @@ const workspaceItems = {
     { label: "Home", icon: Home, path: "/instructor-dashboard" },
     { label: "Explore", icon: SearchIcon, path: "/discover" },
     { label: "Projects", icon: FolderKanban, path: "/view-all-projects" },
-    { label: "Courses", icon: BookOpen, path: null },
+    { label: "My Courses", icon: BookOpen, path: null },
+    { label: "Courses", icon: BookOpen, path: "/admin/courses" },
     { label: "Invitations", icon: ClipboardCheck, path: null },
-    { label: "Feedback", icon: MessageSquare, path: null },
-    { label: "Flags", icon: FileWarning, path: null },
     { label: "Settings", icon: Settings, path: "/settings" },
   ],
 
@@ -72,8 +72,8 @@ const workspaceItems = {
     { label: "Internships", icon: Briefcase, path: "/manage-internships" },
     { label: "Applicants", icon: Users, path: "/manage-applicants/emp-int-1" },
     { label: "Favorites", icon: Heart, path:"/fav-list" },
-    { label: "Messages", icon: MessageSquare, path: "/chat" },
-    { label: "Statistics", icon: BarChart3, path: null },
+   
+    
     { label: "Settings", icon: Settings, path: "/settings" },
   ],
 
