@@ -49,6 +49,7 @@ import AdminStatistics from "@/pages/admin/AdminStatistics";
 import AdminCreateCourse from "@/pages/admin/AdminCreateCourse";
 import AdminCreateAccount from "@/pages/admin/AdminCreateAccount";
 import ViewInstructor from "@/pages/ViewInstructor"
+import FavoriteList from "@/pages/FavoriteList"
 
 export default function App() {
   useEffect(() => {
@@ -211,6 +212,15 @@ export default function App() {
   element={
     <ProtectedRoute allowedRoles={["admin"]}>
       <AdminFlaggedProjects />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/fav-list"
+  element={
+    <ProtectedRoute allowedRoles={["student", "employer"]}>
+      <FavoriteList />
     </ProtectedRoute>
   }
 />
