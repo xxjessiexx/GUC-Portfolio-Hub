@@ -69,7 +69,6 @@ function inferWorkspace({ explicitWorkspace, pathname, profile }) {
 
 export default function DashboardLayout({
   children,
-  notifications,
   workspace,
   workspaceLabel,
   sidebarProgress,
@@ -122,7 +121,6 @@ export default function DashboardLayout({
       />
 
       <TopNav
-        notifications={notifications}
         workspace={activeWorkspace}
         workspaceLabel={activeWorkspaceLabel}
       />

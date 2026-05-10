@@ -28,7 +28,7 @@ import MetricCard from "@/components/common/MetricCard";
 import FilterSelect from "@/components/common/FilterSelect";
 import AppModal from "@/components/common/AppModal";
 
-import { notifications } from "@/data/studentDashboardData";
+
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 
 const applicantsData = [
@@ -273,7 +273,7 @@ export default function ManageApplicants() {
   };
 
   return (
-    <DashboardLayout notifications={notifications}>
+    <DashboardLayout >
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">

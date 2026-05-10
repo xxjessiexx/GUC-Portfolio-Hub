@@ -28,7 +28,7 @@ import InitialsAvatar from "@/components/common/InitialsAvatar";
 import StatusBadge from "@/components/common/StatusBadge";
 import AppModal from "@/components/common/AppModal";
 
-import { notifications } from "@/data/studentDashboardData";
+
 import { internshipsData } from "@/data/internshipsData";
 import FilterPanel from "@/components/common/FilterPanel";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
@@ -307,7 +307,7 @@ const confirmDeleteInternship = () => {
   };
 
   return (
-    <DashboardLayout notifications={notifications}>
+    <DashboardLayout >
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">

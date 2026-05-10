@@ -5,15 +5,15 @@ import NotificationsTabs from "@/components/notificationPage/notificationTabs";
 
 
 export default function Notifications() {
-const { notifications } = useNotifications();
 
-const count =  notifications.filter(n => n.unread).length;
-const mssg = `You have ${count} unread notifications`;
+const { notifications, unreadCount } = useNotifications();
+const mssg = `You have ${unreadCount} unread notifications`;
 
+console.log(notifications);
 
 return(
 
-<DashboardLayout notifications={notifications}>
+<DashboardLayout >
     <div className="space-y-6">
             <SectionHeader
             title="Notifications"
