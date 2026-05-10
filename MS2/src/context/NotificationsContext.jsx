@@ -22,7 +22,57 @@ import NotificationToast from "@/components/notificationPage/notificationsToast"
 const NotificationsContext = createContext();
 
 const TOAST_DURATION = 4000;
+const NOTIFICATION_SOUND_KEY = "guc-notification-sound-enabled";
 
+function isNotificationSoundEnabled() {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(NOTIFICATION_SOUND_KEY) !== "false";
+}
+function playNotificationSound() {
+  if (typeof window === "undefined") return;
+  if (!isNotificationSoundEnabled()) return;
+
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+
+    const audioContext = new AudioContext();
+
+    const playTone = (startTime, frequency, duration, volume = 0.055) => {
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      oscillator.type = "sine";
+
+      oscillator.frequency.setValueAtTime(frequency, startTime);
+      oscillator.frequency.exponentialRampToValueAtTime(
+        frequency * 0.92,
+        startTime + duration
+      );
+
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration + 0.02);
+    };
+
+    const now = audioContext.currentTime;
+
+    playTone(now, 880, 0.075, 0.045);
+    playTone(now + 0.09, 1175, 0.105, 0.055);
+
+    window.setTimeout(() => {
+      audioContext.close?.();
+    }, 450);
+  } catch {
+    // Browsers may block sound before the user interacts with the page.
+  }
+}
 const DEFAULT_NOTIFICATION_PREFERENCES = {
   muteAll: false,
   inApp: true,
@@ -199,12 +249,14 @@ export function NotificationsProvider({ children }) {
       }, 0);
       return;
     }
+shownToastIdsRef.current.add(nextToast.id);
+setActiveToast(nextToast);
+activeToastRef.current = nextToast;
+playNotificationSound();
 
-    shownToastIdsRef.current.add(nextToast.id);
-    setActiveToast(nextToast);
-    activeToastRef.current = nextToast;
+toastTimerRef.current = window.setTimeout(() => {
 
-    toastTimerRef.current = window.setTimeout(() => {
+   
       setActiveToast(null);
       activeToastRef.current = null;
       toastTimerRef.current = null;
