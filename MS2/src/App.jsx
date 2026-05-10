@@ -55,6 +55,7 @@ import FavoriteProjects from "./pages/FavoriteProjects";
 import AdminOverview from "@/pages/admin/AdminOverview";
 import FeaturedStudents
 from "@/pages/FeaturedStudents";
+import Settings from "./pages/Settings";
 
 export default function App() {
   useEffect(() => {
@@ -516,6 +517,18 @@ export default function App() {
               element={
                 <ProtectedRoute allowedRoles={["employer"]}>
                   <EditInternship />
+                </ProtectedRoute>
+              }
+            />
+
+
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute
+                  allowedRoles={["student", "instructor", "employer", "admin"]}
+                >
+                  <Settings />
                 </ProtectedRoute>
               }
             />

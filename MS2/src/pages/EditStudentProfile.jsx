@@ -8,7 +8,6 @@ import ProfileSelectField from "@/components/profile/ProfileSelectField";
 import SkillsEditor from "@/components/profile/SkillsEditor";
 import DangerActions from "@/components/profile/DangerActions";
 
-import { notifications } from "@/data/studentDashboardData";
 import { useUserProfile } from "@/context/UserProfileContext";
 
 import { Link2 } from "lucide-react";
@@ -28,7 +27,7 @@ export default function EditStudentProfile() {
   const majorOptions = ["MET", "DMET", "CSEN", "BI", "Mechatronics"];
 
   return (
-    <DashboardLayout notifications={notifications}>
+    <DashboardLayout >
       <div className="space-y-6">
         <SectionHeader
           title="Profile Information"

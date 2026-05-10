@@ -25,7 +25,7 @@ import AppModal from "@/components/common/AppModal";
 import FilterSelect from "@/components/common/FilterSelect";
 import StatusBadge from "@/components/common/StatusBadge";
 
-import { notifications } from "@/data/studentDashboardData";
+
 
 const INTERNSHIPS_STORAGE_KEY = "guc-portfolio-internships";
 
@@ -276,7 +276,7 @@ export default function CreateInternship() {
   };
 
   return (
-    <DashboardLayout notifications={notifications}>
+    <DashboardLayout >
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
         <form onSubmit={handlePublish} className="mx-auto max-w-7xl space-y-6">
           <AppCard className="p-6 sm:p-8">

@@ -16,6 +16,8 @@ import {
   normalizeUserRole,
 } from "@/utils/roleRoutes";
 
+import { setCurrentUser as setDemoCurrentUser } from "@/data/demoStore";
+
 function findUserByCredentials(users, email, password) {
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -114,7 +116,10 @@ export default function Login({ users, setCurrentUser }) {
       JSON.stringify(normalizedUser)
     );
 
+    setDemoCurrentUser(normalizedUser);
+
     setCurrentUser(normalizedUser);
+    
 
     navigate(getDashboardRouteByRole(role));
   };

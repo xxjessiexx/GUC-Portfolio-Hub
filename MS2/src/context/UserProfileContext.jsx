@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { student } from "@/data/studentDashboardData";
+import { getCurrentUser, normalizeRole as normalizeStoreRole, setCurrentUser, updateUser } from "@/data/demoStore";
 
 const UserProfileContext = createContext();
 
@@ -57,64 +58,43 @@ const defaultLinks = {
 };
 
 function normalizeRole(value) {
-  const role = String(value || "").trim().toLowerCase();
-
-  if (role.includes("admin")) return "admin";
-  if (role.includes("instructor")) return "instructor";
-  if (role.includes("employer") || role.includes("company")) return "employer";
-  if (role.includes("student")) return "student";
-
-  return "";
+  const role = normalizeStoreRole(value || "");
+  return role || "student";
 }
 
 function buildProfile(currentUser) {
-  const role =
-    normalizeRole(
-      currentUser?.accountRole ||
-        currentUser?.systemRole ||
-        currentUser?.role ||
-        currentUser?.userType
-    ) || "student";
+  const storeUser = currentUser?.id ? getCurrentUser() || currentUser : currentUser;
+  const role = normalizeRole(
+    storeUser?.accountRole || storeUser?.systemRole || storeUser?.role || storeUser?.userType
+  );
 
   const fallback = roleDefaults[role] || roleDefaults.student;
-
-  const major = currentUser?.major || fallback.major || "Computer Science";
-
-  const companyName =
-    currentUser?.companyName ||
-    fallback.companyName ||
-    currentUser?.company ||
-    "";
-
-  const displayName =
-    role === "employer"
-      ? companyName || currentUser?.name || fallback.name
-      : currentUser?.name || fallback.name;
+  const major = storeUser?.major || fallback.major || "Computer Science";
+  const companyName = storeUser?.companyName || fallback.companyName || storeUser?.company || "";
+  const displayName = role === "employer" ? companyName || storeUser?.name || fallback.name : storeUser?.name || fallback.name;
 
   return {
     ...fallback,
-    ...currentUser,
+    ...storeUser,
     name: displayName,
     companyName,
-    email: currentUser?.email || fallback.email,
-    semester: currentUser?.semester || fallback.semester || "1",
-    faculty: currentUser?.faculty || fallback.faculty,
+    email: storeUser?.email || fallback.email,
+    semester: storeUser?.semester || fallback.semester || "1",
+    faculty: storeUser?.faculty || fallback.faculty,
     major,
     role,
     systemRole: role,
     accountRole: role,
-    title: currentUser?.title || fallback.title || roleLabels[role],
-    displayRole:
-      currentUser?.displayRole ||
-      (role === "student" ? `${major} Student` : roleLabels[role]),
+    title: storeUser?.title || fallback.title || roleLabels[role],
+    displayRole: storeUser?.displayRole || (role === "student" ? `${major} Student` : roleLabels[role]),
     bio:
-      currentUser?.bio ||
+      storeUser?.bio ||
       (role === "employer"
         ? "Building practical software, AI tools, and internship pathways for ambitious GUC students."
         : "Passionate about building impactful digital solutions."),
-    image: currentUser?.image || currentUser?.avatar || null,
-    skills: currentUser?.skills || ["Python", "JavaScript", "React", "UI/UX"],
-    links: currentUser?.links || defaultLinks,
+    image: storeUser?.image || storeUser?.avatar || null,
+    skills: storeUser?.skills || ["Python", "JavaScript", "React", "UI/UX"],
+    links: storeUser?.links || defaultLinks,
   };
 }
 
@@ -126,12 +106,19 @@ export function UserProfileProvider({ children, currentUser }) {
     setProfile(buildProfile(currentUser));
   }, [currentUser]);
 
+  useEffect(() => {
+    const refresh = () => setProfile(buildProfile(currentUser));
+    window.addEventListener("demo-current-user-change", refresh);
+    window.addEventListener("demo-db-change", refresh);
+    return () => {
+      window.removeEventListener("demo-current-user-change", refresh);
+      window.removeEventListener("demo-db-change", refresh);
+    };
+  }, [currentUser]);
+
   const updateProfile = (updates) => {
     setProfile((prev) => {
-      const updatedRole = updates.role
-        ? normalizeRole(updates.role) || prev.role
-        : prev.role;
-
+      const updatedRole = updates.role ? normalizeRole(updates.role) || prev.role : prev.role;
       const updatedProfile = {
         ...prev,
         ...updates,
@@ -141,17 +128,14 @@ export function UserProfileProvider({ children, currentUser }) {
       };
 
       try {
-        const storedUser = JSON.parse(
-          sessionStorage.getItem("currentUser") || "{}"
-        );
+        const storedUser = JSON.parse(sessionStorage.getItem("currentUser") || "{}");
+        const sessionUser = { ...storedUser, ...updatedProfile };
+        sessionStorage.setItem("currentUser", JSON.stringify(sessionUser));
 
-        sessionStorage.setItem(
-          "currentUser",
-          JSON.stringify({
-            ...storedUser,
-            ...updatedProfile,
-          })
-        );
+        if (sessionUser.id) {
+          const saved = updateUser(sessionUser.id, updatedProfile);
+          if (saved) setCurrentUser(saved);
+        }
       } catch {
         sessionStorage.setItem("currentUser", JSON.stringify(updatedProfile));
       }

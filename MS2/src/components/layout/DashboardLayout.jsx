@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom";
 import TopNav from "./TopNav";
 import Sidebar from "./Sidebar";
 import DashboardFooter from "@/components/footer/DashboardFooter";
+import FloatingAICompanion from "@/components/aiCompanion/FloatingAICompanion";
 import { useUserProfile } from "@/context/UserProfileContext";
 
 const workspaceLabels = {
@@ -68,7 +69,6 @@ function inferWorkspace({ explicitWorkspace, pathname, profile }) {
 
 export default function DashboardLayout({
   children,
-  notifications,
   workspace,
   workspaceLabel,
   sidebarProgress,
@@ -121,7 +121,6 @@ export default function DashboardLayout({
       />
 
       <TopNav
-        notifications={notifications}
         workspace={activeWorkspace}
         workspaceLabel={activeWorkspaceLabel}
       />
@@ -132,6 +131,8 @@ export default function DashboardLayout({
         workspace={activeWorkspace}
         sidebarProgress={sidebarProgress}
       />
+
+      <FloatingAICompanion />
 
       <div className="relative z-10 min-h-screen pt-20">
         <div className="ml-[92px] w-[calc(100vw-92px)] overflow-x-hidden px-6 py-8">
