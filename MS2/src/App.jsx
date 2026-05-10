@@ -53,6 +53,8 @@ import FavoriteList from "@/pages/FavoriteList"
 import FavoritePortfolios from "./pages/FavoritePortfolios";
 import FavoriteProjects from "./pages/FavoriteProjects";
 import AdminOverview from "@/pages/admin/AdminOverview";
+import FeaturedStudents
+from "@/pages/FeaturedStudents";
 import Settings from "./pages/Settings";
 
 export default function App() {
@@ -175,13 +177,21 @@ export default function App() {
               }
             />
             <Route
-  path="/admin/users"
-  element={
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminUsers />
-    </ProtectedRoute>
-  }
-/>
+          path="/admin/users"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+        path="/featured-students"
+        element={<ProtectedRoute  allowedRoles={["student", "instructor", "employer", "admin"]}>
+                    <FeaturedStudents />
+        </ProtectedRoute>
+        }
+      />
 
 <Route
   path="/admin/employers"
