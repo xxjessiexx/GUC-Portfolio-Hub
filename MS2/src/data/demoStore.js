@@ -6,6 +6,7 @@ import { DEMO_DATA_VERSION, demoSeed } from "@/data/seed";
 import {
   extraDemoEmployerUsers,
   extraDemoInternships,
+  
 } from "@/data/seed/extra-demo-internships-50";
 
 

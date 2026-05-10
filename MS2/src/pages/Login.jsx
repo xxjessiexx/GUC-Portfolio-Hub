@@ -7,6 +7,7 @@ import AuthInput from "@/components/auth/AuthInput";
 import AuthSubmitButton from "@/components/auth/AuthSubmitButton";
 import AuthDivider from "@/components/auth/AuthDivider";
 import AuthBottomLink from "@/components/auth/AuthBottomLink";
+import AuthGradientOrb from "@/components/auth/AuthGradientOrb";
 
 import { Mail, Lock } from "lucide-react";
 import { easeOutExpo, tapScale } from "@/lib/motionVariants";
@@ -119,13 +120,12 @@ export default function Login({ users, setCurrentUser }) {
     setDemoCurrentUser(normalizedUser);
 
     setCurrentUser(normalizedUser);
-    
 
     navigate(getDashboardRouteByRole(role));
   };
 
   return (
-    <AuthLayout>
+    <AuthLayout visual={<AuthGradientOrb />}>
       <AuthHeader
         showBrand
         badge="GUC Portfolio Platform"
