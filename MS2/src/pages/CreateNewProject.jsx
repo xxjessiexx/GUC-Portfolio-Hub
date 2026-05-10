@@ -547,6 +547,9 @@ function InviteBox({
 }
 
 function validateProjectField(field, data) {
+  const isBachelorProjectInput =
+    data.type === "thesis" || data.courseName === "Bachelor Project";
+
   switch (field) {
     case "title":
       if (!data.title.trim()) return "Project title is required.";
@@ -561,20 +564,13 @@ function validateProjectField(field, data) {
       return "";
 
     case "thesisDrafts":
-    if (
-      data.courseName !==
-      "Bachelor Project"
-    ) {
+      if (!isBachelorProjectInput) return "";
+
+      if (data.thesisDrafts.length === 0) {
+        return "Upload at least one thesis draft.";
+      }
+
       return "";
-    }
-
-    if (
-      data.thesisDrafts.length === 0
-    ) {
-      return "Upload at least one thesis draft.";
-    }
-
-    return "";
 
     case "description":
       if (!data.description.trim()) return "Project description is required.";
@@ -611,6 +607,72 @@ function validateInviteEmail(value, existing) {
   if (existing.includes(clean)) return "This email is already added.";
   return "";
 }
+function ThesisDraftsSection({
+  drafts,
+  error,
+  onUpload,
+  onSetFinal,
+  onRemove,
+}) {
+  return (
+    <div className="space-y-4">
+      <FileDropField
+        label="Upload Thesis Draft"
+        required
+        accept="application/pdf"
+        icon={FileText}
+        onChange={onUpload}
+        error={error}
+        helper="Upload one or more thesis drafts. You can later select one as the final public draft."
+      />
+
+      <div className="space-y-3">
+        {drafts.map((draft) => (
+          <div
+            key={draft.id}
+            className={`flex items-center justify-between rounded-2xl border p-4 ${
+              draft.isFinal
+                ? "border-[color:var(--primary)]/30 bg-blue-50"
+                : "border-white/60 bg-[var(--surface-soft)]"
+            }`}
+          >
+            <div>
+              <p className="font-black text-[color:var(--ink)]">
+                {draft.file?.name || draft.name || "Thesis Draft"}
+              </p>
+
+              <p className="text-xs font-semibold text-[color:var(--muted)]">
+                {draft.isFinal
+                  ? "Final Draft · Public"
+                  : "Private Draft · Hidden from instructors and viewers"}
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              {!draft.isFinal && (
+                <AppButton
+                  type="button"
+                  onClick={() => onSetFinal(draft.id)}
+                  className="min-h-12 rounded-2xl bg-[var(--primary)] px-4 font-black text-white shadow-[var(--shadow-brand)] transition hover:-translate-y-0.5 hover:bg-[var(--dark)]"
+                >
+                  Set Final
+                </AppButton>
+              )}
+
+              <AppButton
+                type="button"
+                onClick={() => onRemove(draft.id)}
+                className="min-h-12 rounded-2xl bg-red-500 px-4 text-white transition hover:-translate-y-0.5 hover:bg-red-600"
+              >
+                Remove
+              </AppButton>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function CreateNewProject() {
   const [availableCourses, setAvailableCourses] = useState(FALLBACK_COURSES);
@@ -628,6 +690,8 @@ export default function CreateNewProject() {
   }, []);
 
   const [formData, setFormData] = useState(initialProjectData);
+  const isBachelorProjectForm =
+  formData.type === "thesis" || formData.courseName === "Bachelor Project";
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [saveMessage, setSaveMessage] = useState({ type: "", message: "" });
@@ -649,25 +713,26 @@ export default function CreateNewProject() {
   });
 
   const updateField = (field, value) => {
-    const nextData = { ...formData, [field]: value };
-    setFormData(nextData);
-    setSaveMessage({ type: "", message: "" });
+  const nextData = { ...formData, [field]: value };
 
-    if (touched[field] || errors[field]) {
-      setErrors((current) => ({
-        ...current,
-        [field]: validateProjectField(field, nextData),
-      }));
-    }
+  setFormData(nextData);
+  setSaveMessage({ type: "", message: "" });
 
-    if (field === "type") {
-      setErrors((current) => ({
-        ...current,
-        courseName: validateProjectField("courseName", nextData),
-        thesisFile: validateProjectField("thesisFile", nextData),
-      }));
-    }
-  };
+  if (touched[field] || errors[field]) {
+    setErrors((current) => ({
+      ...current,
+      [field]: validateProjectField(field, nextData),
+    }));
+  }
+
+  if (field === "type" || field === "courseName") {
+    setErrors((current) => ({
+      ...current,
+      courseName: validateProjectField("courseName", nextData),
+      thesisDrafts: validateProjectField("thesisDrafts", nextData),
+    }));
+  }
+};
 
   const handleBlur = (field) => {
     setTouched((current) => ({ ...current, [field]: true }));
@@ -749,15 +814,24 @@ export default function CreateNewProject() {
   }));
 };
 const removeDraft = (draftId) => {
-  setFormData((current) => ({
-    ...current,
+  setFormData((current) => {
+    const remainingDrafts = current.thesisDrafts.filter(
+      (draft) => draft.id !== draftId
+    );
 
-    thesisDrafts:
-      current.thesisDrafts.filter(
-        (draft) =>
-          draft.id !== draftId
-      ),
-  }));
+    const stillHasFinal = remainingDrafts.some((draft) => draft.isFinal);
+
+    return {
+      ...current,
+      thesisDrafts: stillHasFinal
+        ? remainingDrafts
+        : remainingDrafts.map((draft) => ({
+            ...draft,
+            isFinal: false,
+            visibility: "private",
+          })),
+    };
+  });
 };
 
   const addTag = () => {
@@ -1318,7 +1392,7 @@ const removeDraft = (draftId) => {
         >
           <div>
             <p className="font-black text-[color:var(--ink)]">
-              {draft.file.name}
+              {draft.file?.name || draft.name || "Thesis Draft"}
             </p>
 
             <p className="text-xs font-semibold text-[color:var(--muted)]">

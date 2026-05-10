@@ -10,6 +10,9 @@ import SortableCard from "@/components/ui/SortableCard";
 import {
   Eye,
   EyeOff,
+  FileText,
+  Globe2,
+  Lock,
   Star,
   Users,
 } from "lucide-react";
@@ -184,9 +187,13 @@ function normalizeProjectForPage(storeProject) {
     ownerName: getDisplayName(owner),
     ownerId: owner?.id || storeProject.ownerId,
 
-    tasks: rawTasks.length > 0 ? rawTasks : fallbackTasks,
+   tasks: rawTasks.length > 0 ? rawTasks : fallbackTasks,
 
-    feedback: storeProject.feedback || storeProject.instructorFeedback || null,
+thesisDrafts: Array.isArray(storeProject.thesisDrafts)
+  ? storeProject.thesisDrafts
+  : [],
+
+feedback: storeProject.feedback || storeProject.instructorFeedback || null,
   };
 }
 
@@ -281,7 +288,39 @@ export default function ProjectPage() {
 
   const canViewComments = isCreator || isCollaborator || isInstructor;
 
-  const isBachelorProject = project?.type === "Bachelor Project";
+const isBachelorProject = project?.type === "Bachelor Project";
+
+const thesisDrafts = project?.thesisDrafts || [];
+
+const visibleThesisDrafts = isCreator
+  ? thesisDrafts
+  : thesisDrafts.filter(
+      (draft) => draft.isFinal && draft.visibility === "public"
+    );
+
+const finalThesisDraft = thesisDrafts.find(
+  (draft) => draft.isFinal && draft.visibility === "public"
+);
+
+const setFinalThesisDraft = (draftId) => {
+  if (!project?.id || !isCreator) return;
+
+  const nextDrafts = thesisDrafts.map((draft) => ({
+    ...draft,
+    isFinal: draft.id === draftId,
+    visibility: draft.id === draftId ? "public" : "private",
+  }));
+
+  setProject((current) => ({
+    ...current,
+    thesisDrafts: nextDrafts,
+  }));
+
+  updateProject(project.id, {
+    thesisDrafts: nextDrafts,
+    updatedAt: new Date().toISOString(),
+  });
+};
 
   const updateTaskStatus = (id, newStatus) => {
     const nextTasks = tasks.map((task) =>
@@ -411,20 +450,27 @@ export default function ProjectPage() {
           </div>
 
           <div className="flex gap-6 border-b border-[color:var(--primary)]/10 pb-2">
-            {["overview", "tasks", "feedback"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-2 text-sm font-black capitalize ${
-                  activeTab === tab
-                    ? "border-b-2 border-[var(--primary)] text-[var(--primary)]"
-                    : "text-[color:var(--muted)]"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+  {[
+    { key: "overview", label: "Overview" },
+    { key: "tasks", label: "Tasks" },
+    { key: "feedback", label: "Feedback" },
+    ...(isBachelorProject
+      ? [{ key: "bachelor-thesis", label: "Bachelor Thesis" }]
+      : []),
+  ].map((tab) => (
+    <button
+      key={tab.key}
+      onClick={() => setActiveTab(tab.key)}
+      className={`pb-2 text-sm font-black ${
+        activeTab === tab.key
+          ? "border-b-2 border-[var(--primary)] text-[var(--primary)]"
+          : "text-[color:var(--muted)]"
+      }`}
+    >
+      {tab.label}
+    </button>
+  ))}
+</div>
 
           {activeTab === "overview" && (
             <div className="space-y-6">
@@ -847,6 +893,134 @@ export default function ProjectPage() {
               </div>
             </div>
           )}
+
+          {activeTab === "bachelor-thesis" && isBachelorProject && (
+  <div className="space-y-6">
+    <div>
+      <h3 className="text-xl font-black text-[var(--primary)]">
+        Bachelor Thesis
+      </h3>
+
+      <p className="mt-1 text-sm font-semibold text-[var(--muted)]">
+        {isCreator
+          ? "Manage your thesis drafts and select the final public draft."
+          : "Only the selected final thesis draft is visible."}
+      </p>
+    </div>
+
+    {visibleThesisDrafts.length === 0 ? (
+      <div className="rounded-2xl border border-dashed border-[color:var(--primary)]/20 bg-white/60 p-6 text-center">
+        <FileText className="mx-auto h-8 w-8 text-[color:var(--primary)]/60" />
+
+        <p className="mt-3 text-sm font-bold text-[var(--muted)]">
+          {isCreator
+            ? "No thesis drafts uploaded yet."
+            : "No final thesis draft has been published yet."}
+        </p>
+      </div>
+    ) : (
+      <div className="space-y-3">
+        {visibleThesisDrafts.map((draft) => {
+          const fileName =
+            draft.file?.name || draft.name || "Thesis Draft";
+
+          const isFinal =
+            draft.isFinal && draft.visibility === "public";
+
+          return (
+            <div
+              key={draft.id}
+              className={`flex flex-col gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
+                isFinal
+                  ? "border-[color:var(--primary)]/30 bg-blue-50"
+                  : "border-white/60 bg-white/70"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${
+                    isFinal
+                      ? "bg-[color:var(--primary)] text-white"
+                      : "bg-white text-[color:var(--primary)]"
+                  }`}
+                >
+                  <FileText className="h-5 w-5" />
+                </div>
+
+                <div>
+                  <p className="font-black text-[color:var(--ink)]">
+                    {fileName}
+                  </p>
+
+                  <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-[color:var(--muted)]">
+                    {isFinal ? (
+                      <>
+                        <Globe2 className="h-3.5 w-3.5" />
+                        Final Draft · Public
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="h-3.5 w-3.5" />
+                        Private Draft · Hidden from instructors and viewers
+                      </>
+                    )}
+                  </p>
+
+                  {draft.uploadedAt && (
+                    <p className="mt-1 text-xs font-semibold text-[color:var(--muted)]">
+                      Uploaded{" "}
+                      {new Date(draft.uploadedAt).toLocaleDateString(
+                        "en-GB",
+                        {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        }
+                      )}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {isFinal && (
+                  <span className="rounded-full bg-[color:var(--primary)] px-3 py-1 text-xs font-black text-white">
+                    Final
+                  </span>
+                )}
+
+                {isCreator && !isFinal && (
+                  <button
+                    type="button"
+                    onClick={() => setFinalThesisDraft(draft.id)}
+                    className="rounded-xl bg-[var(--primary)] px-4 py-2 text-xs font-black text-white transition hover:bg-[var(--dark)]"
+                  >
+                    Set as Final Draft
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+
+    {isCreator && finalThesisDraft && (
+      <div className="rounded-2xl border border-[color:var(--primary)]/20 bg-[color:var(--accent)]/15 p-4">
+        <p className="text-sm font-bold text-[color:var(--primary)]">
+          Current final draft:{" "}
+          {finalThesisDraft.file?.name ||
+            finalThesisDraft.name ||
+            "Thesis Draft"}
+        </p>
+
+        <p className="mt-1 text-xs font-semibold text-[color:var(--muted)]">
+          All other drafts are private and hidden from everyone except you.
+        </p>
+      </div>
+    )}
+  </div>
+)}
         </AppCard>
       </div>
     </DashboardLayout>
