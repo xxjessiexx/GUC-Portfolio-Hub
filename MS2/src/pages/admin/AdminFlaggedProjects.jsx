@@ -29,17 +29,7 @@ export default function AdminFlaggedProjects() {
   const { flaggedProjects, appeals, actions } =
   useAdminModuleData();
 
-const savedFlaggedProjects =
-  JSON.parse(
-    localStorage.getItem(
-      "flaggedProjects"
-    )
-  ) || [];
 
-const allFlaggedProjects = [
-  ...flaggedProjects,
-  ...savedFlaggedProjects,
-];
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -51,7 +41,7 @@ const allFlaggedProjects = [
 
   const filtered = useMemo(
     () =>
-      allFlaggedProjects.filter((project) => {
+      flaggedProjects.filter((project) => {
         const haystack =
           `${project.title} ${project.student} ${project.course} ${project.reason}`.toLowerCase();
 
@@ -82,47 +72,7 @@ const allFlaggedProjects = [
       decision.nextStatus === "rejected" &&
       !note.trim();
 
-      if (decision.active) {
-
-  /* REMOVE FROM REPORTED */
-
-  const reported =
-    JSON.parse(
-      localStorage.getItem(
-        "reportedProjects"
-      )
-    ) || [];
-
-  const updatedReported =
-    reported.filter(
-      (id) => id !== decision.project.id
-    );
-
-  localStorage.setItem(
-    "reportedProjects",
-    JSON.stringify(updatedReported)
-  );
-
-  /* UPDATE FLAG STATUS */
-
-  const savedFlags =
-    JSON.parse(
-      localStorage.getItem(
-        "flaggedProjects"
-      )
-    ) || [];
-
-  const updatedFlags =
-  savedFlags.filter(
-    (project) =>
-      project.id !== decision.project.id
-  );
-  
-  localStorage.setItem(
-    "flaggedProjects",
-    JSON.stringify(updatedFlags)
-  );
-}
+     
 
     if (projectNeedsNote || appealNeedsNote) return;
 

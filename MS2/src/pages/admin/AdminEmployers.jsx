@@ -394,7 +394,7 @@ const displayedEmployers = dbEmployers.length ? dbEmployers : employers;
                             size="sm"
                             onClick={() =>
                               setPreviewDocument({
-                                employer: selectedEmployer || employer,
+                                employer: selectedEmployer ,
                                 document,
                               })
                             }
