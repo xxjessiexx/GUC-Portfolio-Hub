@@ -153,9 +153,6 @@ export default function AdminUsers() {
         eyebrow="User Management"
         title="Manage Platform Users"
         description="View all users with their full name, email and role. Activation changes use confirmation notes for safer admin workflows."
-        actionLabel="Create Admin"
-        actionTo="/admin/users/create-admin"
-        icon={UserPlus}
       />
 
       <SearchFilterToolbar

@@ -26,6 +26,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import { Input } from "@/components/ui/input";
 import { useUserProfile } from "@/context/UserProfileContext";
+import { ViewAllButton } from "@/components/ui/ViewAllButton";
 import {
   getCurrentUser,
   getUserById,
@@ -260,18 +261,15 @@ function ScoreBadge({ rating }) {
 
 function ProfileInfoRow({ icon: Icon, label, value }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/60 bg-white/55 px-4 py-3 shadow-[0_10px_24px_rgba(53,88,114,0.05)] dark:border-white/10 dark:bg-white/[0.035]">
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-[#355872] dark:text-[#9CD5FF]" />
+    <div className="flex items-start gap-3 px-4 py-3">
+      <Icon className="mt-1 h-4 w-4 text-[#355872] dark:text-[#9CD5FF]" />
 
-        <span className="text-sm font-black text-[color:var(--ink)]">
-          {label}
-        </span>
+      <div>
+        <p className="text-sm font-black text-[color:var(--ink)]">{label}</p>
+        <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
+          {value || "Not added"}
+        </p>
       </div>
-
-      <span className="text-sm font-semibold text-[color:var(--muted)]">
-        {value || "Not added"}
-      </span>
     </div>
   );
 }
@@ -280,30 +278,28 @@ function LinkRow({ icon: Icon, label, value }) {
   const href = normalizeUrl(value);
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/60 bg-white/55 px-4 py-3 shadow-[0_10px_24px_rgba(53,88,114,0.05)] dark:border-white/10 dark:bg-white/[0.035]">
-      <div className="flex min-w-0 items-center gap-2">
-        <Icon className="h-4 w-4 shrink-0 text-[#355872] dark:text-[#9CD5FF]" />
+    <div className="flex items-start gap-3 px-4 py-3">
+      <Icon className="mt-1 h-4 w-4 shrink-0 text-[#355872] dark:text-[#9CD5FF]" />
 
-        <span className="text-sm font-black text-[color:var(--ink)]">
-          {label}
-        </span>
-      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-black text-[color:var(--ink)]">{label}</p>
 
-      <div className="flex min-w-0 items-center gap-2">
-        <span className="max-w-[170px] truncate text-sm font-semibold text-[color:var(--muted)]">
-          {value || "Not added"}
-        </span>
+        <div className="mt-1 flex min-w-0 items-center gap-2">
+          <span className="truncate text-sm font-semibold text-[color:var(--muted)]">
+            {value || "Not added"}
+          </span>
 
-        {href ? (
-          <a
-            href={href}
-            target="_blank"
-            rel="noreferrer"
-            className="grid h-8 w-8 place-items-center rounded-xl border border-[#355872]/10 bg-white/80 text-[#355872] transition hover:bg-white dark:border-white/10 dark:bg-white/10 dark:text-[#9CD5FF]"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        ) : null}
+          {href ? (
+            <a
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 text-[#355872] transition hover:opacity-70 dark:text-[#9CD5FF]"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          ) : null}
+        </div>
       </div>
     </div>
   );
@@ -345,6 +341,8 @@ function PortfolioHeader({ page, viewMode = "own", viewedName = "", onOpenSaveDi
         <p className="mt-3 max-w-3xl text-base font-semibold leading-7 text-[color:var(--muted)]">
           {isManage
             ? "Control your public portfolio, pin featured work, remove projects, edit entries, and save changes when you are done."
+            : isPublic
+            ? "Review this student's public work, featured projects, skills, portfolio links, and academic contributions."
             : "Showcase your public work, featured projects, instructor scores, skills, and portfolio links."}
         </p>
       </div>
@@ -434,30 +432,31 @@ function PortfolioTopCard({ profile, stats, page, canManageProfile = false }) {
               value={profile?.semester || "6"}
             />
 
-            <div className="rounded-[1.15rem] border border-white/60 bg-white/58 px-4 py-3 shadow-[0_10px_24px_rgba(53,88,114,0.06)] dark:border-white/10 dark:bg-white/[0.04]">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-[#355872] dark:text-[#9CD5FF]" />
-                  <span className="text-sm font-black text-[color:var(--ink)]">
-                    Skills
-                  </span>
+            <div className="px-4 py-3">
+              <div className="flex items-start gap-3">
+                <Star className="mt-1 h-4 w-4 text-[#355872] dark:text-[#9CD5FF]" />
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-black text-[color:var(--ink)]">Skills</p>
+
+                    <span className="text-sm font-bold text-[color:var(--muted)]">
+                      {skills.length} added
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {skills.length > 0 ? (
+                      skills.slice(0, 4).map((skill) => (
+                        <SkillChip key={skill}>{skill}</SkillChip>
+                      ))
+                    ) : (
+                      <span className="text-xs font-semibold text-[color:var(--muted)]">
+                        No skills added yet
+                      </span>
+                    )}
+                  </div>
                 </div>
-
-                <span className="text-sm font-bold text-[color:var(--muted)]">
-                  {skills.length} added
-                </span>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                {skills.length > 0 ? (
-                  skills.slice(0, 4).map((skill) => (
-                    <SkillChip key={skill}>{skill}</SkillChip>
-                  ))
-                ) : (
-                  <span className="text-xs font-semibold text-[color:var(--muted)]">
-                    No skills added yet
-                  </span>
-                )}
               </div>
             </div>
           </div>
@@ -682,7 +681,7 @@ function ProjectHeader({
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(122,170,206,0.18),transparent_32%),radial-gradient(circle_at_82%_82%,rgba(230,199,123,0.08),transparent_34%)]" />
 
-      <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+      <div className="absolute left-4 top-4 z-10 flex items-center gap-2">
         <VisibilityBadge visibility={project.visibility} />
 
         {project.pinned ? (
@@ -695,7 +694,7 @@ function ProjectHeader({
                 onTogglePin(project);
               }
             }}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(230,199,123,0.18)] px-3 py-1.5 text-xs font-black text-[#E6C77B] transition hover:bg-[rgba(230,199,123,0.28)]"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-[rgba(230,199,123,0.18)] px-3 text-xs font-black text-[#E6C77B] transition hover:bg-[rgba(230,199,123,0.28)]"
             title={page === "manage" ? "Unpin project" : "Pinned project"}
           >
             <Pin className="h-3.5 w-3.5" />
@@ -708,7 +707,7 @@ function ProjectHeader({
               event.stopPropagation();
               onTogglePin(project);
             }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/18 bg-white/10 px-3 py-1.5 text-xs font-black text-white transition hover:bg-white/18"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-white/18 bg-white/10 px-3 text-xs font-black text-white transition hover:bg-white/18"
           >
             <Pin className="h-3.5 w-3.5" />
             Pin
@@ -726,14 +725,18 @@ function ProjectHeader({
         </div>
       ) : null}
 
-      <div className="absolute bottom-4 left-4 right-4">
+      <div
+        className={`absolute left-4 right-4 ${
+          compact ? "top-[4.35rem]" : "bottom-4"
+        }`}
+      >
         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
           {project.type}
         </p>
 
         <h3
           className={`mt-2 line-clamp-2 font-black leading-tight text-white ${
-            compact ? "text-2xl" : "text-[1.7rem]"
+            compact ? "text-[1.55rem]" : "text-[1.7rem]"
           }`}
         >
           {project.title}
@@ -922,7 +925,7 @@ function HorizontalProjectCard({
             <ScoreBadge rating={project.rating} />
           </div>
 
-          <div className="mt-4 rounded-[1.15rem] border border-[#355872]/10 bg-[linear-gradient(135deg,rgba(53,88,114,0.07),rgba(255,255,255,0.9))] px-4 py-3 shadow-[0_8px_18px_rgba(53,88,114,0.04)] dark:border-white/10 dark:bg-white/[0.05]">
+          <div className="mt-4 px-1 py-1">
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#355872] dark:text-[#9CD5FF]">
               Project Summary
             </p>
@@ -1044,11 +1047,169 @@ function EmptyState({ title, description, action }) {
     </div>
   );
 }
+function InternshipsGrid({
+  internships = [],
+  useInlineExpand = false,
+  isExpanded = false,
+  onToggleExpand,
+}) {
+  
+
+  return (
+    <AppCard className="p-5">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <FolderKanban className="h-5 w-5 text-[#355872] dark:text-[#9CD5FF]" />
+
+          <h2 className="text-2xl font-black text-[color:var(--ink)]">
+            Internships
+          </h2>
+        </div>
+
+        {useInlineExpand ? (
+          <PrimaryButton
+            onClick={onToggleExpand}
+            className="h-14 min-w-[150px] rounded-[1.35rem] bg-gradient-to-r from-[#2E4053] to-[#77A9CC] px-8 text-base shadow-none hover:from-[#263849] hover:to-[#6A9DBF]"
+          >
+            {isExpanded ? "Show Less" : "View All"}
+          </PrimaryButton>
+        ) : (
+          <PrimaryButton
+            to="/internships"
+            className="h-14 min-w-[150px] rounded-[1.35rem] bg-gradient-to-r from-[#2E4053] to-[#77A9CC] px-8 text-base shadow-none hover:from-[#263849] hover:to-[#6A9DBF]"
+          >
+            View All
+          </PrimaryButton>
+        )}
+      </div>
+
+      {internships.length > 0 ? (
+        <div className="space-y-4">
+          {internships.map((internship) => (
+            <motion.article
+              key={internship.id}
+              whileHover={{ y: -3 }}
+              transition={{ duration: 0.18 }}
+              className="group cursor-pointer overflow-hidden rounded-[1.65rem] border border-white/70 bg-white/74 shadow-[0_18px_44px_rgba(53,88,114,0.09)] dark:border-white/10 dark:bg-white/[0.045]"
+            >
+              <div className="grid min-h-[210px] lg:grid-cols-[260px_1fr]">
+                <div className="relative overflow-hidden bg-[#071C2C] dark:bg-[#071521]">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(122,170,206,0.18),transparent_32%),radial-gradient(circle_at_82%_82%,rgba(230,199,123,0.08),transparent_34%)]" />
+
+                  <div className="absolute left-4 top-4 z-10">
+                    <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 text-xs font-black text-[#9CD5FF] backdrop-blur-md">
+                      <FolderKanban className="h-3.5 w-3.5" />
+                      Internship
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+                      {internship.company || "Company"}
+                    </p>
+
+                    <h3 className="mt-2 line-clamp-2 text-[1.7rem] font-black leading-tight text-white">
+                      {internship.title || internship.role || "Internship"}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex h-full flex-col p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-lg font-black text-[color:var(--ink)]">
+                        {internship.title || internship.role || "Internship"}
+                      </p>
+
+                      <p className="mt-1 text-xs font-bold text-[color:var(--muted)]">
+                        {internship.company || "Company not added"} •{" "}
+                        {internship.location || "Location not added"}
+                      </p>
+                    </div>
+
+                    <ScoreBadge rating={internship.rating || "4.8"} />
+                  </div>
+
+                  <div className="mt-4 px-1 py-1">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#355872] dark:text-[#9CD5FF]">
+                      Internship Summary
+                    </p>
+
+                    <p className="mt-2 line-clamp-2 text-xs font-semibold leading-6 text-[color:var(--muted)]">
+                      {internship.overview ||
+                        internship.details ||
+                        internship.description ||
+                        internship.summary ||
+                        "No internship description added yet."}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 grid gap-2 sm:grid-cols-4">
+                    <MiniMetric
+                      label="Type"
+                      value={internship.type || "Internship"}
+                      tone="navy"
+                    />
+
+                    <MiniMetric
+                      label="Duration"
+                      value={internship.duration || "Not added"}
+                      tone="soft"
+                    />
+
+                    <MiniMetric
+                      label="Status"
+                      value={internship.status || "Completed"}
+                      tone="blue"
+                    />
+
+                    <MiniMetric
+                      label="Updated"
+                      value={
+                        internship.updatedAt
+                          ? formatDate(internship.updatedAt)
+                          : internship.deadline
+                          ? `Deadline ${formatDate(internship.deadline)}`
+                          : internship.postedAt || "Unknown"
+                      }
+                      tone="soft"
+                    />
+                  </div>
+
+                  <div className="mt-auto flex flex-wrap gap-3 pt-4">
+                    {internship.link ? (
+                      <SoftButton
+                        href={normalizeUrl(internship.link)}
+                        className="h-10 px-4 text-xs"
+                      >
+                        View Internship
+                        <ExternalLink className="h-4 w-4" />
+                      </SoftButton>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </motion.article>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          title="No internships added yet."
+          description="Internships will appear here once added to the portfolio."
+        />
+      )}
+    </AppCard>
+  );
+}
 
 function ProjectsGrid({
   title,
   projects,
   page,
+  showViewAll = false,
+  useInlineExpand = false,
+  isExpanded = false,
+  onToggleExpand,
   onOpenProject,
   onTogglePin,
   onEditProject,
@@ -1056,12 +1217,32 @@ function ProjectsGrid({
 }) {
   return (
     <AppCard className="p-5">
-      <div className="mb-4 flex items-center gap-2">
-        <FolderKanban className="h-5 w-5 text-[#355872] dark:text-[#9CD5FF]" />
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <FolderKanban className="h-5 w-5 text-[#355872] dark:text-[#9CD5FF]" />
 
-        <h2 className="text-2xl font-black text-[color:var(--ink)]">
-          {title}
-        </h2>
+          <h2 className="text-2xl font-black text-[color:var(--ink)]">
+            {title}
+          </h2>
+        </div>
+
+        {showViewAll ? (
+          useInlineExpand ? (
+            <PrimaryButton
+              onClick={onToggleExpand}
+              className="h-14 min-w-[150px] rounded-[1.35rem] bg-gradient-to-r from-[#2E4053] to-[#77A9CC] px-8 text-base shadow-none hover:from-[#263849] hover:to-[#6A9DBF]"
+            >
+              {isExpanded ? "Show Less" : "View All"}
+            </PrimaryButton>
+          ) : (
+            <PrimaryButton
+              to="/view-all-projects"
+              className="h-14 min-w-[150px] rounded-[1.35rem] bg-gradient-to-r from-[#2E4053] to-[#77A9CC] px-8 text-base shadow-none hover:from-[#263849] hover:to-[#6A9DBF]"
+            >
+              View All
+            </PrimaryButton>
+          )
+        ) : null}
       </div>
 
       {projects.length > 0 ? (
@@ -1412,6 +1593,7 @@ export function PortfolioPageShell({ page = "preview" }) {
   const [storeProjects, setStoreProjects] = useState([]);
   const [courses, setCourses] = useState([]);
   const [users, setUsers] = useState([]);
+  const [internships, setInternships] = useState([]);
   const [viewedUser, setViewedUser] = useState(null);
   const [viewMode, setViewMode] = useState("own");
 
@@ -1425,6 +1607,8 @@ export function PortfolioPageShell({ page = "preview" }) {
   const [search, setSearch] = useState("");
   const [projectType, setProjectType] = useState("all");
   const [sortBy, setSortBy] = useState("date");
+  const [showAllProjects, setShowAllProjects] = useState(false);
+  const [showAllInternships, setShowAllInternships] = useState(false);
 
   const refreshPortfolioData = () => {
     const currentUser = getCurrentUser();
@@ -1454,6 +1638,7 @@ export function PortfolioPageShell({ page = "preview" }) {
     setUsers(allUsers);
     setViewedUser(targetUser || currentUser || null);
     setStoreProjects(getProjectsForUser(targetUserId) || []);
+    setInternships(getCollection("internships") || []);
   };
 
   useEffect(() => {
@@ -1552,6 +1737,18 @@ export function PortfolioPageShell({ page = "preview" }) {
       averageRating: average,
     };
   }, [publicProjects]);
+
+  const acceptedInternships = useMemo(() => {
+  return internships.filter((internship) => {
+    const status = String(internship.status || "").toLowerCase();
+
+    return (
+      status === "accepted" ||
+      status === "filled" ||
+      status === "completed"
+    );
+  });
+}, [internships]);
 
   const updateDraftOverride = (projectId, patch) => {
     setDraftOverrides((current) => ({
@@ -1692,12 +1889,30 @@ export function PortfolioPageShell({ page = "preview" }) {
 
         <ProjectsGrid
           title="All Public Projects"
-          projects={filteredProjects}
+          projects={viewMode === "public" && showAllProjects ? filteredProjects : filteredProjects.slice(0, 3)}
+          showViewAll
+          useInlineExpand={viewMode === "public"}
+          isExpanded={showAllProjects}
+          onToggleExpand={() =>
+            setShowAllProjects((current) => !current)
+          }
           page={page}
           onOpenProject={handleOpenProject}
           onTogglePin={handleTogglePin}
           onEditProject={handleEditProject}
           onDeleteRequest={setProjectToDelete}
+        />
+        <InternshipsGrid
+          internships={
+            viewMode === "public" && showAllInternships
+              ? acceptedInternships
+              : acceptedInternships.slice(0, 3)
+          }
+          useInlineExpand={viewMode === "public"}
+          isExpanded={showAllInternships}
+          onToggleExpand={() =>
+            setShowAllInternships((current) => !current)
+          }
         />
       </div>
     </DashboardLayout>

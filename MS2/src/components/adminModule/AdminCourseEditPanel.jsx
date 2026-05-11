@@ -61,14 +61,19 @@ export default function AdminCourseEditPanel({
             Cancel
           </AppButton>
 
-          <AppButton variant="brand" size="sm" onClick={onSave}>
+          <AppButton
+              variant="brand"
+              size="sm"
+              onClick={onSave}
+              className="text-[color:var(--primary)] disabled:text-[color:var(--primary)] disabled:opacity-70"
+            >
             <Save className="size-4" />
             Save changes
           </AppButton>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
         <EditField
           label="Code"
           value={editingCourse.code}
@@ -87,23 +92,8 @@ export default function AdminCourseEditPanel({
           placeholder="Software Engineering"
         />
 
-        <EditField
-          label="Type"
-          value={editingCourse.type}
-          onChange={(value) =>
-            setEditingCourse((prev) => ({ ...prev, type: value }))
-          }
-          placeholder="Course"
-        />
+      
 
-        <EditField
-          label="Instructor"
-          value={editingCourse.instructor}
-          onChange={(value) =>
-            setEditingCourse((prev) => ({ ...prev, instructor: value }))
-          }
-          placeholder="Unassigned"
-        />
       </div>
 
       <label className="mt-5 block space-y-2">
