@@ -59,7 +59,7 @@ const workspaceItems = {
   instructor: [
     { label: "Home", icon: Home, path: "/instructor-dashboard" },
     { label: "Explore", icon: SearchIcon, path: "/discover" },
-    { label: "Projects", icon: FolderKanban, path: "/view-all-projects" },
+    { label: "Projects", icon: FolderKanban, path: "/instructor/projects" },
     { label: "My Courses", icon: BookCheckIcon, path: "/instructor/my-courses" },
     { label: "Courses", icon: BookOpen, path: "/instructor/courses" },
     { label: "Invitations", icon: ClipboardCheck, path: "/instructor/invitations" },
