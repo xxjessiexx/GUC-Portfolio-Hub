@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
+import { Search, UserPlus, X } from "lucide-react";
 
+import AppModal from "@/components/common/AppModal";
 import { addNotification, updateProject } from "@/data/demoStore";
 
 function makeId(prefix) {
@@ -61,19 +63,17 @@ function normalizeStatus(value) {
 function statusClassName(status) {
   const clean = normalizeStatus(status);
 
-  if (clean === "accepted") return "bg-green-100 text-green-700";
-  if (clean === "rejected") return "bg-red-100 text-red-600";
-  if (clean === "cancelled") return "bg-gray-100 text-gray-500";
+  if (clean === "accepted") return "bg-emerald-100 text-emerald-700";
+  if (clean === "rejected") return "bg-rose-100 text-rose-600";
+  if (clean === "cancelled") return "bg-slate-100 text-slate-500";
 
-  return "bg-yellow-100 text-yellow-700";
+  return "bg-amber-100 text-amber-700";
 }
 
 function roleBadgeClassName(type) {
-  if (type === "instructor") {
-    return "bg-[#EAF6FF] text-[var(--primary)]";
-  }
+  if (type === "instructor") return "bg-sky-100 text-[var(--primary)]";
 
-  return "bg-[rgba(156,213,255,0.25)] text-[var(--primary)]";
+  return "bg-[rgba(156,213,255,0.28)] text-[var(--primary)]";
 }
 
 function EmptyState({ title, description }) {
@@ -85,19 +85,32 @@ function EmptyState({ title, description }) {
   );
 }
 
-function makeNotification(userId, title, body, projectId) {
+function Avatar({ user, fallbackIndex = 1, size = "h-11 w-11" }) {
+  return (
+    <img
+      src={getImageForUser(user, fallbackIndex)}
+      alt={getDisplayName(user)}
+      className={`${size} shrink-0 rounded-full object-cover ring-2 ring-white`}
+    />
+  );
+}
+
+function makeNotification(userId, title, body, projectId, invitationRole) {
   if (!userId) return;
 
   addNotification({
     id: makeId("notification"),
     userId,
     title,
+    text: body,
     body,
     message: body,
-    type: "project",
+    type: "project-invite",
     projectId,
+    invitationRole,
     unread: true,
     createdAt: new Date().toISOString(),
+    time: new Date().toLocaleString(),
   });
 }
 
@@ -129,74 +142,181 @@ function uniqueRows(rows) {
   });
 }
 
-function RelationshipRow({
+function PersonCard({
   row,
   index,
-  canManageCollaborators,
+  canCancelInvitations,
+  canRemoveCollaborators,
   onCancel,
   onRemove,
 }) {
   const status = normalizeStatus(row.status);
+  const isPending = status === "no reply";
+  const isAcceptedCollaborator = row.type === "collaborator" && status === "accepted";
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white/60 p-4">
-      <div className="flex items-center gap-3">
-        <img
-          src={getImageForUser(row.user, index + 5)}
-          alt=""
-          className="h-10 w-10 rounded-full object-cover"
-        />
+    <div className="group rounded-2xl border border-[color:var(--primary)]/10 bg-white/75 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[color:var(--primary)]/25 hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Avatar user={row.user} fallbackIndex={index + 7} />
 
-        <div>
-          <p className="text-sm font-black text-[var(--ink)]">
-            {getDisplayName(row.user)}
-          </p>
-          <p className="text-xs font-semibold text-[var(--muted)]">
-            {row.user.email}
-          </p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-black text-[var(--ink)]">
+              {getDisplayName(row.user)}
+            </p>
+            <p className="truncate text-xs font-semibold text-[var(--muted)]">
+              {row.user.email || "No email available"}
+            </p>
+          </div>
         </div>
+
+        {canRemoveCollaborators && isAcceptedCollaborator && (
+          <button
+            type="button"
+            onClick={() => onRemove(row)}
+            className="rounded-full bg-rose-50 px-3 py-1.5 text-xs font-black text-rose-600 opacity-100 transition hover:bg-rose-100 sm:opacity-0 sm:group-hover:opacity-100"
+          >
+            Remove
+          </button>
+        )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         <span
-          className={`rounded-full px-3 py-1 text-xs font-black ${roleBadgeClassName(
-            row.type
-          )}`}
+          className={`rounded-full px-3 py-1 text-xs font-black ${roleBadgeClassName(row.type)}`}
         >
           {row.type === "instructor" ? "Instructor" : "Collaborator"}
         </span>
 
         <span
-          className={`rounded-full px-3 py-1 text-xs font-black capitalize ${statusClassName(
-            status
-          )}`}
+          className={`rounded-full px-3 py-1 text-xs font-black capitalize ${statusClassName(status)}`}
         >
           {status}
         </span>
 
-        {canManageCollaborators && status === "no reply" && (
+        {canCancelInvitations && isPending && (
           <button
             type="button"
-            onClick={() => onCancel(row.id)}
-            className="rounded-xl bg-yellow-50 px-3 py-2 text-xs font-black text-yellow-700 transition hover:bg-yellow-100"
+            onClick={() => onCancel(row)}
+            className="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700 transition hover:bg-amber-100"
           >
-            Cancel
+            Cancel invite
           </button>
         )}
-
-        {canManageCollaborators &&
-          row.type === "collaborator" &&
-          status === "accepted" && (
-            <button
-              type="button"
-              onClick={() => onRemove(row.id)}
-              className="rounded-xl bg-red-50 px-3 py-2 text-xs font-black text-red-600 transition hover:bg-red-100"
-            >
-              Remove
-            </button>
-          )}
       </div>
     </div>
+  );
+}
+
+function InviteModal({
+  open,
+  mode,
+  query,
+  message,
+  candidates,
+  onClose,
+  onModeChange,
+  onQueryChange,
+  onSendInvitation,
+}) {
+  if (!open) return null;
+
+  const isInstructorMode = mode === "instructor";
+
+  return (
+    <AppModal title="Invite people" onClose={onClose} maxWidth="max-w-3xl">
+      <div className="space-y-5">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => onModeChange("student")}
+            className={`rounded-2xl border px-4 py-3 text-left transition ${
+              !isInstructorMode
+                ? "border-[color:var(--primary)] bg-[rgba(156,213,255,0.2)]"
+                : "border-[color:var(--primary)]/10 bg-white hover:bg-slate-50"
+            }`}
+          >
+            <p className="text-sm font-black text-[var(--ink)]">Student collaborator</p>
+            <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+              Search students and invite them to join the project team.
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onModeChange("instructor")}
+            className={`rounded-2xl border px-4 py-3 text-left transition ${
+              isInstructorMode
+                ? "border-[color:var(--primary)] bg-[rgba(156,213,255,0.2)]"
+                : "border-[color:var(--primary)]/10 bg-white hover:bg-slate-50"
+            }`}
+          >
+            <p className="text-sm font-black text-[var(--ink)]">Course instructor</p>
+            <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+              Invite instructors linked to this project course.
+            </p>
+          </button>
+        </div>
+
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
+          <input
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="Search by name, email, first name, or last name"
+            className="h-12 w-full rounded-2xl border border-[color:var(--primary)]/10 bg-white pl-11 pr-4 text-sm font-semibold outline-none transition focus:border-[var(--primary)]"
+          />
+        </div>
+
+        {message && (
+          <p className="rounded-2xl bg-[rgba(156,213,255,0.18)] px-4 py-3 text-xs font-bold text-[var(--primary)]">
+            {message}
+          </p>
+        )}
+
+        <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1">
+          {candidates.length === 0 ? (
+            <EmptyState
+              title="No matching users"
+              description={
+                isInstructorMode
+                  ? "No available course instructors match your search. Rejected or cancelled invitations can be sent again."
+                  : "No available student collaborators match your search. Rejected or cancelled invitations can be sent again."
+              }
+            />
+          ) : (
+            candidates.map((user, index) => (
+              <div
+                key={user.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--primary)]/10 bg-white/80 p-4"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar user={user} fallbackIndex={index + 12} />
+
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-[var(--ink)]">
+                      {getDisplayName(user)}
+                    </p>
+                    <p className="truncate text-xs font-semibold text-[var(--muted)]">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onSendInvitation(user)}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2 text-xs font-black text-white transition hover:-translate-y-0.5 hover:opacity-90"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Send invite
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </AppModal>
   );
 }
 
@@ -206,11 +326,16 @@ export default function ProjectCollaboratorsSection({
   courses = [],
   tasks = [],
   canManageCollaborators,
+  canInvitePeople = canManageCollaborators,
+  canCancelInvitations = canInvitePeople,
+  canRemoveCollaborators = canManageCollaborators,
   refreshProject,
 }) {
   const [inviteQuery, setInviteQuery] = useState("");
-  const [invitePanel, setInvitePanel] = useState(null); // "student" | "instructor" | null
+  const [inviteMode, setInviteMode] = useState("student");
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteMessage, setInviteMessage] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
 
   const rawProject = project?.raw || project || {};
 
@@ -368,7 +493,7 @@ export default function ProjectCollaboratorsSection({
 
     tasks.forEach((task) => {
       const status = String(task.status || "").toLowerCase();
-      const isCompleted = status === "completed";
+      const isCompleted = status === "completed" || status === "done";
       if (!isCompleted) return;
 
       const keys = [
@@ -391,7 +516,9 @@ export default function ProjectCollaboratorsSection({
         email: rawProject?.owner?.email,
         avatar: rawProject?.owner?.avatar || rawProject?.owner?.image,
       },
-      ...relationshipRows.collaborators.map((row) => row.user),
+      ...relationshipRows.collaborators
+        .filter((row) => normalizeStatus(row.status) === "accepted")
+        .map((row) => row.user),
     ].filter(Boolean);
 
     let best = candidates[0] || null;
@@ -424,12 +551,16 @@ export default function ProjectCollaboratorsSection({
   }, [tasks, relationshipRows, project, rawProject]);
 
   const inviteCandidates = useMemo(() => {
-    if (!invitePanel) return [];
+    const activeInvitationUserIds = new Set(
+      (invitationStatuses || [])
+        .filter((item) => ["pending", "accepted"].includes(String(item.status || "").toLowerCase()))
+        .map((item) => String(item.userId))
+    );
 
     const existingIds = new Set([
       ...(project?.collaboratorIds || []).map(String),
       ...(project?.instructorIds || []).map(String),
-      ...(invitationStatuses || []).map((item) => String(item.userId)),
+      ...activeInvitationUserIds,
       String(project?.ownerId),
     ]);
 
@@ -439,16 +570,16 @@ export default function ProjectCollaboratorsSection({
 
         if (existingIds.has(String(user.id))) return false;
 
-        if (invitePanel === "student" && role !== "student") return false;
+        if (inviteMode === "student" && role !== "student") return false;
 
-        if (invitePanel === "instructor") {
+        if (inviteMode === "instructor") {
           if (role !== "instructor") return false;
 
           const allowedInstructorIds = course?.instructorIds || [];
 
           if (
             allowedInstructorIds.length > 0 &&
-            !allowedInstructorIds.includes(user.id)
+            !allowedInstructorIds.map(String).includes(String(user.id))
           ) {
             return false;
           }
@@ -456,8 +587,8 @@ export default function ProjectCollaboratorsSection({
 
         return userMatchesSearch(user, inviteQuery);
       })
-      .slice(0, 8);
-  }, [invitePanel, inviteQuery, users, project, course, invitationStatuses]);
+      .slice(0, 12);
+  }, [inviteMode, inviteQuery, users, project, course, invitationStatuses]);
 
   const persistProject = (updates) => {
     const updated = updateProject(project.id, {
@@ -472,28 +603,43 @@ export default function ProjectCollaboratorsSection({
     return updated;
   };
 
+  const openInviteModal = (mode = "student") => {
+    setInviteMode(mode);
+    setInviteQuery("");
+    setInviteMessage("");
+    setInviteOpen(true);
+  };
+
+  const closeInviteModal = () => {
+    setInviteOpen(false);
+    setInviteQuery("");
+    setInviteMessage("");
+  };
+
   const sendInvitationToUser = (target) => {
-    if (!canManageCollaborators || !target || !invitePanel) return;
+    if (!canInvitePeople || !target) return;
 
     const targetRole = normalizeRole(target.role);
 
-    if (invitePanel === "student" && targetRole !== "student") {
+    if (inviteMode === "student" && targetRole !== "student") {
       setInviteMessage("Collaborator invitations can only be sent to students.");
       return;
     }
 
-    if (invitePanel === "instructor") {
+    if (inviteMode === "instructor") {
       const allowedInstructorIds = course?.instructorIds || [];
 
       if (
         targetRole !== "instructor" ||
         (allowedInstructorIds.length > 0 &&
-          !allowedInstructorIds.includes(target.id))
+          !allowedInstructorIds.map(String).includes(String(target.id)))
       ) {
         setInviteMessage("Only instructors linked to this course can be invited.");
         return;
       }
     }
+
+    const invitationRole = inviteMode === "instructor" ? "instructor" : "student";
 
     const nextStatuses = [
       ...invitationStatuses.filter(
@@ -501,7 +647,7 @@ export default function ProjectCollaboratorsSection({
       ),
       {
         userId: target.id,
-        role: invitePanel === "instructor" ? "instructor" : "student",
+        role: invitationRole,
         status: "pending",
         invitedAt: new Date().toISOString(),
       },
@@ -513,38 +659,48 @@ export default function ProjectCollaboratorsSection({
       target.id,
       "Project invitation received",
       `${project.ownerName} invited you to join ${project.title}.`,
-      project.id
+      project.id,
+      invitationRole
     );
 
     setInviteQuery("");
     setInviteMessage(`Invitation sent to ${getDisplayName(target)}.`);
   };
 
-  const cancelInvitation = (userId) => {
+  const cancelInvitation = (row) => {
+    if (!canCancelInvitations || !row?.id) return;
+
+    const existingInvitation = invitationStatuses.find(
+      (item) => String(item.userId) === String(row.id)
+    );
+
     const nextStatuses = [
       ...invitationStatuses.filter(
-        (item) => String(item.userId) !== String(userId)
+        (item) => String(item.userId) !== String(row.id)
       ),
       {
-        userId,
-        role: "student",
+        userId: row.id,
+        role:
+          existingInvitation?.role ||
+          (row.type === "instructor" ? "instructor" : "student"),
         status: "cancelled",
         cancelledAt: new Date().toISOString(),
       },
     ];
 
     persistProject({ invitationStatuses: nextStatuses });
+    setActionMessage(`Invitation to ${getDisplayName(row.user)} was cancelled.`);
   };
 
-  const removeCollaborator = (userId) => {
-    if (!canManageCollaborators) return;
+  const removeCollaborator = (row) => {
+    if (!canRemoveCollaborators || !row?.id) return;
 
     const nextStatuses = [
       ...invitationStatuses.filter(
-        (item) => String(item.userId) !== String(userId)
+        (item) => String(item.userId) !== String(row.id)
       ),
       {
-        userId,
+        userId: row.id,
         role: "student",
         status: "cancelled",
         removedAt: new Date().toISOString(),
@@ -553,15 +709,17 @@ export default function ProjectCollaboratorsSection({
 
     persistProject({
       collaboratorIds: (project?.collaboratorIds || []).filter(
-        (id) => String(id) !== String(userId)
+        (id) => String(id) !== String(row.id)
       ),
       collaborators: Array.isArray(rawProject?.collaborators)
         ? rawProject.collaborators.filter(
-            (user) => String(user.id) !== String(userId)
+            (user) => String(user.id) !== String(row.id)
           )
         : rawProject?.collaborators,
       invitationStatuses: nextStatuses,
     });
+
+    setActionMessage(`${getDisplayName(row.user)} was removed from the project.`);
   };
 
   return (
@@ -572,44 +730,24 @@ export default function ProjectCollaboratorsSection({
             Collaborators & Instructors
           </h3>
           <p className="mt-1 text-sm font-semibold text-[var(--muted)]">
-            Manage project participation, invitation statuses, and instructor links.
+            Manage team members, course instructors, and invitation statuses.
           </p>
         </div>
 
-        {canManageCollaborators && (
+        {canInvitePeople && (
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => {
-                setInvitePanel((current) =>
-                  current === "student" ? null : "student"
-                );
-                setInviteQuery("");
-                setInviteMessage("");
-              }}
-              className={`rounded-2xl px-4 py-2 text-sm font-black shadow-sm transition hover:-translate-y-0.5 ${
-                invitePanel === "student"
-                  ? "bg-[var(--primary)] text-white"
-                  : "border border-[color:var(--primary)]/15 bg-white/80 text-[var(--primary)]"
-              }`}
+              onClick={() => openInviteModal("student")}
+              className="rounded-2xl border border-[color:var(--primary)]/15 bg-white/85 px-4 py-2 text-sm font-black text-[var(--primary)] shadow-sm transition hover:-translate-y-0.5 hover:bg-[rgba(156,213,255,0.18)]"
             >
               + Invite Collaborator
             </button>
 
             <button
               type="button"
-              onClick={() => {
-                setInvitePanel((current) =>
-                  current === "instructor" ? null : "instructor"
-                );
-                setInviteQuery("");
-                setInviteMessage("");
-              }}
-              className={`rounded-2xl px-4 py-2 text-sm font-black shadow-sm transition hover:-translate-y-0.5 ${
-                invitePanel === "instructor"
-                  ? "bg-[var(--primary)] text-white"
-                  : "border border-[color:var(--primary)]/15 bg-white/80 text-[var(--primary)]"
-              }`}
+              onClick={() => openInviteModal("instructor")}
+              className="rounded-2xl border border-[color:var(--primary)]/15 bg-white/85 px-4 py-2 text-sm font-black text-[var(--primary)] shadow-sm transition hover:-translate-y-0.5 hover:bg-[rgba(156,213,255,0.18)]"
             >
               + Invite Instructor
             </button>
@@ -617,117 +755,43 @@ export default function ProjectCollaboratorsSection({
         )}
       </div>
 
-      {invitePanel && canManageCollaborators && (
-        <div className="rounded-3xl border border-[color:var(--primary)]/10 bg-white/70 p-4 shadow-sm">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-black text-[var(--ink)]">
-                {invitePanel === "instructor"
-                  ? "Invite course instructor"
-                  : "Invite student collaborator"}
-              </p>
-              <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
-                Search by email, first name, or last name, then choose from the list.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setInvitePanel(null);
-                setInviteQuery("");
-                setInviteMessage("");
-              }}
-              className="rounded-xl bg-red-50 px-3 py-2 text-xs font-black text-red-600 transition hover:bg-red-100"
-            >
-              Close
-            </button>
-          </div>
-
-          <input
-            value={inviteQuery}
-            onChange={(event) => {
-              setInviteQuery(event.target.value);
-              setInviteMessage("");
-            }}
-            placeholder="Search by email, first name, or last name"
-            className="mb-4 h-12 w-full rounded-2xl border border-[color:var(--primary)]/10 bg-white px-4 text-sm font-semibold outline-none transition focus:border-[var(--primary)]"
-          />
-
-          {inviteMessage && (
-            <p className="mb-3 rounded-2xl bg-[rgba(156,213,255,0.18)] px-4 py-3 text-xs font-bold text-[var(--primary)]">
-              {inviteMessage}
-            </p>
-          )}
-
-          <div className="space-y-3">
-            {inviteCandidates.length === 0 ? (
-              <EmptyState
-                title="No matching users"
-                description={
-                  invitePanel === "instructor"
-                    ? "No course instructors match your search."
-                    : "No student collaborators match your search."
-                }
-              />
-            ) : (
-              inviteCandidates.map((user, index) => (
-                <div
-                  key={user.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white/70 p-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={getImageForUser(user, index + 12)}
-                      alt=""
-                      className="h-10 w-10 rounded-full object-cover"
-                    />
-
-                    <div>
-                      <p className="text-sm font-black text-[var(--ink)]">
-                        {getDisplayName(user)}
-                      </p>
-                      <p className="text-xs font-semibold text-[var(--muted)]">
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => sendInvitationToUser(user)}
-                    className="rounded-xl bg-[var(--primary)] px-4 py-2 text-xs font-black text-white transition hover:-translate-y-0.5 hover:opacity-90"
-                  >
-                    Send Invite
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
+      {actionMessage && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--primary)]/10 bg-[rgba(156,213,255,0.16)] px-4 py-3 text-sm font-bold text-[var(--primary)]">
+          <span>{actionMessage}</span>
+          <button
+            type="button"
+            onClick={() => setActionMessage("")}
+            className="rounded-full p-1 transition hover:bg-white/70"
+            aria-label="Dismiss message"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 
-      <div className="rounded-2xl border border-[color:var(--primary)]/10 bg-white/70 p-4">
+      <div className="rounded-3xl border border-[color:var(--primary)]/10 bg-white/70 p-5 shadow-sm">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--primary)]">
           Top Contributor
         </p>
 
         {topContributor.user ? (
-          <div className="mt-3 flex items-center gap-3">
-            <img
-              src={getImageForUser(topContributor.user, 4)}
-              alt=""
-              className="h-12 w-12 rounded-full object-cover"
-            />
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Avatar user={topContributor.user} fallbackIndex={4} size="h-14 w-14" />
 
-            <div>
-              <p className="text-sm font-black text-[var(--ink)]">
-                {getDisplayName(topContributor.user)}
-              </p>
-              <p className="text-xs font-semibold text-[var(--muted)]">
-                Based on completed and assigned project tasks
-              </p>
+              <div>
+                <p className="text-base font-black text-[var(--ink)]">
+                  {getDisplayName(topContributor.user)}
+                </p>
+                <p className="text-xs font-semibold text-[var(--muted)]">
+                  Based on completed project tasks and assigned work.
+                </p>
+              </div>
             </div>
+
+            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
+              {topContributor.score} completed task{topContributor.score === 1 ? "" : "s"}
+            </span>
           </div>
         ) : (
           <p className="mt-2 text-sm font-semibold text-[var(--muted)]">
@@ -736,81 +800,96 @@ export default function ProjectCollaboratorsSection({
         )}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        <div className="rounded-2xl border border-[color:var(--primary)]/10 bg-white/70 p-4">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-lg font-black text-[var(--ink)]">
-                Collaborators
-              </h4>
-              <p className="text-xs font-semibold text-[var(--muted)]">
-                Students invited or added to this project.
-              </p>
-            </div>
-
-            <span className="rounded-full bg-[rgba(156,213,255,0.18)] px-3 py-1 text-xs font-black text-[var(--primary)]">
-              {relationshipRows.collaborators.length}
-            </span>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h4 className="text-lg font-black text-[var(--ink)]">Collaborators</h4>
+            <p className="text-xs font-semibold text-[var(--muted)]">
+              Students invited or added to this project.
+            </p>
           </div>
 
-          <div className="space-y-3">
-            {relationshipRows.collaborators.length === 0 ? (
-              <EmptyState
-                title="No collaborators"
-                description="No student collaborators have been added or invited yet."
-              />
-            ) : (
-              relationshipRows.collaborators.map((row, index) => (
-                <RelationshipRow
-                  key={`${row.type}-${row.id}`}
-                  row={row}
-                  index={index}
-                  canManageCollaborators={canManageCollaborators}
-                  onCancel={cancelInvitation}
-                  onRemove={removeCollaborator}
-                />
-              ))
-            )}
-          </div>
+          <span className="rounded-full bg-[rgba(156,213,255,0.18)] px-3 py-1 text-xs font-black text-[var(--primary)]">
+            {relationshipRows.collaborators.length}
+          </span>
         </div>
 
-        <div className="rounded-2xl border border-[color:var(--primary)]/10 bg-white/70 p-4">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-lg font-black text-[var(--ink)]">
-                Instructors
-              </h4>
-              <p className="text-xs font-semibold text-[var(--muted)]">
-                Assigned or invited course instructors.
-              </p>
-            </div>
-
-            <span className="rounded-full bg-[rgba(156,213,255,0.18)] px-3 py-1 text-xs font-black text-[var(--primary)]">
-              {relationshipRows.instructors.length}
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {relationshipRows.instructors.length === 0 ? (
-              <EmptyState
-                title="No instructors"
-                description="No instructors have been linked or invited yet."
+        {relationshipRows.collaborators.length === 0 ? (
+          <EmptyState
+            title="No collaborators"
+            description="No student collaborators have been added or invited yet."
+          />
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {relationshipRows.collaborators.map((row, index) => (
+              <PersonCard
+                key={`${row.type}-${row.id}`}
+                row={row}
+                index={index}
+                canCancelInvitations={canCancelInvitations}
+                canRemoveCollaborators={canRemoveCollaborators}
+                onCancel={cancelInvitation}
+                onRemove={removeCollaborator}
               />
-            ) : (
-              relationshipRows.instructors.map((row, index) => (
-                <RelationshipRow
-                  key={`${row.type}-${row.id}`}
-                  row={row}
-                  index={index}
-                  canManageCollaborators={canManageCollaborators}
-                  onCancel={cancelInvitation}
-                  onRemove={removeCollaborator}
-                />
-              ))
-            )}
+            ))}
           </div>
+        )}
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h4 className="text-lg font-black text-[var(--ink)]">Instructors</h4>
+            <p className="text-xs font-semibold text-[var(--muted)]">
+              Assigned or invited course instructors.
+            </p>
+          </div>
+
+          <span className="rounded-full bg-[rgba(156,213,255,0.18)] px-3 py-1 text-xs font-black text-[var(--primary)]">
+            {relationshipRows.instructors.length}
+          </span>
         </div>
-      </div>
+
+        {relationshipRows.instructors.length === 0 ? (
+          <EmptyState
+            title="No instructors"
+            description="No instructors have been linked or invited yet."
+          />
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {relationshipRows.instructors.map((row, index) => (
+              <PersonCard
+                key={`${row.type}-${row.id}`}
+                row={row}
+                index={index}
+                canCancelInvitations={canCancelInvitations}
+                canRemoveCollaborators={canRemoveCollaborators}
+                onCancel={cancelInvitation}
+                onRemove={removeCollaborator}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <InviteModal
+        open={inviteOpen && canInvitePeople}
+        mode={inviteMode}
+        query={inviteQuery}
+        message={inviteMessage}
+        candidates={inviteCandidates}
+        onClose={closeInviteModal}
+        onModeChange={(mode) => {
+          setInviteMode(mode);
+          setInviteQuery("");
+          setInviteMessage("");
+        }}
+        onQueryChange={(value) => {
+          setInviteQuery(value);
+          setInviteMessage("");
+        }}
+        onSendInvitation={sendInvitationToUser}
+      />
     </div>
   );
 }

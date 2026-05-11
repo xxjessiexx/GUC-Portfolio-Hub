@@ -3,10 +3,40 @@ import { motion } from "framer-motion";
 import NotificationCard from "./notificationCard";
 import { MessageCircle, Bell, Mail, UserPlus } from "lucide-react";
 import { useNotifications } from "@/context/NotificationsContext";
-import { getCurrentUser, normalizeRole } from "@/data/demoStore";
+import {
+  addNotification,
+  getCurrentUser,
+  getProjectById,
+  normalizeRole,
+  updateProject,
+} from "@/data/demoStore";
+
+function makeId(prefix) {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+  }
+
+  return `${prefix}-${Date.now()}`;
+}
+
+function getDisplayName(user) {
+  return user?.name || user?.fullName || user?.email || "User";
+}
+
+function getInvitationStatus(notification, currentUser) {
+  const projectId = notification.projectId || notification.relatedProjectId;
+  const project = projectId ? getProjectById(projectId) : null;
+
+  const invitation = (project?.invitationStatuses || []).find(
+    (item) => String(item.userId) === String(currentUser?.id)
+  );
+
+  return invitation?.status || notification.invitationStatus || "pending";
+}
 
 export default function NotificationsTabs({ notifications }) {
   const { markAsRead, deleteNotification } = useNotifications();
+  const [activeTab, setActiveTab] = useState("all");
 
   const currentUser = getCurrentUser();
   const role = normalizeRole(
@@ -24,7 +54,63 @@ export default function NotificationsTabs({ notifications }) {
     markAsRead(id);
   };
 
-  const [activeTab, setActiveTab] = useState("all");
+  const respondToProjectInvite = (notificationId, status) => {
+    const notification = notifications.find((item) => item.id === notificationId);
+    const projectId = notification?.projectId || notification?.relatedProjectId;
+    const project = projectId ? getProjectById(projectId) : null;
+
+    if (!project || !currentUser?.id) return;
+
+    const invitationStatuses = project.invitationStatuses || [];
+    const ownInvitation = invitationStatuses.find(
+      (item) => String(item.userId) === String(currentUser.id)
+    );
+
+    if (!ownInvitation || ownInvitation.status !== "pending") return;
+
+    const nextStatuses = invitationStatuses.map((item) =>
+      String(item.userId) === String(currentUser.id)
+        ? {
+            ...item,
+            status,
+            respondedAt: new Date().toISOString(),
+          }
+        : item
+    );
+
+    const updates = { invitationStatuses: nextStatuses };
+
+    if (status === "accepted") {
+      if (ownInvitation.role === "instructor") {
+        updates.instructorIds = Array.from(
+          new Set([...(project.instructorIds || []), currentUser.id])
+        );
+      } else {
+        updates.collaboratorIds = Array.from(
+          new Set([...(project.collaboratorIds || []), currentUser.id])
+        );
+      }
+    }
+
+    updateProject(project.id, updates);
+
+    addNotification({
+      id: makeId("notification"),
+      userId: project.ownerId,
+      type: "project",
+      title: `Project invitation ${status}`,
+      text: `${getDisplayName(currentUser)} ${status} the invitation to ${project.title}.`,
+      body: `${getDisplayName(currentUser)} ${status} the invitation to ${project.title}.`,
+      message: `${getDisplayName(currentUser)} ${status} the invitation to ${project.title}.`,
+      projectId: project.id,
+      unread: true,
+      createdAt: new Date().toISOString(),
+      time: new Date().toLocaleString(),
+    });
+
+    markAsRead(notificationId);
+    window.dispatchEvent(new Event("demo-db-change"));
+  };
 
   const iconMap = {
     feedback: <MessageCircle className="h-5 w-5" />,
@@ -50,16 +136,13 @@ export default function NotificationsTabs({ notifications }) {
   };
 
   const allowedTabKeys = tabsByRole[role] || tabsByRole.student;
-
   const tabs = allTabs.filter((tab) => allowedTabKeys.includes(tab.key));
 
   const filteredNotifications = notifications.filter((n) => {
     if (activeTab === "unread") return n.unread;
     if (activeTab === "feedback") return n.type === "feedback";
     if (activeTab === "messages") return n.type === "message";
-    if (activeTab === "invites") {
-      return n.type === "invite" || n.type === "project-invite";
-    }
+    if (activeTab === "invites") return n.type === "invite" || n.type === "project-invite";
 
     return true;
   });
@@ -76,7 +159,6 @@ export default function NotificationsTabs({ notifications }) {
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
       <div className="flex flex-wrap gap-3">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.key;
@@ -96,7 +178,6 @@ export default function NotificationsTabs({ notifications }) {
             >
               <span>{tab.label}</span>
 
-              {/* Count badge */}
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-bold
                 ${
@@ -112,7 +193,6 @@ export default function NotificationsTabs({ notifications }) {
         })}
       </div>
 
-      {/* Content */}
       <div className="space-y-4">
         {filteredNotifications.length === 0 ? (
           <p className="text-sm text-[var(--muted)]">No notifications</p>
@@ -122,12 +202,17 @@ export default function NotificationsTabs({ notifications }) {
               key={n.id}
               id={n.id}
               title={n.title}
-              description={n.text}
+              description={n.text || n.message || n.body || n.description}
               unread={n.unread}
               icon={iconMap[n.type] || iconMap.default}
               time={n.time}
+              type={n.type}
+              projectId={n.projectId || n.relatedProjectId}
+              invitationStatus={getInvitationStatus(n, currentUser)}
               onDelete={handleDelete}
               onMarkAsRead={handleMarkAsRead}
+              onAcceptInvite={(id) => respondToProjectInvite(id, "accepted")}
+              onRejectInvite={(id) => respondToProjectInvite(id, "rejected")}
             />
           ))
         )}

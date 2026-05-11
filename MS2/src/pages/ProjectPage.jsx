@@ -39,7 +39,7 @@ import {
   updateProject,
 } from "@/data/demoStore";
 
-function makeNotification(userId, title, body, projectId) {
+function makeNotification(userId, title, body, projectId, type = "project") {
   if (!userId) return;
 
   addNotification({
@@ -48,7 +48,7 @@ function makeNotification(userId, title, body, projectId) {
     title,
     body,
     message: body,
-    type: "project",
+    type,
     projectId,
     unread: true,
     createdAt: new Date().toISOString(),
@@ -78,8 +78,10 @@ export default function ProjectPage() {
   const currentUser =
     loggedInUser?.name || loggedInUser?.fullName || loggedInUser?.email || "";
 
+  const userRole = normalizeRole(loggedInUser?.role);
+  const isAdmin = userRole === "admin";
+
   const isPublic = project?.visibility === "Public";
-  const isAdmin = normalizeRole(loggedInUser?.role) === "admin";
 
   const isCreator =
     Boolean(project) &&
@@ -103,9 +105,11 @@ export default function ProjectPage() {
     project?.invitationStatuses?.some(
       (item) =>
         String(item.userId) === String(loggedInUser?.id) &&
-        ["pending", "accepted"].includes(item.status)
+        ["pending", "accepted"].includes(String(item.status).toLowerCase())
     )
   );
+
+  const isBachelorProject = project?.type === "Bachelor Project";
 
   const canViewProject =
     Boolean(project) &&
@@ -116,16 +120,33 @@ export default function ProjectPage() {
       isAdmin ||
       hasOwnProjectInvitation);
 
-  const canManageProject = isCreator || isAdmin;
+  /*
+    Requirements-safe permissions:
+
+    - Admin may view/moderate projects elsewhere, but should NOT act as:
+      project creator, collaborator, or instructor inside ProjectPage.
+    - Only project creator manages project visibility and collaborators.
+    - Only project creator creates/edits/reorders/deletes tasks.
+    - Only accepted course instructor can add/rate feedback.
+  */
+  const canManageProject = isCreator;
   const canManageTasks = isCreator;
-  const canManageCollaborators =
-    isCreator && project?.type !== "Bachelor Project";
+
+  const canInvitePeople =
+    isCreator && !isBachelorProject;
+
+  const canCancelInvitations =
+    isCreator && !isBachelorProject;
+
+  const canRemoveCollaborators =
+    isCreator && !isBachelorProject;
+
+  const canManageCollaborators = canRemoveCollaborators;
 
   const canViewComments =
     isCreator || isAcceptedCollaborator || isInstructor || isAdmin;
 
-  const canAddInstructorFeedback = isInstructor || isAdmin;
-  const isBachelorProject = project?.type === "Bachelor Project";
+  const canAddInstructorFeedback = isInstructor;
 
   const visibleTabs = useMemo(() => {
     const tabs = ["overview", "tasks"];
@@ -136,6 +157,10 @@ export default function ProjectPage() {
 
     return tabs;
   }, [canViewComments, isBachelorProject]);
+
+  const safeActiveTab = visibleTabs.includes(activeTab)
+    ? activeTab
+    : "overview";
 
   const refreshProject = () => {
     const loadedProject = getProjectById(projectId);
@@ -164,7 +189,8 @@ export default function ProjectPage() {
       ) ||
       (normalizedProject.invitationStatuses || []).some(
         (item) =>
-          item.userId === currentId && ["pending", "accepted"].includes(item.status)
+          item.userId === currentId &&
+          ["pending", "accepted"].includes(String(item.status).toLowerCase())
       ) ||
       normalizeRole(loggedInUser?.role) === "admin";
 
@@ -178,12 +204,6 @@ export default function ProjectPage() {
     refreshProject();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, loggedInUser?.id]);
-
-  useEffect(() => {
-    if (!visibleTabs.includes(activeTab)) {
-      setActiveTab("overview");
-    }
-  }, [activeTab, visibleTabs]);
 
   useEffect(() => {
     let createdUrl = "";
@@ -317,7 +337,8 @@ export default function ProjectPage() {
       project.ownerId,
       `Project invitation ${status}`,
       `${getDisplayName(loggedInUser)} ${status} the invitation to ${project.title}.`,
-      project.id
+      project.id,
+      "project-invite"
     );
   };
 
@@ -349,8 +370,9 @@ export default function ProjectPage() {
             </h2>
 
             <p className="text-sm font-semibold text-[var(--muted)]">
-              You can only view this project if it is public or if you are the creator,
-              an accepted collaborator, an assigned instructor, or an admin.
+              You can only view this project if it is public or if you are the
+              creator, an accepted collaborator, an assigned instructor, or an
+              admin.
             </p>
           </AppCard>
         </div>
@@ -359,7 +381,9 @@ export default function ProjectPage() {
   }
 
   const ownPendingInvitation = (project.invitationStatuses || []).find(
-    (item) => item.userId === loggedInUser?.id && item.status === "pending"
+    (item) =>
+      String(item.userId) === String(loggedInUser?.id) &&
+      String(item.status).toLowerCase() === "pending"
   );
 
   const projectVideoSrc = videoObjectUrl || project.video;
@@ -385,18 +409,18 @@ export default function ProjectPage() {
 
           <ProjectPageTabs
             visibleTabs={visibleTabs}
-            activeTab={activeTab}
+            activeTab={safeActiveTab}
             setActiveTab={setActiveTab}
           />
 
-          {activeTab === "overview" && (
+          {safeActiveTab === "overview" && (
             <ProjectOverviewTab
               project={project}
               isBachelorProject={isBachelorProject}
             />
           )}
 
-          {activeTab === "tasks" && (
+          {safeActiveTab === "tasks" && (
             <ProjectTasksTab
               tasks={tasks}
               canManageTasks={canManageTasks}
@@ -418,18 +442,21 @@ export default function ProjectPage() {
             />
           )}
 
-          {activeTab === "collaborators" && !isBachelorProject && (
+          {safeActiveTab === "collaborators" && !isBachelorProject && (
             <ProjectCollaboratorsSection
               project={project}
               users={users}
               courses={courses}
               tasks={tasks}
               canManageCollaborators={canManageCollaborators}
+              canInvitePeople={canInvitePeople}
+              canCancelInvitations={canCancelInvitations}
+              canRemoveCollaborators={canRemoveCollaborators}
               refreshProject={refreshProject}
             />
           )}
 
-          {activeTab === "feedback" && canViewComments && (
+          {safeActiveTab === "feedback" && canViewComments && (
             <ProjectFeedbackTab
               project={project}
               loggedInUser={loggedInUser}
@@ -446,7 +473,7 @@ export default function ProjectPage() {
             />
           )}
 
-          {activeTab === "bachelor thesis" && isBachelorProject && (
+          {safeActiveTab === "bachelor thesis" && isBachelorProject && (
             <ProjectBachelorThesisTab
               visibleDrafts={thesisDrafts.visibleDrafts}
               isCreator={isCreator}
