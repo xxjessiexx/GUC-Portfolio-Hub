@@ -14,7 +14,6 @@ import {
 export function useProjectThesisDrafts({
   project,
   isCreator,
-  isAdmin,
   canAddInstructorFeedback,
   loggedInUser,
   persistProject,
@@ -33,7 +32,7 @@ export function useProjectThesisDrafts({
     return project.thesisDrafts.filter(
       (draft) => draft.isFinal || draft.visibility === "public"
     );
-  }, [isCreator, project?.thesisDrafts]);
+  }, [isCreator, project]);
 
   const addThesisDraft = async () => {
     if (!isCreator || !newDraftFile) {
@@ -164,7 +163,7 @@ export function useProjectThesisDrafts({
     );
   };
 
-  const editDraftFeedback = (draftId, feedbackId) => {
+  const editDraftFeedback = (draftId, feedbackId, nextMessage = "") => {
     if (!project) return;
 
     const draft = (project.thesisDrafts || []).find(
@@ -173,16 +172,11 @@ export function useProjectThesisDrafts({
 
     const feedback = draft?.feedback?.find((item) => item.id === feedbackId);
 
-    if (!feedback || (feedback.authorId !== loggedInUser?.id && !isAdmin)) {
+    if (!feedback || feedback.authorId !== loggedInUser?.id) {
       return;
     }
 
-    const nextMessage = window.prompt(
-      "Edit thesis feedback",
-      feedback.message || ""
-    );
-
-    if (nextMessage === null || !nextMessage.trim()) return;
+    if (!nextMessage.trim()) return;
 
     persistProject({
       thesisDrafts: (project.thesisDrafts || []).map((item) =>
@@ -206,6 +200,14 @@ export function useProjectThesisDrafts({
 
   const deleteDraftFeedback = (draftId, feedbackId) => {
     if (!project) return;
+
+    const draft = (project.thesisDrafts || []).find(
+      (item) => item.id === draftId
+    );
+
+    const feedback = draft?.feedback?.find((item) => item.id === feedbackId);
+
+    if (!feedback || feedback.authorId !== loggedInUser?.id) return;
 
     persistProject({
       thesisDrafts: (project.thesisDrafts || []).map((draft) =>
