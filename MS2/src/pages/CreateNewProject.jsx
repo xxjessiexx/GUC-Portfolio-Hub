@@ -1084,14 +1084,31 @@ const removeDraft = (draftId) => {
       const courseId = findCourseIdByLabel(selectedCourseName);
 
       const collaboratorIds = findUserIdsByEmails(
-        formData.collaborators,
-        "student"
-      );
+  formData.collaborators,
+  "student"
+).filter((id) => String(id) !== String(currentUser.id));
 
-      const instructorIds = findUserIdsByEmails(
-        formData.instructors,
-        "instructor"
-      );
+const instructorIds = findUserIdsByEmails(
+  formData.instructors,
+  "instructor"
+).filter((id) => String(id) !== String(currentUser.id));
+
+const invitationStatuses = [
+  ...collaboratorIds.map((userId) => ({
+    userId,
+    role: "collaborator",
+    status: "pending",
+    sentAt: now,
+  })),
+  ...instructorIds.map((userId) => ({
+    userId,
+    role: "instructor",
+    status: "pending",
+    sentAt: now,
+  })),
+];
+
+      
 
       const storedProject = {
         id: projectId,
@@ -1101,6 +1118,7 @@ const removeDraft = (draftId) => {
         studentId: currentUser.id,
         collaboratorIds,
         instructorIds,
+        invitationStatuses,
 
         title: formData.title.trim(),
         name: formData.title.trim(),

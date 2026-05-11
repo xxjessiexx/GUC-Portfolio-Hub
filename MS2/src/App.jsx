@@ -60,6 +60,7 @@ import FeaturedStudents
 from "@/pages/FeaturedStudents";
 import Settings from "./pages/Settings";
 import PublicStudentPortfolio from "./pages/PublicStudentPortfolio";
+import ProjectInvitations from "./pages/ProjectInvitations";
 
 export default function App() {
   useEffect(() => {
@@ -113,6 +114,15 @@ export default function App() {
                 />
               }
             />
+
+            <Route
+  path="/invitations"
+  element={
+    <ProtectedRoute allowedRoles={["student", "instructor"]}>
+      <ProjectInvitations />
+    </ProtectedRoute>
+  }
+/>
 
             <Route
               path="/login"
