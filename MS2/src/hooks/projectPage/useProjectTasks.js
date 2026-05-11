@@ -5,6 +5,19 @@ import {
   getDisplayName,
   makeId,
 } from "@/utils/projectPage/projectPageHelpers";
+import { getInvitationStatus } from "@/utils/projectPage/normalizeProjectForPage";
+
+function getStudentNotificationTargets(project) {
+  if (!project) return [];
+
+  const acceptedCollaborators = (project.collaboratorIds || []).filter(
+    (id) => getInvitationStatus(project, id) === "accepted"
+  );
+
+  return Array.from(
+    new Set([project.ownerId, ...acceptedCollaborators].filter(Boolean))
+  );
+}
 
 export function useProjectTasks({
   project,
@@ -14,8 +27,6 @@ export function useProjectTasks({
   isBachelorProject,
   canAddInstructorFeedback,
   loggedInUser,
-  currentUser,
-  isAdmin,
   makeNotification,
 }) {
   const [showTaskPopup, setShowTaskPopup] = useState(false);
@@ -34,7 +45,7 @@ export function useProjectTasks({
   const [taskFeedbackDrafts, setTaskFeedbackDrafts] = useState({});
 
   const storeTasks = (nextTasks) => {
-    if (!project?.id) return;
+    if (!project?.id || !Array.isArray(nextTasks)) return;
 
     const orderedTasks = nextTasks.map((task, index) => ({
       ...task,
@@ -127,10 +138,10 @@ export function useProjectTasks({
     storeTasks(tasks.filter((task) => task.id !== taskId));
   };
 
-  const addTaskFeedback = (taskId) => {
+  const addTaskFeedback = (taskId, messageOverride = "") => {
     if (!project || !canAddInstructorFeedback) return;
 
-    const message = taskFeedbackDrafts[taskId]?.trim();
+    const message = (messageOverride || taskFeedbackDrafts[taskId] || "").trim();
     if (!message) return;
 
     const nextTasks = tasks.map((task) =>
@@ -158,12 +169,14 @@ export function useProjectTasks({
       [taskId]: "",
     }));
 
-    makeNotification(
-      project.ownerId,
-      "New task feedback",
-      `${getDisplayName(loggedInUser)} commented on a task in ${project.title}.`,
-      project.id
-    );
+    getStudentNotificationTargets(project).forEach((userId) => {
+      makeNotification(
+        userId,
+        "New task feedback",
+        `${getDisplayName(loggedInUser)} commented on a task in ${project.title}.`,
+        project.id
+      );
+    });
   };
 
   const deleteTaskFeedback = (taskId, feedbackId) => {
@@ -181,20 +194,14 @@ export function useProjectTasks({
     );
   };
 
-  const editTaskFeedback = (taskId, feedbackId) => {
+  const editTaskFeedback = (taskId, feedbackId, nextMessage = "") => {
     const task = tasks.find((item) => item.id === taskId);
     const feedback = task?.feedback?.find((item) => item.id === feedbackId);
 
-    if (!feedback || (feedback.authorId !== loggedInUser?.id && !isAdmin)) {
-      return;
-    }
+    if (!feedback || feedback.authorId !== loggedInUser?.id) return;
 
-    const nextMessage = window.prompt(
-      "Edit task feedback",
-      feedback.message || ""
-    );
-
-    if (nextMessage === null || !nextMessage.trim()) return;
+    const cleanMessage = String(nextMessage || "").trim();
+    if (!cleanMessage) return;
 
     storeTasks(
       tasks.map((item) =>
@@ -205,7 +212,7 @@ export function useProjectTasks({
                 entry.id === feedbackId
                   ? {
                       ...entry,
-                      message: nextMessage.trim(),
+                      message: cleanMessage,
                       updatedAt: new Date().toISOString(),
                     }
                   : entry
@@ -214,6 +221,15 @@ export function useProjectTasks({
           : item
       )
     );
+
+    getStudentNotificationTargets(project).forEach((userId) => {
+      makeNotification(
+        userId,
+        "Task feedback updated",
+        `${getDisplayName(loggedInUser)} updated feedback on a task in ${project.title}.`,
+        project.id
+      );
+    });
   };
 
   return {

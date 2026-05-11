@@ -1,3 +1,68 @@
+import AppModal from "@/components/common/AppModal";
+
+const STATUS_OPTIONS = [
+  { value: "pending", label: "Pending" },
+  { value: "post-poned", label: "Post-Poned" },
+  { value: "completed", label: "Completed" },
+];
+
+function FieldLabel({ children }) {
+  return (
+    <label className="mb-1.5 block text-xs font-black uppercase tracking-[0.16em] text-[var(--muted)]">
+      {children}
+    </label>
+  );
+}
+
+function FormInput(props) {
+  return (
+    <input
+      {...props}
+      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--ink)] outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[color:var(--primary)]/10"
+    />
+  );
+}
+
+function FormTextarea(props) {
+  return (
+    <textarea
+      {...props}
+      className="min-h-28 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--ink)] outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[color:var(--primary)]/10"
+    />
+  );
+}
+
+function FormSelect(props) {
+  return (
+    <select
+      {...props}
+      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--ink)] outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[color:var(--primary)]/10"
+    />
+  );
+}
+
+function ModalFooter({ onCancel, onConfirm, confirmText }) {
+  return (
+    <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-500 transition hover:bg-slate-50"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        onClick={onConfirm}
+        className="rounded-2xl bg-[var(--primary)] px-5 py-3 text-sm font-black text-white shadow-sm transition hover:opacity-90"
+      >
+        {confirmText}
+      </button>
+    </div>
+  );
+}
+
 export default function ProjectTaskModals({
   project,
   isBachelorProject,
@@ -14,78 +79,76 @@ export default function ProjectTaskModals({
   setEditingTask,
   onSaveEditedTask,
 }) {
+  const team = project?.team || [];
+
   return (
     <>
       {showTaskPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="mb-4 text-xl font-black text-[var(--ink)]">
-              Add New Task
-            </h2>
-
-            <div className="mb-4">
-              <label className="mb-1 block text-sm font-bold">
-                Task Title
-              </label>
-
-              <input
+        <AppModal
+          title="Add task"
+          onClose={() => setShowTaskPopup(false)}
+          maxWidth="max-w-xl"
+        >
+          <div className="space-y-4">
+            <div>
+              <FieldLabel>Task title</FieldLabel>
+              <FormInput
                 type="text"
                 value={newTask.title}
                 onChange={(event) =>
-                  setNewTask({
-                    ...newTask,
-                    title: event.target.value,
-                  })
+                  setNewTask({ ...newTask, title: event.target.value })
                 }
-                className="w-full rounded-xl border p-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
+                placeholder="Example: Build login validation"
               />
             </div>
 
-            <div className="mb-4">
-              <label className="mb-1 block text-sm font-bold">
-                Description
-              </label>
-
-              <textarea
+            <div>
+              <FieldLabel>Description</FieldLabel>
+              <FormTextarea
                 value={newTask.description}
                 onChange={(event) =>
-                  setNewTask({
-                    ...newTask,
-                    description: event.target.value,
-                  })
+                  setNewTask({ ...newTask, description: event.target.value })
                 }
-                className="min-h-24 w-full rounded-xl border p-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
+                placeholder="Add a clear task description for the assignee."
               />
             </div>
 
-            <div className="mb-4">
-              <label className="mb-1 block text-sm font-bold">
-                Deadline
-              </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <FieldLabel>Deadline</FieldLabel>
+                <FormInput
+                  type="date"
+                  value={newTask.deadline}
+                  onChange={(event) =>
+                    setNewTask({ ...newTask, deadline: event.target.value })
+                  }
+                />
+              </div>
 
-              <input
-                type="date"
-                value={newTask.deadline}
-                onChange={(event) =>
-                  setNewTask({
-                    ...newTask,
-                    deadline: event.target.value,
-                  })
-                }
-                className="w-full rounded-xl border p-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
-              />
+              <div>
+                <FieldLabel>Status</FieldLabel>
+                <FormSelect
+                  value={newTask.status}
+                  onChange={(event) =>
+                    setNewTask({ ...newTask, status: event.target.value })
+                  }
+                >
+                  {STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </FormSelect>
+              </div>
             </div>
 
             {!isBachelorProject && (
-              <div className="mb-4">
-                <label className="mb-1 block text-sm font-bold">
-                  Collaborator
-                </label>
-
-                <select
+              <div>
+                <FieldLabel>Collaborator</FieldLabel>
+                <FormSelect
                   value={newTask.assigneeId}
                   onChange={(event) => {
-                    const member = project.team.find(
+                    const member = team.find(
                       (item) => String(item.id) === String(event.target.value)
                     );
 
@@ -95,11 +158,10 @@ export default function ProjectTaskModals({
                       assignee: member?.name || "",
                     });
                   }}
-                  className="w-full rounded-xl border p-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
                 >
                   <option value="">Choose collaborator</option>
 
-                  {project.team.map((member) => (
+                  {team.map((member) => (
                     <option
                       key={member.id || member.name}
                       value={member.id || member.name}
@@ -107,122 +169,92 @@ export default function ProjectTaskModals({
                       {member.name}
                     </option>
                   ))}
-                </select>
+                </FormSelect>
               </div>
             )}
-
-            <div className="mb-6">
-              <label className="mb-1 block text-sm font-bold">
-                Status
-              </label>
-
-              <select
-                value={newTask.status}
-                onChange={(event) =>
-                  setNewTask({
-                    ...newTask,
-                    status: event.target.value,
-                  })
-                }
-                className="w-full rounded-xl border p-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
-              >
-                <option value="pending">Pending</option>
-                <option value="post-poned">Post-Poned</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowTaskPopup(false)}
-                className="w-1/2 rounded-xl border px-4 py-2 font-bold transition hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={onAddTask}
-                className="w-1/2 rounded-xl bg-[var(--primary)] px-4 py-2 font-bold text-white transition hover:opacity-90"
-              >
-                Confirm
-              </button>
-            </div>
           </div>
-        </div>
+
+          <ModalFooter
+            onCancel={() => setShowTaskPopup(false)}
+            onConfirm={onAddTask}
+            confirmText="Create task"
+          />
+        </AppModal>
       )}
 
       {showEditPopup && editingTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="mb-4 text-xl font-black text-[var(--ink)]">
-              Edit Task
-            </h2>
-
-            <div className="mb-4">
-              <label className="mb-1 block text-sm font-bold">
-                Task Title
-              </label>
-
-              <input
+        <AppModal
+          title="Edit task"
+          onClose={() => {
+            setShowEditPopup(false);
+            setEditingTask(null);
+          }}
+          maxWidth="max-w-xl"
+        >
+          <div className="space-y-4">
+            <div>
+              <FieldLabel>Task title</FieldLabel>
+              <FormInput
                 type="text"
                 value={editingTask.title}
                 onChange={(event) =>
-                  setEditingTask({
-                    ...editingTask,
-                    title: event.target.value,
-                  })
+                  setEditingTask({ ...editingTask, title: event.target.value })
                 }
-                className="w-full rounded-xl border p-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
               />
             </div>
 
-            <div className="mb-4">
-              <label className="mb-1 block text-sm font-bold">
-                Description
-              </label>
-
-              <textarea
-                value={editingTask.description}
+            <div>
+              <FieldLabel>Description</FieldLabel>
+              <FormTextarea
+                value={editingTask.description || ""}
                 onChange={(event) =>
                   setEditingTask({
                     ...editingTask,
                     description: event.target.value,
                   })
                 }
-                className="min-h-24 w-full rounded-xl border p-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
               />
             </div>
 
-            <div className="mb-4">
-              <label className="mb-1 block text-sm font-bold">
-                Deadline
-              </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <FieldLabel>Deadline</FieldLabel>
+                <FormInput
+                  type="date"
+                  value={editingTask.deadline || ""}
+                  onChange={(event) =>
+                    setEditingTask({
+                      ...editingTask,
+                      deadline: event.target.value,
+                    })
+                  }
+                />
+              </div>
 
-              <input
-                type="date"
-                value={editingTask.deadline || ""}
-                onChange={(event) =>
-                  setEditingTask({
-                    ...editingTask,
-                    deadline: event.target.value,
-                  })
-                }
-                className="w-full rounded-xl border p-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
-              />
+              <div>
+                <FieldLabel>Status</FieldLabel>
+                <FormSelect
+                  value={editingTask.status}
+                  onChange={(event) =>
+                    setEditingTask({ ...editingTask, status: event.target.value })
+                  }
+                >
+                  {STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </FormSelect>
+              </div>
             </div>
 
             {!isBachelorProject && (
-              <div className="mb-4">
-                <label className="mb-1 block text-sm font-bold">
-                  Assignee
-                </label>
-
-                <select
+              <div>
+                <FieldLabel>Assignee</FieldLabel>
+                <FormSelect
                   value={editingTask.assigneeId || ""}
                   onChange={(event) => {
-                    const member = project.team.find(
+                    const member = team.find(
                       (item) => String(item.id) === String(event.target.value)
                     );
 
@@ -232,11 +264,10 @@ export default function ProjectTaskModals({
                       assignee: member?.name || editingTask.assignee,
                     });
                   }}
-                  className="w-full rounded-xl border p-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
                 >
                   <option value="">Choose collaborator</option>
 
-                  {project.team.map((member) => (
+                  {team.map((member) => (
                     <option
                       key={member.id || member.name}
                       value={member.id || member.name}
@@ -244,53 +275,20 @@ export default function ProjectTaskModals({
                       {member.name}
                     </option>
                   ))}
-                </select>
+                </FormSelect>
               </div>
             )}
-
-            <div className="mb-6">
-              <label className="mb-1 block text-sm font-bold">
-                Status
-              </label>
-
-              <select
-                value={editingTask.status}
-                onChange={(event) =>
-                  setEditingTask({
-                    ...editingTask,
-                    status: event.target.value,
-                  })
-                }
-                className="w-full rounded-xl border p-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
-              >
-                <option value="pending">Pending</option>
-                <option value="post-poned">Post-Poned</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowEditPopup(false);
-                  setEditingTask(null);
-                }}
-                className="w-1/2 rounded-xl border px-4 py-2 font-bold transition hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={onSaveEditedTask}
-                className="w-1/2 rounded-xl bg-[var(--primary)] px-4 py-2 font-bold text-white transition hover:opacity-90"
-              >
-                Save Changes
-              </button>
-            </div>
           </div>
-        </div>
+
+          <ModalFooter
+            onCancel={() => {
+              setShowEditPopup(false);
+              setEditingTask(null);
+            }}
+            onConfirm={onSaveEditedTask}
+            confirmText="Save changes"
+          />
+        </AppModal>
       )}
     </>
   );

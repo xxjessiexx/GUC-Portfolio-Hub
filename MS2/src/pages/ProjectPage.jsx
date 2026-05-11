@@ -201,6 +201,8 @@ export default function ProjectPage() {
   };
 
   useEffect(() => {
+    // This reads the external demo store after the route/user changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshProject();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, loggedInUser?.id]);
@@ -281,7 +283,6 @@ export default function ProjectPage() {
     project,
     canAddInstructorFeedback,
     loggedInUser,
-    isAdmin,
     persistProject,
     makeNotification,
   });
@@ -427,9 +428,7 @@ export default function ProjectPage() {
               canViewComments={canViewComments}
               canAddInstructorFeedback={canAddInstructorFeedback}
               loggedInUser={loggedInUser}
-              currentUser={currentUser}
               isAdmin={isAdmin}
-              taskFeedbackDrafts={projectTasks.taskFeedbackDrafts}
               setTaskFeedbackDrafts={projectTasks.setTaskFeedbackDrafts}
               onAddTaskClick={() => projectTasks.setShowTaskPopup(true)}
               onStoreTasks={projectTasks.storeTasks}

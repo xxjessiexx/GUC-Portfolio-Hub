@@ -16,7 +16,7 @@ import {
 
 
 const DB_KEY = "guc_demo_database_v9";
-const CHAT_RESET_VERSION = "chat-reset-v1";
+const CHAT_RESET_VERSION = "chat-reset-v13";
 const CHAT_RESET_KEY = "guc_demo_chat_reset_version";
 const CURRENT_USER_KEY = "currentUser";
 const LEGACY_USERS_KEY = "users";
@@ -25,6 +25,9 @@ const INTERNSHIPS_STORAGE_KEY = "guc-portfolio-internships";
 const APPLIED_INTERNSHIPS_KEY = "guc-applied-internships";
 const SAVED_INTERNSHIPS_KEY = "guc-saved-internships";
 const COVER_LETTERS_KEY = "guc-cover-letters";
+
+let demoDbCache = null;
+let compatibilitySyncedForUserId = null;
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
@@ -294,9 +297,22 @@ function syncCompatibilityKeys(db, explicitUser = getCurrentUserRaw()) {
 export function initializeDemoStore({ force = false } = {}) {
   if (typeof window === "undefined") return freshDb();
 
+  const currentUserId = getCurrentUserRaw()?.id || null;
+
+  if (!force && demoDbCache) {
+    if (compatibilitySyncedForUserId !== currentUserId) {
+      syncCompatibilityKeys(demoDbCache);
+      compatibilitySyncedForUserId = currentUserId;
+    }
+
+    return demoDbCache;
+  }
+
   if (force) {
     const reset = freshDb();
 
+    demoDbCache = reset;
+    compatibilitySyncedForUserId = null;
     writeLocal(DB_KEY, reset);
     localStorage.setItem(CHAT_RESET_KEY, CHAT_RESET_VERSION);
     sessionStorage.removeItem(CURRENT_USER_KEY);
@@ -327,6 +343,8 @@ export function initializeDemoStore({ force = false } = {}) {
         notifications: seedDb.notifications || [],
       });
 
+      demoDbCache = updatedDb;
+      compatibilitySyncedForUserId = null;
       writeLocal(DB_KEY, updatedDb);
       localStorage.setItem(CHAT_RESET_KEY, CHAT_RESET_VERSION);
 
@@ -337,17 +355,27 @@ export function initializeDemoStore({ force = false } = {}) {
     }
 
     const migratedStored = ensureBachelorLinks(stored);
-    if (JSON.stringify(migratedStored) !== JSON.stringify(stored)) writeLocal(DB_KEY, migratedStored);
+    demoDbCache = migratedStored;
+    compatibilitySyncedForUserId = null;
+
+    if (JSON.stringify(migratedStored) !== JSON.stringify(stored)) {
+      writeLocal(DB_KEY, migratedStored);
+    }
+
     syncCompatibilityKeys(migratedStored);
+    compatibilitySyncedForUserId = currentUserId;
     return migratedStored;
   }
 
   const next = freshDb();
 
+  demoDbCache = next;
+  compatibilitySyncedForUserId = null;
   writeLocal(DB_KEY, next);
   localStorage.setItem(CHAT_RESET_KEY, CHAT_RESET_VERSION);
 
   syncCompatibilityKeys(next);
+  compatibilitySyncedForUserId = currentUserId;
   dispatchStoreChange();
 
   return next;
@@ -359,8 +387,12 @@ export function getDemoDb() {
 
 export function setDemoDb(nextDb) {
   const normalized = ensureBachelorLinks({ ...nextDb, version: DEMO_DATA_VERSION });
+
+  demoDbCache = normalized;
+  compatibilitySyncedForUserId = null;
   writeLocal(DB_KEY, normalized);
   syncCompatibilityKeys(normalized);
+  compatibilitySyncedForUserId = getCurrentUserRaw()?.id || null;
   dispatchStoreChange();
   return normalized;
 }
@@ -1267,6 +1299,75 @@ export function getChatsForCurrentUser(userId = getCurrentUser()?.id) {
       (participantId) => String(participantId) === String(userId)
     )
   );
+}
+
+
+export function getExistingDirectChat(targetUserId, currentUserId = getCurrentUser()?.id) {
+  if (!targetUserId || !currentUserId) return null;
+  if (String(targetUserId) === String(currentUserId)) return null;
+
+  const chats = getDemoDb().chats || [];
+
+  return (
+    chats.find((chat) => {
+      const participantIds = (chat.participantIds || []).map(String);
+
+      return (
+        participantIds.length === 2 &&
+        participantIds.includes(String(currentUserId)) &&
+        participantIds.includes(String(targetUserId))
+      );
+    }) || null
+  );
+}
+
+export function getOrCreateDirectChat(targetUserId, currentUserId = getCurrentUser()?.id) {
+  if (!targetUserId || !currentUserId) return null;
+  if (String(targetUserId) === String(currentUserId)) return null;
+
+  const existingChat = getExistingDirectChat(targetUserId, currentUserId);
+  if (existingChat) return existingChat;
+
+  const db = getDemoDb();
+  const chats = db.chats || [];
+
+  const targetUser = getUserById(targetUserId);
+  const currentUser = getUserById(currentUserId);
+
+  if (!targetUser || !currentUser) return null;
+
+  const sortedIds = [String(currentUserId), String(targetUserId)].sort();
+  const now = new Date();
+
+  const targetName =
+    targetUser.name ||
+    targetUser.fullName ||
+    targetUser.displayName ||
+    targetUser.companyName ||
+    "New conversation";
+
+  const newChat = {
+    id: `chat-${sortedIds.join("-")}`,
+    isDemo: false,
+    participantIds: [currentUserId, targetUserId],
+    name: targetName,
+    avatar: targetUser.avatar || getInitials(targetName),
+    online: false,
+    unread: 0,
+    unreadBy: [],
+    messages: [],
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+  };
+
+  setDemoDb({
+    ...db,
+    chats: [newChat, ...chats],
+  });
+
+  notifyChatsChanged();
+
+  return newChat;
 }
 
 export function setChatsForCurrentUser(chats, userId = getCurrentUser()?.id) {
