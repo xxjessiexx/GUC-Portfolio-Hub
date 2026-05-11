@@ -366,8 +366,8 @@ export default function ProjectPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <AppCard className="space-y-6 p-6">
+      <div className="mx-auto w-full max-w-6xl space-y-6 px-3 sm:px-4 lg:px-0">
+        <AppCard className="space-y-6 p-5 sm:p-6 lg:p-8">
           <ProjectPageHeader
             project={project}
             isPublic={isPublic}
