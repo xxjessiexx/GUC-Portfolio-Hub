@@ -26,6 +26,9 @@ const APPLIED_INTERNSHIPS_KEY = "guc-applied-internships";
 const SAVED_INTERNSHIPS_KEY = "guc-saved-internships";
 const COVER_LETTERS_KEY = "guc-cover-letters";
 
+let demoDbCache = null;
+let compatibilitySyncedForUserId = null;
+
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
 function parseJson(value, fallback) {
@@ -294,9 +297,22 @@ function syncCompatibilityKeys(db, explicitUser = getCurrentUserRaw()) {
 export function initializeDemoStore({ force = false } = {}) {
   if (typeof window === "undefined") return freshDb();
 
+  const currentUserId = getCurrentUserRaw()?.id || null;
+
+  if (!force && demoDbCache) {
+    if (compatibilitySyncedForUserId !== currentUserId) {
+      syncCompatibilityKeys(demoDbCache);
+      compatibilitySyncedForUserId = currentUserId;
+    }
+
+    return demoDbCache;
+  }
+
   if (force) {
     const reset = freshDb();
 
+    demoDbCache = reset;
+    compatibilitySyncedForUserId = null;
     writeLocal(DB_KEY, reset);
     localStorage.setItem(CHAT_RESET_KEY, CHAT_RESET_VERSION);
     sessionStorage.removeItem(CURRENT_USER_KEY);
@@ -327,6 +343,8 @@ export function initializeDemoStore({ force = false } = {}) {
         notifications: seedDb.notifications || [],
       });
 
+      demoDbCache = updatedDb;
+      compatibilitySyncedForUserId = null;
       writeLocal(DB_KEY, updatedDb);
       localStorage.setItem(CHAT_RESET_KEY, CHAT_RESET_VERSION);
 
@@ -337,17 +355,27 @@ export function initializeDemoStore({ force = false } = {}) {
     }
 
     const migratedStored = ensureBachelorLinks(stored);
-    if (JSON.stringify(migratedStored) !== JSON.stringify(stored)) writeLocal(DB_KEY, migratedStored);
+    demoDbCache = migratedStored;
+    compatibilitySyncedForUserId = null;
+
+    if (JSON.stringify(migratedStored) !== JSON.stringify(stored)) {
+      writeLocal(DB_KEY, migratedStored);
+    }
+
     syncCompatibilityKeys(migratedStored);
+    compatibilitySyncedForUserId = currentUserId;
     return migratedStored;
   }
 
   const next = freshDb();
 
+  demoDbCache = next;
+  compatibilitySyncedForUserId = null;
   writeLocal(DB_KEY, next);
   localStorage.setItem(CHAT_RESET_KEY, CHAT_RESET_VERSION);
 
   syncCompatibilityKeys(next);
+  compatibilitySyncedForUserId = currentUserId;
   dispatchStoreChange();
 
   return next;
@@ -359,8 +387,12 @@ export function getDemoDb() {
 
 export function setDemoDb(nextDb) {
   const normalized = ensureBachelorLinks({ ...nextDb, version: DEMO_DATA_VERSION });
+
+  demoDbCache = normalized;
+  compatibilitySyncedForUserId = null;
   writeLocal(DB_KEY, normalized);
   syncCompatibilityKeys(normalized);
+  compatibilitySyncedForUserId = getCurrentUserRaw()?.id || null;
   dispatchStoreChange();
   return normalized;
 }

@@ -13,11 +13,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
-export default function DragDropList({
-  items,
-  setItems,
-  children,
-}) {
+export default function DragDropList({ items, setItems, children }) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
@@ -30,17 +26,12 @@ export default function DragDropList({
 
     if (!over || active.id === over.id) return;
 
-    const oldIndex = items.findIndex(
-      (item) => item.id === active.id
-    );
+    const oldIndex = items.findIndex((item) => item.id === active.id);
+    const newIndex = items.findIndex((item) => item.id === over.id);
 
-    const newIndex = items.findIndex(
-      (item) => item.id === over.id
-    );
+    if (oldIndex < 0 || newIndex < 0) return;
 
-    setItems((prev) =>
-      arrayMove(prev, oldIndex, newIndex)
-    );
+    setItems(arrayMove(items, oldIndex, newIndex));
   };
 
   return (

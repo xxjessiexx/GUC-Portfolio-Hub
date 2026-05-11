@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { FaRegStar, FaStar } from "react-icons/fa";
 
+import AppModal from "@/components/common/AppModal";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import { EmptyState } from "@/components/projectPage/ProjectPageShared";
 import {
@@ -67,53 +68,41 @@ function RatingStars({ value = 0, onChange, readonly = false, size = "text-lg" }
   );
 }
 
-function FeedbackEditModal({ feedback, onCancel, onSave }) {
-  const [message, setMessage] = useState(feedback?.message || "");
-
-  useEffect(() => {
-    setMessage(feedback?.message || "");
-  }, [feedback]);
-
+function FeedbackEditModal({ feedback, message, onMessageChange, onCancel, onSave }) {
   if (!feedback) return null;
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-[32px] border border-white/40 bg-white p-7 shadow-2xl">
-        <h2 className="text-2xl font-black text-[var(--ink)]">
-          Edit feedback
-        </h2>
+    <AppModal title="Edit feedback" onClose={onCancel} maxWidth="max-w-2xl">
+      <p className="mb-4 text-sm font-semibold text-[var(--muted)]">
+        Update the instructor feedback note shown on this project.
+      </p>
 
-        <p className="mt-2 text-sm font-semibold text-[var(--muted)]">
-          Update the instructor feedback note shown on this project.
-        </p>
+      <textarea
+        value={message}
+        onChange={(event) => onMessageChange(event.target.value)}
+        className="min-h-36 w-full resize-none rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold outline-none focus:border-[var(--primary)]"
+        autoFocus
+      />
 
-        <textarea
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-          className="mt-5 min-h-36 w-full rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold outline-none focus:border-[var(--primary)]"
-          autoFocus
-        />
+      <div className="mt-5 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-2xl border border-slate-200 px-5 py-3 font-black text-slate-500 transition hover:bg-slate-100"
+        >
+          Cancel
+        </button>
 
-        <div className="mt-5 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-2xl border border-slate-200 px-5 py-3 font-black text-slate-500 transition hover:bg-slate-100"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onSave(message)}
-            disabled={!message.trim()}
-            className="rounded-2xl bg-[var(--primary)] px-5 py-3 font-black text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Save changes
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => onSave(message)}
+          disabled={!message.trim()}
+          className="rounded-2xl bg-[var(--primary)] px-5 py-3 font-black text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Save changes
+        </button>
       </div>
-    </div>
+    </AppModal>
   );
 }
 
@@ -135,7 +124,6 @@ function getInstructorRating(project, instructorId) {
 export default function ProjectFeedbackTab({
   project,
   loggedInUser,
-  isAdmin,
   canAddInstructorFeedback,
   ratingDraft,
   setRatingDraft,
@@ -149,6 +137,7 @@ export default function ProjectFeedbackTab({
   const [editingRating, setEditingRating] = useState(false);
   const [feedbackToDelete, setFeedbackToDelete] = useState(null);
   const [feedbackToEdit, setFeedbackToEdit] = useState(null);
+  const [feedbackEditMessage, setFeedbackEditMessage] = useState("");
 
   const instructorName =
     project.instructor?.name || getDisplayName(loggedInUser) || "Instructor";
@@ -301,11 +290,14 @@ export default function ProjectFeedbackTab({
                 </div>
               </div>
 
-              {(item.authorId === loggedInUser?.id || isAdmin) && (
+              {item.authorId === loggedInUser?.id && (
                 <div className="flex gap-3">
                   <button
                     type="button"
-                    onClick={() => setFeedbackToEdit(item.id)}
+                    onClick={() => {
+                      setFeedbackToEdit(item.id);
+                      setFeedbackEditMessage(item.message || "");
+                    }}
                     className="text-xs font-black text-[var(--primary)] transition hover:opacity-70"
                   >
                     Edit
@@ -357,10 +349,16 @@ export default function ProjectFeedbackTab({
 
       <FeedbackEditModal
         feedback={selectedFeedbackToEdit}
-        onCancel={() => setFeedbackToEdit(null)}
+        message={feedbackEditMessage}
+        onMessageChange={setFeedbackEditMessage}
+        onCancel={() => {
+          setFeedbackToEdit(null);
+          setFeedbackEditMessage("");
+        }}
         onSave={(message) => {
           onEditProjectFeedback(feedbackToEdit, message);
           setFeedbackToEdit(null);
+          setFeedbackEditMessage("");
         }}
       />
 
