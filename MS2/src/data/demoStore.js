@@ -279,6 +279,98 @@ export function setCurrentUser(user) {
   dispatchUserChange();
   return normalized;
 }
+export function getEmployerDashboardSnapshot(employerId = getCurrentUser()?.id) {
+  const db = getDemoDb();
+  const users = db.users || [];
+  const employer =
+    users.find((user) => String(user.id) === String(employerId)) ||
+    getCurrentUser() ||
+    null;
+
+  const id = employer?.id || employerId;
+
+  const internships = (db.internships || [])
+    .filter((internship) => String(internship.employerId) === String(id))
+    .map(hydrateInternshipFromDb(db))
+    .map((internship) => ({
+      ...internship,
+      applications: (internship.applications || []).map((application) => ({
+        ...application,
+        student:
+          users.find((user) => String(user.id) === String(application.studentId)) ||
+          null,
+      })),
+    }));
+
+  const applications = internships.flatMap((internship) =>
+    (internship.applications || []).map((application) => ({
+      ...application,
+      internshipId: internship.id,
+      internshipTitle: internship.title,
+    }))
+  );
+
+  const acceptedLike = new Set([
+    "accepted",
+    "hired",
+    "completed",
+    "interned",
+    "offer accepted",
+  ]);
+
+  const acceptedApplications = applications.filter((application) =>
+    acceptedLike.has(String(application.status || "").trim().toLowerCase())
+  );
+
+  const filledInternships = internships.filter((internship) => {
+    const status = String(internship.status || "").toLowerCase();
+    return (
+      Boolean(internship.isFilled) ||
+      status.includes("filled") ||
+      status.includes("completed") ||
+      status.includes("closed")
+    );
+  });
+
+  const acceptedStudentIds = new Set(
+    acceptedApplications.map((application) => application.studentId).filter(Boolean)
+  );
+
+  const studentsInterned = Math.max(
+    acceptedStudentIds.size,
+    filledInternships.length
+  );
+
+  return {
+    employer,
+    internships,
+    applications,
+    acceptedApplications,
+    filledInternships,
+    stats: {
+      internshipsOffered: internships.length,
+      activeInternships: internships.filter((internship) => {
+        const status = String(internship.status || "").toLowerCase();
+        return (
+          !internship.archived &&
+          !internship.isArchived &&
+          !status.includes("filled") &&
+          !status.includes("closed")
+        );
+      }).length,
+      totalApplicants:
+        applications.length ||
+        internships.reduce(
+          (sum, internship) => sum + Number(internship.applicants || 0),
+          0
+        ),
+      studentsInterned,
+    },
+    notifications: (db.notifications || []).filter(
+      (notification) => String(notification.userId) === String(id)
+    ),
+  };
+}
 
 export function clearCurrentUser() {
   if (typeof window === "undefined") return;
@@ -1086,7 +1178,395 @@ export function getStudentDashboardSnapshot(userId = getCurrentUser()?.id) {
     recommendedProjects: getRecommendedProjectsForUser(user.id).map((project) => project.title),
   };
 }
+export function getAdminDashboardSnapshot(adminId) {
+  const db = getDemoDb();
 
+  const users = Array.isArray(db.users) ? db.users : [];
+  const projects = Array.isArray(db.projects) ? db.projects : [];
+  const courses = Array.isArray(db.courses) ? db.courses : [];
+  const internships = Array.isArray(db.internships) ? db.internships : [];
+  const notifications = Array.isArray(db.notifications) ? db.notifications : [];
+
+  const currentUser =
+    typeof getCurrentUser === "function" ? getCurrentUser() : null;
+
+  const normalizeRoleSafe = (role) =>
+    String(role || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-");
+
+  const parseDateSafe = (value) => {
+    if (!value) return null;
+
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return value;
+    }
+
+    const parsed = new Date(value);
+
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+
+    return parsed;
+  };
+
+  const internshipDate = (internship = {}) =>
+    parseDateSafe(internship.postedAt) ||
+    parseDateSafe(internship.createdAt) ||
+    parseDateSafe(internship.datePosted) ||
+    parseDateSafe(internship.postedDate) ||
+    parseDateSafe(internship.createdOn) ||
+    parseDateSafe(internship.deadline) ||
+    new Date();
+
+  const applicationDate = (application = {}, internship = {}) =>
+    parseDateSafe(application.acceptedAt) ||
+    parseDateSafe(application.completedAt) ||
+    parseDateSafe(application.updatedAt) ||
+    parseDateSafe(application.appliedAt) ||
+    internshipDate(internship);
+
+  const monthKeyFromDateSafe = (dateValue) => {
+    const date = parseDateSafe(dateValue) || new Date();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}`;
+  };
+
+  const monthLabelFromKey = (key) => {
+    const [, month] = String(key).split("-");
+    const labels = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    return labels[Math.max(0, Number(month) - 1)] || key;
+  };
+
+  const getLastMonths = (count = 7) => {
+    const today = new Date();
+
+    return Array.from({ length: count }, (_, index) => {
+      const date = new Date(today.getFullYear(), today.getMonth() - count + 1 + index, 1);
+      const key = monthKeyFromDateSafe(date);
+
+      return {
+        key,
+        label: monthLabelFromKey(key),
+        date,
+      };
+    });
+  };
+
+  const isAcceptedStatus = (status) => {
+    const normalized = String(status || "").trim().toLowerCase();
+
+    return [
+      "accepted",
+      "hired",
+      "completed",
+      "complete",
+      "interned",
+      "offer accepted",
+      "position filled",
+      "filled",
+    ].includes(normalized);
+  };
+
+  const getUserName = (user = {}) =>
+    user.companyName ||
+    user.name ||
+    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+    user.email ||
+    "Unknown";
+
+  const admin =
+    users.find((user) => String(user.id) === String(adminId)) ||
+    currentUser ||
+    users.find((user) => normalizeRoleSafe(user.role) === "admin") ||
+    null;
+
+  const students = users.filter(
+    (user) => normalizeRoleSafe(user.role) === "student"
+  );
+
+  const employers = users.filter(
+    (user) => normalizeRoleSafe(user.role) === "employer"
+  );
+
+  const instructors = users.filter(
+    (user) =>
+      normalizeRoleSafe(user.role) === "instructor" ||
+      normalizeRoleSafe(user.role) === "course-instructor"
+  );
+
+  const admins = users.filter(
+    (user) => normalizeRoleSafe(user.role) === "admin"
+  );
+
+  const applicationsFromInternships = internships.flatMap((internship) =>
+    (internship.applications || []).map((application) => ({
+      ...application,
+      internshipId: application.internshipId || internship.id,
+      internshipTitle: application.internshipTitle || internship.title,
+      employerId: application.employerId || internship.employerId,
+      companyName:
+        application.companyName ||
+        internship.companyName ||
+        internship.company ||
+        "Unknown company",
+      _internship: internship,
+    }))
+  );
+
+  const applicationsFromDb = Array.isArray(db.applications)
+    ? db.applications.map((application) => {
+        const internship = internships.find(
+          (item) => String(item.id) === String(application.internshipId)
+        );
+
+        return {
+          ...application,
+          internshipId: application.internshipId || internship?.id,
+          internshipTitle: application.internshipTitle || internship?.title,
+          employerId: application.employerId || internship?.employerId,
+          companyName:
+            application.companyName ||
+            internship?.companyName ||
+            internship?.company ||
+            "Unknown company",
+          _internship: internship || {},
+        };
+      })
+    : [];
+
+  const applicationMap = new Map();
+
+  [...applicationsFromInternships, ...applicationsFromDb].forEach((application, index) => {
+    const key =
+      application.id ||
+      `${application.internshipId || "internship"}-${
+        application.studentId || application.email || "student"
+      }-${index}`;
+
+    applicationMap.set(String(key), application);
+  });
+
+  const applications = Array.from(applicationMap.values());
+
+  const acceptedApplications = applications.filter((application) =>
+    isAcceptedStatus(application.status)
+  );
+
+  const filledInternships = internships.filter((internship) => {
+    const status = String(internship.status || "").toLowerCase();
+
+    return (
+      Boolean(internship.isFilled) ||
+      Boolean(internship.filled) ||
+      status.includes("filled") ||
+      status.includes("completed") ||
+      status.includes("closed")
+    );
+  });
+
+  const acceptedStudentIds = new Set(
+    acceptedApplications
+      .map((application) => application.studentId || application.userId)
+      .filter(Boolean)
+  );
+
+  const months = getLastMonths(7);
+
+  const internshipTimeline = months.map((month, index) => {
+    const monthEnd = new Date(`${month.key}-28`);
+
+    const offered = internships.filter(
+      (internship) => monthKeyFromDateSafe(internshipDate(internship)) === month.key
+    ).length;
+
+    const interned = acceptedApplications.filter((application) => {
+      const date = applicationDate(application, application._internship);
+      return monthKeyFromDateSafe(date) === month.key;
+    }).length;
+
+    const cumulativeOffered = internships.filter(
+      (internship) => internshipDate(internship) <= monthEnd
+    ).length;
+
+    const cumulativeInterned = acceptedApplications.filter((application) => {
+      const date = applicationDate(application, application._internship);
+      return date <= monthEnd;
+    }).length;
+
+    return {
+      ...month,
+      offered,
+      interned,
+      cumulativeOffered,
+      cumulativeInterned,
+      value: offered + interned + index,
+    };
+  });
+
+  const companyOutcomes = employers
+    .map((employer) => {
+      const companyInternships = internships.filter(
+        (internship) => String(internship.employerId) === String(employer.id)
+      );
+
+      const companyApplications = applications.filter((application) =>
+        companyInternships.some(
+          (internship) => String(internship.id) === String(application.internshipId)
+        )
+      );
+
+      const companyAccepted = companyApplications.filter((application) =>
+        isAcceptedStatus(application.status)
+      );
+
+      const companyFilled = companyInternships.filter((internship) => {
+        const status = String(internship.status || "").toLowerCase();
+
+        return (
+          Boolean(internship.isFilled) ||
+          Boolean(internship.filled) ||
+          status.includes("filled") ||
+          status.includes("completed") ||
+          status.includes("closed")
+        );
+      });
+
+      return {
+        id: employer.id,
+        name: employer.companyName || employer.name || getUserName(employer),
+        offered: companyInternships.length,
+        interned: Math.max(
+          new Set(
+            companyAccepted
+              .map((application) => application.studentId || application.userId)
+              .filter(Boolean)
+          ).size,
+          companyFilled.length
+        ),
+      };
+    })
+    .filter((company) => company.offered > 0 || company.interned > 0)
+    .sort((a, b) => b.interned - a.interned || b.offered - a.offered);
+
+  const roleDistribution = [
+    { label: "Students", value: students.length },
+    { label: "Employers", value: employers.length },
+    { label: "Instructors", value: instructors.length },
+    { label: "Admins", value: admins.length },
+  ];
+
+  const stats = {
+    totalUsers: users.length,
+    students: students.length,
+    employers: employers.length,
+    instructors: instructors.length,
+    admins: admins.length,
+    projects: projects.length,
+    courses: courses.length,
+    internshipsOffered: internships.length,
+    studentsInterned: Math.max(acceptedStudentIds.size, filledInternships.length),
+    pendingReviews: notifications.filter(
+      (notification) =>
+        !notification.read &&
+        ["admin", admin?.id].includes(notification.userId)
+    ).length,
+  };
+
+  const makeSparkline = (base) =>
+    Array.from({ length: 7 }, (_, index) => ({
+      label: index,
+      value: Math.max(
+        0,
+        Math.round(base * (0.55 + index * 0.075) + (index % 2 ? 1 : 0))
+      ),
+    }));
+
+  return {
+    admin,
+    users,
+    projects,
+    courses,
+    internships,
+    applications,
+    acceptedApplications,
+    companyOutcomes,
+    roleDistribution,
+    internshipTimeline,
+    notifications,
+    stats,
+    platformCards: [
+      {
+        label: "Total users",
+        value: stats.totalUsers,
+        detail: "all platform accounts",
+      },
+      {
+        label: "Students",
+        value: stats.students,
+        detail: "registered learners",
+      },
+      {
+        label: "Employers",
+        value: stats.employers,
+        detail: "company accounts",
+      },
+      {
+        label: "Instructors",
+        value: stats.instructors,
+        detail: "course staff",
+      },
+      {
+        label: "Total projects",
+        value: stats.projects,
+        detail: "visible project records",
+      },
+      {
+        label: "Total courses",
+        value: stats.courses,
+        detail: "course catalog entries",
+      },
+      {
+        label: "Internships offered",
+        value: stats.internshipsOffered,
+        detail: "roles posted by companies",
+      },
+      {
+        label: "Students interned",
+        value: stats.studentsInterned,
+        detail: "accepted/completed interns",
+      },
+    ],
+    sparklines: {
+      users: makeSparkline(stats.totalUsers),
+      students: makeSparkline(stats.students),
+      employers: makeSparkline(stats.employers),
+      instructors: makeSparkline(stats.instructors),
+      projects: makeSparkline(stats.projects),
+      courses: makeSparkline(stats.courses),
+      internships: makeSparkline(stats.internshipsOffered),
+      interned: makeSparkline(stats.studentsInterned),
+    },
+  };
+}
 export function getAdminModuleState() {
   const db = getDemoDb();
   const users = db.users || [];
