@@ -26,8 +26,10 @@ const projectsGrid =
   "lg:grid-cols-[1.5fr_1.7fr_0.9fr_0.8fr_0.8fr_0.7fr]";
 
 export default function AdminFlaggedProjects() {
-  const { flaggedProjects, appeals, actions } =
-  useAdminModuleData();
+  const {
+  flaggedProjects,
+  actions,
+} = useAdminModuleData();
 
 const savedFlaggedProjects =
   JSON.parse(
@@ -40,6 +42,14 @@ const allFlaggedProjects = [
   ...flaggedProjects,
   ...savedFlaggedProjects,
 ];
+
+const appeals =
+  JSON.parse(
+    localStorage.getItem(
+      "projectAppeals"
+    )
+  ) || [];
+
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -144,7 +154,97 @@ const allFlaggedProjects = [
           : prev
       );
     } else {
-      actions.setAppealStatus(decision.appeal.id, decision.nextStatus, note.trim());
+     const savedAppeals =
+  JSON.parse(
+    localStorage.getItem(
+      "projectAppeals"
+    )
+  ) || [];
+
+const updatedAppeals =
+  savedAppeals.map((appeal) =>
+
+    appeal.id ===
+    decision.appeal.id
+
+      ? {
+          ...appeal,
+          status:
+            decision.nextStatus,
+          decisionNote: note,
+        }
+
+      : appeal
+  );
+
+localStorage.setItem(
+  "projectAppeals",
+  JSON.stringify(updatedAppeals)
+);
+
+/* ACCEPTED */
+
+if (
+  decision.nextStatus ===
+  "accepted"
+) {
+
+  /* REMOVE REPORT */
+
+  const reported =
+    JSON.parse(
+      localStorage.getItem(
+        "reportedProjects"
+      )
+    ) || [];
+
+  const updatedReported =
+    reported.filter(
+      (project) =>
+
+        project.projectId !==
+        decision.appeal.projectId
+    );
+
+  localStorage.setItem(
+    "reportedProjects",
+    JSON.stringify(updatedReported)
+  );
+
+  /* UPDATE FLAG */
+
+  const flagged =
+    JSON.parse(
+      localStorage.getItem(
+        "flaggedProjects"
+      )
+    ) || [];
+
+  const updatedFlags =
+    flagged.map((project) =>
+
+      project.id ===
+      decision.appeal.projectId
+
+        ? {
+            ...project,
+            appealStatus:
+              "accepted",
+
+            status:
+              "resolved",
+
+            active: true,
+          }
+
+        : project
+    );
+
+  localStorage.setItem(
+    "flaggedProjects",
+    JSON.stringify(updatedFlags)
+  );
+}
       toast.success(`Appeal ${decision.nextStatus}`);
     }
 

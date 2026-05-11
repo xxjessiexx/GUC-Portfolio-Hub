@@ -506,8 +506,17 @@ export default function ManageApplicants() {
 
             <aside className="space-y-6">
               <AppCard className="p-6">
-                <SideHeader title="Shortlisted" action="View all" />
-
+                <div
+  onClick={() =>
+    navigate("/featured-students")
+  }
+  className="cursor-pointer"
+>
+  <SideHeader
+    title="Shortlisted"
+    action="View all"
+  />
+</div>
                 {applicants
                   .filter((a) => a.status === "Shortlisted")
                   .slice(0, 4)
@@ -517,7 +526,17 @@ export default function ManageApplicants() {
               </AppCard>
 
               <AppCard className="p-6">
-                <SideHeader title="Suggested from Favorites" action="View all" />
+                <div
+  onClick={() =>
+    navigate("/featured-students")
+  }
+  className="cursor-pointer"
+>
+  <SideHeader
+    title="Suggested from Favorites"
+    action="View all"
+  />
+</div>
 
                 {favoriteCandidates.map((candidate) => (
                   <div

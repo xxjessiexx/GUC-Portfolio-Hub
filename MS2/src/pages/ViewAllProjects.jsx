@@ -6,6 +6,8 @@ import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import FilterSelect from "@/components/common/FilterSelect";
 import DeleteConfirmationModal
 from "@/components/ui/DeleteConfirmationModal";
+import { AdminActionDialog }
+from "@/components/adminModule/AdminActionDialog";
 
 import {
   getCurrentUser,
@@ -18,7 +20,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 
-import { Pencil, Trash2, Pin, ChevronDown, Globe, Lock } from "lucide-react";
+import { Pencil, Trash2, ChevronDown, Globe, Lock } from "lucide-react";
 import CourseBadge from "@/components/ui/CourseBadge";
 import DragDropList from "@/components/ui/DragDropList";
 import SortableCard from "@/components/ui/SortableCard";
@@ -94,13 +96,30 @@ export default function ViewAllProjects() {
   const [search, setSearch] = useState("");
   const [filterVisibility, setFilterVisibility] = useState("All");
   const [filterCourse, setFilterCourse] = useState("All");
-  const [filterPinned, setFilterPinned] = useState("All");
+  
   const [sortBy, setSortBy] = useState("Updated");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] =
   useState(null);
 
   const navigate = useNavigate();
+  const currentUser = getCurrentUser();
+
+  const [appealOpen, setAppealOpen] =
+  useState(false);
+
+const [selectedAppealProject, setSelectedAppealProject] =
+  useState(null);
+
+const [appealMessage, setAppealMessage] =
+  useState("");
+
+const reportedProjects =
+  JSON.parse(
+    localStorage.getItem(
+      "reportedProjects"
+    )
+  ) || [];
 
   const refreshProjects = () => {
     const currentUser = getCurrentUser();
@@ -129,16 +148,14 @@ export default function ViewAllProjects() {
       const name = getProjectName(p);
       const course = getProjectCourse(p, courses);
       const visibility = normalizeVisibility(p.visibility);
-      const pinned = Boolean(p.pinned || p.isPinned);
+      
 
       return (
         name.toLowerCase().includes(search.toLowerCase()) &&
         (filterCourse === "All" ||
           course.toUpperCase().includes(filterCourse.toUpperCase())) &&
-        (filterVisibility === "All" || visibility === filterVisibility) &&
-        (filterPinned === "All" ||
-          (filterPinned === "Pinned" && pinned) ||
-          (filterPinned === "Unpinned" && !pinned))
+        (filterVisibility === "All" || visibility === filterVisibility) 
+        
       );
     })
     .sort((a, b) => {
@@ -156,25 +173,9 @@ export default function ViewAllProjects() {
       return 0;
     });
 
-  const pinnedProjects = filteredProjects.filter(
-    (p) => p.pinned || p.isPinned
-  );
+  
 
-  const togglePin = (id) => {
-    const project = projects.find((p) => p.id === id);
-    if (!project) return;
-
-    const nextPinned = !(project.pinned || project.isPinned);
-
-    updateProject(id, {
-      pinned: nextPinned,
-      isPinned: nextPinned,
-      updatedAt: new Date().toISOString(),
-    });
-
-    refreshProjects();
-  };
-
+  
   const toggleVisibility = (id, value) => {
     updateProject(id, {
       visibility: String(value).toLowerCase(),
@@ -191,6 +192,97 @@ export default function ViewAllProjects() {
   const editProject = (id) => {
     navigate(`/edit-project/${id}`);
   };
+
+  const submitAppeal = () => {
+
+  if (!appealMessage.trim()) return;
+
+  const savedAppeals =
+    JSON.parse(
+      localStorage.getItem("projectAppeals")
+    ) || [];
+
+  const updatedAppeals = [
+
+    ...savedAppeals,
+
+    {
+      id: Date.now(),
+
+      projectId:
+        selectedAppealProject.id,
+
+      studentId:
+        currentUser.id,
+
+      student:
+        currentUser.name,
+
+      message:
+        appealMessage,
+
+      submittedAt:
+        new Date().toLocaleString(),
+
+      status: "pending",
+    },
+  ];
+
+  localStorage.setItem(
+    "projectAppeals",
+    JSON.stringify(updatedAppeals)
+  );
+
+  /* UPDATE FLAGGED PROJECT */
+
+  const flagged =
+    JSON.parse(
+      localStorage.getItem(
+        "flaggedProjects"
+      )
+    ) || [];
+
+  const updatedFlags =
+    flagged.map((project) =>
+
+      project.id ===
+      selectedAppealProject.id
+
+        ? {
+            ...project,
+            appealStatus: "pending",
+          }
+
+        : project
+    );
+
+  localStorage.setItem(
+    "flaggedProjects",
+    JSON.stringify(updatedFlags)
+  );
+
+  refreshProjects();
+
+setProjects((prev) =>
+
+  prev.map((project) =>
+
+    project.id ===
+    selectedAppealProject.id
+
+      ? {
+          ...project,
+          appealStatus: "pending",
+        }
+
+      : project
+  )
+);
+
+setAppealOpen(false);
+
+setAppealMessage("");
+};
 
   return (
     <DashboardLayout>
@@ -235,7 +327,7 @@ export default function ViewAllProjects() {
   onClearFilters={() => {
     setFilterCourse("All");
     setFilterVisibility("All");
-    setFilterPinned("All");
+    
   }}
 >
   <FilterSelect
@@ -268,71 +360,317 @@ export default function ViewAllProjects() {
     ]}
   />
 
-  <FilterSelect
-    value={`Pinned: ${filterPinned}`}
-    onChange={(value) =>
-      setFilterPinned(
-        value.replace("Pinned: ", "")
-      )
-    }
-    options={[
-      "Pinned: All",
-      "Pinned: Pinned",
-      "Pinned: Unpinned",
-    ]}
-  />
+  
 </SearchFilterToolbar>
 
-        {/* Pinned */}
-        {pinnedProjects.length > 0 && (
-          <AppCard className="p-4">
-            <Label className="mb-1 text-xl font-bold text-[#243B6B]">
-              Pinned on Portfolio
-            </Label>
+        {/* Flagged Projects */}
+<AppCard className="p-5">
 
-            <p className="text-sm text-gray-500 mt-0 mb-4">
-              Projects highlighted at the top of your portfolio
-            </p>
+  <div className="flex items-center justify-between">
 
-            <div className="flex gap-4 flex-wrap">
-              {pinnedProjects.map((p) => (
-                <div
-                  key={p.id}
-                  onClick={() => openProject(p.id)}
-                  className="border rounded-2xl p-3 flex justify-between items-start w-80 cursor-pointer hover:bg-slate-50 transition"
-                >
-                  <div className="min-w-0">
-                    <h3 className="font-extrabold text-[15px] text-[#243B6B] truncate max-w-[230px]">
-                      {getProjectName(p)}
-                    </h3>
+    <div className="flex items-center gap-3">
 
-                    <CourseBadge course={getProjectCourse(p, courses)} />
-                  </div>
+      <Label
+        className="
+          text-xl
+          font-black
+          text-[#243B6B]
+        "
+      >
+        Flagged Projects
+      </Label>
 
-                  <button
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      togglePin(p.id);
-                    }}
-                    className={`mt-2 flex items-center justify-center w-10 h-10 rounded-full border transition ${
-                      p.pinned || p.isPinned
-                        ? "bg-yellow-100 border-yellow-300 text-yellow-600"
-                        : "bg-white border-gray-200 text-gray-400 hover:bg-gray-100"
-                    }`}
-                  >
-                    <Pin size={16} strokeWidth={2.5} className="rotate-45" />
-                  </button>
-                </div>
-              ))}
+      <div
+        className="
+          w-7 h-7
+          rounded-full
+          bg-red-100
+          text-red-500
+          flex items-center justify-center
+          text-sm font-bold
+        "
+      >
+        {
+          projects.filter((p) =>
+
+  reportedProjects.some(
+    (reported) =>
+
+      reported.projectId === p.id &&
+
+      reported.ownerId ===
+        currentUser?.id
+  )
+).length
+        }
+      </div>
+
+    </div>
+
+    <button
+      className="
+        text-[#4F8CFF]
+        text-sm
+        font-bold
+        hover:underline
+      "
+    >
+      View all flagged →
+    </button>
+
+  </div>
+
+  <div className="mt-5 space-y-4">
+
+    {projects
+  .filter((p) =>
+
+    reportedProjects.some(
+      (reported) =>
+
+        reported.projectId === p.id &&
+
+        reported.ownerId ===
+          currentUser?.id
+    )
+  )
+
+  .map((p) => (
+
+        <div
+          key={p.id}
+          onClick={() =>
+            openProject(p.id)
+          }
+          className="
+            border
+            rounded-3xl
+            bg-white
+            px-5 py-4
+            flex items-center
+            justify-between
+            gap-6
+            hover:bg-slate-50
+            transition
+            cursor-pointer
+          "
+        >
+
+          {/* LEFT */}
+          <div className="flex items-center gap-5 min-w-0">
+
+            <img
+              src={p.image}
+              alt={getProjectName(p)}
+              className="
+                w-44 h-28
+                rounded-2xl
+                object-cover
+                shrink-0
+              "
+            />
+
+            <div className="min-w-0">
+
+              <h3
+                className="
+                  text-[22px]
+                  font-black
+                  text-[#16253A]
+                  truncate
+                "
+              >
+                {getProjectName(p)}
+              </h3>
+
+              <p
+                className="
+                  text-gray-500
+                  font-semibold
+                  mt-1
+                "
+              >
+                {getProjectCourse(
+                  p,
+                  courses
+                )}
+              </p>
+
+              <div
+                className="
+                  flex items-center
+                  gap-4
+                  mt-3
+                  text-gray-500
+                  text-sm
+                "
+              >
+
+                <span>
+                  👨‍🏫 {p.instructor ||
+                  "Instructor"}
+                </span>
+
+                <span>
+                  👥 {p.students ||
+                  0} Students
+                </span>
+
+              </div>
+
             </div>
-          </AppCard>
-        )}
+          </div>
+
+          {/* RIGHT */}
+          <div
+            className="
+              flex items-center
+              gap-4
+              shrink-0
+            "
+          >
+
+            {(() => {
+
+  const savedAppeals =
+    JSON.parse(
+      localStorage.getItem(
+        "projectAppeals"
+      )
+    ) || [];
+
+  const projectAppeal =
+    savedAppeals.find(
+      (appeal) =>
+        appeal.projectId === p.id
+    );
+
+  const appealStatus =
+    projectAppeal?.status;
+
+  return (
+
+    <button
+      onClick={(event) => {
+
+        event.stopPropagation();
+
+        if (
+          appealStatus === "pending" ||
+          appealStatus === "accepted"
+        ) {
+          return;
+        }
+
+        setSelectedAppealProject(p);
+
+        setAppealOpen(true);
+      }}
+
+      className={`
+        px-5 py-2
+        rounded-full
+        font-bold
+        text-sm
+        transition
+
+        ${
+          appealStatus === "accepted"
+
+            ? `
+              bg-green-100
+              text-green-600
+            `
+
+            : appealStatus === "pending"
+
+            ? `
+              bg-orange-100
+              text-orange-500
+            `
+
+            : `
+              bg-red-100
+              text-red-500
+              hover:bg-red-200
+            `
+        }
+      `}
+    >
+
+      {appealStatus === "accepted"
+
+        ? "Resolved"
+
+        : appealStatus === "pending"
+
+        ? "Reviewing Appeal"
+
+        : "Send Appeal"}
+
+    </button>
+
+  );
+})()}
+            
+
+            <button
+              onClick={(event) => {
+                event.stopPropagation();
+                setProjectToDelete(
+                  p.id
+                );
+              }}
+              className="
+                p-3
+                rounded-xl
+                border
+                text-red-500
+                hover:bg-red-50
+              "
+            >
+              <Trash2 size={18} />
+            </button>
+
+          </div>
+
+        </div>
+
+      ))}
+
+  </div>
+
+</AppCard>
 
         {/* All Projects */}
         <AppCard className="p-4">
-          <Label className="mb-4 ml-3 text-xl font-bold text-[#243B6B]">
-            All My Projects
-          </Label>
+          <div className="flex items-center gap-3 mb-4 ml-3">
+
+  <Label
+    className="
+      text-xl
+      font-black
+      text-[#243B6B]
+    "
+  >
+    All My Projects
+  </Label>
+
+  <div
+    className="
+      w-7 h-7
+      rounded-full
+      bg-[#EEF4FF]
+      text-[#4F8CFF]
+      flex items-center justify-center
+      text-sm
+      font-bold
+    "
+  >
+    {filteredProjects.length}
+  </div>
+
+</div>
 
           {filteredProjects.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-10 text-center">
@@ -352,7 +690,7 @@ export default function ViewAllProjects() {
 
                 <span className="-ml-6">Portfolio Visibility</span>
 
-                <span className="-ml-6">Pinned to Top</span>
+                
 
                 <span className="-ml-4">Rating / Comments</span>
 
@@ -363,7 +701,7 @@ export default function ViewAllProjects() {
                 <div className="space-y-4">
                   {filteredProjects.map((p) => {
                     const visibility = normalizeVisibility(p.visibility);
-                    const pinned = Boolean(p.pinned || p.isPinned);
+                    
 
                     return (
                       <SortableCard
@@ -432,23 +770,7 @@ export default function ViewAllProjects() {
 
                             {/* Pin */}
                             <div className="flex justify-center">
-                              <button
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  togglePin(p.id);
-                                }}
-                                className={`flex items-center justify-center w-10 h-10 rounded-full border transition ${
-                                  pinned
-                                    ? "bg-yellow-100 border-yellow-300 text-yellow-600"
-                                    : "bg-white border-gray-200 text-gray-400 hover:bg-gray-100"
-                                }`}
-                              >
-                                <Pin
-                                  size={16}
-                                  strokeWidth={2.5}
-                                  className="rotate-45"
-                                />
-                              </button>
+                              
                             </div>
 
                             {/* Rating */}
@@ -493,23 +815,7 @@ export default function ViewAllProjects() {
                                 <Trash2 size={16} />
                               </button>
 
-                            <button
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                togglePin(p.id);
-                              }}
-                              className={`flex items-center justify-center w-10 h-10 rounded-full border transition ${
-                                pinned
-                                  ? "bg-yellow-100 border-yellow-300 text-yellow-600"
-                                  : "bg-white border-gray-200 text-gray-400 hover:bg-gray-100"
-                              }`}
-                            >
-                              <Pin
-                                size={16}
-                                strokeWidth={2.5}
-                                className="rotate-45"
-                              />
-                            </button>
+                            
                           </div>
                         }
                       />
@@ -536,6 +842,43 @@ export default function ViewAllProjects() {
     setProjectToDelete(null);
   }}
   confirmText="Delete project"
+/>
+
+<AdminActionDialog
+  open={appealOpen}
+
+  tone="warning"
+
+  title="Submit Appeal"
+
+  description="
+  Explain why this project
+  should be restored.
+  "
+
+  confirmLabel="Send Appeal"
+
+  cancelLabel="Cancel"
+
+  noteLabel="Appeal Message"
+
+  notePlaceholder="
+  Explain your appeal...
+  "
+
+  noteRequired
+
+  noteValue={appealMessage}
+
+  onNoteChange={
+    setAppealMessage
+  }
+
+  onCancel={() =>
+    setAppealOpen(false)
+  }
+
+  onConfirm={submitAppeal}
 />
     </DashboardLayout>
   );
