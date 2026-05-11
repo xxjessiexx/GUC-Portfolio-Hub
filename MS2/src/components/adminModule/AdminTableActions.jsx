@@ -1,6 +1,95 @@
 import { MoreHorizontal } from "lucide-react";
+import { useEffect, useState } from "react";
 
-export default function AdminTableActions({ rowId, openMenu, setOpenMenu, actions }) {
+function getIsDarkMode() {
+  if (typeof document === "undefined") return false;
+
+  return (
+    document.documentElement.classList.contains("dark") ||
+    document.body.classList.contains("dark") ||
+    document.documentElement.getAttribute("data-theme") === "dark" ||
+    document.body.getAttribute("data-theme") === "dark"
+  );
+}
+
+export default function AdminTableActions({
+  rowId,
+  openMenu,
+  setOpenMenu,
+  actions,
+}) {
+  const [isDarkMode, setIsDarkMode] = useState(getIsDarkMode);
+
+  useEffect(() => {
+    const updateTheme = () => setIsDarkMode(getIsDarkMode());
+
+    updateTheme();
+
+    const observer = new MutationObserver(updateTheme);
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme"],
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const getActionClassName = (action) => {
+    if (action.danger) {
+      return [
+        "flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-bold transition",
+        isDarkMode
+          ? "text-rose-200 hover:bg-rose-500/15 hover:text-rose-100"
+          : "text-rose-600 hover:bg-rose-50 hover:text-rose-700",
+      ].join(" ");
+    }
+
+    return [
+      "flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-bold transition",
+      isDarkMode
+        ? "text-[#DDEFFF] hover:bg-[#9CD5FF]/10 hover:text-white"
+        : "text-[#2C3947] hover:bg-[#EAF4FB] hover:text-[#355872]",
+    ].join(" ");
+  };
+
+  const getIconClassName = (action) => {
+    if (action.danger) {
+      return isDarkMode
+        ? "size-4 text-rose-200"
+        : "size-4 text-rose-500";
+    }
+
+    return isDarkMode
+      ? "size-4 text-[#9CD5FF]"
+      : "size-4 text-[#355872]";
+  };
+
+  const triggerClassName = isDarkMode
+    ? [
+        "grid h-12 w-12 place-items-center rounded-2xl border shadow-[0_10px_28px_rgba(0,0,0,0.28)] transition",
+        "border-white/10 bg-white/5 text-[#BFE7FF] hover:border-[#9CD5FF]/40 hover:bg-[#9CD5FF]/10",
+      ].join(" ")
+    : [
+        "grid h-12 w-12 place-items-center rounded-2xl border shadow-[0_10px_28px_rgba(53,88,114,0.16)] transition",
+        "border-[#A7C3D6] bg-[#EAF4FB] text-[#2C3947] hover:border-[#355872] hover:bg-[#DDEFFF] hover:text-[#355872]",
+      ].join(" ");
+
+  const menuClassName = isDarkMode
+    ? [
+        "absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-3xl border p-1 shadow-[0_24px_70px_rgba(0,0,0,0.35)] backdrop-blur-xl",
+        "border-white/10 bg-[#182432]/95",
+      ].join(" ")
+    : [
+        "absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-3xl border p-1 shadow-[0_24px_70px_rgba(16,32,45,0.2)]",
+        "border-[#A7C3D6] bg-white",
+      ].join(" ");
+
   return (
     <div className="relative">
       <button
@@ -8,9 +97,10 @@ export default function AdminTableActions({ rowId, openMenu, setOpenMenu, action
         onClick={() =>
           setOpenMenu((current) => (current === rowId ? null : rowId))
         }
-        className="grid h-12 w-12 place-items-center rounded-2xl border border-white/70 bg-white/70 text-[color:var(--primary)] shadow-[0_10px_30px_rgba(53,88,114,0.08)] transition hover:bg-white"
+        className={triggerClassName}
+        aria-label="Open row actions"
       >
-        <MoreHorizontal className="size-5" />
+        <MoreHorizontal className="size-5 stroke-[3]" />
       </button>
 
       {openMenu === rowId && (
@@ -23,13 +113,11 @@ export default function AdminTableActions({ rowId, openMenu, setOpenMenu, action
                 action.onClick();
                 setOpenMenu(null);
               }}
-              className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-bold transition ${
-                action.danger
-                  ? "text-red-500 hover:bg-red-50"
-                  : "text-[color:var(--ink)] hover:bg-[color:var(--accent)]/10"
-              }`}
+              className={getActionClassName(action)}
             >
-              {action.icon && <action.icon className="size-4" />}
+              {action.icon && (
+                <action.icon className={getIconClassName(action)} />
+              )}
               {action.label}
             </button>
           ))}

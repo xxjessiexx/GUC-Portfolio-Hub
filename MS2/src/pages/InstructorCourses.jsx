@@ -58,17 +58,25 @@ function CourseRequestButton({ course, onRequested }) {
   }
 
   return (
-    <AppButton
-      size="sm"
-      variant={linked ? "danger" : "brand"}
-      onClick={submitRequest}
-      disabled={loading}
-      className="min-w-[132px]"
-    >
-      {linked ? <Unlink className="mr-2 h-4 w-4" /> : <Link2 className="mr-2 h-4 w-4" />}
-      {loading ? "Sending..." : linked ? "Request unlink" : "Request link"}
-    </AppButton>
-  );
+     <AppButton
+    size="sm"
+    variant={linked ? "danger" : "brand"}
+    onClick={submitRequest}
+    disabled={loading}
+    className={
+      linked
+        ? "min-w-[132px]"
+        : "min-w-[132px] bg-gradient-to-r from-[#355872] via-[#4f7fa3] to-[#7AAACE] text-white shadow-[0_14px_32px_rgba(53,88,114,0.22)] hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(53,88,114,0.28)]"
+    }
+  >
+    {linked ? (
+      <Unlink className="mr-2 h-4 w-4" />
+    ) : (
+      <Link2 className="mr-2 h-4 w-4" />
+    )}
+    {loading ? "Sending..." : linked ? "Request unlink" : "Request link"}
+  </AppButton>
+);
 }
 
 export default function InstructorCourses() {
