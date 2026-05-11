@@ -112,6 +112,7 @@ const [reportReason, setReportReason] =
   useState(null);
 
 const [reportedProjects, setReportedProjects] =
+
   useState(() => {
 
     const saved =
@@ -124,7 +125,16 @@ const [reportedProjects, setReportedProjects] =
       : [];
   });
 
-  
+  const courseOptions = [
+  "Course: All Courses",
+
+  ...new Set(
+    projects.map(
+      (project) =>
+        `Course: ${getDisplayCourse(project)}`
+    )
+  ),
+];
 
 const instructorOptions = [
   "Instructor: All Instructors",
