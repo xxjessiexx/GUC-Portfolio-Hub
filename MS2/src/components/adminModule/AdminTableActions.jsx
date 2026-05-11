@@ -14,7 +14,7 @@ export default function AdminTableActions({ rowId, openMenu, setOpenMenu, action
       </button>
 
       {openMenu === rowId && (
-        <div className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-3xl border border-white/70 bg-white shadow-[0_24px_70px_rgba(16,32,45,0.18)]">
+        <div className="absolute right-0 top-12 z-[9999] mt-2 w-52 overflow-hidden rounded-3xl border border-white/70 bg-white shadow-[0_24px_70px_rgba(16,32,45,0.18)]">
           {actions.map((action) => (
             <button
               key={action.label}

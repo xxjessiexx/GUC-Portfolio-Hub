@@ -14,6 +14,7 @@ import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import FilterSelect from "@/components/common/FilterSelect";
 
 import { useAdminModuleData } from "@/hooks/useAdminModuleData";
+import { AppButton } from "@/components/ui/AppButton";
 
 const courseGrid =
   "lg:grid-cols-[0.75fr_1.5fr_0.8fr_1.2fr_0.7fr_0.8fr_1.3fr]";
@@ -189,14 +190,22 @@ export default function AdminCourses() {
 
   return (
     <AdminPageShell>
-      <AdminPageHeader
-        eyebrow="Academic Catalog"
-        title="Course Management"
-        description="View, edit, activate, deactivate, and delete course records used across projects and instructor linking."
-        actionLabel="Create Course"
-        actionTo="/admin/courses/create"
-        icon={Plus}
-      />
+      
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <AdminPageHeader
+          eyebrow="Academic Catalog"
+          title="Course Management"
+          description="View, edit, activate, deactivate, and delete course records used across projects and instructor linking."
+        />
+
+        <AppButton
+          to="/admin/courses/create"
+          className="h-14 rounded-[1.35rem] bg-gradient-to-r from-[#2E4053] to-[#77A9CC] px-8 text-base font-black text-white shadow-none hover:from-[#263849] hover:to-[#6A9DBF]"
+        >
+          <Plus className="size-5" />
+          Create Course
+        </AppButton>
+      </div>
 
       <AdminCourseEditPanel
         editingCourse={editingCourse}

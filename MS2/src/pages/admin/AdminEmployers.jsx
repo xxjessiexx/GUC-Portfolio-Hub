@@ -25,6 +25,7 @@ import FilterSelect from "@/components/common/FilterSelect";
 
 import { AppButton } from "@/components/ui/AppButton";
 import { useAdminModuleData } from "@/hooks/useAdminModuleData";
+import { getCollection } from "@/data/demoStore";
 
 const employerGrid =
   "lg:grid-cols-[1.5fr_1.2fr_1.7fr_0.8fr_0.7fr]";
@@ -57,10 +58,32 @@ function downloadDocument(employer, document) {
 
 export default function AdminEmployers() {
   const { employers, actions } = useAdminModuleData();
+  const dbEmployers = useMemo(() => {
+  return (getCollection("users") || [])
+    .filter((user) => user.role === "employer")
+    .map((user) => ({
+      id: user.id,
+      companyName: user.companyName || user.name,
+      contactName: user.position || user.name,
+      email: user.email,
+      biography: user.companyBio || user.bio || "No company bio added.",
+      industry: user.industry || "Not specified",
+      location:
+        typeof user.location === "string"
+          ? user.location
+          : user.location?.label || "Not specified",
+      status: user.verificationStatus || user.status || "pending",
+      submittedAt: user.createdAt || "Seeded",
+      documents: user.uploadedDocuments || [],
+    }));
+}, []);
+
+const displayedEmployers = dbEmployers.length ? dbEmployers : employers;
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [selectedEmployer, setSelectedEmployer] = useState(null);
+  const [previewDocument, setPreviewDocument] = useState(null);
   const [decision, setDecision] = useState(null);
   const [note, setNote] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -68,7 +91,7 @@ export default function AdminEmployers() {
 
   const filtered = useMemo(
     () =>
-      employers.filter((employer) => {
+      displayedEmployers.filter((employer) => {
         const haystack =
           `${employer.companyName} ${employer.email} ${employer.industry} ${employer.location}`.toLowerCase();
 
@@ -143,7 +166,56 @@ export default function AdminEmployers() {
     {
       key: "documents",
       label: "Documents",
-      render: (employer) => <EmployerDocuments documents={employer.documents} />,
+      render: (employer) => (
+        <div className="space-y-2">
+          {(employer.documents || []).length > 0 ? (
+            employer.documents.map((document) => (
+              <div
+                key={document.id}
+                className="rounded-2xl border border-[color:var(--border-blue)] bg-[var(--surface-soft)] px-3 py-2"
+              >
+                <p className="text-sm font-black text-[color:var(--ink)]">
+                  {document.name}
+                </p>
+
+                <p className="text-xs font-semibold text-[color:var(--muted)]">
+                  {document.type} • {document.status}
+                </p>
+
+                <div className="mt-2 flex gap-2">
+                  <AppButton
+                    variant="glass"
+                    size="sm"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setPreviewDocument({
+                        employer,
+                        document,
+                      });
+                    }}
+                  >
+                    <Eye className="size-4" />
+                    Preview
+                  </AppButton>
+
+                  <AppButton
+                    variant="glass"
+                    size="sm"
+                    onClick={() => downloadDocument(employer, document)}
+                  >
+                    <Download className="size-4" />
+                    Download
+                  </AppButton>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm font-semibold text-[color:var(--muted)]">
+              No documents uploaded
+            </p>
+          )}
+        </div>
+      ),
     },
     {
       key: "status",
@@ -226,104 +298,235 @@ export default function AdminEmployers() {
         emptyMessage="No employers found"
       />
 
-      <AdminReviewDrawer
-        open={Boolean(selectedEmployer)}
-        onClose={() => setSelectedEmployer(null)}
-        eyebrow="Company review"
-        title={selectedEmployer?.companyName}
-        subtitle={
-          selectedEmployer
-            ? `${selectedEmployer.industry} • ${selectedEmployer.location} • submitted ${selectedEmployer.submittedAt}`
-            : ""
-        }
-        status={selectedEmployer?.status}
-        footer={
-          selectedEmployer ? (
-            <div className="flex flex-wrap justify-end gap-2">
-              <AppButton
-                variant="glass"
-                onClick={() =>
-                  selectedEmployer.documents?.[0] &&
-                  downloadDocument(selectedEmployer, selectedEmployer.documents[0])
-                }
-              >
-                <Download className="size-4" />
-                Download first doc
-              </AppButton>
+      {selectedEmployer ? (
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-[color:var(--ink)]/35 px-4 pt-32 pb-8 backdrop-blur-sm">
+          <div className="w-full max-w-4xl rounded-[32px] border border-white/40 bg-[var(--surface)] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-[color:var(--primary)]">
+                  Employer Review
+                </p>
+
+                <h2 className="mt-2 text-3xl font-black text-[color:var(--ink)]">
+                  {selectedEmployer.companyName}
+                </h2>
+
+                <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
+                  {selectedEmployer.industry} • {selectedEmployer.location}
+                </p>
+              </div>
 
               <AppButton
-                variant="brand"
-                onClick={() => openDecision(selectedEmployer, "approved")}
+                variant="ghost"
+                onClick={() => setSelectedEmployer(null)}
+                className="h-11 w-11 rounded-full px-0"
               >
-                Approve company
-              </AppButton>
-
-              <AppButton
-                variant="danger"
-                onClick={() => openDecision(selectedEmployer, "rejected")}
-              >
-                Reject company
+                ✕
               </AppButton>
             </div>
-          ) : null
-        }
-      >
-        {selectedEmployer ? (
-          <div className="space-y-4">
-            <DrawerSection title="Profile">
-              <p>{selectedEmployer.biography}</p>
 
-              <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-                <p>
-                  <b>Contact:</b> {selectedEmployer.contactName}
+            <div className="mt-6 space-y-5">
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                  Profile
                 </p>
-                <p>
-                  <b>Email:</b> {selectedEmployer.email}
+
+                <p className="mt-3 text-sm font-semibold leading-7 text-[color:var(--ink)]">
+                  {selectedEmployer.biography}
                 </p>
-                <p>
-                  <b>Industry:</b> {selectedEmployer.industry}
-                </p>
-                <p>
-                  <b>Location:</b> {selectedEmployer.location}
-                </p>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <p className="text-sm font-semibold text-[color:var(--muted)]">
+                    <span className="font-black text-[color:var(--ink)]">
+                      Contact:
+                    </span>{" "}
+                    {selectedEmployer.contactName}
+                  </p>
+
+                  <p className="text-sm font-semibold text-[color:var(--muted)]">
+                    <span className="font-black text-[color:var(--ink)]">
+                      Email:
+                    </span>{" "}
+                    {selectedEmployer.email}
+                  </p>
+
+                  <p className="text-sm font-semibold text-[color:var(--muted)]">
+                    <span className="font-black text-[color:var(--ink)]">
+                      Industry:
+                    </span>{" "}
+                    {selectedEmployer.industry}
+                  </p>
+
+                  <p className="text-sm font-semibold text-[color:var(--muted)]">
+                    <span className="font-black text-[color:var(--ink)]">
+                      Location:
+                    </span>{" "}
+                    {selectedEmployer.location}
+                  </p>
+                </div>
               </div>
-            </DrawerSection>
 
-            <DrawerSection title="Uploaded documents">
-              <div className="space-y-3">
-                {selectedEmployer.documents?.map((document) => (
-                  <div
-                    key={document.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--border-blue)] bg-white/70 p-3"
-                  >
-                    <div>
-                      <p className="font-black">{document.name}</p>
-                      <p className="text-xs text-[color:var(--muted)]">
-                        {document.type} • {document.status}
-                      </p>
-                    </div>
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                  Uploaded Documents
+                </p>
 
-                    <AppButton
-                      variant="glass"
-                      size="sm"
-                      onClick={() =>
-                        downloadDocument(selectedEmployer, document)
-                      }
-                    >
-                      <Download className="size-4" />
-                      Download
-                    </AppButton>
-                  </div>
-                ))}
+                <div className="mt-4 space-y-3">
+                  {selectedEmployer.documents?.length > 0 ? (
+                    selectedEmployer.documents.map((document) => (
+                      <div
+                        key={document.id}
+                        className="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--border-blue)] bg-white/80 p-4"
+                      >
+                        <div>
+                          <p className="font-black text-[color:var(--ink)]">
+                            {document.name}
+                          </p>
+
+                          <p className="text-xs font-semibold text-[color:var(--muted)]">
+                            {document.type} • {document.status}
+                          </p>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <AppButton
+                            variant="glass"
+                            size="sm"
+                            onClick={() =>
+                              setPreviewDocument({
+                                employer: selectedEmployer || employer,
+                                document,
+                              })
+                            }
+                          >
+                            <Eye className="size-4" />
+                            Preview
+                          </AppButton>
+
+                          <AppButton
+                            variant="glass"
+                            size="sm"
+                            onClick={() =>
+                              downloadDocument(selectedEmployer, document)
+                            }
+                          >
+                            <Download className="size-4" />
+                            Download
+                          </AppButton>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm font-semibold text-[color:var(--muted)]">
+                      No documents uploaded.
+                    </p>
+                  )}
+                </div>
               </div>
-            </DrawerSection>
 
-            <DrawerSection title="Latest admin note">
-              {selectedEmployer.reviewNote || "No admin decision note yet."}
-            </DrawerSection>
+              <div className="flex flex-wrap justify-end gap-3">
+                <AppButton
+                  variant="glass"
+                  onClick={() => setSelectedEmployer(null)}
+                >
+                  Close
+                </AppButton>
+
+                <AppButton
+                  variant="danger"
+                  onClick={() => openDecision(selectedEmployer, "rejected")}
+                >
+                  Reject company
+                </AppButton>
+
+                <AppButton
+                  onClick={() => openDecision(selectedEmployer, "approved")}
+                >
+                  Approve company
+                </AppButton>
+              </div>
+            </div>
           </div>
-        ) : null}
-      </AdminReviewDrawer>
+        </div>
+      ) : null}
+
+      {previewDocument ? (
+        <div className="fixed inset-0 z-[10000] flex items-start justify-center overflow-y-auto bg-[color:var(--ink)]/40 px-4 pt-28 pb-8 backdrop-blur-sm">
+          <div className="w-full max-w-4xl overflow-hidden rounded-[32px] border border-white/40 bg-[var(--surface)] shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-[color:var(--border-blue)] p-5">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-[color:var(--primary)]">
+                  Document Preview
+                </p>
+
+                <h2 className="mt-1 text-2xl font-black text-[color:var(--ink)]">
+                  {previewDocument.document.name}
+                </h2>
+
+                <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
+                  {previewDocument.employer.companyName} •{" "}
+                  {previewDocument.document.type || "Document"}
+                </p>
+              </div>
+
+              <AppButton
+                variant="ghost"
+                onClick={() => setPreviewDocument(null)}
+                className="h-11 w-11 rounded-full px-0"
+              >
+                ✕
+              </AppButton>
+            </div>
+
+            <div className="bg-white p-6">
+              <div className="mx-auto min-h-[560px] max-w-3xl rounded-md border border-slate-200 bg-white p-10 shadow-lg">
+                <div className="border-b border-slate-200 pb-5">
+                  <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-400">
+                    GUC Portfolio Hub
+                  </p>
+
+                  <h3 className="mt-3 text-3xl font-black text-slate-900">
+                    {previewDocument.document.name}
+                  </h3>
+
+                  <p className="mt-2 text-sm font-semibold text-slate-500">
+                    {previewDocument.document.type || "Verification document"} •{" "}
+                    {previewDocument.document.status || "uploaded"}
+                  </p>
+                </div>
+
+                <div className="mt-8 space-y-4 text-sm leading-7 text-slate-700">
+                  <p>
+                    <b>Company:</b> {previewDocument.employer.companyName}
+                  </p>
+
+                  <p>
+                    <b>Contact:</b> {previewDocument.employer.contactName}
+                  </p>
+
+                  <p>
+                    <b>Email:</b> {previewDocument.employer.email}
+                  </p>
+
+                  <p>
+                    <b>Document Type:</b>{" "}
+                    {previewDocument.document.type || "Verification document"}
+                  </p>
+
+                  <p>
+                    <b>Status:</b>{" "}
+                    {previewDocument.document.status || "uploaded"}
+                  </p>
+
+                  <div className="mt-8 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                    Prototype PDF preview content
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <AdminActionDialog
         open={Boolean(decision)}
