@@ -12,7 +12,6 @@ import {
   Home,
   Link2,
   LogOut,
-  MessageSquare,
   SearchIcon,
   Settings,
   ShieldCheck,
@@ -63,7 +62,6 @@ const workspaceItems = {
     { label: "My Courses", icon: BookOpen, path: "/instructor/my-courses" },
     { label: "Courses", icon: BookOpen, path: "/instructor/courses" },
     { label: "Invitations", icon: ClipboardCheck, path: null },
-    { label: "Feedback", icon: MessageSquare, path: null },
     { label: "Settings", icon: Settings, path: "/settings" },
   ],
 
