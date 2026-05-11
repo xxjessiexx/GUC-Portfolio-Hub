@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function AuthLayout({
   children,
+  visual = null,
   maxWidth = "max-w-[610px]",
   contentClassName = "px-16 py-12 max-sm:px-7 max-sm:py-9",
 }) {
@@ -39,20 +40,39 @@ export default function AuthLayout({
         className="pointer-events-none fixed -bottom-52 -right-44 h-[640px] w-[640px] rounded-full bg-[radial-gradient(circle,rgba(122,170,206,0.62)_0%,rgba(230,199,123,0.16)_52%,transparent_72%)] blur-3xl"
       />
 
-      <motion.div
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className={`relative z-10 w-full ${maxWidth}`}
+      <div
+        className={`relative z-10 grid w-full ${
+          visual
+            ? "max-w-[1280px] grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(470px,610px)_minmax(480px,1fr)] xl:gap-12"
+            : maxWidth
+        }`}
       >
-        <Card className="relative overflow-hidden rounded-[34px] border border-[color:var(--auth-card-border)] bg-[color:var(--auth-card-bg)] shadow-[var(--auth-card-shadow)] backdrop-blur-2xl">
-          <div className="pointer-events-none absolute inset-0 bg-[image:var(--auth-card-sheen)]" />
+        <motion.div
+          initial={{ opacity: 0, y: 24, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className={`relative w-full ${visual ? "lg:justify-self-start" : ""}`}
+        >
+          <Card className="relative overflow-hidden rounded-[34px] border border-[color:var(--auth-card-border)] bg-[color:var(--auth-card-bg)] shadow-[var(--auth-card-shadow)] backdrop-blur-2xl">
+            <div className="pointer-events-none absolute inset-0 bg-[image:var(--auth-card-sheen)]" />
 
-          <CardContent className={`relative z-10 ${contentClassName}`}>
-            {children}
-          </CardContent>
-        </Card>
-      </motion.div>
+            <CardContent className={`relative z-10 ${contentClassName}`}>
+              {children}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {visual && (
+          <motion.div
+            initial={{ opacity: 0, x: 26, scale: 0.98 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 0.75, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+            className="relative hidden lg:block"
+          >
+            {visual}
+          </motion.div>
+        )}
+      </div>
     </main>
   );
-}motion.div
+}
