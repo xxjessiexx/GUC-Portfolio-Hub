@@ -106,10 +106,16 @@ const instructorOptions = [
   /* FILTERS */
   const filteredProjects = projects
 
-  .filter(
-    (project) =>
-      !reportedProjects.includes(project.id)
-  )
+  .filter((project) => {
+
+  const isReported =
+    reportedProjects.some(
+      (reported) =>
+        reported.projectId === project.id
+    );
+
+  return !isReported;
+})
 
   .filter((project) => {
 
@@ -333,9 +339,11 @@ const instructorOptions = [
             key={project.id}
             project={{
             ...project,
-            reported: reportedProjects.includes(
-              project.id
-            ),
+            reported:
+  reportedProjects.some(
+    (reported) =>
+      reported.projectId === project.id
+  )
           }}
             view={view}
             toggleFavorite={toggleFavorite}
@@ -376,9 +384,14 @@ const instructorOptions = [
   onConfirm={() => {
 
   const updatedArray = [
-    ...reportedProjects,
-    selectedProject.id,
-  ];
+  ...reportedProjects,
+
+  {
+    projectId: selectedProject.id,
+
+    ownerId: selectedProject.ownerId
+  },
+];
 
   setReportedProjects(updatedArray);
 
