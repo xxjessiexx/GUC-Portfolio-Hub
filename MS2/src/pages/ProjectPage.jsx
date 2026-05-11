@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
@@ -12,6 +12,7 @@ import ProjectTasksTab from "@/components/projectPage/ProjectTasksTab";
 import ProjectBachelorThesisTab from "@/components/projectPage/ProjectBachelorThesisTab";
 import ProjectFeedbackTab from "@/components/projectPage/ProjectFeedbackTab";
 import ProjectTaskModals from "@/components/projectPage/ProjectTaskModals";
+import ProjectRoleActions from "@/components/projectPage/ProjectRoleActions";
 import ProjectCollaboratorsSection from "@/components/project/ProjectCollaboratorsSection";
 
 import { useProjectThesisDrafts } from "@/hooks/projectPage/useProjectThesisDrafts";
@@ -58,6 +59,7 @@ function makeNotification(userId, title, body, projectId, type = "project") {
 export default function ProjectPage() {
   const [searchParams] = useSearchParams();
   const params = useParams();
+  const navigate = useNavigate();
 
   const projectId =
     searchParams.get("projectId") || params.projectId || params.id;
@@ -78,33 +80,67 @@ export default function ProjectPage() {
   const currentUser =
     loggedInUser?.name || loggedInUser?.fullName || loggedInUser?.email || "";
 
+  const currentUserId = loggedInUser?.id;
   const userRole = normalizeRole(loggedInUser?.role);
   const isAdmin = userRole === "admin";
+  const isLoggedInInstructor = userRole === "instructor";
 
   const isPublic = project?.visibility === "Public";
 
   const isCreator =
     Boolean(project) &&
-    (currentUser === project.ownerName || loggedInUser?.id === project.ownerId);
+    String(currentUserId || "") === String(project.ownerId || "");
+
+  const statusFor = (id) => getInvitationStatus(project, id);
 
   const acceptedCollaboratorIds = (project?.collaboratorIds || []).filter(
-    (id) => getInvitationStatus(project, id) === "accepted"
+    (id) => statusFor(id) === "accepted"
   );
 
   const acceptedInstructorIds = (project?.instructorIds || []).filter(
-    (id) => getInvitationStatus(project, id) === "accepted"
+    (id) => statusFor(id) === "accepted"
   );
 
   const isAcceptedCollaborator =
-    Boolean(project) && acceptedCollaboratorIds.includes(loggedInUser?.id);
+    Boolean(project) && acceptedCollaboratorIds.includes(currentUserId);
 
-  const isInstructor =
-    Boolean(project) && acceptedInstructorIds.includes(loggedInUser?.id);
+  const coursesForProject = courses.find(
+    (course) => String(course.id) === String(project?.courseId)
+  );
+
+  const linkedInstructorIds = new Set([
+    ...(project?.courseInstructorIds || []),
+    ...(project?.raw?.courseInstructorIds || []),
+    ...(project?.raw?.courseRecord?.instructorIds || []),
+    ...(coursesForProject?.instructorIds || []),
+    ...(project?.instructorIds || []),
+  ].map(String));
+
+  const userLinkedCourseIds = [
+    ...(loggedInUser?.linkedCourseIds || []),
+    ...(loggedInUser?.courseIds || []),
+    ...(loggedInUser?.courses || [])
+      .map((course) => (typeof course === "string" ? course : course?.id))
+      .filter(Boolean),
+  ].map(String);
+
+  const isLinkedToProjectCourse =
+    Boolean(project?.courseId) &&
+    (linkedInstructorIds.has(String(currentUserId)) ||
+      userLinkedCourseIds.includes(String(project.courseId)));
+
+  const isAcceptedProjectInstructor =
+    Boolean(project) && acceptedInstructorIds.includes(currentUserId);
+
+  const isRelatedInstructor =
+    isLoggedInInstructor && (isLinkedToProjectCourse || isAcceptedProjectInstructor);
+
+  const isOtherInstructor = isLoggedInInstructor && !isRelatedInstructor;
 
   const hasOwnProjectInvitation = Boolean(
     project?.invitationStatuses?.some(
       (item) =>
-        String(item.userId) === String(loggedInUser?.id) &&
+        String(item.userId) === String(currentUserId) &&
         ["pending", "accepted"].includes(String(item.status).toLowerCase())
     )
   );
@@ -116,37 +152,22 @@ export default function ProjectPage() {
     (isPublic ||
       isCreator ||
       isAcceptedCollaborator ||
-      isInstructor ||
+      isRelatedInstructor ||
       isAdmin ||
       hasOwnProjectInvitation);
 
-  /*
-    Requirements-safe permissions:
-
-    - Admin may view/moderate projects elsewhere, but should NOT act as:
-      project creator, collaborator, or instructor inside ProjectPage.
-    - Only project creator manages project visibility and collaborators.
-    - Only project creator creates/edits/reorders/deletes tasks.
-    - Only accepted course instructor can add/rate feedback.
-  */
   const canManageProject = isCreator;
   const canManageTasks = isCreator;
-
-  const canInvitePeople =
-    isCreator && !isBachelorProject;
-
-  const canCancelInvitations =
-    isCreator && !isBachelorProject;
-
-  const canRemoveCollaborators =
-    isCreator && !isBachelorProject;
-
-  const canManageCollaborators = canRemoveCollaborators;
-
+  const canInvitePeople = isCreator;
+  const canCancelInvitations = isCreator;
+  const canRemoveCollaborators = isCreator;
+  const canManageCollaborators = isCreator;
   const canViewComments =
-    isCreator || isAcceptedCollaborator || isInstructor || isAdmin;
-
-  const canAddInstructorFeedback = isInstructor;
+    isCreator || isAcceptedCollaborator || isRelatedInstructor || isAdmin;
+  const canAddInstructorFeedback = isRelatedInstructor;
+  const canFlagProject = isAdmin || isLoggedInInstructor;
+  const canModerateProject = isAdmin;
+  const canAppealFlag = isCreator;
 
   const visibleTabs = useMemo(() => {
     const tabs = ["overview", "tasks"];
@@ -175,24 +196,40 @@ export default function ProjectPage() {
 
     const normalizedProject = normalizeProjectForPage(loadedProject);
     const currentId = loggedInUser?.id;
+    const currentRole = normalizeRole(loggedInUser?.role);
 
-    const statusFor = (id) => getInvitationStatus(normalizedProject, id);
+    const statusForId = (id) => getInvitationStatus(normalizedProject, id);
+    const projectCourse = (getCollection("courses") || []).find(
+      (course) => String(course.id) === String(normalizedProject.courseId)
+    );
+    const currentInstructorCourseIds = [
+      ...(loggedInUser?.linkedCourseIds || []),
+      ...(loggedInUser?.courseIds || []),
+    ].map(String);
+
+    const linkedInstructorIdsForProject = new Set([
+      ...(normalizedProject.courseInstructorIds || []),
+      ...(normalizedProject.raw?.courseInstructorIds || []),
+      ...(normalizedProject.raw?.courseRecord?.instructorIds || []),
+      ...(projectCourse?.instructorIds || []),
+      ...(normalizedProject.instructorIds || []),
+    ].map(String));
 
     const canView =
       normalizedProject.visibility === "Public" ||
-      normalizedProject.ownerId === currentId ||
+      String(normalizedProject.ownerId) === String(currentId) ||
       (normalizedProject.collaboratorIds || []).some(
-        (id) => id === currentId && statusFor(id) === "accepted"
+        (id) => String(id) === String(currentId) && statusForId(id) === "accepted"
       ) ||
-      (normalizedProject.instructorIds || []).some(
-        (id) => id === currentId && statusFor(id) === "accepted"
-      ) ||
+      (currentRole === "instructor" &&
+        (linkedInstructorIdsForProject.has(String(currentId)) ||
+          currentInstructorCourseIds.includes(String(normalizedProject.courseId)))) ||
       (normalizedProject.invitationStatuses || []).some(
         (item) =>
-          item.userId === currentId &&
+          String(item.userId) === String(currentId) &&
           ["pending", "accepted"].includes(String(item.status).toLowerCase())
       ) ||
-      normalizeRole(loggedInUser?.role) === "admin";
+      currentRole === "admin";
 
     setProject(normalizedProject);
     setProjectMissing(false);
@@ -201,8 +238,6 @@ export default function ProjectPage() {
   };
 
   useEffect(() => {
-    // This reads the external demo store after the route/user changes.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshProject();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, loggedInUser?.id]);
@@ -283,6 +318,7 @@ export default function ProjectPage() {
     project,
     canAddInstructorFeedback,
     loggedInUser,
+    isAdmin,
     persistProject,
     makeNotification,
   });
@@ -292,6 +328,127 @@ export default function ProjectPage() {
 
     persistProject({
       visibility: isPublic ? "private" : "public",
+    });
+  };
+
+  const goToEditProject = () => {
+    if (!project?.id || !canManageProject) return;
+    navigate(`/edit-project/${project.id}`);
+  };
+
+  const flagProject = () => {
+    if (!project?.id || !canFlagProject || isCreator) return;
+
+    const reason = window.prompt(
+      "Why are you flagging this project?",
+      project.flagReason || ""
+    );
+
+    if (reason === null || !reason.trim()) return;
+
+    const now = new Date().toISOString();
+
+    persistProject({
+      status: "flagged",
+      flagReason: reason.trim(),
+      flaggedById: loggedInUser?.id,
+      flaggedByName: getDisplayName(loggedInUser),
+      flaggedAt: now,
+      appealStatus: "none",
+    });
+
+    const savedFlaggedProjects = JSON.parse(
+      localStorage.getItem("flaggedProjects") || "[]"
+    );
+
+    const nextFlaggedProjects = [
+      ...savedFlaggedProjects.filter((item) => String(item.id) !== String(project.id)),
+      {
+        id: project.id,
+        title: project.title,
+        student: project.ownerName,
+        course: project.course,
+        reason: reason.trim(),
+        flaggedBy: getDisplayName(loggedInUser),
+        flaggedById: loggedInUser?.id,
+        status: "flagged",
+        appealStatus: "none",
+        submittedAt: now.slice(0, 10),
+        active: project.active !== false,
+      },
+    ];
+
+    localStorage.setItem("flaggedProjects", JSON.stringify(nextFlaggedProjects));
+
+    makeNotification(
+      project.ownerId,
+      "Project flagged",
+      `${project.title} was flagged: ${reason.trim()}`,
+      project.id,
+      "project-flag"
+    );
+  };
+
+  const appealFlag = () => {
+    if (!project?.id || !canAppealFlag) return;
+
+    const message = window.prompt(
+      "Write your appeal message for the admin:",
+      project.appealMessage || ""
+    );
+
+    if (message === null || !message.trim()) return;
+
+    const now = new Date().toISOString();
+
+    persistProject({
+      appealStatus: "submitted",
+      appealMessage: message.trim(),
+      appealSubmittedAt: now,
+    });
+
+    const savedFlaggedProjects = JSON.parse(
+      localStorage.getItem("flaggedProjects") || "[]"
+    );
+
+    const nextFlaggedProjects = [
+      ...savedFlaggedProjects.filter((item) => String(item.id) !== String(project.id)),
+      {
+        id: project.id,
+        title: project.title,
+        student: project.ownerName,
+        course: project.course,
+        reason: project.flagReason || "Owner submitted an appeal for this flagged project.",
+        flaggedBy: project.flaggedByName || "Instructor/Admin",
+        flaggedById: project.flaggedById || "",
+        status: "under-review",
+        appealStatus: "submitted",
+        appealMessage: message.trim(),
+        submittedAt: now.slice(0, 10),
+        active: project.active !== false,
+      },
+    ];
+
+    localStorage.setItem("flaggedProjects", JSON.stringify(nextFlaggedProjects));
+  };
+
+  const toggleProjectActive = (currentlyInactive) => {
+    if (!project?.id || !canModerateProject) return;
+
+    const nextActive = Boolean(currentlyInactive);
+    const note = window.prompt(
+      nextActive ? "Activation note" : "Why are you deactivating this project?",
+      project.adminNote || ""
+    );
+
+    if (!nextActive && (note === null || !note.trim())) return;
+    if (note === null) return;
+
+    persistProject({
+      active: nextActive,
+      adminNote: note.trim(),
+      status: nextActive ? "approved" : "flagged",
+      deactivatedAt: nextActive ? undefined : new Date().toISOString(),
     });
   };
 
@@ -406,6 +563,25 @@ export default function ProjectPage() {
             onReject={() => respondToInvitation("rejected")}
           />
 
+          <ProjectRoleActions
+            project={project}
+            permissions={{
+              isOwner: isCreator,
+              isAcceptedCollaborator,
+              isRelatedInstructor,
+              isOtherInstructor,
+              isAdmin,
+              canManageProject,
+              canFlagProject,
+              canAppealFlag,
+              canModerateProject,
+            }}
+            onEditProject={goToEditProject}
+            onFlagProject={flagProject}
+            onAppealFlag={appealFlag}
+            onToggleProjectActive={toggleProjectActive}
+          />
+
           <ProjectPageVideo src={projectVideoSrc} />
 
           <ProjectPageTabs
@@ -428,7 +604,9 @@ export default function ProjectPage() {
               canViewComments={canViewComments}
               canAddInstructorFeedback={canAddInstructorFeedback}
               loggedInUser={loggedInUser}
+              currentUser={currentUser}
               isAdmin={isAdmin}
+              taskFeedbackDrafts={projectTasks.taskFeedbackDrafts}
               setTaskFeedbackDrafts={projectTasks.setTaskFeedbackDrafts}
               onAddTaskClick={() => projectTasks.setShowTaskPopup(true)}
               onStoreTasks={projectTasks.storeTasks}
