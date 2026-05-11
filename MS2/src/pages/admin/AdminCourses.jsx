@@ -217,13 +217,10 @@ export default function AdminCourses() {
       >
         <FilterSelect
           value={`Status: ${status === "all" ? "All statuses" : status}`}
-          onChange={(value) =>
-            setStatus(
-              value.replace("Status: ", "") === "All statuses"
-                ? "all"
-                : value.replace("Status: ", "")
-            )
-          }
+          onChange={(value) => {
+            const next = value.replace("Status: ", "");
+            setStatus(next === "All statuses" ? "all" : next);
+          }}
           options={[
             "Status: All statuses",
             "Status: active",

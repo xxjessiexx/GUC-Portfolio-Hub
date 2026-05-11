@@ -343,18 +343,18 @@ toastTimerRef.current = window.setTimeout(() => {
 
     setNotifications(userNotifications);
 
-    const unreadMessageNotifications = userNotifications
+    const unreadToastNotifications = userNotifications
       .filter((notification) => {
-        return notification.unread && notification.type === "message";
+        return notification.unread && ["message", "link-request"].includes(notification.type);
       })
       .sort((a, b) => {
         return new Date(b.createdAt || b.time) - new Date(a.createdAt || a.time);
       });
 
     if (userChanged) {
-      const latestUnreadMessage = unreadMessageNotifications[0];
+      const latestUnreadMessage = unreadToastNotifications[0];
 
-      unreadMessageNotifications.forEach((notification) => {
+      unreadToastNotifications.forEach((notification) => {
         if (notification.id !== latestUnreadMessage?.id) {
           shownToastIdsRef.current.add(notification.id);
         }
@@ -367,7 +367,7 @@ toastTimerRef.current = window.setTimeout(() => {
       return;
     }
 
-    unreadMessageNotifications.forEach((notification) => {
+    unreadToastNotifications.forEach((notification) => {
       queueToast(notification);
     });
   }, [queueToast]);
