@@ -115,7 +115,11 @@ export default function InstructorCourses() {
     {
       key: "code",
       label: "Code",
-      render: (course) => <p className="font-black text-[color:var(--ink)]">{course.code}</p>,
+      render: (course) => (
+        <p className="font-black text-[color:var(--ink)]">
+          {course.type === "Bachelor Project" ? "-" : course.code}
+        </p>
+      ),
     },
     {
       key: "name",
@@ -123,10 +127,15 @@ export default function InstructorCourses() {
       render: (course) => <p className="text-sm font-black text-[color:var(--ink)]">{course.name}</p>,
     },
     {
-      key: "type",
-      label: "Type",
-      render: (course) => <p className="text-sm font-semibold text-[color:var(--muted)]">{course.type}</p>,
-    },
+        key: "type",
+        label: "Type",
+        render: (course) =>
+          course.type === "Bachelor Project" ? null : (
+            <p className="text-sm font-semibold text-[color:var(--muted)]">
+              {course.type}
+            </p>
+          ),
+      },
     {
       key: "instructor",
       label: "Linked instructors",

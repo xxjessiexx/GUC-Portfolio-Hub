@@ -28,13 +28,27 @@ function readJsonStorage(key, fallback) {
 function uniqueOptions(values) {
   return [...new Set(values.filter(Boolean))];
 }
+function getDisplayCourse(project) {
+  const projectType = String(project.type || "").toLowerCase();
+
+  const isBachelorProject =
+    projectType.includes("bachelor") ||
+    projectType.includes("thesis");
+
+  return isBachelorProject
+    ? "Bachelor Project"
+    : (
+        project.course ||
+        project.courseName ||
+        project.courseCode ||
+        "Course Project"
+      );
+}
 
 function getProjectSearchText(project) {
   return [
     project.title,
-    project.course,
-    project.courseName,
-    project.courseCode,
+    getDisplayCourse(project),
     project.instructor,
     ...(project.tags || []),
     ...(project.technologies || []),
@@ -113,7 +127,7 @@ export default function InstructorProjects() {
       "Course: All Courses",
       ...uniqueOptions(
         instructorProjects.map(
-          (project) => project.course || project.courseName || project.courseCode
+          (project) => getDisplayCourse(project)
         )
       ).map((course) => `Course: ${course}`),
     ],
@@ -130,9 +144,7 @@ export default function InstructorProjects() {
 
         const matchesCourse =
           selectedCourse === "All Courses" ||
-          project.course === selectedCourse ||
-          project.courseName === selectedCourse ||
-          project.courseCode === selectedCourse ||
+          getDisplayCourse(project) === selectedCourse ||
           project.program === selectedCourse;
 
         const createdAt = project.createdAt ? new Date(project.createdAt) : null;
@@ -205,7 +217,7 @@ export default function InstructorProjects() {
         selectedProject.owner?.name ||
         selectedProject.student?.name ||
         "Unknown student",
-      course: selectedProject.course,
+      course: getDisplayCourse(selectedProject),
       reason: reportReason.trim(),
       flaggedBy: currentUser?.name || "Instructor Review",
       flaggedById: currentUser?.id || instructorId,

@@ -28,6 +28,22 @@ import { useState } from "react";
 export default function ExploreProjects({showReport = false,}) {
 
   /* STATE */
+  const getDisplayCourse = (project) => {
+  const projectType = String(project.type || "").toLowerCase();
+
+  const isBachelorProject =
+    projectType.includes("bachelor") ||
+    projectType.includes("thesis");
+
+  return isBachelorProject
+    ? "Bachelor Project"
+    : (
+        project.course ||
+        project.courseName ||
+        project.courseCode ||
+        "Course Project"
+      );
+};
 
   const [reportOpen, setReportOpen] =
   useState(false);
@@ -73,15 +89,7 @@ const [reportedProjects, setReportedProjects] =
       : [];
   });
 
-  const courseOptions = [
-  "Course: All Courses",
-
-  ...new Set(
-    projects.map(
-      (project) => `Course: ${project.course}`
-    )
-  ),
-];
+  
 
 const instructorOptions = [
   "Instructor: All Instructors",
@@ -145,7 +153,7 @@ const instructorOptions = [
     const matchesCourse =
   selectedCourse === "All Courses" ||
 
-  project.course === selectedCourse ||
+  getDisplayCourse(project) === selectedCourse ||
 
   project.courseName === selectedCourse ||
 
@@ -166,7 +174,7 @@ const instructorOptions = [
 
   ...new Set(
     projects.map(
-      (project) => `Course: ${project.course}`
+      (project) => `Course: ${getDisplayCourse(project)}`
     )
   ),
 ];
@@ -419,7 +427,7 @@ const instructorOptions = [
       selectedProject.instructor ||
       "Unknown",
 
-    course: selectedProject.course,
+    course: getDisplayCourse(selectedProject),
 
     reason: reportReason,
 
