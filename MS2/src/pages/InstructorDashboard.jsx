@@ -225,18 +225,11 @@ function InstructorHero({ instructor, snapshot }) {
           </p>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            <Button
-              type="button"
-              onClick={() => navigate("/instructor-projects")}
-              className="rounded-2xl bg-white px-5 font-black text-[var(--primary)] hover:bg-white/90"
-            >
-              <MessageSquareText className="mr-2 h-4 w-4" />
-              Review Queue
-            </Button>
+    
 
             <Button
               type="button"
-              onClick={() => navigate("/instructor-courses")}
+              onClick={() => navigate("/instructor/my-courses")}
               className="rounded-2xl bg-white/10 px-5 font-black text-white ring-1 ring-white/15 hover:bg-white/15"
             >
               <BookOpenCheck className="mr-2 h-4 w-4" />

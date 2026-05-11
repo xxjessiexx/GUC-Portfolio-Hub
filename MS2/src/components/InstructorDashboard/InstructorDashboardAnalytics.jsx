@@ -504,50 +504,6 @@ function CourseCoverage({ rows }) {
   );
 }
 
-function ReviewQueue({ items }) {
-  return (
-    <AppCard className="p-5 xl:col-span-5">
-      <SectionTitle
-        title="Review queue"
-        description="Projects, task updates, and thesis drafts waiting for instructor feedback."
-        action="Feedback workspace"
-      />
-      <div className="space-y-3">
-        {items.slice(0, 4).map((item) => (
-          <div key={item.id} className="rounded-[24px] border border-[rgba(53,88,114,0.08)] bg-white/55 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h4 className="truncate text-sm font-black text-[var(--ink)]">{item.title}</h4>
-                  <span className={cn(
-                    "rounded-full px-3 py-1 text-[11px] font-black",
-                    item.priority === "High" ? "bg-red-50 text-red-600" : "bg-[rgba(230,199,123,0.22)] text-[var(--primary)]"
-                  )}>
-                    {item.priority}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs font-bold text-[var(--muted)]">
-                  {item.student} · {item.course} · {item.type}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button type="button" variant="ghost" className="rounded-2xl bg-white/70 px-4 text-xs font-black text-[var(--primary)]">
-                  <MessageSquareText className="mr-2 h-4 w-4" />
-                  Comment
-                </Button>
-                <Button type="button" variant="ghost" className="rounded-2xl bg-white/70 px-4 text-xs font-black text-[var(--primary)]">
-                  <Star className="mr-2 h-4 w-4" />
-                  Rate
-                </Button>
-              </div>
-            </div>
-            <p className="mt-3 text-xs font-black text-[var(--primary)]">{item.action}</p>
-          </div>
-        ))}
-      </div>
-    </AppCard>
-  );
-}
 
 export default function InstructorDashboardAnalytics({ snapshot, notifications = [] }) {
   const projects = snapshot.supervisedProjects || [];
@@ -642,50 +598,58 @@ export default function InstructorDashboardAnalytics({ snapshot, notifications =
         <CalendarCard queue={queue} />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-9">
-        <AppCard className="p-5 xl:col-span-4">
-          <SectionTitle
-            title="Monthly review shape"
-            description="Supervised projects vs review actions by month."
+    <section className="grid gap-5 xl:grid-cols-12">
+  <AppCard className="p-5 xl:col-span-5">
+    <SectionTitle
+      title="Monthly review shape"
+      description="Supervised projects vs review actions by month."
+    />
+    <div className="h-[220px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={monthlyBars}
+          margin={{ top: 8, right: 8, left: -24, bottom: 0 }}
+        >
+          <CartesianGrid stroke="rgba(53,88,114,0.08)" vertical={false} />
+          <XAxis
+            dataKey="label"
+            tickLine={false}
+            axisLine={false}
+            tick={{ fill: "#77879b", fontSize: 12, fontWeight: 800 }}
           />
-          <div className="h-[220px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyBars} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
-                <CartesianGrid stroke="rgba(53,88,114,0.08)" vertical={false} />
-                <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "#77879b", fontSize: 12, fontWeight: 800 }} />
-                <YAxis tickLine={false} axisLine={false} tick={{ fill: "#77879b", fontSize: 12, fontWeight: 800 }} />
-                <Tooltip contentStyle={{ borderRadius: 18, border: "1px solid rgba(53,88,114,0.12)", boxShadow: "0 18px 45px rgba(53,88,114,0.12)" }} />
-                <Bar dataKey="projects" name="Projects" fill={CHART.blue} radius={[10, 10, 0, 0]} />
-                <Bar dataKey="reviews" name="Reviews" fill={CHART.gold} radius={[10, 10, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </AppCard>
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            tick={{ fill: "#77879b", fontSize: 12, fontWeight: 800 }}
+          />
+          <Tooltip
+            contentStyle={{
+              borderRadius: 18,
+              border: "1px solid rgba(53,88,114,0.12)",
+              boxShadow: "0 18px 45px rgba(53,88,114,0.12)",
+            }}
+          />
+          <Bar
+            dataKey="projects"
+            name="Projects"
+            fill={CHART.blue}
+            radius={[10, 10, 0, 0]}
+          />
+          <Bar
+            dataKey="reviews"
+            name="Reviews"
+            fill={CHART.gold}
+            radius={[10, 10, 0, 0]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  </AppCard>
 
-        <CourseCoverage rows={courseRows} />
-        <ReviewQueue items={queue} />
-      </section>
+  <CourseCoverage rows={courseRows} />
+</section>
 
-      {notifications.length > 0 ? (
-        <section className="grid gap-5 xl:grid-cols-12">
-          <AppCard className="p-5 xl:col-span-12">
-            <SectionTitle title="Recent instructor alerts" description="Latest course, message, invitation, and feedback notifications." />
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {notifications.slice(0, 6).map((notification) => (
-                <div key={notification.id} className="flex items-start gap-3 rounded-[22px] border border-[rgba(53,88,114,0.08)] bg-white/55 p-4">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[rgba(156,213,255,0.25)] text-[var(--primary)]">
-                    {notification.unread ? <Bell className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-black text-[var(--ink)]">{notification.title}</p>
-                    <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-[var(--muted)]">{notification.text || notification.message || notification.body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </AppCard>
-        </section>
-      ) : null}
+     
     </div>
   );
 }
