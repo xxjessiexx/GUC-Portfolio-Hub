@@ -2,8 +2,8 @@ import { AppCard } from "@/components/ui/AppCard";
 
 export function AdminTable({ columns, rows, emptyMessage = "No records found." }) {
   return (
-    <AppCard variant="glass" radius="lg" padding="none" className="overflow-hidden">
-      <div className="overflow-x-auto">
+    <AppCard variant="glass" radius="lg" padding="none" className="overflow-visible">
+      <div className="overflow-x-auto overflow-y-visible">
         <table className="w-full min-w-[760px] text-left">
           <thead className="border-b border-[color:var(--border-blue)] bg-[var(--surface-strong)]">
             <tr>
@@ -36,7 +36,7 @@ export function AdminTable({ columns, rows, emptyMessage = "No records found." }
 
 export function AdminGridTable({ columns, rows, gridTemplate, emptyMessage }) {
   return (
-    <AppCard className="overflow-hidden">
+    <AppCard className="relative z-20 overflow-visible p-0">
       <div
         className={`hidden ${gridTemplate} border-b border-[color:var(--primary)]/10 px-8 py-4 text-sm font-black text-[color:var(--dark)] lg:grid lg:items-center lg:gap-4`}
       >
