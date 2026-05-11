@@ -40,8 +40,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { getCollection, getProjectById, updateProject } from "@/data/demoStore";
 
-const PROJECTS_STORAGE_KEY = "guc-portfolio-projects";
 const PROJECT_FILES_DB = "guc-portfolio-files-db";
 const PROJECT_FILES_STORE = "projectFiles";
 
@@ -93,33 +93,19 @@ function isGithubUrl(value) {
 }
 
 function getStoredProjects() {
-  try {
-    const storedProjects = localStorage.getItem(PROJECTS_STORAGE_KEY);
-    return storedProjects ? JSON.parse(storedProjects) : [];
-  } catch {
-    return [];
-  }
+  return getCollection("projects") || [];
 }
 
 function saveProject(project) {
-  const existingProjects = getStoredProjects();
-  const updatedProjects = [project, ...existingProjects];
-  localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(updatedProjects));
-  return updatedProjects;
+  return project;
 }
 
 function updateStoredProject(projectId, updatedProject) {
-  const existingProjects = getStoredProjects();
-  const updatedProjects = existingProjects.map((project) =>
-    project.id === projectId ? updatedProject : project
-  );
-
-  localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(updatedProjects));
-  return updatedProjects;
+  return updateProject(projectId, updatedProject);
 }
 
 function findStoredProject(projectId) {
-  return getStoredProjects().find((project) => project.id === projectId) || null;
+  return getProjectById(projectId);
 }
 
 function mapProjectToFormData(project) {
@@ -135,8 +121,8 @@ function mapProjectToFormData(project) {
     video: project.video ? { ...project.video, __existing: true } : null,
     tags: project.technologies || project.tags || [],
     tagInput: "",
-    collaborators: project.collaborators || [],
-    instructors: project.instructors || [],
+    collaborators: (project.collaborators || []).map((item) => item.email || item).filter(Boolean),
+    instructors: (project.instructors || []).map((item) => item.email || item).filter(Boolean),
     visibility: project.visibility || "private",
   };
 }
@@ -1005,7 +991,7 @@ export default function EditProject() {
             Project not found
           </h1>
           <p className="mt-2 text-sm font-semibold text-[color:var(--muted)]">
-            The project you are trying to edit could not be found in localStorage.
+            The project you are trying to edit could not be found in the demo database.
           </p>
           <AppButton
             type="button"

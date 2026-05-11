@@ -97,7 +97,7 @@ export default function ExploreProjectCard({
           <div>
             {/* TITLE */}
             <h3
-              onClick={() => navigate("/project")}
+              onClick={() => navigate(`/project?projectId=${project.id}`)}
               className="
                 text-lg font-black text-[#16253A]
                 cursor-pointer hover:text-blue-600
