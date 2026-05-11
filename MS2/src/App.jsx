@@ -40,6 +40,28 @@ import ProjectPage from "./pages/ProjectPage";
 import ExploreInstructors from "./pages/ExploreInstructors";
 import ExploreProjects from "@/pages/ExploreProjects";
 import ChatsSection from "@/pages/ChatsSection";
+import EditInternship from "@/pages/EditInternship";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminEmployers from "@/pages/admin/AdminEmployers";
+import AdminCourses from "@/pages/admin/AdminCourses";
+import InstructorCourses from "@/pages/InstructorCourses";
+import InstructorMyCourses from "@/pages/InstructorMyCourses";
+import AdminLinkRequests from "@/pages/admin/AdminLinkRequests";
+import AdminFlaggedProjects from "@/pages/admin/AdminFlaggedProjects";
+import AdminStatistics from "@/pages/admin/AdminStatistics";
+import AdminCreateCourse from "@/pages/admin/AdminCreateCourse";
+import AdminCreateAccount from "@/pages/admin/AdminCreateAccount";
+import ViewInstructor from "@/pages/ViewInstructor"
+import FavoriteList from "@/pages/FavoriteList"
+import FavoritePortfolios from "./pages/FavoritePortfolios";
+import FavoriteProjects from "./pages/FavoriteProjects";
+import AdminOverview from "@/pages/admin/AdminOverview";
+import InstructorProjects from "@/pages/InstructorProjects";
+import FeaturedStudents
+from "@/pages/FeaturedStudents";
+import Settings from "./pages/Settings";
+import PublicStudentPortfolio from "./pages/PublicStudentPortfolio";
 
 export default function App() {
   const [users, setUsers] = useState(() => {
@@ -144,6 +166,128 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+            <Route
+              path="/employer-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["employer"]}>
+                  <EmployerDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+        path="/featured-students"
+        element={<ProtectedRoute  allowedRoles={["student", "instructor", "employer", "admin"]}>
+                    <FeaturedStudents />
+        </ProtectedRoute>
+        }
+      />
+
+<Route
+  path="/admin/employers"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminEmployers />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/courses"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminCourses />
+    </ProtectedRoute>
+  }
+/>
+
+
+<Route
+  path="/instructor/courses"
+  element={
+    <ProtectedRoute allowedRoles={["instructor"]}>
+      <InstructorCourses />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/instructor/my-courses"
+  element={
+    <ProtectedRoute allowedRoles={["instructor"]}>
+      <InstructorMyCourses />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/instructor/projects"
+  element={
+    <ProtectedRoute allowedRoles={["instructor"]}>
+      <InstructorProjects />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/courses/create"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminCreateCourse />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/admin/overview"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminOverview />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/admin/users/create-admin"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminCreateAccount />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/link-requests"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminLinkRequests />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/flagged-projects"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminFlaggedProjects />
+    </ProtectedRoute>
+  }
+/>
+
 <Route
   path="/fav-list"
   element={

@@ -26,20 +26,20 @@ const projectsGrid =
   "lg:grid-cols-[1.5fr_1.7fr_0.9fr_0.8fr_0.8fr_0.7fr]";
 
 export default function AdminFlaggedProjects() {
-  const { flaggedProjects, appeals, actions } =
-  useAdminModuleData();
+  const {
+  flaggedProjects,
+  actions,
+} = useAdminModuleData();
 
-const savedFlaggedProjects =
+
+
+const appeals =
   JSON.parse(
     localStorage.getItem(
-      "flaggedProjects"
+      "projectAppeals"
     )
   ) || [];
 
-const allFlaggedProjects = [
-  ...flaggedProjects,
-  ...savedFlaggedProjects,
-];
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -51,7 +51,7 @@ const allFlaggedProjects = [
 
   const filtered = useMemo(
     () =>
-      allFlaggedProjects.filter((project) => {
+      flaggedProjects.filter((project) => {
         const haystack =
           `${project.title} ${project.student} ${project.course} ${project.reason}`.toLowerCase();
 
@@ -82,47 +82,7 @@ const allFlaggedProjects = [
       decision.nextStatus === "rejected" &&
       !note.trim();
 
-      if (decision.active) {
-
-  /* REMOVE FROM REPORTED */
-
-  const reported =
-    JSON.parse(
-      localStorage.getItem(
-        "reportedProjects"
-      )
-    ) || [];
-
-  const updatedReported =
-    reported.filter(
-      (id) => id !== decision.project.id
-    );
-
-  localStorage.setItem(
-    "reportedProjects",
-    JSON.stringify(updatedReported)
-  );
-
-  /* UPDATE FLAG STATUS */
-
-  const savedFlags =
-    JSON.parse(
-      localStorage.getItem(
-        "flaggedProjects"
-      )
-    ) || [];
-
-  const updatedFlags =
-  savedFlags.filter(
-    (project) =>
-      project.id !== decision.project.id
-  );
-  
-  localStorage.setItem(
-    "flaggedProjects",
-    JSON.stringify(updatedFlags)
-  );
-}
+     
 
     if (projectNeedsNote || appealNeedsNote) return;
 
@@ -144,7 +104,97 @@ const allFlaggedProjects = [
           : prev
       );
     } else {
-      actions.setAppealStatus(decision.appeal.id, decision.nextStatus, note.trim());
+     const savedAppeals =
+  JSON.parse(
+    localStorage.getItem(
+      "projectAppeals"
+    )
+  ) || [];
+
+const updatedAppeals =
+  savedAppeals.map((appeal) =>
+
+    appeal.id ===
+    decision.appeal.id
+
+      ? {
+          ...appeal,
+          status:
+            decision.nextStatus,
+          decisionNote: note,
+        }
+
+      : appeal
+  );
+
+localStorage.setItem(
+  "projectAppeals",
+  JSON.stringify(updatedAppeals)
+);
+
+/* ACCEPTED */
+
+if (
+  decision.nextStatus ===
+  "accepted"
+) {
+
+  /* REMOVE REPORT */
+
+  const reported =
+    JSON.parse(
+      localStorage.getItem(
+        "reportedProjects"
+      )
+    ) || [];
+
+  const updatedReported =
+    reported.filter(
+      (project) =>
+
+        project.projectId !==
+        decision.appeal.projectId
+    );
+
+  localStorage.setItem(
+    "reportedProjects",
+    JSON.stringify(updatedReported)
+  );
+
+  /* UPDATE FLAG */
+
+  const flagged =
+    JSON.parse(
+      localStorage.getItem(
+        "flaggedProjects"
+      )
+    ) || [];
+
+  const updatedFlags =
+    flagged.map((project) =>
+
+      project.id ===
+      decision.appeal.projectId
+
+        ? {
+            ...project,
+            appealStatus:
+              "accepted",
+
+            status:
+              "resolved",
+
+            active: true,
+          }
+
+        : project
+    );
+
+  localStorage.setItem(
+    "flaggedProjects",
+    JSON.stringify(updatedFlags)
+  );
+}
       toast.success(`Appeal ${decision.nextStatus}`);
     }
 
@@ -269,7 +319,7 @@ const allFlaggedProjects = [
         emptyMessage="No flagged projects found"
       />
 
-      <AppCard className="p-6">
+      <AppCard className="relative z-0 p-6">
         <SectionHeader
           eyebrow="Student Appeals"
           title="Appeal Inbox"
@@ -328,62 +378,101 @@ const allFlaggedProjects = [
         </div>
       </AppCard>
 
-      <AdminReviewDrawer
-        open={Boolean(selectedProject)}
-        onClose={() => setSelectedProject(null)}
-        eyebrow="Project moderation"
-        title={selectedProject?.title}
-        subtitle={
-          selectedProject
-            ? `${selectedProject.student} • ${selectedProject.course}`
-            : ""
-        }
-        status={selectedProject?.status}
-        footer={
-          selectedProject ? (
-            <div className="flex flex-wrap justify-end gap-2">
-              <AppButton
-                variant="brand"
-                onClick={() => openProjectDecision(selectedProject, true)}
-              >
-                Activate project
-              </AppButton>
+      {selectedProject ? (
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-[color:var(--ink)]/35 px-4 pt-32 pb-8 backdrop-blur-sm">
+          <div className="w-full max-w-4xl rounded-[32px] border border-white/40 bg-[var(--surface)] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-[color:var(--primary)]">
+                  Project Moderation
+                </p>
+
+                <h2 className="mt-2 text-3xl font-black text-[color:var(--ink)]">
+                  {selectedProject.title}
+                </h2>
+
+                <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
+                  {selectedProject.student} • {selectedProject.course}
+                </p>
+              </div>
 
               <AppButton
-                variant="danger"
-                onClick={() => openProjectDecision(selectedProject, false)}
+                variant="ghost"
+                onClick={() => setSelectedProject(null)}
+                className="h-11 w-11 rounded-full px-0"
               >
-                Deactivate project
+                ✕
               </AppButton>
             </div>
-          ) : null
-        }
-      >
-        {selectedProject ? (
-          <div className="space-y-4">
-            <DrawerSection title="Flag reason">
-              {selectedProject.reason}
-            </DrawerSection>
 
-            <DrawerSection title="Flag source">
-              {selectedProject.flaggedBy}
-            </DrawerSection>
+            <div className="mt-6 space-y-5">
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                  Flag Reason
+                </p>
 
-            <DrawerSection title="Project state">
-              <div className="flex gap-2">
-                <AdminStatusBadge
-                  status={selectedProject.active ? "active" : "inactive"}
-                />
-                <AdminStatusBadge status={selectedProject.appealStatus || "none"} />
+                <p className="mt-3 text-sm font-semibold leading-7 text-[color:var(--ink)]">
+                  {selectedProject.reason}
+                </p>
               </div>
-            </DrawerSection>
 
-            <DrawerSection title="Latest admin note">
-              {selectedProject.adminNote || "No admin note yet."}
-            </DrawerSection>
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                  Flag Source
+                </p>
+
+                <p className="mt-3 text-sm font-semibold text-[color:var(--ink)]">
+                  {selectedProject.flaggedBy}
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                  Project State
+                </p>
+
+                <div className="mt-3 flex gap-2">
+                  <AdminStatusBadge status={selectedProject.active ? "active" : "inactive"} />
+                  <AdminStatusBadge status={selectedProject.appealStatus || "none"} />
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                  Latest Admin Note
+                </p>
+
+                <p className="mt-3 text-sm font-semibold text-[color:var(--ink)]">
+                  {selectedProject.adminNote || "No admin note yet."}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap justify-end gap-3">
+                <AppButton
+                  variant="glass"
+                  onClick={() => setSelectedProject(null)}
+                >
+                  Close
+                </AppButton>
+
+                <AppButton
+                  variant="brand"
+                  onClick={() => openProjectDecision(selectedProject, true)}
+                >
+                  Activate project
+                </AppButton>
+
+                <AppButton
+                  variant="danger"
+                  onClick={() => openProjectDecision(selectedProject, false)}
+                >
+                  Deactivate project
+                </AppButton>
+              </div>
+            </div>
           </div>
-        ) : null}
-      </AdminReviewDrawer>
+        </div>
+      ) : null}
 
       <AdminActionDialog
         open={Boolean(decision)}

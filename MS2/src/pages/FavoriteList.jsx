@@ -92,7 +92,7 @@ export default function FavoriteList() {
   ?.toLowerCase()
   .includes(
     selectedInstructor.toLowerCase()
-  )
+  );
 
     return (
       matchesSearch &&

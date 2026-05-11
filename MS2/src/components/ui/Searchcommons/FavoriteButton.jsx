@@ -6,7 +6,10 @@ export default function FavoriteButton({
 }) {
   return (
     <button
-      onClick={onClick}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick?.();
+      }}
       className="
         absolute top-4 right-4
         w-10 h-10

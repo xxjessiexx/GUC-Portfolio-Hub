@@ -71,7 +71,7 @@ function ActionCell({ row, onReview, onApprove, onReject }) {
       <AppButton
         size="sm"
         variant="brand"
-        className="justify-start xl:justify-center    bg-gradient-to-r from-[#355872] via-[#4f7fa3] to-[#7AAACE] px-4 py-2font-semibold text-white shadow-[0_14px_32px_rgba(53,88,114,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(53,88,114,0.28)] disabled:cursor-not-allowed disabled:opacity-60"
+        className="justify-start xl:justify-center    bg-gradient-to-r from-[#355872] via-[#4f7fa3] to-[#7AAACE] px-4 py-2 font-semibold text-white shadow-[0_14px_32px_rgba(53,88,114,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(53,88,114,0.28)] disabled:cursor-not-allowed disabled:opacity-60"
         disabled={!isPending}
         onClick={() => onApprove(row)}
       >
@@ -192,30 +192,7 @@ export default function AdminLinkRequests() {
         icon={Link2}
       />
 
-      <AppCard variant="strong" radius="lg" padding="lg">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="rounded-2xl bg-[color:var(--accent)]/15 p-3 text-[color:var(--primary)]">
-              <Bell className="size-5" />
-            </div>
-
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--secondary)]">
-                Admin notifications
-              </p>
-              <h2 className="mt-1 text-2xl font-black text-[color:var(--ink)]">
-                {pendingRequests.length} pending course request
-                {pendingRequests.length === 1 ? "" : "s"}
-              </h2>
-              <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
-                New instructor link/unlink requests appear here and stay pending until an admin approves or rejects them.
-              </p>
-            </div>
-          </div>
-
-          <AdminStatusBadge status={pendingRequests.length ? "pending" : "resolved"} />
-        </div>
-      </AppCard>
+    
 
       <AdminToolbar
         search={search}
@@ -310,74 +287,111 @@ export default function AdminLinkRequests() {
         ]}
       />
 
-      <AdminReviewDrawer
-        open={Boolean(selectedRequest)}
-        onClose={() => setSelectedRequest(null)}
-        eyebrow="Instructor access request"
-        title={selectedRequest?.course}
-        subtitle={
-          selectedRequest
-            ? `${selectedRequest.instructor} • ${selectedRequest.email || "No email recorded"}`
-            : ""
-        }
-        status={selectedRequest?.status}
-        footer={
-          selectedRequest ? (
-            <div className="flex flex-wrap justify-end gap-2">
+      {selectedRequest ? (
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-[color:var(--ink)]/35 px-4 pt-32 pb-8 backdrop-blur-sm">
+          <div className="w-full max-w-4xl rounded-[32px] border border-white/40 bg-[var(--surface)] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-[color:var(--primary)]">
+                  Instructor Access Request
+                </p>
+
+                <h2 className="mt-2 text-3xl font-black text-[color:var(--ink)]">
+                  {selectedRequest.course}
+                </h2>
+
+                <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
+                  {selectedRequest.instructor} • {selectedRequest.email || "No email recorded"}
+                </p>
+              </div>
+
               <AppButton
-                variant="brand"
-                disabled={selectedRequest.status !== "pending"}
-                onClick={() => openDecision(selectedRequest, "approved")}
+                variant="ghost"
+                onClick={() => setSelectedRequest(null)}
+                className="h-11 w-11 rounded-full px-0"
               >
-                <Check className="size-4" />
-                Approve request
-              </AppButton>
-              <AppButton
-                variant="danger"
-                disabled={selectedRequest.status !== "pending"}
-                onClick={() => openDecision(selectedRequest, "rejected")}
-              >
-                <X className="size-4" />
-                Reject request
+                ✕
               </AppButton>
             </div>
-          ) : null
-        }
-      >
-        {selectedRequest ? (
-          <div className="space-y-4">
-            <DrawerSection title="Request summary">
-              <div className="flex items-start gap-3 rounded-3xl border border-[color:var(--border-blue)] bg-[var(--surface-soft)] p-4">
-                <div className="rounded-2xl bg-[color:var(--accent)]/15 p-3 text-[color:var(--primary)]">
-                  <ClipboardCheck className="size-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-black text-[color:var(--ink)]">
-                    {selectedCopy?.sentence}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold text-[color:var(--muted)]">
-                    Submitted: {formatDate(selectedRequest.submittedAt || selectedRequest.createdAt)}
-                  </p>
-                </div>
+
+            <div className="mt-6 space-y-5">
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                  Request Summary
+                </p>
+
+                <p className="mt-3 text-sm font-black text-[color:var(--ink)]">
+                  {selectedCopy?.sentence}
+                </p>
+
+                <p className="mt-2 text-xs font-semibold text-[color:var(--muted)]">
+                  Submitted: {formatDate(selectedRequest.submittedAt || selectedRequest.createdAt)}
+                </p>
               </div>
-            </DrawerSection>
 
-            <DrawerSection title="Request type">
-              <p className="font-bold text-[color:var(--ink)]">
-                {selectedCopy?.label}
-              </p>
-            </DrawerSection>
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                  Request Type
+                </p>
 
-            <DrawerSection title="Instructor message">
-              {selectedRequest.reason || "No reason provided."}
-            </DrawerSection>
+                <p className="mt-3 font-bold text-[color:var(--ink)]">
+                  {selectedCopy?.label}
+                </p>
+              </div>
 
-            <DrawerSection title="Decision note">
-              {selectedRequest.decisionNote || "No decision note yet."}
-            </DrawerSection>
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                  Instructor Message
+                </p>
+
+                <p className="mt-3 text-sm font-semibold leading-7 text-[color:var(--ink)]">
+                  {selectedRequest.reason || "No reason provided."}
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                  Decision Note
+                </p>
+
+                <p className="mt-3 text-sm font-semibold text-[color:var(--ink)]">
+                  {selectedRequest.decisionNote || "No decision note yet."}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap justify-end gap-3">
+                <AppButton
+                  variant="glass"
+                  onClick={() => setSelectedRequest(null)}
+                >
+                  Close
+                </AppButton>
+
+                {selectedRequest.status === "pending" ? (
+                  <AppButton
+                    variant="brand"
+                    className="text-white"
+                    onClick={() => openDecision(selectedRequest, "approved")}
+                  >
+                    <Check className="size-4" />
+                    Approve request
+                  </AppButton>
+                ) : null}
+                                
+
+                <AppButton
+                  variant="danger"
+                  disabled={selectedRequest.status !== "pending"}
+                  onClick={() => openDecision(selectedRequest, "rejected")}
+                >
+                  <X className="size-4" />
+                  Reject request
+                </AppButton>
+              </div>
+            </div>
           </div>
-        ) : null}
-      </AdminReviewDrawer>
+        </div>
+      ) : null}
 
       <AdminActionDialog
         open={Boolean(decision)}

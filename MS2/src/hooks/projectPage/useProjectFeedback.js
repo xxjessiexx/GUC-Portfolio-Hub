@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   getDisplayName,
@@ -56,7 +56,6 @@ export function useProjectFeedback({
   project,
   canAddInstructorFeedback,
   loggedInUser,
-  isAdmin,
   persistProject,
   makeNotification,
 }) {
@@ -69,10 +68,6 @@ export function useProjectFeedback({
     () => getUserRating(project, loggedInUser?.id),
     [project, loggedInUser?.id]
   );
-
-  useEffect(() => {
-    setRatingDraft(myRating ? String(myRating) : "");
-  }, [myRating]);
 
   const notifyProjectStudents = (title, body) => {
     getProjectStudentRecipients(project, loggedInUser?.id).forEach((userId) => {
@@ -116,7 +111,7 @@ export function useProjectFeedback({
       (feedback) => String(feedback.id) === String(feedbackId)
     );
 
-    if (!item || (item.authorId !== loggedInUser?.id && !isAdmin)) {
+    if (!item || item.authorId !== loggedInUser?.id) {
       return;
     }
 
@@ -134,7 +129,7 @@ export function useProjectFeedback({
       (feedback) => String(feedback.id) === String(feedbackId)
     );
 
-    if (!item || (item.authorId !== loggedInUser?.id && !isAdmin)) {
+    if (!item || item.authorId !== loggedInUser?.id) {
       return;
     }
 

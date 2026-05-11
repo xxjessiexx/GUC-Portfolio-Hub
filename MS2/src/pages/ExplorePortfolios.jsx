@@ -135,7 +135,7 @@ const [selectedPortfolio, setSelectedPortfolio] =
         </div>
 
         {/* CONTENT */}
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
 
           {/* LEFT */}
           <div className="space-y-5">
@@ -170,38 +170,53 @@ const [selectedPortfolio, setSelectedPortfolio] =
   }}
 >
   <FilterSelect
-    value={`Major: ${selectedMajor}`}
-    onChange={(value) =>
-      setSelectedMajor(
-        value.replace("Major: ", "")
+  value={`Major: ${selectedMajor}`}
+  onChange={(value) =>
+    setSelectedMajor(
+      value.replace("Major: ", "")
+    )
+  }
+
+  options={[
+    "Major: All Majors",
+
+    ...Array.from(
+      new Set(
+        portfolios
+          .map((portfolio) =>
+            portfolio.major
+          )
+          .filter(Boolean)
       )
-    }
-    options={[
-      "Major: All Majors",
-      "Major: Computer Science",
-      "Major: Software Engineering",
-      "Major: Information Systems",
-      "Major: Data Science",
-      "Major: UI/UX Design",
-    ]}
-  />
+    ).map(
+      (major) => `Major: ${major}`
+    ),
+  ]}
+/>
 
   <FilterSelect
-    value={`Skill: ${selectedSkill}`}
-    onChange={(value) =>
-      setSelectedSkill(
-        value.replace("Skill: ", "")
+  value={`Skill: ${selectedSkill}`}
+  onChange={(value) =>
+    setSelectedSkill(
+      value.replace("Skill: ", "")
+    )
+  }
+
+  options={[
+    "Skill: All Skills",
+
+    ...Array.from(
+      new Set(
+        portfolios.flatMap(
+          (portfolio) =>
+            portfolio.skills || []
+        )
       )
-    }
-    options={[
-      "Skill: All Skills",
-      "Skill: React",
-      "Skill: Python",
-      "Skill: Figma",
-      "Skill: SQL",
-      "Skill: Tailwind",
-    ]}
-  />
+    ).map(
+      (skill) => `Skill: ${skill}`
+    ),
+  ]}
+/>
 </SearchFilterToolbar>
 
 
@@ -228,44 +243,7 @@ const [selectedPortfolio, setSelectedPortfolio] =
           {/* RIGHT SIDEBAR */}
           <div className="space-y-5">
 
-            {/* INSIGHTS */}
-            <AppCard className="p-6 rounded-[28px] bg-white/65 border border-gray-100 shadow-sm">
-
-              <div className="flex items-center gap-2 mb-6">
-                <Sparkles
-                  size={18}
-                  className="text-[#69A7FF]"
-                />
-
-                <h3 className="text-xl font-black text-[#16253A]">
-                  Discovery Insights
-                </h3>
-              </div>
-
-              <div className="space-y-4">
-
-                <InsightRow
-                  title="Active Portfolios"
-                  subtitle="Students with public portfolios"
-                  number="156"
-                  color="bg-blue-100 text-blue-500"
-                />
-
-                <InsightRow
-                  title="Total Projects"
-                  subtitle="Across all portfolios"
-                  number="248"
-                  color="bg-green-100 text-green-500"
-                />
-
-                <InsightRow
-                  title="Top Skills"
-                  subtitle="Most in-demand skills"
-                  number="React"
-                  color="bg-purple-100 text-purple-500"
-                />
-              </div>
-            </AppCard>
+            
 
             {/* FEATURED */}
             <AppCard
@@ -288,7 +266,13 @@ const [selectedPortfolio, setSelectedPortfolio] =
 
               <div className="mt-6 space-y-4">
 
-                {portfolios.slice(0, 3).map((student) => (
+                {portfolios
+  .filter(
+    (portfolio) =>
+      portfolio.projects >= 6
+  )
+  .slice(0, 3)
+  .map((student) => (
                   <div
                     key={student.id}
                     className="
