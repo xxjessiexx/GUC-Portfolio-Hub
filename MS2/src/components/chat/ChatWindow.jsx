@@ -7,10 +7,12 @@ import {
   addChatMessage,
   addScriptedChatReply,
   getCurrentUser,
+  getOrCreateDirectChat,
 } from "@/data/demoStore";
 
 export default function ChatWindow({
   selectedChat,
+  onCreatedChat,
 }) {
   const messagesContainerRef = useRef(null);
   const currentUser = getCurrentUser();
@@ -42,12 +44,22 @@ export default function ChatWindow({
     if (!selectedChat) return;
     if (!text.trim()) return;
 
-    addChatMessage(selectedChat.id, text, currentUser?.id);
+    let activeChat = selectedChat;
+
+    if (selectedChat.isDraft) {
+      activeChat = getOrCreateDirectChat(selectedChat.targetUserId, currentUser?.id);
+
+      if (!activeChat?.id) return;
+
+      onCreatedChat?.(activeChat.id);
+    }
+
+    addChatMessage(activeChat.id, text, currentUser?.id);
 
     if (!shouldUseScriptedReply()) return;
 
-    const replies = selectedChat.scriptedReplies || [];
-    const replyIndex = selectedChat.scriptedReplyIndex || 0;
+    const replies = activeChat.scriptedReplies || [];
+    const replyIndex = activeChat.scriptedReplyIndex || 0;
     const nextReply = replies[replyIndex];
     const otherParticipantId = getOtherParticipantId();
 
@@ -56,7 +68,7 @@ export default function ChatWindow({
     setIsTyping(true);
 
     window.setTimeout(() => {
-      addScriptedChatReply(selectedChat.id, nextReply, otherParticipantId, {
+      addScriptedChatReply(activeChat.id, nextReply, otherParticipantId, {
         markAsUnread: false,
         createNotification: false,
       });
@@ -112,6 +124,12 @@ export default function ChatWindow({
               currentUserId={currentUser?.id}
             />
           ))}
+
+          {selectedChat.isDraft && (
+            <div className="mx-auto rounded-full border border-dashed border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-400">
+              Send a message to start this conversation.
+            </div>
+          )}
 
           {isTyping && (
             <div className="flex justify-start">
