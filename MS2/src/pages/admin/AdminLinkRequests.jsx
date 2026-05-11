@@ -71,7 +71,7 @@ function ActionCell({ row, onReview, onApprove, onReject }) {
       <AppButton
         size="sm"
         variant="brand"
-        className="justify-start xl:justify-center"
+        className="justify-start xl:justify-center    bg-gradient-to-r from-[#355872] via-[#4f7fa3] to-[#7AAACE] px-4 py-2font-semibold text-white shadow-[0_14px_32px_rgba(53,88,114,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(53,88,114,0.28)] disabled:cursor-not-allowed disabled:opacity-60"
         disabled={!isPending}
         onClick={() => onApprove(row)}
       >
