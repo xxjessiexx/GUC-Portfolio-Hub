@@ -309,68 +309,7 @@ export default function EditInstructorProfile() {
               </div>
             </AppCard>
 
-            <AppCard className="p-6">
-              <h3 className="mb-4 text-xl font-black text-[color:var(--ink)]">
-                Courses Teaching
-              </h3>
-
-              <div className="flex flex-wrap gap-2 rounded-2xl border border-[color:var(--primary)]/15 bg-white/70 p-3">
-                {courses.map((course) => (
-                  <AlertDialog key={course}>
-                    <div className="flex items-center gap-2 rounded-xl border border-[color:var(--primary)]/20 bg-[color:var(--primary)]/10 px-3 py-1.5 text-sm font-bold text-[color:var(--primary)]">
-                      <span>{course}</span>
-
-                      <AlertDialogTrigger asChild>
-                        <button
-                          type="button"
-                          className="text-red-500 transition hover:text-red-600"
-                        >
-                          ×
-                        </button>
-                      </AlertDialogTrigger>
-                    </div>
-
-                    <AlertDialogContent className="z-[9999] rounded-3xl border border-white/70 bg-white/95 p-6 shadow-[0_24px_80px_rgba(44,57,71,0.25)] backdrop-blur-2xl">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle className="text-2xl font-black text-[color:var(--ink)]">
-                          Unlink course?
-                        </AlertDialogTitle>
-
-                        <AlertDialogDescription className="text-base text-[color:var(--muted)]">
-                          This will unlink you from "{course}". Are you sure?
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-
-                      <AlertDialogFooter>
-                        <AlertDialogCancel className="rounded-2xl">
-                          Cancel
-                        </AlertDialogCancel>
-
-                        <AlertDialogAction
-                          onClick={() => unlinkCourse(course)}
-                          className="rounded-2xl bg-red-500 font-bold text-white hover:bg-red-600"
-                        >
-                          Yes, unlink
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                ))}
-
-                <input
-                  placeholder="Link course by code or name"
-                  value={courseInput}
-                  onChange={(e) => setCourseInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addCourse();
-                    }
-                  }}
-                  className="min-w-[180px] flex-1 bg-transparent text-sm font-semibold text-[color:var(--ink)] outline-none placeholder:text-[color:var(--muted)]"
-                />
-              </div>
-            </AppCard>
+            
 
             <AppCard className="p-6">
               <DangerActions />
