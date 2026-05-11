@@ -158,4 +158,4 @@ export default function ProjectInvitePickerModal({
       </div>
     </div>
   );
-}gi
+}
