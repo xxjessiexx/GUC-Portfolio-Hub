@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom";
+
 export default function DeleteConfirmationModal({
   open,
   title = "Delete item?",
@@ -8,7 +10,7 @@ export default function DeleteConfirmationModal({
 }) {
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
       className="
         fixed inset-0 z-[99999]
@@ -30,25 +32,11 @@ export default function DeleteConfirmationModal({
       >
         <div className="flex flex-col gap-6">
           <div>
-            <h2
-              className="
-                text-2xl
-                font-black
-                text-[color:var(--ink)]
-              "
-            >
+            <h2 className="text-2xl font-black text-[color:var(--ink)]">
               {title}
             </h2>
 
-            <p
-              className="
-                mt-3
-                text-base
-                font-semibold
-                leading-relaxed
-                text-[color:var(--muted)]
-              "
-            >
+            <p className="mt-3 text-base font-semibold leading-relaxed text-[color:var(--muted)]">
               {description}
             </p>
           </div>
@@ -90,6 +78,7 @@ export default function DeleteConfirmationModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
