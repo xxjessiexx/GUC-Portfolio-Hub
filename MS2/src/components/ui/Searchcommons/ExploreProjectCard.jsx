@@ -105,8 +105,19 @@ export default function ExploreProjectCard({
               {project.title}
             </h3>
 
-            <p className="text-sm text-[color:var(--muted)] font-medium mt-1">
-              {project.course}
+            <p className="text-sm text-gray-500 font-medium mt-1">
+              {String(project.type || "")
+                .toLowerCase()
+                .includes("bachelor") ||
+              String(project.type || "")
+                .toLowerCase()
+                .includes("thesis")
+                ? "Bachelor Project"
+                : (
+                    project.course ||
+                    project.courseName ||
+                    project.courseCode
+                  )}
             </p>
           </div>
 

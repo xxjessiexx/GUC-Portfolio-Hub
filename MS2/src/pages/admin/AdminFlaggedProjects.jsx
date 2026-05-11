@@ -25,6 +25,23 @@ import { useAdminModuleData } from "@/hooks/useAdminModuleData";
 const projectsGrid =
   "lg:grid-cols-[1.5fr_1.7fr_0.9fr_0.8fr_0.8fr_0.7fr]";
 
+function getDisplayCourse(project) {
+  const projectType = String(project.type || "").toLowerCase();
+
+  const isBachelorProject =
+    projectType.includes("bachelor") ||
+    projectType.includes("thesis");
+
+  return isBachelorProject
+    ? "Bachelor Project"
+    : (
+        project.course ||
+        project.courseName ||
+        project.courseCode ||
+        "Course Project"
+      );
+}
+
 export default function AdminFlaggedProjects() {
   const {
   flaggedProjects,
@@ -53,7 +70,7 @@ const appeals =
     () =>
       flaggedProjects.filter((project) => {
         const haystack =
-          `${project.title} ${project.student} ${project.course} ${project.reason}`.toLowerCase();
+          `${project.title} ${project.student} ${getDisplayCourse(project)} ${project.reason}`.toLowerCase();
 
         return (
           haystack.includes(search.toLowerCase()) &&
@@ -209,7 +226,7 @@ if (
         <div>
           <p className="font-black text-[color:var(--ink)]">{project.title}</p>
           <p className="mt-1 text-xs font-semibold text-[color:var(--muted)]">
-            {project.student} • {project.course}
+            {project.student} • {getDisplayCourse(project)}
           </p>
         </div>
       ),
@@ -392,7 +409,7 @@ if (
                 </h2>
 
                 <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
-                  {selectedProject.student} • {selectedProject.course}
+                  {selectedProject.student} • {getDisplayCourse(selectedProject)}
                 </p>
               </div>
 

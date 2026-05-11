@@ -749,7 +749,7 @@ export const coursesSeed = [
   },
   {
     "id": "course-bachelor",
-    "code": "DMET 401",
+    "code": "BACHELOR",
     "name": "Bachelor Project",
     "type": "Bachelor Project",
     "instructorIds": [
@@ -1597,7 +1597,7 @@ export const projectsSeed = [
     "title": "Bachelor Project: Autonomous Vehicle System",
     "type": "Bachelor Project",
     "courseId": "course-bachelor",
-    "courseCode": "DMET 401",
+    "courseCode": "BACHELOR",
     "courseName": "Bachelor Project",
     "ownerId": "student-demo-1",
     "collaboratorIds": [],

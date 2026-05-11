@@ -15,6 +15,23 @@ import {
 
 export default function FavoriteProjects() {
 
+  const getDisplayCourse = (project) => {
+  const projectType = String(project.type || "").toLowerCase();
+
+  const isBachelorProject =
+    projectType.includes("bachelor") ||
+    projectType.includes("thesis");
+
+  return isBachelorProject
+    ? "Bachelor Project"
+    : (
+        project.course ||
+        project.courseName ||
+        project.courseCode ||
+        "Course Project"
+      );
+};
+
   const [projects, setProjects] =
   useState(getAllProjects());
 
@@ -51,8 +68,7 @@ const courseOptions = [
       projects
         .map(
           (project) =>
-            project.course ||
-            project.courseName
+            getDisplayCourse(project)
         )
         .filter(Boolean)
     )
@@ -99,7 +115,7 @@ const instructorOptions = [
       const matchesCourse =
         selectedCourse === "All Courses" ||
 
-        project.course === selectedCourse ||
+        getDisplayCourse(project) === selectedCourse ||
 
         project.courseName ===
           selectedCourse ||
