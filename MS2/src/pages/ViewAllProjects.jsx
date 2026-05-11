@@ -46,6 +46,16 @@ const getProjectDescription = (project) =>
   "No description added yet.";
 
 const getProjectCourse = (project, courses) => {
+  const projectType = String(project.type || "").toLowerCase();
+
+  const isBachelorProject =
+    projectType.includes("bachelor") ||
+    projectType.includes("thesis");
+
+  if (isBachelorProject) {
+    return "Bachelor Project";
+  }
+
   if (project.course) return project.course;
   if (project.courseCode) return project.courseCode;
   if (project.courseName) return project.courseName;
@@ -766,7 +776,7 @@ return (
                         updated={getProjectUpdated(p)}
                         onClick={() => openProject(p.id)}
                         left={
-                          <div>
+                          <div className="min-w-0 pr-10">
                             <h3
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -781,7 +791,7 @@ return (
                               {getProjectCourse(p, courses)}
                             </p>
 
-                            <p className="text-sm text-gray-500 min-w-0 line-clamp-2 max-w-xl">
+                            <p className="max-w-sm text-sm text-gray-500 line-clamp-2">
                               {getProjectDescription(p)}
                             </p>
                           </div>

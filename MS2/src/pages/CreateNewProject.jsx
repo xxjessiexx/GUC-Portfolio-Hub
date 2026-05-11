@@ -561,12 +561,9 @@ function validateProjectField(field, data) {
       return "";
 
     case "thesisDrafts":
-    if (
-      data.courseName !==
-      "Bachelor Project"
-    ) {
-      return "";
-    }
+      if (data.type !== "thesis") {
+        return "";
+      }
 
     if (
       data.thesisDrafts.length === 0
@@ -661,11 +658,20 @@ export default function CreateNewProject() {
     }
 
     if (field === "type") {
+      const cleanedData =
+        value === "thesis"
+          ? { ...nextData, courseName: "" }
+          : { ...nextData, thesisDrafts: [] };
+
+      setFormData(cleanedData);
+
       setErrors((current) => ({
         ...current,
-        courseName: validateProjectField("courseName", nextData),
-        thesisFile: validateProjectField("thesisFile", nextData),
+        courseName: validateProjectField("courseName", cleanedData),
+        thesisDrafts: validateProjectField("thesisDrafts", cleanedData),
       }));
+
+      return;
     }
   };
 
@@ -1076,22 +1082,42 @@ const removeDraft = (draftId) => {
         throw new Error("No logged-in user found.");
       }
 
-      const selectedCourseName =
-        formData.type === "course"
-          ? formData.courseName.trim()
-          : "Bachelor Project";
+      const isBachelorProject = formData.type === "thesis";
 
-      const courseId = findCourseIdByLabel(selectedCourseName);
+      const selectedCourseName = isBachelorProject
+        ? ""
+        : formData.courseName.trim();
+
+      const courseId = isBachelorProject
+        ? ""
+        : findCourseIdByLabel(selectedCourseName);
 
       const collaboratorIds = findUserIdsByEmails(
-        formData.collaborators,
-        "student"
-      );
+  formData.collaborators,
+  "student"
+).filter((id) => String(id) !== String(currentUser.id));
 
-      const instructorIds = findUserIdsByEmails(
-        formData.instructors,
-        "instructor"
-      );
+const instructorIds = findUserIdsByEmails(
+  formData.instructors,
+  "instructor"
+).filter((id) => String(id) !== String(currentUser.id));
+
+const invitationStatuses = [
+  ...collaboratorIds.map((userId) => ({
+    userId,
+    role: "collaborator",
+    status: "pending",
+    sentAt: now,
+  })),
+  ...instructorIds.map((userId) => ({
+    userId,
+    role: "instructor",
+    status: "pending",
+    sentAt: now,
+  })),
+];
+
+      
 
       const storedProject = {
         id: projectId,
@@ -1101,11 +1127,12 @@ const removeDraft = (draftId) => {
         studentId: currentUser.id,
         collaboratorIds,
         instructorIds,
+        invitationStatuses,
 
         title: formData.title.trim(),
         name: formData.title.trim(),
 
-        type: formData.type,
+        type: isBachelorProject ? "Bachelor Project" : "Course Project",
         courseId,
         courseName: selectedCourseName,
         course: selectedCourseName,

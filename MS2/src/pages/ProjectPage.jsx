@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
@@ -12,7 +12,6 @@ import ProjectTasksTab from "@/components/projectPage/ProjectTasksTab";
 import ProjectBachelorThesisTab from "@/components/projectPage/ProjectBachelorThesisTab";
 import ProjectFeedbackTab from "@/components/projectPage/ProjectFeedbackTab";
 import ProjectTaskModals from "@/components/projectPage/ProjectTaskModals";
-import ProjectRoleActions from "@/components/projectPage/ProjectRoleActions";
 import ProjectCollaboratorsSection from "@/components/project/ProjectCollaboratorsSection";
 
 import { useProjectThesisDrafts } from "@/hooks/projectPage/useProjectThesisDrafts";
@@ -56,10 +55,17 @@ function makeNotification(userId, title, body, projectId, type = "project") {
   });
 }
 
+function sameId(a, b) {
+  return String(a || "") === String(b || "");
+}
+
+function toIdSet(values = []) {
+  return new Set((Array.isArray(values) ? values : []).filter(Boolean).map(String));
+}
+
 export default function ProjectPage() {
   const [searchParams] = useSearchParams();
   const params = useParams();
-  const navigate = useNavigate();
 
   const projectId =
     searchParams.get("projectId") || params.projectId || params.id;
@@ -83,67 +89,69 @@ export default function ProjectPage() {
   const currentUserId = loggedInUser?.id;
   const userRole = normalizeRole(loggedInUser?.role);
   const isAdmin = userRole === "admin";
-  const isLoggedInInstructor = userRole === "instructor";
 
   const isPublic = project?.visibility === "Public";
 
   const isCreator =
     Boolean(project) &&
-    String(currentUserId || "") === String(project.ownerId || "");
-
-  const statusFor = (id) => getInvitationStatus(project, id);
+    (sameId(currentUserId, project.ownerId) ||
+      sameId(currentUserId, project.raw?.ownerId) ||
+      sameId(currentUserId, project.raw?.studentId) ||
+      sameId(currentUserId, project.raw?.authorId) ||
+      sameId(currentUserId, project.raw?.creatorId) ||
+      String(currentUser || "").trim().toLowerCase() ===
+        String(project.ownerName || "").trim().toLowerCase());
 
   const acceptedCollaboratorIds = (project?.collaboratorIds || []).filter(
-    (id) => statusFor(id) === "accepted"
+    (id) => getInvitationStatus(project, id) === "accepted"
   );
 
   const acceptedInstructorIds = (project?.instructorIds || []).filter(
-    (id) => statusFor(id) === "accepted"
+    (id) => getInvitationStatus(project, id) === "accepted"
   );
 
   const isAcceptedCollaborator =
-    Boolean(project) && acceptedCollaboratorIds.includes(currentUserId);
+    Boolean(project) &&
+    acceptedCollaboratorIds.some((id) => sameId(id, currentUserId));
 
-  const coursesForProject = courses.find(
-    (course) => String(course.id) === String(project?.courseId)
+  const ownInvitationStatus = (project?.invitationStatuses || []).find((item) =>
+    sameId(item.userId, currentUserId)
   );
-
-  const linkedInstructorIds = new Set([
-    ...(project?.courseInstructorIds || []),
-    ...(project?.raw?.courseInstructorIds || []),
-    ...(project?.raw?.courseRecord?.instructorIds || []),
-    ...(coursesForProject?.instructorIds || []),
-    ...(project?.instructorIds || []),
-  ].map(String));
-
-  const userLinkedCourseIds = [
-    ...(loggedInUser?.linkedCourseIds || []),
-    ...(loggedInUser?.courseIds || []),
-    ...(loggedInUser?.courses || [])
-      .map((course) => (typeof course === "string" ? course : course?.id))
-      .filter(Boolean),
-  ].map(String);
-
-  const isLinkedToProjectCourse =
-    Boolean(project?.courseId) &&
-    (linkedInstructorIds.has(String(currentUserId)) ||
-      userLinkedCourseIds.includes(String(project.courseId)));
-
-  const isAcceptedProjectInstructor =
-    Boolean(project) && acceptedInstructorIds.includes(currentUserId);
-
-  const isRelatedInstructor =
-    isLoggedInInstructor && (isLinkedToProjectCourse || isAcceptedProjectInstructor);
-
-  const isOtherInstructor = isLoggedInInstructor && !isRelatedInstructor;
 
   const hasOwnProjectInvitation = Boolean(
-    project?.invitationStatuses?.some(
-      (item) =>
-        String(item.userId) === String(currentUserId) &&
-        ["pending", "accepted"].includes(String(item.status).toLowerCase())
-    )
+    ownInvitationStatus &&
+      ["pending", "accepted"].includes(String(ownInvitationStatus.status).toLowerCase())
   );
+
+  const courseRecord =
+    project?.raw?.courseRecord ||
+    project?.courseRecord ||
+    courses.find((course) => sameId(course.id, project?.courseId)) ||
+    null;
+
+  const courseInstructorIds = toIdSet([
+    ...(courseRecord?.instructorIds || []),
+    ...(project?.raw?.courseInstructorIds || []),
+    ...(project?.raw?.courseInstructorId ? [project.raw.courseInstructorId] : []),
+  ]);
+
+  const userLinkedCourseIds = toIdSet([
+    ...(loggedInUser?.linkedCourseIds || []),
+    ...(loggedInUser?.courseIds || []),
+    ...(loggedInUser?.courses || []),
+  ]);
+
+  const isAcceptedProjectInstructor =
+    userRole === "instructor" &&
+    acceptedInstructorIds.some((id) => sameId(id, currentUserId));
+
+  const isCourseLinkedInstructor =
+    userRole === "instructor" &&
+    (courseInstructorIds.has(String(currentUserId || "")) ||
+      userLinkedCourseIds.has(String(project?.courseId || "")));
+
+  const isRelatedInstructor =
+    Boolean(project) && (isAcceptedProjectInstructor || isCourseLinkedInstructor);
 
   const isBachelorProject = project?.type === "Bachelor Project";
 
@@ -156,18 +164,26 @@ export default function ProjectPage() {
       isAdmin ||
       hasOwnProjectInvitation);
 
+  /*
+    Requirements-safe permissions:
+    - Owner manages project content, collaborators, thesis drafts, and tasks.
+    - Accepted collaborator can only update the status of assigned tasks.
+    - Related/course instructor can add feedback/rating and flag elsewhere.
+    - Other instructor can view allowed public projects, but cannot comment/rate.
+    - Admin can moderate, but must not see instructor comments/feedback here.
+  */
   const canManageProject = isCreator;
   const canManageTasks = isCreator;
-  const canInvitePeople = isCreator;
-  const canCancelInvitations = isCreator;
-  const canRemoveCollaborators = isCreator;
-  const canManageCollaborators = isCreator;
+
+  const canInvitePeople = isCreator && !isBachelorProject;
+  const canCancelInvitations = isCreator && !isBachelorProject;
+  const canRemoveCollaborators = isCreator && !isBachelorProject;
+  const canManageCollaborators = canRemoveCollaborators;
+
   const canViewComments =
-    isCreator || isAcceptedCollaborator || isRelatedInstructor || isAdmin;
+    isCreator || isAcceptedCollaborator || isRelatedInstructor;
+
   const canAddInstructorFeedback = isRelatedInstructor;
-  const canFlagProject = isAdmin || isLoggedInInstructor;
-  const canModerateProject = isAdmin;
-  const canAppealFlag = isCreator;
 
   const visibleTabs = useMemo(() => {
     const tabs = ["overview", "tasks"];
@@ -196,40 +212,54 @@ export default function ProjectPage() {
 
     const normalizedProject = normalizeProjectForPage(loadedProject);
     const currentId = loggedInUser?.id;
-    const currentRole = normalizeRole(loggedInUser?.role);
 
-    const statusForId = (id) => getInvitationStatus(normalizedProject, id);
-    const projectCourse = (getCollection("courses") || []).find(
-      (course) => String(course.id) === String(normalizedProject.courseId)
-    );
-    const currentInstructorCourseIds = [
+    const statusFor = (id) => getInvitationStatus(normalizedProject, id);
+
+    const refreshCourseRecord =
+      normalizedProject.raw?.courseRecord ||
+      normalizedProject.courseRecord ||
+      courses.find((course) => sameId(course.id, normalizedProject.courseId)) ||
+      null;
+
+    const refreshCourseInstructorIds = toIdSet([
+      ...(refreshCourseRecord?.instructorIds || []),
+      ...(normalizedProject.raw?.courseInstructorIds || []),
+      ...(normalizedProject.raw?.courseInstructorId
+        ? [normalizedProject.raw.courseInstructorId]
+        : []),
+    ]);
+
+    const refreshUserLinkedCourseIds = toIdSet([
       ...(loggedInUser?.linkedCourseIds || []),
       ...(loggedInUser?.courseIds || []),
-    ].map(String);
+      ...(loggedInUser?.courses || []),
+    ]);
 
-    const linkedInstructorIdsForProject = new Set([
-      ...(normalizedProject.courseInstructorIds || []),
-      ...(normalizedProject.raw?.courseInstructorIds || []),
-      ...(normalizedProject.raw?.courseRecord?.instructorIds || []),
-      ...(projectCourse?.instructorIds || []),
-      ...(normalizedProject.instructorIds || []),
-    ].map(String));
+    const refreshIsRelatedInstructor =
+      normalizeRole(loggedInUser?.role) === "instructor" &&
+      ((normalizedProject.instructorIds || []).some(
+        (id) => sameId(id, currentId) && statusFor(id) === "accepted"
+      ) ||
+        refreshCourseInstructorIds.has(String(currentId || "")) ||
+        refreshUserLinkedCourseIds.has(String(normalizedProject.courseId || "")));
 
     const canView =
       normalizedProject.visibility === "Public" ||
-      String(normalizedProject.ownerId) === String(currentId) ||
+      sameId(normalizedProject.ownerId, currentId) ||
+      sameId(normalizedProject.raw?.ownerId, currentId) ||
+      sameId(normalizedProject.raw?.studentId, currentId) ||
+      sameId(normalizedProject.raw?.authorId, currentId) ||
+      sameId(normalizedProject.raw?.creatorId, currentId) ||
       (normalizedProject.collaboratorIds || []).some(
-        (id) => String(id) === String(currentId) && statusForId(id) === "accepted"
+        (id) => sameId(id, currentId) && statusFor(id) === "accepted"
       ) ||
-      (currentRole === "instructor" &&
-        (linkedInstructorIdsForProject.has(String(currentId)) ||
-          currentInstructorCourseIds.includes(String(normalizedProject.courseId)))) ||
+      refreshIsRelatedInstructor ||
       (normalizedProject.invitationStatuses || []).some(
         (item) =>
-          String(item.userId) === String(currentId) &&
+          sameId(item.userId, currentId) &&
           ["pending", "accepted"].includes(String(item.status).toLowerCase())
       ) ||
-      currentRole === "admin";
+      normalizeRole(loggedInUser?.role) === "admin";
 
     setProject(normalizedProject);
     setProjectMissing(false);
@@ -307,6 +337,7 @@ export default function ProjectPage() {
     setTasks,
     setProject,
     isBachelorProject,
+    canManageTasks,
     canAddInstructorFeedback,
     loggedInUser,
     currentUser,
@@ -328,127 +359,6 @@ export default function ProjectPage() {
 
     persistProject({
       visibility: isPublic ? "private" : "public",
-    });
-  };
-
-  const goToEditProject = () => {
-    if (!project?.id || !canManageProject) return;
-    navigate(`/edit-project/${project.id}`);
-  };
-
-  const flagProject = () => {
-    if (!project?.id || !canFlagProject || isCreator) return;
-
-    const reason = window.prompt(
-      "Why are you flagging this project?",
-      project.flagReason || ""
-    );
-
-    if (reason === null || !reason.trim()) return;
-
-    const now = new Date().toISOString();
-
-    persistProject({
-      status: "flagged",
-      flagReason: reason.trim(),
-      flaggedById: loggedInUser?.id,
-      flaggedByName: getDisplayName(loggedInUser),
-      flaggedAt: now,
-      appealStatus: "none",
-    });
-
-    const savedFlaggedProjects = JSON.parse(
-      localStorage.getItem("flaggedProjects") || "[]"
-    );
-
-    const nextFlaggedProjects = [
-      ...savedFlaggedProjects.filter((item) => String(item.id) !== String(project.id)),
-      {
-        id: project.id,
-        title: project.title,
-        student: project.ownerName,
-        course: project.course,
-        reason: reason.trim(),
-        flaggedBy: getDisplayName(loggedInUser),
-        flaggedById: loggedInUser?.id,
-        status: "flagged",
-        appealStatus: "none",
-        submittedAt: now.slice(0, 10),
-        active: project.active !== false,
-      },
-    ];
-
-    localStorage.setItem("flaggedProjects", JSON.stringify(nextFlaggedProjects));
-
-    makeNotification(
-      project.ownerId,
-      "Project flagged",
-      `${project.title} was flagged: ${reason.trim()}`,
-      project.id,
-      "project-flag"
-    );
-  };
-
-  const appealFlag = () => {
-    if (!project?.id || !canAppealFlag) return;
-
-    const message = window.prompt(
-      "Write your appeal message for the admin:",
-      project.appealMessage || ""
-    );
-
-    if (message === null || !message.trim()) return;
-
-    const now = new Date().toISOString();
-
-    persistProject({
-      appealStatus: "submitted",
-      appealMessage: message.trim(),
-      appealSubmittedAt: now,
-    });
-
-    const savedFlaggedProjects = JSON.parse(
-      localStorage.getItem("flaggedProjects") || "[]"
-    );
-
-    const nextFlaggedProjects = [
-      ...savedFlaggedProjects.filter((item) => String(item.id) !== String(project.id)),
-      {
-        id: project.id,
-        title: project.title,
-        student: project.ownerName,
-        course: project.course,
-        reason: project.flagReason || "Owner submitted an appeal for this flagged project.",
-        flaggedBy: project.flaggedByName || "Instructor/Admin",
-        flaggedById: project.flaggedById || "",
-        status: "under-review",
-        appealStatus: "submitted",
-        appealMessage: message.trim(),
-        submittedAt: now.slice(0, 10),
-        active: project.active !== false,
-      },
-    ];
-
-    localStorage.setItem("flaggedProjects", JSON.stringify(nextFlaggedProjects));
-  };
-
-  const toggleProjectActive = (currentlyInactive) => {
-    if (!project?.id || !canModerateProject) return;
-
-    const nextActive = Boolean(currentlyInactive);
-    const note = window.prompt(
-      nextActive ? "Activation note" : "Why are you deactivating this project?",
-      project.adminNote || ""
-    );
-
-    if (!nextActive && (note === null || !note.trim())) return;
-    if (note === null) return;
-
-    persistProject({
-      active: nextActive,
-      adminNote: note.trim(),
-      status: nextActive ? "approved" : "flagged",
-      deactivatedAt: nextActive ? undefined : new Date().toISOString(),
     });
   };
 
@@ -561,25 +471,6 @@ export default function ProjectPage() {
             invitation={ownPendingInvitation}
             onAccept={() => respondToInvitation("accepted")}
             onReject={() => respondToInvitation("rejected")}
-          />
-
-          <ProjectRoleActions
-            project={project}
-            permissions={{
-              isOwner: isCreator,
-              isAcceptedCollaborator,
-              isRelatedInstructor,
-              isOtherInstructor,
-              isAdmin,
-              canManageProject,
-              canFlagProject,
-              canAppealFlag,
-              canModerateProject,
-            }}
-            onEditProject={goToEditProject}
-            onFlagProject={flagProject}
-            onAppealFlag={appealFlag}
-            onToggleProjectActive={toggleProjectActive}
           />
 
           <ProjectPageVideo src={projectVideoSrc} />

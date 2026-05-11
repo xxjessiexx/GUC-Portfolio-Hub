@@ -111,7 +111,10 @@ function findStoredProject(projectId) {
 function mapProjectToFormData(project) {
   return {
     title: project.title || "",
-    type: project.type || "course",
+    type:
+      project.type === "Bachelor Project" || project.type === "thesis"
+        ? "thesis"
+        : "course",
     courseName: project.courseName || "",
     thesisFile: project.thesisFile
       ? { ...project.thesisFile, __existing: true }
@@ -652,11 +655,20 @@ export default function EditProject() {
     }
 
     if (field === "type") {
+      const cleanedData =
+        value === "thesis"
+          ? { ...nextData, courseName: "" }
+          : { ...nextData, thesisFile: null };
+
+      setFormData(cleanedData);
+
       setErrors((current) => ({
         ...current,
-        courseName: validateProjectField("courseName", nextData),
-        thesisFile: validateProjectField("thesisFile", nextData),
+        courseName: validateProjectField("courseName", cleanedData),
+        thesisFile: validateProjectField("thesisFile", cleanedData),
       }));
+
+      return;
     }
   };
 
@@ -931,14 +943,16 @@ export default function EditProject() {
         formData.thesisFile,
         `${projectId}-thesis`
       );
+      const isBachelorProject = formData.type === "thesis";
 
       const storedProject = {
         ...loadedProject,
         id: projectId,
         title: formData.title.trim(),
-        type: formData.type,
-        courseName:
-          formData.type === "course" ? formData.courseName.trim() : "",
+        type: isBachelorProject ? "Bachelor Project" : "Course Project",
+        courseName: isBachelorProject ? "" : formData.courseName.trim(),
+        courseCode: isBachelorProject ? "" : loadedProject.courseCode,
+        course: isBachelorProject ? "" : formData.courseName.trim(),
         thesisFile: formData.thesisFile?.__existing
           ? loadedProject.thesisFile
           : createStoredFileReference(savedThesisFile),

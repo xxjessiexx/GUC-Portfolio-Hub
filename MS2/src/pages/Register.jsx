@@ -107,10 +107,11 @@ export default function Register({ addUser }) {
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    if (validate()) {
+    if (!validate()) return;
+
     const newUser = {
-      name: form.fullName,
-      email: form.email,
+      name: form.fullName.trim(),
+      email: form.email.trim().toLowerCase(),
       password: form.password,
       role,
       faculty: form.faculty || "",
@@ -123,24 +124,33 @@ export default function Register({ addUser }) {
       bio: "Passionate about building impactful digital solutions.",
     };
 
-    addUser(newUser);
-      
-toast.success(
-  role === "employer"
-    ? "Employer registration submitted for admin approval!"
-    : "Account created successfully!",
-  {
-    className:
-      "!border-white/10 !bg-[linear-gradient(135deg,var(--dark),var(--primary))] !text-white !shadow-[0_18px_55px_rgba(44,57,71,0.22)]",
-    descriptionClassName: "!text-white/70",
-  }
-);
+    try {
+      if (typeof addUser !== "function") {
+        throw new Error("Registration is not connected correctly. Please check the /register route in App.jsx.");
+      }
+
+      addUser(newUser);
+
+      toast.success(
+        role === "employer"
+          ? "Employer registration submitted for admin approval!"
+          : "Account created successfully!",
+        {
+          className:
+            "!border-white/10 !bg-[linear-gradient(135deg,var(--dark),var(--primary))] !text-white !shadow-[0_18px_55px_rgba(44,57,71,0.22)]",
+          descriptionClassName: "!text-white/70",
+        }
+      );
 
       sessionStorage.setItem("lastRegisteredRole", role);
-      navigate("/login");
+      navigate("/login", { replace: true });
+    } catch (error) {
+      toast.error(error?.message || "Could not create account. Please try again.", {
+        className:
+          "!border-white/10 !bg-[linear-gradient(135deg,var(--dark),var(--primary))] !text-white !shadow-[0_18px_55px_rgba(44,57,71,0.22)]",
+        descriptionClassName: "!text-white/70",
+      });
     }
-
-    
   };
 
   const roleOptions = [
