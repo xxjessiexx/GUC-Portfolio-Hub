@@ -278,6 +278,98 @@ export function setCurrentUser(user) {
   dispatchUserChange();
   return normalized;
 }
+export function getEmployerDashboardSnapshot(employerId = getCurrentUser()?.id) {
+  const db = getDemoDb();
+  const users = db.users || [];
+  const employer =
+    users.find((user) => String(user.id) === String(employerId)) ||
+    getCurrentUser() ||
+    null;
+
+  const id = employer?.id || employerId;
+
+  const internships = (db.internships || [])
+    .filter((internship) => String(internship.employerId) === String(id))
+    .map(hydrateInternshipFromDb(db))
+    .map((internship) => ({
+      ...internship,
+      applications: (internship.applications || []).map((application) => ({
+        ...application,
+        student:
+          users.find((user) => String(user.id) === String(application.studentId)) ||
+          null,
+      })),
+    }));
+
+  const applications = internships.flatMap((internship) =>
+    (internship.applications || []).map((application) => ({
+      ...application,
+      internshipId: internship.id,
+      internshipTitle: internship.title,
+    }))
+  );
+
+  const acceptedLike = new Set([
+    "accepted",
+    "hired",
+    "completed",
+    "interned",
+    "offer accepted",
+  ]);
+
+  const acceptedApplications = applications.filter((application) =>
+    acceptedLike.has(String(application.status || "").trim().toLowerCase())
+  );
+
+  const filledInternships = internships.filter((internship) => {
+    const status = String(internship.status || "").toLowerCase();
+    return (
+      Boolean(internship.isFilled) ||
+      status.includes("filled") ||
+      status.includes("completed") ||
+      status.includes("closed")
+    );
+  });
+
+  const acceptedStudentIds = new Set(
+    acceptedApplications.map((application) => application.studentId).filter(Boolean)
+  );
+
+  const studentsInterned = Math.max(
+    acceptedStudentIds.size,
+    filledInternships.length
+  );
+
+  return {
+    employer,
+    internships,
+    applications,
+    acceptedApplications,
+    filledInternships,
+    stats: {
+      internshipsOffered: internships.length,
+      activeInternships: internships.filter((internship) => {
+        const status = String(internship.status || "").toLowerCase();
+        return (
+          !internship.archived &&
+          !internship.isArchived &&
+          !status.includes("filled") &&
+          !status.includes("closed")
+        );
+      }).length,
+      totalApplicants:
+        applications.length ||
+        internships.reduce(
+          (sum, internship) => sum + Number(internship.applicants || 0),
+          0
+        ),
+      studentsInterned,
+    },
+    notifications: (db.notifications || []).filter(
+      (notification) => String(notification.userId) === String(id)
+    ),
+  };
+}
 
 export function clearCurrentUser() {
   if (typeof window === "undefined") return;
