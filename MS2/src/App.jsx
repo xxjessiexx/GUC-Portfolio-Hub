@@ -4,7 +4,7 @@ import { NotificationsProvider } from "./context/NotificationsContext";
 import { UserProfileProvider } from "./context/UserProfileContext";
 import { Toaster } from "sonner";
 
-import { initializeDemoStore } from "@/data/demoStore";
+import { getRegisteredUsers, initializeDemoStore, registerUser } from "@/data/demoStore";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -74,11 +74,13 @@ export default function App() {
   });
 
   const addUser = (user) => {
-    setUsers((prev) => {
-      const updated = [...prev, user];
-      sessionStorage.setItem("users", JSON.stringify(updated));
-      return updated;
-    });
+    const createdUser = registerUser(user);
+    const updatedUsers = getRegisteredUsers();
+
+    setUsers(updatedUsers);
+    sessionStorage.setItem("users", JSON.stringify(updatedUsers));
+
+    return createdUser;
   };
 
   useEffect(() => {

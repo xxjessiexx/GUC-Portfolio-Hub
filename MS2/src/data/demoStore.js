@@ -11,7 +11,7 @@ import {
 
 
 const DB_KEY = "guc_demo_database_v8";
-const CHAT_RESET_VERSION = "chat-reset-v9";
+const CHAT_RESET_VERSION = "chat-reset-v7";
 const CHAT_RESET_KEY = "guc_demo_chat_reset_version";
 const CURRENT_USER_KEY = "currentUser";
 const LEGACY_USERS_KEY = "users";
@@ -459,8 +459,16 @@ export function registerUser(formUser) {
   });
 
   upsertRecord("users", created);
+
+  // upsertRecord -> setDemoDb -> ensureBachelorLinks writes the automatic
+  // Bachelor Project link into BOTH places:
+  // 1) created instructor.linkedCourseIds
+  // 2) Bachelor Project course.instructorIds
+  // Return the saved DB version, not the pre-save object, so sessionStorage/users
+  // also carries the automatic Bachelor Project link immediately after register.
+  const saved = getUserById(created.id) || created;
   writeSession(LEGACY_USERS_KEY, getRegisteredUsers());
-  return created;
+  return saved;
 }
 
 export function getRegisteredUsers() {
