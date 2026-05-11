@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
   FileText,
@@ -15,6 +15,7 @@ import {
 import { FaGithub as Github } from "react-icons/fa";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import ProjectInvitePickerModal from "@/components/project/ProjectInvitePickerModal";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
 import AppIconFrame from "@/components/ui/AppIconFrame";
@@ -28,18 +29,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
+  addNotification,
   getCurrentUser,
   getCollection,
   createProject,
@@ -79,10 +71,67 @@ const selectTriggerStyles = cn(
   "h-12 w-full justify-between py-0 text-left"
 );
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+function makeInviteNotificationId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return `notification-${crypto.randomUUID().slice(0, 8)}`;
+  }
 
-function isValidEmail(value) {
-  return EMAIL_REGEX.test(value.trim());
+  return `notification-${Date.now()}`;
+}
+
+function getDisplayName(user) {
+  return (
+    user?.name ||
+    user?.fullName ||
+    user?.companyName ||
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+    user?.email ||
+    "Unknown User"
+  );
+}
+
+function normalizeUserRole(value) {
+  const role = String(value || "").trim().toLowerCase();
+
+  if (role.includes("instructor") || role.includes("teacher")) {
+    return "instructor";
+  }
+
+  if (role.includes("admin")) return "admin";
+  if (role.includes("employer")) return "employer";
+
+  return "student";
+}
+
+function userMatchesSearch(user, query) {
+  const clean = String(query || "").trim().toLowerCase();
+
+  if (!clean) return true;
+
+  return [
+    user.email,
+    user.name,
+    user.fullName,
+    user.firstName,
+    user.lastName,
+    `${user.firstName || ""} ${user.lastName || ""}`,
+  ].some((value) => String(value || "").toLowerCase().includes(clean));
+}
+
+function courseMatchesLabel(course, label) {
+  const clean = String(label || "").trim().toLowerCase();
+
+  if (!clean) return false;
+
+  return [
+    course?.id,
+    course?.code,
+    course?.courseCode,
+    course?.name,
+    course?.title,
+  ]
+    .filter(Boolean)
+    .some((value) => String(value).trim().toLowerCase() === clean);
 }
 
 function isValidUrl(value) {
@@ -141,8 +190,15 @@ async function saveProjectFile(file, prefix) {
 
   const db = await openProjectFilesDB();
 
+  const fallbackId = `${prefix}-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+
   const fileRecord = {
-    id: `${prefix}-${Date.now()}-${crypto.randomUUID()}`,
+    id:
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? `${prefix}-${Date.now()}-${crypto.randomUUID()}`
+        : fallbackId,
     name: file.name,
     type: file.type,
     size: file.size,
@@ -220,6 +276,7 @@ function FieldShell({ label, required, icon: Icon, children, className }) {
         {label}
         {required ? <span className="text-[color:var(--gold)]">*</span> : null}
       </Label>
+
       {children}
     </div>
   );
@@ -426,73 +483,6 @@ function ChipInput({
   );
 }
 
-function InviteDialog({
-  open,
-  onOpenChange,
-  title,
-  description,
-  placeholder,
-  actionLabel,
-  value,
-  onValueChange,
-  onConfirm,
-  error,
-}) {
-  return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-[39rem] rounded-[2rem] border border-[color:var(--accent)]/55 bg-[#F7F8F0] px-8 py-7 text-[color:var(--ink)] shadow-[0_30px_80px_rgba(53,88,114,0.22)] dark:bg-[#152536]">
-        <AlertDialogHeader className="space-y-3 text-left">
-          <AlertDialogTitle className="text-3xl font-black tracking-tight text-[color:var(--ink)]">
-            {title}
-          </AlertDialogTitle>
-
-          <AlertDialogDescription className="text-base font-semibold leading-7 text-[color:var(--muted)]">
-            {description}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <div className="mt-5 space-y-3">
-          <FieldShell label="Email address" icon={Users}>
-            <Input
-              className={inputStyles}
-              placeholder={placeholder}
-              value={value}
-              onChange={(event) => onValueChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  onConfirm(event);
-                }
-              }}
-              autoFocus
-            />
-          </FieldShell>
-
-          <FieldFeedback
-            error={error}
-            helper="Enter the email you want to invite."
-          />
-        </div>
-
-        <div className="my-6 h-px w-full bg-[color:var(--border-blue)]/70" />
-
-        <AlertDialogFooter className="flex-row justify-end gap-3">
-          <AlertDialogCancel className="min-h-11 rounded-2xl border border-[color:var(--border-blue)] bg-white px-5 font-black text-[color:var(--ink)] shadow-sm transition hover:bg-[var(--surface-soft)] hover:text-[color:var(--ink)]">
-            Cancel
-          </AlertDialogCancel>
-
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="min-h-11 rounded-2xl bg-[var(--primary)] px-5 font-black text-white shadow-[var(--shadow-soft)] transition hover:bg-[var(--dark)]"
-          >
-            {actionLabel}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-
 function InviteBox({
   title,
   description,
@@ -513,9 +503,7 @@ function InviteBox({
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm font-semibold text-[color:var(--muted)]">
-          {items.length
-            ? `${items.length} added`
-            : emptyText}
+          {items.length ? `${items.length} added` : emptyText}
         </p>
 
         <AppButton
@@ -530,8 +518,8 @@ function InviteBox({
 
       <div className="mt-4 flex flex-wrap gap-2">
         {items.map((item) => (
-          <Chip key={item} onRemove={() => onRemove(item)}>
-            {item}
+          <Chip key={item.id} onRemove={() => onRemove(item.id)}>
+            {getDisplayName(item)} · no reply
           </Chip>
         ))}
       </div>
@@ -561,17 +549,11 @@ function validateProjectField(field, data) {
       return "";
 
     case "thesisDrafts":
-      if (data.type !== "thesis") {
-        return "";
+      if (data.type !== "thesis") return "";
+      if (data.thesisDrafts.length === 0) {
+        return "Upload at least one thesis draft.";
       }
-
-    if (
-      data.thesisDrafts.length === 0
-    ) {
-      return "Upload at least one thesis draft.";
-    }
-
-    return "";
+      return "";
 
     case "description":
       if (!data.description.trim()) return "Project description is required.";
@@ -598,15 +580,6 @@ function validateProjectField(field, data) {
     default:
       return "";
   }
-}
-
-function validateInviteEmail(value, existing) {
-  const clean = value.trim().toLowerCase();
-
-  if (!clean) return "Email address is required.";
-  if (!isValidEmail(clean)) return "Enter a valid email address.";
-  if (existing.includes(clean)) return "This email is already added.";
-  return "";
 }
 
 export default function CreateNewProject() {
@@ -645,6 +618,83 @@ export default function CreateNewProject() {
     instructor: { open: false, value: "", error: "" },
   });
 
+  const users = useMemo(() => getCollection("users") || [], []);
+  const courses = useMemo(() => getCollection("courses") || [], []);
+  const currentUser = getCurrentUser();
+
+  const selectedCourse = useMemo(() => {
+    const label =
+      formData.type === "course" ? formData.courseName : "Bachelor Project";
+
+    return courses.find((course) => courseMatchesLabel(course, label)) || null;
+  }, [courses, formData.courseName, formData.type]);
+
+  const selectedCollaborators = useMemo(
+    () =>
+      formData.collaborators
+        .map((id) => users.find((user) => String(user.id) === String(id)))
+        .filter(Boolean),
+    [formData.collaborators, users]
+  );
+
+  const selectedInstructors = useMemo(
+    () =>
+      formData.instructors
+        .map((id) => users.find((user) => String(user.id) === String(id)))
+        .filter(Boolean),
+    [formData.instructors, users]
+  );
+
+  const inviteMode = dialogs.instructor.open ? "instructor" : "student";
+
+  const inviteQuery =
+    inviteMode === "instructor"
+      ? dialogs.instructor.value
+      : dialogs.collab.value;
+
+  const linkedInstructorIds = selectedCourse?.instructorIds || [];
+
+  const inviteCandidates = useMemo(() => {
+    const selectedIds =
+      inviteMode === "instructor"
+        ? formData.instructors
+        : formData.collaborators;
+
+    return users
+      .filter((user) => {
+        const role = normalizeUserRole(user.role);
+
+        if (inviteMode === "instructor") {
+          if (role !== "instructor") return false;
+
+          if (
+            linkedInstructorIds.length > 0 &&
+            !linkedInstructorIds.some((id) => String(id) === String(user.id))
+          ) {
+            return false;
+          }
+        } else {
+          if (role !== "student") return false;
+          if (String(user.id) === String(currentUser?.id)) return false;
+        }
+
+        if (selectedIds.some((id) => String(id) === String(user.id))) {
+          return false;
+        }
+
+        return userMatchesSearch(user, inviteQuery);
+      })
+      .slice(0, 12);
+  }, [
+    currentUser?.id,
+    formData.collaborators,
+    formData.instructors,
+    inviteMode,
+    inviteQuery,
+    linkedInstructorIds,
+    users,
+  ]);
+
   const updateField = (field, value) => {
     const nextData = { ...formData, [field]: value };
     setFormData(nextData);
@@ -660,7 +710,7 @@ export default function CreateNewProject() {
     if (field === "type") {
       const cleanedData =
         value === "thesis"
-          ? { ...nextData, courseName: "" }
+          ? { ...nextData, courseName: "", collaborators: [] }
           : { ...nextData, thesisDrafts: [] };
 
       setFormData(cleanedData);
@@ -669,6 +719,21 @@ export default function CreateNewProject() {
         ...current,
         courseName: validateProjectField("courseName", cleanedData),
         thesisDrafts: validateProjectField("thesisDrafts", cleanedData),
+      }));
+    }
+
+    if (field === "courseName") {
+      setFormData((current) => ({
+        ...current,
+        instructors: [],
+      }));
+
+      setInviteFeedback((current) => ({
+        ...current,
+        instructor: {
+          type: "",
+          message: "",
+        },
       }));
 
       return;
@@ -695,76 +760,61 @@ export default function CreateNewProject() {
   };
 
   const handleThesisUpload = (file) => {
-  if (!file) return;
+    if (!file) return;
 
-  const newDraft = {
-    id: crypto.randomUUID(),
-    file,
+    const newDraft = {
+      id:
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `draft-${Date.now()}`,
+      file,
+      uploadedAt: new Date().toISOString(),
+      isFinal: false,
+      visibility: "private",
+    };
 
-    uploadedAt: new Date().toISOString(),
+    const nextData = {
+      ...formData,
+      thesisDrafts: [...formData.thesisDrafts, newDraft],
+    };
 
-    isFinal: false,
-    visibility: "private",
+    setFormData(nextData);
+
+    setTouched((current) => ({
+      ...current,
+      thesisDrafts: true,
+    }));
+
+    setErrors((current) => ({
+      ...current,
+      thesisDrafts: validateProjectField("thesisDrafts", nextData),
+    }));
+
+    setSaveMessage({
+      type: "",
+      message: "",
+    });
   };
 
-  const nextData = {
-    ...formData,
-    thesisDrafts: [
-      ...formData.thesisDrafts,
-      newDraft,
-    ],
-  };
-
-  setFormData(nextData);
-
-  setTouched((current) => ({
-    ...current,
-    thesisDrafts: true,
-  }));
-
-  setErrors((current) => ({
-    ...current,
-    thesisDrafts:
-      validateProjectField(
-        "thesisDrafts",
-        nextData
-      ),
-  }));
-
-  setSaveMessage({
-    type: "",
-    message: "",
-  });
-};
- const setFinalDraft = (draftId) => {
-  setFormData((current) => ({
-    ...current,
-
-    thesisDrafts:
-      current.thesisDrafts.map((draft) => ({
+  const setFinalDraft = (draftId) => {
+    setFormData((current) => ({
+      ...current,
+      thesisDrafts: current.thesisDrafts.map((draft) => ({
         ...draft,
-
-        isFinal:
-          draft.id === draftId,
-
-        visibility:
-          draft.id === draftId
-            ? "public"
-            : "private",
+        isFinal: draft.id === draftId,
+        visibility: draft.id === draftId ? "public" : "private",
       })),
-  }));
-};
-const removeDraft = (draftId) => {
-  setFormData((current) => ({
-    ...current,
+    }));
+  };
 
-    thesisDrafts:
-      current.thesisDrafts.filter(
-        (draft) =>
-          draft.id !== draftId
+  const removeDraft = (draftId) => {
+    setFormData((current) => ({
+      ...current,
+      thesisDrafts: current.thesisDrafts.filter(
+        (draft) => draft.id !== draftId
       ),
-  }));
-};
+    }));
+  };
 
   const addTag = () => {
     const cleanTag = formData.tagInput.trim();
@@ -841,58 +891,39 @@ const removeDraft = (draftId) => {
   };
 
   const updateInviteValue = (kind, value) => {
-    setDialogs((current) => {
-      const existing =
-        kind === "collab" ? formData.collaborators : formData.instructors;
-      const error =
-        current[kind].error || value
-          ? validateInviteEmail(value, existing)
-          : "";
+    setDialogs((current) => ({
+      ...current,
+      [kind]: {
+        ...current[kind],
+        value,
+        error: "",
+      },
+    }));
+  };
+
+  const selectInviteUser = (user) => {
+    if (!user?.id) return;
+
+    const kind = dialogs.instructor.open ? "instructor" : "collab";
+    const field = kind === "instructor" ? "instructors" : "collaborators";
+
+    setFormData((current) => {
+      if (current[field].some((id) => String(id) === String(user.id))) {
+        return current;
+      }
 
       return {
         ...current,
-        [kind]: {
-          ...current[kind],
-          value,
-          error,
-        },
+        [field]: [...current[field], user.id],
       };
     });
-  };
 
-  const confirmInvite = (kind) => (event) => {
-    event.preventDefault();
-
-    const currentDialog = dialogs[kind];
-    const existing =
-      kind === "collab" ? formData.collaborators : formData.instructors;
-    const error = validateInviteEmail(currentDialog.value, existing);
-
-    if (error) {
-      setDialogs((current) => ({
-        ...current,
-        [kind]: {
-          ...current[kind],
-          error,
-        },
-      }));
-
-      setInviteFeedback((current) => ({
-        ...current,
-        [kind]: { type: "error", message: error },
-      }));
-
-      return;
-    }
-
-    const cleanEmail = currentDialog.value.trim().toLowerCase();
-
-    setFormData((current) => ({
+    setInviteFeedback((current) => ({
       ...current,
-      [kind === "collab" ? "collaborators" : "instructors"]: [
-        ...current[kind === "collab" ? "collaborators" : "instructors"],
-        cleanEmail,
-      ],
+      [kind]: {
+        type: "success",
+        message: `${getDisplayName(user)} added as no reply.`,
+      },
     }));
 
     setDialogs((current) => ({
@@ -904,25 +935,14 @@ const removeDraft = (draftId) => {
       },
     }));
 
-    setInviteFeedback((current) => ({
-      ...current,
-      [kind]: {
-        type: "success",
-        message:
-          kind === "collab"
-            ? "Collaborator added successfully."
-            : "Course instructor added successfully.",
-      },
-    }));
-
     setSaveMessage({ type: "", message: "" });
   };
 
-  const removeCollaborator = (emailToRemove) => {
+  const removeCollaborator = (userIdToRemove) => {
     setFormData((current) => ({
       ...current,
       collaborators: current.collaborators.filter(
-        (email) => email !== emailToRemove
+        (id) => String(id) !== String(userIdToRemove)
       ),
     }));
 
@@ -937,11 +957,11 @@ const removeDraft = (draftId) => {
     setSaveMessage({ type: "", message: "" });
   };
 
-  const removeInstructor = (emailToRemove) => {
+  const removeInstructor = (userIdToRemove) => {
     setFormData((current) => ({
       ...current,
       instructors: current.instructors.filter(
-        (email) => email !== emailToRemove
+        (id) => String(id) !== String(userIdToRemove)
       ),
     }));
 
@@ -960,10 +980,7 @@ const removeDraft = (draftId) => {
     const nextErrors = {
       title: validateProjectField("title", formData),
       courseName: validateProjectField("courseName", formData),
-      thesisDrafts: validateProjectField(
-      "thesisDrafts",
-      formData
-),
+      thesisDrafts: validateProjectField("thesisDrafts", formData),
       description: validateProjectField("description", formData),
       github: validateProjectField("github", formData),
       video: validateProjectField("video", formData),
@@ -983,10 +1000,9 @@ const removeDraft = (draftId) => {
   };
 
   const findCourseIdByLabel = (courseLabel) => {
-    const courses = getCollection("courses") || [];
-
     const matchedCourse = courses.find((course) => {
       const possibleLabels = [
+        course.id,
         course.code,
         course.courseCode,
         course.name,
@@ -1001,25 +1017,6 @@ const removeDraft = (draftId) => {
     return matchedCourse?.id || "";
   };
 
-  const findUserIdsByEmails = (emails = [], role) => {
-    const users = getCollection("users") || [];
-
-    return emails
-      .map((email) => {
-        const cleanEmail = String(email).trim().toLowerCase();
-
-        const matchedUser = users.find((user) => {
-          const sameEmail = String(user.email || "").toLowerCase() === cleanEmail;
-          const sameRole = role ? user.role === role : true;
-
-          return sameEmail && sameRole;
-        });
-
-        return matchedUser?.id;
-      })
-      .filter(Boolean);
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -1028,7 +1025,8 @@ const removeDraft = (draftId) => {
     if (!isValid) {
       setSaveMessage({
         type: "error",
-        message: "Please fix the highlighted fields before creating the project.",
+        message:
+          "Please fix the highlighted fields before creating the project.",
       });
       return;
     }
@@ -1040,84 +1038,79 @@ const removeDraft = (draftId) => {
       const now = new Date().toISOString();
       const projectId = `project-${Date.now()}`;
 
+      if (!currentUser?.id) {
+        throw new Error("No logged-in user found.");
+      }
+
       const savedVideo = await saveProjectFile(
         formData.video,
         `${projectId}-video`
       );
 
-      const savedThesisDrafts =
-  await Promise.all(
-    formData.thesisDrafts.map(
-      async (draft) => {
-        const savedFile =
-          await saveProjectFile(
+      const savedThesisDrafts = await Promise.all(
+        formData.thesisDrafts.map(async (draft) => {
+          const savedFile = await saveProjectFile(
             draft.file,
             `${projectId}-draft`
           );
 
-        return {
-          id: draft.id,
-
-          file:
-            createStoredFileReference(
-              savedFile
-            ),
-
-          uploadedAt:
-            draft.uploadedAt,
-
-          isFinal:
-            draft.isFinal,
-
-          visibility:
-            draft.visibility,
-        };
-      }
-    )
-  );
-
-      const currentUser = getCurrentUser();
-
-      if (!currentUser?.id) {
-        throw new Error("No logged-in user found.");
-      }
+          return {
+            id: draft.id,
+            title: draft.file?.name || "Thesis draft",
+            fileName: draft.file?.name || "Thesis draft",
+            file: createStoredFileReference(savedFile),
+            uploadedAt: draft.uploadedAt,
+            isFinal: draft.isFinal,
+            visibility: draft.visibility,
+            feedback: [],
+          };
+        })
+      );
 
       const isBachelorProject = formData.type === "thesis";
 
       const selectedCourseName = isBachelorProject
-        ? ""
+        ? "Bachelor Project"
         : formData.courseName.trim();
 
       const courseId = isBachelorProject
-        ? ""
+        ? findCourseIdByLabel("Bachelor Project")
         : findCourseIdByLabel(selectedCourseName);
 
-      const collaboratorIds = findUserIdsByEmails(
-  formData.collaborators,
-  "student"
-).filter((id) => String(id) !== String(currentUser.id));
+      const collaboratorIds = isBachelorProject
+        ? []
+        : Array.from(new Set(formData.collaborators)).filter(
+            (id) => String(id) !== String(currentUser.id)
+          );
 
-const instructorIds = findUserIdsByEmails(
-  formData.instructors,
-  "instructor"
-).filter((id) => String(id) !== String(currentUser.id));
+      const instructorIds = Array.from(new Set(formData.instructors)).filter(
+        (id) => String(id) !== String(currentUser.id)
+      );
 
-const invitationStatuses = [
-  ...collaboratorIds.map((userId) => ({
-    userId,
-    role: "collaborator",
-    status: "pending",
-    sentAt: now,
-  })),
-  ...instructorIds.map((userId) => ({
-    userId,
-    role: "instructor",
-    status: "pending",
-    sentAt: now,
-  })),
-];
+      const collaboratorUsers = collaboratorIds
+        .map((id) => users.find((user) => String(user.id) === String(id)))
+        .filter(Boolean);
 
-      
+      const instructorUsers = instructorIds
+        .map((id) => users.find((user) => String(user.id) === String(id)))
+        .filter(Boolean);
+
+      const invitationStatuses = [
+        ...collaboratorIds.map((userId) => ({
+          userId,
+          role: "collaborator",
+          status: "pending",
+          sentAt: now,
+          invitedAt: now,
+        })),
+        ...instructorIds.map((userId) => ({
+          userId,
+          role: "instructor",
+          status: "pending",
+          sentAt: now,
+          invitedAt: now,
+        })),
+      ];
 
       const storedProject = {
         id: projectId,
@@ -1125,6 +1118,7 @@ const invitationStatuses = [
         ownerId: currentUser.id,
         authorId: currentUser.id,
         studentId: currentUser.id,
+
         collaboratorIds,
         instructorIds,
         invitationStatuses,
@@ -1148,8 +1142,8 @@ const invitationStatuses = [
         technologies: formData.tags,
         tags: formData.tags,
 
-        collaborators: formData.collaborators,
-        instructors: formData.instructors,
+        collaborators: collaboratorUsers,
+        instructors: instructorUsers,
 
         visibility: formData.visibility,
         status: "draft",
@@ -1159,12 +1153,32 @@ const invitationStatuses = [
 
         rating: 0,
         comments: [],
+        feedback: [],
+        tasks: [],
 
         createdAt: now,
         updatedAt: now,
       };
 
       createProject(storedProject);
+      saveProject(storedProject);
+
+      invitationStatuses.forEach((invite) => {
+        addNotification({
+          id: makeInviteNotificationId(),
+          userId: invite.userId,
+          title: "Project invitation received",
+          text: `${getDisplayName(currentUser)} invited you to join ${storedProject.title}.`,
+          body: `${getDisplayName(currentUser)} invited you to join ${storedProject.title}.`,
+          message: `${getDisplayName(currentUser)} invited you to join ${storedProject.title}.`,
+          type: "project-invite",
+          projectId: storedProject.id,
+          invitationRole: invite.role,
+          unread: true,
+          createdAt: now,
+          time: new Date().toLocaleString(),
+        });
+      });
 
       setFormData(initialProjectData);
       setErrors({});
@@ -1173,6 +1187,10 @@ const invitationStatuses = [
       setInviteFeedback({
         collab: { type: "", message: "" },
         instructor: { type: "", message: "" },
+      });
+      setDialogs({
+        collab: { open: false, value: "", error: "" },
+        instructor: { open: false, value: "", error: "" },
       });
 
       setSaveMessage({
@@ -1193,30 +1211,36 @@ const invitationStatuses = [
 
   return (
     <DashboardLayout>
-      <InviteDialog
-        open={dialogs.collab.open}
-        onOpenChange={(open) => setInviteDialogOpen("collab", open)}
-        title="Invite collaborator"
-        description="Add a student email to invite them as a collaborator on this project."
-        placeholder="student email"
-        actionLabel="Add collaborator"
-        value={dialogs.collab.value}
-        onValueChange={(value) => updateInviteValue("collab", value)}
-        onConfirm={confirmInvite("collab")}
-        error={dialogs.collab.error}
-      />
-
-      <InviteDialog
-        open={dialogs.instructor.open}
-        onOpenChange={(open) => setInviteDialogOpen("instructor", open)}
-        title="Invite course instructor"
-        description="Add an instructor email to invite them to review or supervise this project."
-        placeholder="instructor email"
-        actionLabel="Add instructor"
-        value={dialogs.instructor.value}
-        onValueChange={(value) => updateInviteValue("instructor", value)}
-        onConfirm={confirmInvite("instructor")}
-        error={dialogs.instructor.error}
+      <ProjectInvitePickerModal
+        open={dialogs.collab.open || dialogs.instructor.open}
+        mode={inviteMode}
+        query={inviteQuery}
+        message={
+          inviteMode === "instructor"
+            ? inviteFeedback.instructor.message
+            : inviteFeedback.collab.message
+        }
+        candidates={inviteCandidates}
+        onClose={() => {
+          setInviteDialogOpen("collab", false);
+          setInviteDialogOpen("instructor", false);
+        }}
+        onModeChange={(nextMode) => {
+          if (nextMode === "instructor") {
+            setInviteDialogOpen("collab", false);
+            setInviteDialogOpen("instructor", true);
+          } else {
+            setInviteDialogOpen("instructor", false);
+            setInviteDialogOpen("collab", true);
+          }
+        }}
+        onQueryChange={(value) =>
+          updateInviteValue(
+            inviteMode === "instructor" ? "instructor" : "collab",
+            value
+          )
+        }
+        onSelectUser={selectInviteUser}
       />
 
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
@@ -1300,93 +1324,81 @@ const invitationStatuses = [
 
             {formData.type === "course" ? (
               <FieldShell label="Course Name" required icon={FileText}>
-              <Select
-                value={formData.courseName}
-                onValueChange={(value) =>
-                  updateField("courseName", value)
-                }
-              >
-                <SelectTrigger className={selectTriggerStyles}>
-                  <SelectValue placeholder="Choose course" />
-                </SelectTrigger>
+                <Select
+                  value={formData.courseName}
+                  onValueChange={(value) => updateField("courseName", value)}
+                >
+                  <SelectTrigger className={selectTriggerStyles}>
+                    <SelectValue placeholder="Choose course" />
+                  </SelectTrigger>
 
-                <SelectContent className="rounded-2xl border-white/70 bg-[var(--surface-elevated)] text-[color:var(--ink)] shadow-[var(--shadow-card)] backdrop-blur-2xl">
-                  {availableCourses.map((course) => (
-                    <SelectItem key={course} value={course}>
-                      {course}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  <SelectContent className="rounded-2xl border-white/70 bg-[var(--surface-elevated)] text-[color:var(--ink)] shadow-[var(--shadow-card)] backdrop-blur-2xl">
+                    {availableCourses.map((course) => (
+                      <SelectItem key={course} value={course}>
+                        {course}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <FieldFeedback
-                error={errors.courseName}
-                helper="Select the course related to this project."
-              />
-            </FieldShell>
+                <FieldFeedback
+                  error={errors.courseName}
+                  helper="Select the course related to this project."
+                />
+              </FieldShell>
             ) : (
-           <div className="space-y-4">
-  <FileDropField
-    label="Upload Thesis Draft"
-    required
-    accept="application/pdf"
-    icon={FileText}
-    onChange={handleThesisUpload}
-    error={errors.thesisDrafts}
-    helper="Upload one or more thesis drafts."
-  />
+              <div className="space-y-4">
+                <FileDropField
+                  label="Upload Thesis Draft"
+                  required
+                  accept="application/pdf"
+                  icon={FileText}
+                  onChange={handleThesisUpload}
+                  error={errors.thesisDrafts}
+                  helper="Upload one or more thesis drafts."
+                />
 
-  <div className="space-y-3">
-    {formData.thesisDrafts.map(
-      (draft) => (
-        <div
-          key={draft.id}
-          className="flex items-center justify-between rounded-2xl border border-white/60 bg-[var(--surface-soft)] p-4"
-        >
-          <div>
-            <p className="font-black text-[color:var(--ink)]">
-              {draft.file.name}
-            </p>
+                <div className="space-y-3">
+                  {formData.thesisDrafts.map((draft) => (
+                    <div
+                      key={draft.id}
+                      className="flex items-center justify-between rounded-2xl border border-white/60 bg-[var(--surface-soft)] p-4"
+                    >
+                      <div>
+                        <p className="font-black text-[color:var(--ink)]">
+                          {draft.file.name}
+                        </p>
 
-            <p className="text-xs font-semibold text-[color:var(--muted)]">
-              {draft.isFinal
-                ? "Final Draft (Public)"
-                : "Private Draft"}
-            </p>
-          </div>
+                        <p className="text-xs font-semibold text-[color:var(--muted)]">
+                          {draft.isFinal
+                            ? "Final Draft (Public)"
+                            : "Private Draft"}
+                        </p>
+                      </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            {!draft.isFinal && (
-              <AppButton
-                type="button"
-                onClick={() =>
-                  setFinalDraft(
-                    draft.id
-                  )
-                }
-                className="min-h-12 rounded-2xl bg-[var(--primary)] px-4 font-black text-white shadow-[var(--shadow-brand)] transition hover:-translate-y-0.5 hover:bg-[var(--dark)] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                Set Final
-              </AppButton>
-            )}
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        {!draft.isFinal && (
+                          <AppButton
+                            type="button"
+                            onClick={() => setFinalDraft(draft.id)}
+                            className="min-h-12 rounded-2xl bg-[var(--primary)] px-4 font-black text-white shadow-[var(--shadow-brand)] transition hover:-translate-y-0.5 hover:bg-[var(--dark)] disabled:cursor-not-allowed disabled:opacity-70"
+                          >
+                            Set Final
+                          </AppButton>
+                        )}
 
-            <AppButton
-              type="button"
-              onClick={() =>
-                removeDraft(
-                  draft.id
-                )
-              }
-              className="min-h-12 rounded-2xl bg-red-500 px-4 text-white transition hover:-translate-y-0.5 hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              Remove
-            </AppButton>
-          </div>
-        </div>
-      )
-    )}
-  </div>
-</div>
+                        <AppButton
+                          type="button"
+                          onClick={() => removeDraft(draft.id)}
+                          className="min-h-12 rounded-2xl bg-red-500 px-4 text-white transition hover:-translate-y-0.5 hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                          Remove
+                        </AppButton>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
 
             <div className="space-y-2.5">
@@ -1490,7 +1502,7 @@ const invitationStatuses = [
                 title="Student Collaborators"
                 description="Add teammates who worked on this project."
                 emptyText="No student collaborators added yet."
-                items={formData.collaborators}
+                items={selectedCollaborators}
                 onRemove={removeCollaborator}
                 onOpenDialog={() => openInviteDialog("collab")}
                 buttonLabel="Invite collaborator"
@@ -1501,7 +1513,7 @@ const invitationStatuses = [
                 title="Course Instructors"
                 description="Invite instructors who should review or supervise this project."
                 emptyText="No course instructors added yet."
-                items={formData.instructors}
+                items={selectedInstructors}
                 onRemove={removeInstructor}
                 onOpenDialog={() => openInviteDialog("instructor")}
                 buttonLabel="Invite instructor"
@@ -1544,6 +1556,10 @@ const invitationStatuses = [
                     setInviteFeedback({
                       collab: { type: "", message: "" },
                       instructor: { type: "", message: "" },
+                    });
+                    setDialogs({
+                      collab: { open: false, value: "", error: "" },
+                      instructor: { open: false, value: "", error: "" },
                     });
                     setSaveMessage({ type: "", message: "" });
                   }}
