@@ -377,6 +377,7 @@ export default function ProjectCollaboratorsSection({
   const [inviteMessage, setInviteMessage] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [cancelTarget, setCancelTarget] = useState(null);
+  const [pendingRemoveCollaborator, setPendingRemoveCollaborator] = useState(null);
 
   const rawProject = useMemo(() => project?.raw || project || {}, [project]);
 
@@ -666,45 +667,58 @@ export default function ProjectCollaboratorsSection({
     setInviteMessage("");
   };
 
-  const updateInvitationStatus = (user, status, role) => {
-    const now = new Date().toISOString();
-    const currentStatuses = project.invitationStatuses || [];
-    const userId = user?.id;
+ const updateInvitationStatus = (user, status, role) => {
+  const now = new Date().toISOString();
+  const currentStatuses = project.invitationStatuses || [];
+  const userId = user?.id;
 
-    const exists = currentStatuses.some(
-      (item) => String(item.userId) === String(userId)
+  const normalizedRole =
+    role === "instructor" ? "instructor" : "collaborator";
+
+  const exists = currentStatuses.some(
+    (item) => String(item.userId) === String(userId)
+  );
+
+  if (exists) {
+    return currentStatuses.map((item) =>
+      String(item.userId) === String(userId)
+        ? {
+            ...item,
+            role: normalizedRole,
+            status,
+            updatedAt: now,
+            ...(status === "pending"
+              ? {
+                  invitedAt: now,
+                  sentAt: now,
+                  respondedAt: null,
+                }
+              : {
+                  respondedAt: now,
+                }),
+          }
+        : item
     );
+  }
 
-    if (exists) {
-      return currentStatuses.map((item) =>
-        String(item.userId) === String(userId)
-          ? {
-              ...item,
-              role: role || item.role || "student",
-              status,
-              updatedAt: now,
-              ...(status === "pending" ? { invitedAt: now, respondedAt: null } : {}),
-            }
-          : item
-      );
-    }
-
-    return [
-      ...currentStatuses,
-      {
-        userId,
-        role: role || "student",
-        status,
-        invitedAt: now,
-        updatedAt: now,
-      },
-    ];
-  };
+  return [
+    ...currentStatuses,
+    {
+      userId,
+      role: normalizedRole,
+      status,
+      invitedAt: now,
+      sentAt: now,
+      updatedAt: now,
+      respondedAt: null,
+    },
+  ];
+};
 
   const sendInvitation = (user) => {
     if (!project?.id || !canInvitePeople || !user?.id) return;
 
-    const role = inviteMode === "instructor" ? "instructor" : "student";
+    const role = inviteMode === "instructor" ? "instructor" : "collaborator";
     const nextStatuses = updateInvitationStatus(user, "pending", role);
 
     updateProject(project.id, {
@@ -740,26 +754,45 @@ export default function ProjectCollaboratorsSection({
     setCancelTarget(null);
     refreshProject?.();
   };
+const requestRemoveCollaborator = (row) => {
+  if (!canRemoveCollaborators || !row?.id) return;
+  setPendingRemoveCollaborator(row);
+};
 
-  const removeCollaborator = (row) => {
-    if (!project?.id || !canRemoveCollaborators || !row?.user?.id) return;
+const confirmRemoveCollaborator = () => {
+  const row = pendingRemoveCollaborator;
 
-    const userId = String(row.user.id);
-    const nextCollaboratorIds = (project.collaboratorIds || []).filter(
-      (id) => String(id) !== userId
-    );
+  if (!canRemoveCollaborators || !row?.id || !project?.id) return;
 
-    const nextStatuses = updateInvitationStatus(row.user, "removed", "student");
+  const nextStatuses = [
+    ...invitationStatuses.filter(
+      (item) => String(item.userId) !== String(row.id)
+    ),
+    {
+      userId: row.id,
+      role: "student",
+      status: "cancelled",
+      removedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
 
-    updateProject(project.id, {
-      collaboratorIds: nextCollaboratorIds,
-      invitationStatuses: nextStatuses,
-    });
+  updateProject(project.id, {
+    collaboratorIds: (project?.collaboratorIds || []).filter(
+      (id) => String(id) !== String(row.id)
+    ),
+    collaborators: Array.isArray(rawProject?.collaborators)
+      ? rawProject.collaborators.filter(
+          (user) => String(user.id) !== String(row.id)
+        )
+      : rawProject?.collaborators,
+    invitationStatuses: nextStatuses,
+  });
 
-    setActionMessage(`${getDisplayName(row.user)} was removed from the project.`);
-    refreshProject?.();
-  };
-
+  setActionMessage(`${getDisplayName(row.user)} was removed from the project.`);
+  setPendingRemoveCollaborator(null);
+  refreshProject?.();
+};
   const collaboratorRows = relationshipRows.collaborators.filter(
     (row) => !["cancelled", "removed"].includes(normalizeStatus(row.status))
   );
@@ -854,15 +887,16 @@ export default function ProjectCollaboratorsSection({
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {collaboratorRows.map((row) => (
-              <PersonCard
-                key={`${row.type}-${row.id}`}
-                row={row}
-                canCancelInvitations={canCancelInvitations}
-                canRemoveCollaborators={canRemoveCollaborators}
-                onCancel={setCancelTarget}
-                onRemove={removeCollaborator}
-              />
-            ))}
+  <PersonCard
+    key={`${row.type}-${row.id}`}
+    row={row}
+    canCancelInvitations={canCancelInvitations}
+    canRemoveCollaborators={canRemoveCollaborators}
+    onCancel={setCancelTarget}
+    onRemove={requestRemoveCollaborator}
+  />
+))}
+           
           </div>
         )}
       </section>
@@ -883,15 +917,15 @@ export default function ProjectCollaboratorsSection({
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {instructorRows.map((row) => (
-              <PersonCard
-                key={`${row.type}-${row.id}`}
-                row={row}
-                canCancelInvitations={canCancelInvitations}
-                canRemoveCollaborators={false}
-                onCancel={setCancelTarget}
-                onRemove={removeCollaborator}
-              />
-            ))}
+  <PersonCard
+    key={`${row.type}-${row.id}`}
+    row={row}
+    canCancelInvitations={canCancelInvitations}
+    canRemoveCollaborators={false}
+    onCancel={setCancelTarget}
+    onRemove={requestRemoveCollaborator}
+  />
+))}
           </div>
         )}
       </section>
@@ -920,6 +954,22 @@ export default function ProjectCollaboratorsSection({
         onCancel={() => setCancelTarget(null)}
         onConfirm={confirmCancelInvitation}
       />
+      <DeleteConfirmationModal
+  open={Boolean(pendingRemoveCollaborator)}
+  title="Remove collaborator?"
+  description={
+    pendingRemoveCollaborator
+      ? `This will remove ${getDisplayName(
+          pendingRemoveCollaborator.user
+        )} from the project and cancel their collaborator access.`
+      : "This action cannot be undone."
+  }
+  confirmText="Remove collaborator"
+  onCancel={() => setPendingRemoveCollaborator(null)}
+  onConfirm={confirmRemoveCollaborator}
+/>
     </div>
+    
   );
+  
 }

@@ -1,10 +1,14 @@
-import { Calendar, Users, Star, MoreVertical, Flag} from "lucide-react";
+import {
+  Calendar,
+  Users,
+  Star,
+  MoreVertical,
+  Flag,
+} from "lucide-react";
+
 import { AppCard } from "../AppCard";
 import { useNavigate } from "react-router-dom";
 import FavoriteButton from "@/components/ui/Searchcommons/FavoriteButton";
-import AuthBottomLink from "@/components/auth/AuthBottomLink";
-import AuthSubmitButton from "@/components/auth/AuthSubmitButton";
-import AuthInput from "@/components/auth/AuthInput";
 
 export default function ExploreProjectCard({
   project,
@@ -20,11 +24,12 @@ export default function ExploreProjectCard({
       className={`
         overflow-hidden
         rounded-3xl
-        border border-gray-100
-        bg-white
-        shadow-sm
-        hover:shadow-md
+        border border-[color:var(--card-border)]
+        bg-[color:var(--card-bg-strong)]
+        shadow-[var(--shadow-card)]
+        hover:shadow-[var(--shadow-lifted)]
         transition
+        text-[color:var(--ink)]
 
         ${
           view === "grid"
@@ -48,47 +53,38 @@ export default function ExploreProjectCard({
           `}
         />
 
-        {/* HEART */}
-        
-          <div className="absolute top-3 right-4 z-10">
-    {showReport ? (
-
-      <button
-        onClick={() => onReport?.(project)}
-        className="
-          w-11 h-11
-          rounded-full
-          bg-white
-          border border-gray-100
-          shadow-sm
-          flex items-center justify-center
-          hover:bg-[#FFF3EE]
-          transition
-        "
-      >
-        <Flag
-        size={18}
-        className={
-          project.reported
-            ? "fill-[#FFB089] text-[#FF8A65]"
-            : "text-[#FF8A65]"
-        }
-      />
-      </button>
-
-    ) : (
-
-      <FavoriteButton
-        favorite={project.favorite}
-        onClick={() =>
-          toggleFavorite(project.id)
-        }
-      />
-
-    )}
-</div>
-
-        
+        {/* HEART / REPORT */}
+        <div className="absolute top-3 right-4 z-10">
+          {showReport ? (
+            <button
+              onClick={() => onReport?.(project)}
+              className="
+                w-11 h-11
+                rounded-full
+                bg-[color:var(--card-bg)]
+                border border-[color:var(--card-border)]
+                shadow-sm
+                flex items-center justify-center
+                hover:bg-[#FFF3EE]
+                transition
+              "
+            >
+              <Flag
+                size={18}
+                className={
+                  project.reported
+                    ? "fill-[#FFB089] text-[#FF8A65]"
+                    : "text-[#FF8A65]"
+                }
+              />
+            </button>
+          ) : (
+            <FavoriteButton
+              favorite={project.favorite}
+              onClick={() => toggleFavorite(project.id)}
+            />
+          )}
+        </div>
       </div>
 
       {/* CONTENT */}
@@ -97,10 +93,12 @@ export default function ExploreProjectCard({
           <div>
             {/* TITLE */}
             <h3
-              onClick={() => navigate(`/project?projectId=${project.id}`)}
+              onClick={() =>
+                navigate(`/project?projectId=${project.id}`)
+              }
               className="
-                text-lg font-black text-[#16253A]
-                cursor-pointer hover:text-blue-600
+                text-lg font-black text-[color:var(--ink)]
+                cursor-pointer hover:text-[color:var(--accent)]
                 transition
               "
             >
@@ -126,24 +124,25 @@ export default function ExploreProjectCard({
           <button>
             <MoreVertical
               size={18}
-              className="text-gray-400"
+              className="text-[color:var(--muted)]"
             />
           </button>
         </div>
 
         {/* INFO */}
-        <div className="mt-4 space-y-3 text-sm text-gray-500">
+        <div className="mt-4 space-y-3 text-sm text-[color:var(--muted)]">
           <div className="flex items-center gap-2">
             <Users size={15} />
             {project.instructor}
           </div>
-          <div className="flex items-center gap-2">
-          <Users size={16} />
 
-          <span className="text-sm font-medium">
-            {project.students} Students
-          </span>
-        </div>
+          <div className="flex items-center gap-2">
+            <Users size={16} />
+
+            <span className="text-sm font-medium">
+              {project.students} Students
+            </span>
+          </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1 text-yellow-500">
@@ -151,7 +150,7 @@ export default function ExploreProjectCard({
               {project.rating}
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 text-[color:var(--muted)]">
               <Calendar size={15} />
               {project.date}
             </div>
@@ -166,10 +165,11 @@ export default function ExploreProjectCard({
               className="
                 px-3 py-1
                 rounded-full
-                bg-blue-50
-                text-blue-600
+                bg-[color:var(--surface-strong)]
+                text-[color:var(--secondary)]
                 text-xs
                 font-semibold
+                border border-[color:var(--card-border)]
               "
             >
               {tag}

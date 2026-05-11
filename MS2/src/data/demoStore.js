@@ -16,7 +16,7 @@ import {
 
 
 const DB_KEY = "guc_demo_database_v9";
-const CHAT_RESET_VERSION = "chat-reset-v13";
+const CHAT_RESET_VERSION = "chat-reset-v17";
 const CHAT_RESET_KEY = "guc_demo_chat_reset_version";
 const CURRENT_USER_KEY = "currentUser";
 const LEGACY_USERS_KEY = "users";
@@ -266,7 +266,14 @@ function getCurrentUserRaw() {
 
 function ownsOrTouchesProject(project, userId) {
   if (!userId) return false;
-  return project.ownerId === userId || project.collaboratorIds?.includes(userId) || project.instructorIds?.includes(userId);
+
+  if (String(project.ownerId) === String(userId)) return true;
+
+  const invitation = getProjectInvitationRecord(project, userId);
+
+  if (invitation?.status === "rejected") return false;
+
+  return Boolean(invitation);
 }
 
 function internshipVisibleForUser(internship, user) {
@@ -980,6 +987,228 @@ export function updateProject(projectId, updates) {
   const updated = normalizeProjectInput({ ...existing, ...updates, id: existing.id, createdAt: existing.createdAt, updatedAt: new Date().toISOString() }, getCurrentUser());
   setDemoDb({ ...db, projects: db.projects.map((project) => (project.id === existing.id ? updated : project)) });
   return hydrateProject(updated);
+}
+
+function getProjectInvitationRecord(project, userId) {
+  if (!project || !userId) return null;
+
+  const directRecord = (project.invitationStatuses || []).find(
+    (item) => String(item.userId) === String(userId)
+  );
+
+  if (directRecord) {
+    const roleValue = String(directRecord.role || "").toLowerCase();
+
+    return {
+      ...directRecord,
+      status: String(directRecord.status || "pending").toLowerCase(),
+      role:
+        roleValue === "instructor"
+          ? "instructor"
+          : "collaborator",
+      sentAt:
+        directRecord.sentAt ||
+        directRecord.invitedAt ||
+        directRecord.createdAt ||
+        project.createdAt ||
+        "",
+    };
+  }
+
+  const isCollaborator = (project.collaboratorIds || []).some(
+    (id) => String(id) === String(userId)
+  );
+
+  const isInstructor = (project.instructorIds || []).some(
+    (id) => String(id) === String(userId)
+  );
+
+  if (!isCollaborator && !isInstructor) return null;
+
+  return {
+    userId,
+    role: isInstructor ? "instructor" : "collaborator",
+    status: "accepted",
+    sentAt: project.createdAt || "",
+  };
+}
+
+export function getProjectInvitationsForUser(userId = getCurrentUser()?.id) {
+  if (!userId) return [];
+
+  const db = getDemoDb();
+  const users = db.users || [];
+  const courses = db.courses || [];
+
+  return (db.projects || [])
+    .map((project) => {
+      const invitation = getProjectInvitationRecord(project, userId);
+
+      if (!invitation) return null;
+
+      const owner = users.find(
+        (user) => String(user.id) === String(project.ownerId)
+      );
+
+      const course = courses.find(
+        (item) => String(item.id) === String(project.courseId)
+      );
+
+      return {
+        id: `${project.id}-${userId}`,
+        projectId: project.id,
+        projectTitle: project.title || project.name || "Untitled project",
+        projectDescription:
+          project.description || "No description was added for this project.",
+        projectImage: project.image,
+        projectVisibility: project.visibility || "private",
+        projectStatus: project.status || "draft",
+        courseName:
+          project.courseName ||
+          course?.name ||
+          project.course ||
+          "Unlinked course",
+        courseCode: project.courseCode || course?.code || "",
+        ownerId: project.ownerId,
+        ownerName:
+          owner?.name ||
+          owner?.fullName ||
+          owner?.email ||
+          "Unknown student",
+        role: invitation.role || "collaborator",
+        status: String(invitation.status || "pending").toLowerCase(),
+        sentAt:
+  invitation.sentAt ||
+  invitation.invitedAt ||
+  invitation.createdAt ||
+  project.createdAt,
+        respondedAt: invitation.respondedAt || "",
+        tags: project.tags || project.technologies || project.languages || [],
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      const order = { pending: 0, accepted: 1, rejected: 2 };
+
+      const statusDiff =
+        (order[a.status] ?? 99) - (order[b.status] ?? 99);
+
+      if (statusDiff !== 0) return statusDiff;
+
+      return new Date(b.sentAt || 0) - new Date(a.sentAt || 0);
+    });
+}
+
+export function respondToProjectInvitation(
+  projectId,
+  userId = getCurrentUser()?.id,
+  decision
+) {
+  if (!projectId || !userId) return null;
+
+  const normalizedDecision =
+    String(decision).toLowerCase() === "accepted" ? "accepted" : "rejected";
+
+  const db = getDemoDb();
+
+  const project = (db.projects || []).find(
+    (item) => String(item.id) === String(projectId)
+  );
+
+  if (!project) return null;
+
+  const now = new Date().toISOString();
+
+  const currentStatuses = Array.isArray(project.invitationStatuses)
+    ? project.invitationStatuses
+    : [];
+
+  const existingInvitation = getProjectInvitationRecord(project, userId);
+
+  const role =
+    existingInvitation?.role ||
+    ((project.instructorIds || []).some((id) => String(id) === String(userId))
+      ? "instructor"
+      : "collaborator");
+
+  const hasStatusRecord = currentStatuses.some(
+    (item) => String(item.userId) === String(userId)
+  );
+
+  const nextStatuses = hasStatusRecord
+    ? currentStatuses.map((item) =>
+        String(item.userId) === String(userId)
+          ? {
+              ...item,
+              role: item.role || role,
+              status: normalizedDecision,
+              respondedAt: now,
+            }
+          : item
+      )
+    : [
+        ...currentStatuses,
+        {
+          userId,
+          role,
+          status: normalizedDecision,
+          sentAt: project.createdAt || now,
+          respondedAt: now,
+        },
+      ];
+
+  const collaboratorIds = new Set(project.collaboratorIds || []);
+  const instructorIds = new Set(project.instructorIds || []);
+
+  if (normalizedDecision === "accepted") {
+    if (role === "instructor") {
+      instructorIds.add(userId);
+    } else {
+      collaboratorIds.add(userId);
+    }
+  } else {
+    collaboratorIds.delete(userId);
+    instructorIds.delete(userId);
+  }
+
+  const updatedProject = {
+    ...project,
+    collaboratorIds: Array.from(collaboratorIds),
+    instructorIds: Array.from(instructorIds),
+    invitationStatuses: nextStatuses,
+    updatedAt: now,
+  };
+
+  setDemoDb({
+    ...db,
+    projects: (db.projects || []).map((item) =>
+      String(item.id) === String(project.id) ? updatedProject : item
+    ),
+  });
+
+  const invitee = getUserById(userId);
+
+  addNotification({
+    id: `project-invite-${projectId}-${userId}-${normalizedDecision}-${Date.now()}`,
+    userId: project.ownerId,
+    title: `Project invitation ${normalizedDecision}`,
+    body: `${
+      invitee?.name || invitee?.fullName || invitee?.email || "A user"
+    } ${normalizedDecision} the invitation to ${
+      project.title || project.name || "your project"
+    }.`,
+    message: `${
+      invitee?.name || invitee?.fullName || invitee?.email || "A user"
+    } ${normalizedDecision} the invitation to ${
+      project.title || project.name || "your project"
+    }.`,
+    type: "project-invite",
+    projectId,
+    unread: true,
+    createdAt: now,
+  });
+
+  return getProjectById(projectId);
 }
 
 export function deleteProject(projectId) {
