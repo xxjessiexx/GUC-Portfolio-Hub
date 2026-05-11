@@ -62,7 +62,7 @@ const workspaceItems = {
     { label: "Projects", icon: FolderKanban, path: "/view-all-projects" },
     { label: "My Courses", icon: BookCheckIcon, path: "/instructor/my-courses" },
     { label: "Courses", icon: BookOpen, path: "/instructor/courses" },
-    { label: "Invitations", icon: ClipboardCheck, path: null },
+    { label: "Invitations", icon: ClipboardCheck, path: "/instructor/invitations" },
     { label: "Settings", icon: Settings, path: "/settings" },
   ],
 
