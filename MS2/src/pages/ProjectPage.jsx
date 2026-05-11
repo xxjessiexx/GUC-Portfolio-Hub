@@ -118,8 +118,13 @@ export default function ProjectPage() {
 
   const canManageProject = isCreator || isAdmin;
   const canManageTasks = isCreator;
-  const canManageCollaborators =
+  const canInvitePeople =
+    (isCreator || isAcceptedCollaborator || isAdmin) &&
+    project?.type !== "Bachelor Project";
+  const canCancelInvitations = canInvitePeople;
+  const canRemoveCollaborators =
     isCreator && project?.type !== "Bachelor Project";
+  const canManageCollaborators = canRemoveCollaborators;
 
   const canViewComments =
     isCreator || isAcceptedCollaborator || isInstructor || isAdmin;
@@ -425,6 +430,9 @@ export default function ProjectPage() {
               courses={courses}
               tasks={tasks}
               canManageCollaborators={canManageCollaborators}
+              canInvitePeople={canInvitePeople}
+              canCancelInvitations={canCancelInvitations}
+              canRemoveCollaborators={canRemoveCollaborators}
               refreshProject={refreshProject}
             />
           )}
