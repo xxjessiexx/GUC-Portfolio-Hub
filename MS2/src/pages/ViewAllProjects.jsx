@@ -163,7 +163,11 @@ const reportedProjects =
       return (
         name.toLowerCase().includes(search.toLowerCase()) &&
         (filterCourse === "All" ||
-          course.toUpperCase().includes(filterCourse.toUpperCase())) &&
+                filterCourse === "Bachelor Project"
+        ? course === "Bachelor Project"
+        : course
+            .toUpperCase()
+            .includes(filterCourse.toUpperCase())) &&
         (filterVisibility === "All" || visibility === filterVisibility) 
         
       );
@@ -341,20 +345,20 @@ setAppealMessage("");
   }}
 >
   <FilterSelect
-    value={`Course: ${filterCourse}`}
-    onChange={(value) =>
-      setFilterCourse(
-        value.replace("Course: ", "")
-      )
-    }
-    options={[
-      "Course: All",
-      "Course: CSEN",
-      "Course: MET",
-      "Course: DMET",
-      "Course: BI",
-    ]}
-  />
+  value={`Course: ${filterCourse}`}
+  onChange={(value) =>
+    setFilterCourse(
+      value.replace("Course: ", "")
+    )
+  }
+  options={[
+    "Course: All",
+    "Course: CSEN",
+    "Course: MET",
+    "Course: BI",
+    "Course: Bachelor Project",
+  ]}
+/>
 
   <FilterSelect
     value={`Visibility: ${filterVisibility}`}
