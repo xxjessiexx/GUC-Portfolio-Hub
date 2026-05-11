@@ -4,7 +4,7 @@ import { NotificationsProvider } from "./context/NotificationsContext";
 import { UserProfileProvider } from "./context/UserProfileContext";
 import { Toaster } from "sonner";
 
-import { initializeDemoStore } from "@/data/demoStore";
+import { getRegisteredUsers, initializeDemoStore, registerUser } from "@/data/demoStore";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -43,6 +43,8 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminEmployers from "@/pages/admin/AdminEmployers";
 import AdminCourses from "@/pages/admin/AdminCourses";
+import InstructorCourses from "@/pages/InstructorCourses";
+import InstructorMyCourses from "@/pages/InstructorMyCourses";
 import AdminLinkRequests from "@/pages/admin/AdminLinkRequests";
 import AdminFlaggedProjects from "@/pages/admin/AdminFlaggedProjects";
 import AdminStatistics from "@/pages/admin/AdminStatistics";
@@ -72,11 +74,13 @@ export default function App() {
   });
 
   const addUser = (user) => {
-    setUsers((prev) => {
-      const updated = [...prev, user];
-      sessionStorage.setItem("users", JSON.stringify(updated));
-      return updated;
-    });
+    const createdUser = registerUser(user);
+    const updatedUsers = getRegisteredUsers();
+
+    setUsers(updatedUsers);
+    sessionStorage.setItem("users", JSON.stringify(updatedUsers));
+
+    return createdUser;
   };
 
   useEffect(() => {
@@ -205,8 +209,27 @@ export default function App() {
 <Route
   path="/admin/courses"
   element={
-    <ProtectedRoute allowedRoles={["admin","instructor"]}>
+    <ProtectedRoute allowedRoles={["admin"]}>
       <AdminCourses />
+    </ProtectedRoute>
+  }
+/>
+
+
+<Route
+  path="/instructor/courses"
+  element={
+    <ProtectedRoute allowedRoles={["instructor"]}>
+      <InstructorCourses />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/instructor/my-courses"
+  element={
+    <ProtectedRoute allowedRoles={["instructor"]}>
+      <InstructorMyCourses />
     </ProtectedRoute>
   }
 />
