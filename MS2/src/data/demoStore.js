@@ -11,7 +11,7 @@ import {
 
 
 const DB_KEY = "guc_demo_database_v8";
-const CHAT_RESET_VERSION = "chat-reset-v7";
+const CHAT_RESET_VERSION = "chat-reset-v9";
 const CHAT_RESET_KEY = "guc_demo_chat_reset_version";
 const CURRENT_USER_KEY = "currentUser";
 const LEGACY_USERS_KEY = "users";
@@ -59,6 +59,52 @@ function dispatchUserChange() {
   if (typeof window !== "undefined") window.dispatchEvent(new Event("demo-current-user-change"));
 }
 
+
+function ensureBachelorLinks(db) {
+  const courses = db.courses || [];
+  const bachelor = courses.find((course) =>
+    String(course.type || "").toLowerCase() === "bachelor project" ||
+    String(course.name || "").toLowerCase() === "bachelor project" ||
+    String(course.id || "") === "course-bachelor"
+  );
+
+  if (!bachelor?.id) return db;
+
+  const instructorIds = (db.users || [])
+    .filter((user) => normalizeRole(user.role || user.systemRole || user.accountRole) === "instructor")
+    .map((user) => user.id);
+
+  const nextUsers = (db.users || []).map((user) => {
+    if (normalizeRole(user.role || user.systemRole || user.accountRole) !== "instructor") return user;
+    return {
+      ...user,
+      linkedCourseIds: Array.from(new Set([...(user.linkedCourseIds || []), bachelor.id])),
+    };
+  });
+
+  const nextCourses = courses.map((course) => {
+    if (course.id !== bachelor.id) return course;
+    return {
+      ...course,
+      status: course.status === "pending-link" ? "active" : course.status || "active",
+      instructorIds: Array.from(new Set([...(course.instructorIds || []), ...instructorIds])),
+    };
+  });
+
+  const nextLinkRequests = (db.linkRequests || []).filter((request) => {
+    const action = String(request.action || request.type || "link").toLowerCase();
+    return !(String(request.courseId) === String(bachelor.id) && action.includes("link"));
+  });
+
+  const nextNotifications = (db.notifications || []).filter((notification) => {
+    if (notification.type !== "link-request") return true;
+    if (String(notification.relatedCourseId) === String(bachelor.id)) return false;
+    return !String(notification.text || "").toLowerCase().includes("bachelor project");
+  });
+
+  return { ...db, users: nextUsers, courses: nextCourses, linkRequests: nextLinkRequests, notifications: nextNotifications };
+}
+
 function freshDb() {
   const existingUsers = demoSeed.users || [];
   const existingInternships = demoSeed.internships || [];
@@ -88,7 +134,7 @@ function freshDb() {
     version: DEMO_DATA_VERSION,
   };
 
-  return clone(mergedSeed);
+  return clone(ensureBachelorLinks(mergedSeed));
 }
 
 export function normalizeRole(value) {
@@ -191,7 +237,7 @@ export function initializeDemoStore({ force = false } = {}) {
     if (!alreadyResetChats) {
       const seedDb = freshDb();
 
-      const updatedDb = {
+      const updatedDb = ensureBachelorLinks({
         ...stored,
 
         // Reset chat-related demo state back to seed.
@@ -199,7 +245,7 @@ export function initializeDemoStore({ force = false } = {}) {
         // It keeps users/projects/internships/applications untouched.
         chats: seedDb.chats || [],
         notifications: seedDb.notifications || [],
-      };
+      });
 
       writeLocal(DB_KEY, updatedDb);
       localStorage.setItem(CHAT_RESET_KEY, CHAT_RESET_VERSION);
@@ -210,8 +256,10 @@ export function initializeDemoStore({ force = false } = {}) {
       return updatedDb;
     }
 
-    syncCompatibilityKeys(stored);
-    return stored;
+    const migratedStored = ensureBachelorLinks(stored);
+    if (JSON.stringify(migratedStored) !== JSON.stringify(stored)) writeLocal(DB_KEY, migratedStored);
+    syncCompatibilityKeys(migratedStored);
+    return migratedStored;
   }
 
   const next = freshDb();
@@ -230,7 +278,7 @@ export function getDemoDb() {
 }
 
 export function setDemoDb(nextDb) {
-  const normalized = { ...nextDb, version: DEMO_DATA_VERSION };
+  const normalized = ensureBachelorLinks({ ...nextDb, version: DEMO_DATA_VERSION });
   writeLocal(DB_KEY, normalized);
   syncCompatibilityKeys(normalized);
   dispatchStoreChange();
@@ -448,6 +496,232 @@ export function deactivateCurrentUser() {
 
 export function getCourseById(courseId) {
   return getCollection("courses").find((course) => course.id === courseId) || null;
+}
+
+
+
+function getBachelorCourse(db = getDemoDb()) {
+  return (db.courses || []).find((course) =>
+    String(course.type || "").toLowerCase() === "bachelor project" ||
+    String(course.name || "").toLowerCase() === "bachelor project" ||
+    String(course.id || "") === "course-bachelor"
+  ) || null;
+}
+
+function getAdminUsersFromDb(db) {
+  return (db.users || []).filter((user) => normalizeRole(user.role || user.systemRole || user.accountRole) === "admin");
+}
+
+function isBachelorCourse(course) {
+  return Boolean(course) && (
+    String(course.type || "").toLowerCase() === "bachelor project" ||
+    String(course.name || "").toLowerCase() === "bachelor project" ||
+    String(course.id || "") === "course-bachelor"
+  );
+}
+
+function formatCourseLabel(course) {
+  if (!course) return "Unknown course";
+  return [course.code, course.name].filter(Boolean).join(" - ") || course.name || course.code || "Course";
+}
+
+function normalizeRequestAction(value) {
+  const action = String(value || "link").toLowerCase();
+  return action.includes("unlink") ? "unlink" : "link";
+}
+
+function hydrateLinkRequest(request, db = getDemoDb()) {
+  const instructor = (db.users || []).find((user) => String(user.id) === String(request.instructorId || request.requestedById)) || null;
+  const course = (db.courses || []).find((item) => String(item.id) === String(request.courseId)) || null;
+  const action = normalizeRequestAction(request.action || request.type);
+
+  return {
+    ...request,
+    action,
+    type: action,
+    instructorId: request.instructorId || request.requestedById,
+    instructor: request.instructor || instructor?.name || "Unknown instructor",
+    email: request.email || instructor?.email || "",
+    courseId: request.courseId || course?.id,
+    course: request.course || formatCourseLabel(course),
+    requestedCourseCode: request.requestedCourseCode || course?.code || "",
+    requestedCourseName: request.requestedCourseName || course?.name || "",
+    reason: request.reason || (action === "unlink" ? "Requested to be unlinked from this course." : "Requested to be linked to this course."),
+    status: request.status || "pending",
+    submittedAt: request.submittedAt || request.createdAt || new Date().toISOString(),
+    createdAt: request.createdAt || request.submittedAt || new Date().toISOString(),
+  };
+}
+
+export function getLinkedCourseIdsForInstructor(instructorId = getCurrentUser()?.id) {
+  if (!instructorId) return [];
+  const db = getDemoDb();
+  const instructor = (db.users || []).find((user) => String(user.id) === String(instructorId));
+  const ids = new Set(instructor?.linkedCourseIds || []);
+
+  (db.courses || []).forEach((course) => {
+    if ((course.instructorIds || []).some((id) => String(id) === String(instructorId))) ids.add(course.id);
+  });
+
+  const bachelor = getBachelorCourse(db);
+  if (bachelor?.id) ids.add(bachelor.id);
+
+  return [...ids];
+}
+
+export function getAllCoursesForInstructorView() {
+  const db = getDemoDb();
+  const currentUser = getCurrentUser();
+  const instructorId = currentUser?.id;
+  const linkedCourseIds = new Set(getLinkedCourseIdsForInstructor(instructorId));
+  const pendingRequests = (db.linkRequests || [])
+    .filter((request) => String(request.instructorId || request.requestedById) === String(instructorId) && request.status === "pending")
+    .map((request) => hydrateLinkRequest(request, db));
+
+  return (db.courses || [])
+    .filter((course) => course.status !== "inactive")
+    .map((course) => {
+      const pendingRequest = pendingRequests.find((request) => String(request.courseId) === String(course.id));
+      const linked = linkedCourseIds.has(course.id) || isBachelorCourse(course);
+
+      return {
+        ...course,
+        linked,
+        isBachelorProject: isBachelorCourse(course),
+        instructorNames: (course.instructorIds || []).map((id) => (db.users || []).find((user) => user.id === id)?.name).filter(Boolean),
+        instructor: (course.instructorIds || []).map((id) => (db.users || []).find((user) => user.id === id)?.name).filter(Boolean).join(", ") || "Unassigned",
+        linkedProjects: course.linkedProjectIds?.length || 0,
+        pendingRequest,
+        requestStatus: pendingRequest?.status || null,
+        requestAction: pendingRequest?.action || null,
+      };
+    });
+}
+
+export function getLinkedCoursesForInstructor(instructorId = getCurrentUser()?.id) {
+  const linkedIds = new Set(getLinkedCourseIdsForInstructor(instructorId));
+  return getAllCoursesForInstructorView().filter((course) => linkedIds.has(course.id) || course.isBachelorProject);
+}
+
+export function requestCourseLinkChange(courseId, action = "link", reason = "") {
+  const db = getDemoDb();
+  const instructor = getCurrentUser();
+  const course = (db.courses || []).find((item) => String(item.id) === String(courseId));
+
+  if (!instructor?.id || normalizeRole(instructor.role || instructor.systemRole || instructor.accountRole) !== "instructor") {
+    throw new Error("Only course instructors can request course links.");
+  }
+
+  if (!course) throw new Error("Course not found.");
+  if (isBachelorCourse(course)) throw new Error("Bachelor Project is linked automatically for every course instructor.");
+
+  const normalizedAction = normalizeRequestAction(action);
+  const alreadyPending = (db.linkRequests || []).find((request) =>
+    String(request.instructorId || request.requestedById) === String(instructor.id) &&
+    String(request.courseId) === String(course.id) &&
+    request.status === "pending"
+  );
+
+  if (alreadyPending) return hydrateLinkRequest(alreadyPending, db);
+
+  const now = new Date();
+  const request = {
+    id: `link-request-${course.id}-${instructor.id}-${Date.now()}`,
+    instructorId: instructor.id,
+    courseId: course.id,
+    action: normalizedAction,
+    type: normalizedAction,
+    status: "pending",
+    reason: reason?.trim() || (normalizedAction === "unlink" ? "I am no longer teaching this course." : "I am teaching this course and need access."),
+    createdAt: now.toISOString(),
+    submittedAt: now.toISOString(),
+  };
+
+  const adminNotifications = getAdminUsersFromDb(db).map((admin) => ({
+    id: `notif-link-request-${admin.id}-${request.id}`,
+    userId: admin.id,
+    type: "link-request",
+    title: normalizedAction === "unlink" ? "Course unlink request" : "Course link request",
+    text: `${instructor.name || "An instructor"} requested to ${normalizedAction === "unlink" ? "unlink from" : "link to"} ${formatCourseLabel(course)}.`,
+    unread: true,
+    createdAt: now.toISOString(),
+    time: now.toLocaleString(),
+    relatedUserId: instructor.id,
+    relatedCourseId: course.id,
+    linkRequestId: request.id,
+  }));
+
+  setDemoDb({
+    ...db,
+    linkRequests: [request, ...(db.linkRequests || [])],
+    notifications: [...(db.notifications || []), ...adminNotifications],
+  });
+
+  return hydrateLinkRequest(request, { ...db, linkRequests: [request, ...(db.linkRequests || [])] });
+}
+
+export function setCourseLinkRequestStatus(requestId, status, note = "") {
+  const db = getDemoDb();
+  const request = (db.linkRequests || []).find((item) => String(item.id) === String(requestId));
+  if (!request) return null;
+
+  const normalizedStatus = String(status || "").toLowerCase();
+  const action = normalizeRequestAction(request.action || request.type);
+  const instructorId = request.instructorId || request.requestedById;
+  const courseId = request.courseId;
+  const course = (db.courses || []).find((item) => String(item.id) === String(courseId));
+  const instructor = (db.users || []).find((user) => String(user.id) === String(instructorId));
+  const now = new Date();
+
+  const nextRequests = (db.linkRequests || []).map((item) =>
+    String(item.id) === String(requestId)
+      ? { ...item, status: normalizedStatus, decisionNote: note, reviewedAt: now.toISOString() }
+      : item
+  );
+
+  let nextCourses = db.courses || [];
+  let nextUsers = db.users || [];
+
+  if (normalizedStatus === "approved" && course && instructor) {
+    nextCourses = nextCourses.map((item) => {
+      if (String(item.id) !== String(courseId)) return item;
+      const ids = new Set(item.instructorIds || []);
+      action === "unlink" ? ids.delete(instructorId) : ids.add(instructorId);
+      return { ...item, instructorIds: [...ids] };
+    });
+
+    nextUsers = nextUsers.map((user) => {
+      if (String(user.id) !== String(instructorId)) return user;
+      const ids = new Set(user.linkedCourseIds || []);
+      action === "unlink" ? ids.delete(courseId) : ids.add(courseId);
+      const bachelor = getBachelorCourse(db);
+      if (bachelor?.id) ids.add(bachelor.id);
+      return { ...user, linkedCourseIds: [...ids] };
+    });
+  }
+
+  const instructorNotification = instructor ? [{
+    id: `notif-link-decision-${instructor.id}-${requestId}-${Date.now()}`,
+    userId: instructor.id,
+    type: "link-request",
+    title: normalizedStatus === "approved" ? "Course request approved" : "Course request rejected",
+    text: `Your request to ${action === "unlink" ? "unlink from" : "link to"} ${formatCourseLabel(course)} was ${normalizedStatus}.${note ? ` Note: ${note}` : ""}`,
+    unread: true,
+    createdAt: now.toISOString(),
+    time: now.toLocaleString(),
+    relatedCourseId: courseId,
+    linkRequestId: requestId,
+  }] : [];
+
+  setDemoDb({
+    ...db,
+    users: nextUsers,
+    courses: nextCourses,
+    linkRequests: nextRequests,
+    notifications: [...(db.notifications || []), ...instructorNotification],
+  });
+
+  return hydrateLinkRequest({ ...request, status: normalizedStatus, decisionNote: note, reviewedAt: now.toISOString() }, { ...db, users: nextUsers, courses: nextCourses });
 }
 
 export function getCourseForProjectInput(input = {}) {
@@ -1574,19 +1848,56 @@ export function getAdminModuleState() {
     id: user.id,
     companyName: user.companyName || user.name,
     contact: user.email,
+    email: user.email,
     status: user.verificationStatus || user.status || "pending",
     focus: user.industry || "Software",
     submitted: user.createdAt || "Seeded",
     documents: user.uploadedDocuments || [],
   }));
+
   return {
-    users: users.map((user) => ({ id: user.id, name: user.name, email: user.email, role: user.role, status: user.status || "active", joined: user.createdAt || "Seeded", projects: (db.projects || []).filter((p) => p.ownerId === user.id).length, lastSeen: user.isDemo ? "Demo" : "New" })),
+    users: users.map((user) => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status || "active",
+      joined: user.createdAt || "Seeded",
+      projects: (db.projects || []).filter((p) => p.ownerId === user.id).length,
+      lastSeen: user.isDemo ? "Demo" : "New",
+    })),
     employers,
-    courses: (db.courses || []).map((course) => ({ id: course.id, code: course.code, name: course.name, type: course.type, instructor: (course.instructorIds || []).map((id) => users.find((u) => u.id === id)?.name).filter(Boolean).join(", ") || "Unassigned", status: course.status === "pending-link" ? "active" : course.status, linkedProjects: course.linkedProjectIds?.length || 0 })),
-    linkRequests: db.linkRequests || [],
-    flaggedProjects: (db.reports || []).map((report) => ({ id: report.projectId, reportId: report.id, title: (db.projects || []).find((p) => p.id === report.projectId)?.title || "Project", reason: report.reason, status: report.status, active: report.active, reportedBy: users.find((u) => u.id === report.reportedById)?.name || "Instructor" })),
-    appeals: (db.reports || []).filter((r) => r.appeal).map((r) => ({ ...r.appeal, projectId: r.projectId, student: users.find((u) => u.id === r.appeal.studentId)?.name || "Student" })),
+    courses: (db.courses || []).map((course) => ({
+      id: course.id,
+      code: course.code,
+      name: course.name,
+      type: course.type,
+      instructor: (course.instructorIds || []).map((id) => users.find((u) => u.id === id)?.name).filter(Boolean).join(", ") || "Unassigned",
+      status: course.status === "pending-link" ? "active" : course.status || "active",
+      linkedProjects: course.linkedProjectIds?.length || 0,
+    })),
+    linkRequests: (db.linkRequests || []).map((request) => hydrateLinkRequest(request, db)),
+    flaggedProjects: (db.reports || []).map((report) => ({
+      id: report.projectId,
+      reportId: report.id,
+      title: (db.projects || []).find((p) => p.id === report.projectId)?.title || "Project",
+      reason: report.reason,
+      status: report.status,
+      active: report.active,
+      reportedBy: users.find((u) => u.id === report.reportedById)?.name || "Instructor",
+    })),
+    appeals: (db.reports || []).filter((r) => r.appeal).map((r) => ({
+      ...r.appeal,
+      projectId: r.projectId,
+      student: users.find((u) => u.id === r.appeal.studentId)?.name || "Student",
+    })),
     activity: [],
-    statistics: { totalUsers: users.length, activeUsers: users.filter((u) => u.status === "active").length, totalProjects: (db.projects || []).length, totalCourses: (db.courses || []).length, approvedEmployers: employers.filter((e) => e.status === "approved" || e.status === "active").length },
+    statistics: {
+      totalUsers: users.length,
+      activeUsers: users.filter((u) => u.status === "active").length,
+      totalProjects: (db.projects || []).length,
+      totalCourses: (db.courses || []).length,
+      approvedEmployers: employers.filter((e) => e.status === "approved" || e.status === "active").length,
+    },
   };
 }
