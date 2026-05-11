@@ -3,8 +3,11 @@ import { useState, useEffect } from "react";
 import { NotificationsProvider } from "./context/NotificationsContext";
 import { UserProfileProvider } from "./context/UserProfileContext";
 import { Toaster } from "sonner";
-
-import { getRegisteredUsers, initializeDemoStore, registerUser } from "@/data/demoStore";
+import FavoriteList from "@/pages/FavoriteList"
+import FavoritePortfolios from "./pages/FavoritePortfolios";
+import FavoriteProjects from "./pages/FavoriteProjects";
+import Settings from "./pages/Settings";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -36,34 +39,9 @@ import ManageApplicants from "./pages/ManageApplicants";
 import ProjectPage from "./pages/ProjectPage";
 import ExploreInstructors from "./pages/ExploreInstructors";
 import ExploreProjects from "@/pages/ExploreProjects";
-import ExplorePortfolios from "./pages/ExplorePortfolios";
 import ChatsSection from "@/pages/ChatsSection";
-import EditInternship from "@/pages/EditInternship";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import AdminUsers from "@/pages/admin/AdminUsers";
-import AdminEmployers from "@/pages/admin/AdminEmployers";
-import AdminCourses from "@/pages/admin/AdminCourses";
-import InstructorCourses from "@/pages/InstructorCourses";
-import InstructorMyCourses from "@/pages/InstructorMyCourses";
-import AdminLinkRequests from "@/pages/admin/AdminLinkRequests";
-import AdminFlaggedProjects from "@/pages/admin/AdminFlaggedProjects";
-import AdminStatistics from "@/pages/admin/AdminStatistics";
-import AdminCreateCourse from "@/pages/admin/AdminCreateCourse";
-import AdminCreateAccount from "@/pages/admin/AdminCreateAccount";
-import ViewInstructor from "@/pages/ViewInstructor"
-import FavoriteList from "@/pages/FavoriteList"
-import FavoritePortfolios from "./pages/FavoritePortfolios";
-import FavoriteProjects from "./pages/FavoriteProjects";
-import AdminOverview from "@/pages/admin/AdminOverview";
-import FeaturedStudents
-from "@/pages/FeaturedStudents";
-import Settings from "./pages/Settings";
-import PublicStudentPortfolio from "./pages/PublicStudentPortfolio";
 
 export default function App() {
-  useEffect(() => {
-    initializeDemoStore();
-  }, []);
   const [users, setUsers] = useState(() => {
     const stored = sessionStorage.getItem("users");
     return stored ? JSON.parse(stored) : [];
@@ -75,13 +53,11 @@ export default function App() {
   });
 
   const addUser = (user) => {
-    const createdUser = registerUser(user);
-    const updatedUsers = getRegisteredUsers();
-
-    setUsers(updatedUsers);
-    sessionStorage.setItem("users", JSON.stringify(updatedUsers));
-
-    return createdUser;
+    setUsers((prev) => {
+      const updated = [...prev, user];
+      sessionStorage.setItem("users", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   useEffect(() => {
@@ -94,14 +70,13 @@ export default function App() {
       <NotificationsProvider>
         <UserProfileProvider currentUser={currentUser}>
           <FloatingCTA />
-
+           {/* 👇 ADD THIS HERE (GLOBAL TOAST SYSTEM) */}
           <Toaster richColors position="top-right" />
 
           <Routes>
             <Route path="/" element={<Landing />} />
 
             <Route path="/verifyOTP" element={<VerifyOTP />} />
-
             <Route
               path="/SetPassword"
               element={
@@ -113,41 +88,47 @@ export default function App() {
               }
             />
 
+            <Route path="/chat" element={<ChatsSection />} />
+
             <Route
               path="/login"
               element={<Login users={users} setCurrentUser={setCurrentUser} />}
             />
-
             <Route path="/register" element={<Register addUser={addUser} />} />
 
-            <Route
-              path="/student-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["student"]}>
-                  <StudentDashboard />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/student-dashboard" element={<StudentDashboard />} />
+            <Route path="/instructor-dashboard" element={<InstructorDashboard />} />
+            <Route path="/employer-dashboard" element={<EmployerDashboard />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
 
-            <Route
-              path="/instructor-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["instructor"]}>
-                  <InstructorDashboard />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/notifications" element={<Notifications />} />
 
-              <Route
-              path="/viewINs"
-              element={
-                <ProtectedRoute allowedRoles={["student"]}>
-                  <ViewInstructor />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/discover" element={<Discover />} />
+            <Route path="/Discover" element={<Discover />} />
+            <Route path="/view-all-projects" element={<ViewAllProjects />} />
 
-            <Route
+            <Route path="/create-internship" element={<CreateInternship />} />
+            <Route path="/internships" element={<Internships />} />
+            <Route path="/internships/:internshipId" element={<InternshipDetails />} />
+            <Route path="/my-applications" element={<MyApplications />} />
+            <Route path="/manage-internships" element={<ManageInternships />} />
+            <Route path="/manage-applicants/:internshipId" element={<ManageApplicants />} />
+
+            <Route path="/student-dashboard/portfolio" element={<Portfolio />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/manage-portfolio" element={<ManagePortfolio />} />
+
+            <Route path="/edit-student-profile" element={<EditStudentProfile />} />
+            <Route path="/edit-instructor-profile" element={<EditInstructorProfile />} />
+            <Route path="/edit-employer-profile" element={<EditEmployerProfile />} />
+
+            <Route path="/create-project" element={<CreateNewProject />} />
+            <Route path="/edit-project/:projectId" element={<EditProject />} />
+            <Route path="/projects/:projectId/edit" element={<EditProject />} />
+            <Route path="/project" element={<ProjectPage />} />
+            <Route path="/explore-instructors" element={<ExploreInstructors />} />
+            <Route path="/explore-projects" element={<ExploreProjects />} />
+  <Route
               path="/favorite-portfolios"
               element={
                 <ProtectedRoute allowedRoles={["student", "employer"]}>
@@ -155,8 +136,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-
-            <Route
+  <Route
           path="/favorite-projects"
           element={
             <ProtectedRoute allowedRoles={["student", "employer"]}>
@@ -164,120 +144,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-            <Route
-              path="/employer-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["employer"]}>
-                  <EmployerDashboard />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/admin-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-          path="/admin/users"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminUsers />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-        path="/featured-students"
-        element={<ProtectedRoute  allowedRoles={["student", "instructor", "employer", "admin"]}>
-                    <FeaturedStudents />
-        </ProtectedRoute>
-        }
-      />
-
-<Route
-  path="/admin/employers"
-  element={
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminEmployers />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/admin/courses"
-  element={
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminCourses />
-    </ProtectedRoute>
-  }
-/>
-
-
-<Route
-  path="/instructor/courses"
-  element={
-    <ProtectedRoute allowedRoles={["instructor"]}>
-      <InstructorCourses />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/instructor/my-courses"
-  element={
-    <ProtectedRoute allowedRoles={["instructor"]}>
-      <InstructorMyCourses />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/admin/courses/create"
-  element={
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminCreateCourse />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/admin/overview"
-  element={
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminOverview />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/admin/users/create-admin"
-  element={
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminCreateAccount />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/admin/link-requests"
-  element={
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminLinkRequests />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/admin/flagged-projects"
-  element={
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminFlaggedProjects />
-    </ProtectedRoute>
-  }
-/>
-
 <Route
   path="/fav-list"
   element={
@@ -286,267 +152,7 @@ export default function App() {
     </ProtectedRoute>
   }
 />
-
-<Route
-  path="/admin/statistics"
-  element={
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminStatistics />
-    </ProtectedRoute>
-  }
-/>
-
-            <Route
-              path="/chat"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["student", "instructor", "employer", "admin"]}
-                >
-                  <ChatsSection />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/notifications"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["student", "instructor", "employer", "admin"]}
-                >
-                  <Notifications />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/discover"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["student", "instructor", "employer", "admin"]}
-                >
-                  <Discover />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/Discover"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["student", "instructor", "employer", "admin"]}
-                >
-                  <Discover />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/view-all-projects"
-              element={
-                <ProtectedRoute allowedRoles={["student", "instructor", "admin"]}>
-                  <ViewAllProjects />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/create-internship"
-              element={
-                <ProtectedRoute allowedRoles={["employer"]}>
-                  <CreateInternship />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/internships"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["student", "instructor", "employer", "admin"]}
-                >
-                  <Internships />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/internships/:internshipId"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["student", "instructor", "employer", "admin"]}
-                >
-                  <InternshipDetails />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/my-applications"
-              element={
-                <ProtectedRoute allowedRoles={["student"]}>
-                  <MyApplications />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/manage-internships"
-              element={
-                <ProtectedRoute allowedRoles={["employer"]}>
-                  <ManageInternships />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/manage-applicants/:internshipId"
-              element={
-                <ProtectedRoute allowedRoles={["employer"]}>
-                  <ManageApplicants />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/student-dashboard/portfolio"
-              element={
-                <ProtectedRoute allowedRoles={["student"]}>
-                  <Portfolio />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/portfolio"
-              element={
-                <ProtectedRoute allowedRoles={["student"]}>
-                  <Portfolio />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/manage-portfolio"
-              element={
-                <ProtectedRoute allowedRoles={["student"]}>
-                  <ManagePortfolio />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/edit-student-profile"
-              element={
-                <ProtectedRoute allowedRoles={["student"]}>
-                  <EditStudentProfile />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/edit-instructor-profile"
-              element={
-                <ProtectedRoute allowedRoles={["instructor"]}>
-                  <EditInstructorProfile />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/edit-employer-profile"
-              element={
-                <ProtectedRoute allowedRoles={["employer"]}>
-                  <EditEmployerProfile />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/create-project"
-              element={
-                <ProtectedRoute allowedRoles={["student"]}>
-                  <CreateNewProject />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/edit-project/:projectId"
-              element={
-                <ProtectedRoute allowedRoles={["student"]}>
-                  <EditProject />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/projects/:projectId/edit"
-              element={
-                <ProtectedRoute allowedRoles={["student"]}>
-                  <EditProject />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/project"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["student", "instructor", "employer", "admin"]}
-                >
-                  <ProjectPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/explore-instructors"
-              element={
-                <ProtectedRoute allowedRoles={["student", "instructor", "admin"]}>
-                  <ExploreInstructors />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/explore-projects"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["student", "instructor", "employer", "admin"]}
-                >
-                  <ExploreProjects
-                  showReport={
-                    currentUser?.role === "admin" ||
-                    currentUser?.role === "instructor"
-                  }
-                 />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-            path="/explore-portfolio"
-            element={
-              <ProtectedRoute
-                allowedRoles={["student", "instructor", "employer", "admin"]}
-              >
-                <ExplorePortfolios
-                />
-              </ProtectedRoute>
-            }
-          />
-
-            <Route
-              path="/edit-internship/:internshipId"
-              element={
-                <ProtectedRoute allowedRoles={["employer"]}>
-                  <EditInternship />
-                </ProtectedRoute>
-              }
-            />
-
-
-            <Route
+   <Route
               path="/settings"
               element={
                 <ProtectedRoute
@@ -559,14 +165,8 @@ export default function App() {
 
             <Route
               path="/forgot-password"
-              element={
-                <ForgotPassword
-                  users={users}
-                  setCurrentUser={setCurrentUser}
-                />
-              }
+              element={<ForgotPassword users={users} setCurrentUser={setCurrentUser} />}
             />
-            <Route path="/public-portfolio" element={<PublicStudentPortfolio />} />
           </Routes>
         </UserProfileProvider>
       </NotificationsProvider>
