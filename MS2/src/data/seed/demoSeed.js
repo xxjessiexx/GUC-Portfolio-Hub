@@ -648,6 +648,7 @@ export const usersSeed = [
   },
   ... extraDemoEmployerUsers,
   
+  
 ];
 
 export const coursesSeed = [
