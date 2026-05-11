@@ -48,7 +48,27 @@ export default function AdminFlaggedProjects() {
   actions,
 } = useAdminModuleData();
 
+const savedFlaggedProjects =
+  JSON.parse(
+    localStorage.getItem(
+      "flaggedProjects"
+    )
+  ) || [];
 
+const allFlaggedProjects = [
+
+  ...flaggedProjects,
+
+  ...savedFlaggedProjects.filter(
+    (savedProject) =>
+
+      !flaggedProjects.some(
+        (project) =>
+          project.id ===
+          savedProject.id
+      )
+  ),
+];
 
 const appeals =
   JSON.parse(
@@ -68,7 +88,7 @@ const appeals =
 
   const filtered = useMemo(
     () =>
-      flaggedProjects.filter((project) => {
+      allFlaggedProjects.filter((project) => {
         const haystack =
           `${project.title} ${project.student} ${getDisplayCourse(project)} ${project.reason}`.toLowerCase();
 
@@ -77,7 +97,7 @@ const appeals =
           (status === "all" || project.status === status)
         );
       }),
-    [flaggedProjects, search, status]
+    [allFlaggedProjects, search, status]
   );
 
   const openProjectDecision = (project, active) => {
@@ -105,6 +125,57 @@ const appeals =
 
     if (decision.type === "project") {
       actions.setProjectActive(decision.project.id, decision.active, note.trim());
+      if (decision.active) {
+window.dispatchEvent(
+  new Event("storage")
+);
+  const reported =
+    JSON.parse(
+      localStorage.getItem(
+        "reportedProjects"
+      )
+    ) || [];
+
+  const updatedReported =
+    reported.filter(
+      (project) =>
+
+        String(project.projectId) !==
+        String(decision.project.id)
+    );
+
+  localStorage.setItem(
+    "reportedProjects",
+    JSON.stringify(updatedReported)
+  );
+
+  window.dispatchEvent(
+  new Event("storage")
+);
+
+  const flagged =
+    JSON.parse(
+      localStorage.getItem(
+        "flaggedProjects"
+      )
+    ) || [];
+
+  const updatedFlags =
+    flagged.filter(
+      (project) =>
+
+        String(project.id) !==
+        String(decision.project.id)
+    );
+
+  localStorage.setItem(
+    "flaggedProjects",
+    JSON.stringify(updatedFlags)
+  );
+  window.dispatchEvent(
+  new Event("storage")
+);
+}
 
       toast.success(
         decision.active ? "Project activated" : "Project deactivated"
@@ -136,8 +207,10 @@ const updatedAppeals =
 
       ? {
           ...appeal,
+
           status:
             decision.nextStatus,
+
           decisionNote: note,
         }
 
@@ -149,7 +222,7 @@ localStorage.setItem(
   JSON.stringify(updatedAppeals)
 );
 
-/* ACCEPTED */
+/* ACCEPT APPEAL */
 
 if (
   decision.nextStatus ===
@@ -169,8 +242,10 @@ if (
     reported.filter(
       (project) =>
 
-        project.projectId !==
-        decision.appeal.projectId
+        String(project.projectId) !==
+        String(
+          decision.appeal.projectId
+        )
     );
 
   localStorage.setItem(
@@ -178,7 +253,7 @@ if (
     JSON.stringify(updatedReported)
   );
 
-  /* UPDATE FLAG */
+  /* UPDATE FLAGGED */
 
   const flagged =
     JSON.parse(
@@ -187,30 +262,22 @@ if (
       )
     ) || [];
 
+  
+
   const updatedFlags =
-    flagged.map((project) =>
+  flagged.filter(
+    (project) =>
 
-      project.id ===
-      decision.appeal.projectId
-
-        ? {
-            ...project,
-            appealStatus:
-              "accepted",
-
-            status:
-              "resolved",
-
-            active: true,
-          }
-
-        : project
-    );
-
-  localStorage.setItem(
-    "flaggedProjects",
-    JSON.stringify(updatedFlags)
+      String(project.id) !==
+      String(
+        decision.appeal.projectId
+      )
   );
+
+localStorage.setItem(
+  "flaggedProjects",
+  JSON.stringify(updatedFlags)
+);
 }
       toast.success(`Appeal ${decision.nextStatus}`);
     }
@@ -373,22 +440,42 @@ if (
               ) : null}
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  className="bg-[color:var(--primary)] text-white hover:opacity-90"
-                  onClick={() => openAppealDecision(appeal, "accepted")}
-                >
-                  Accept appeal
-                </AppButton>
+                {appeal.status !== "rejected" &&
+ appeal.status !== "accepted" ? (
 
-                <AppButton
-                  variant="danger"
-                  size="sm"
-                  onClick={() => openAppealDecision(appeal, "rejected")}
-                >
-                  Reject
-                </AppButton>
+  <AppButton
+    variant="primary"
+    size="sm"
+    className="bg-[color:var(--primary)] text-white hover:opacity-90"
+    onClick={() =>
+      openAppealDecision(
+        appeal,
+        "accepted"
+      )
+    }
+  >
+    Accept appeal
+  </AppButton>
+
+) : null}
+
+                {appeal.status !== "rejected" &&
+ appeal.status !== "accepted" ? (
+
+  <AppButton
+    variant="danger"
+    size="sm"
+    onClick={() =>
+      openAppealDecision(
+        appeal,
+        "rejected"
+      )
+    }
+  >
+    Reject
+  </AppButton>
+
+) : null}
               </div>
             </div>
           ))}

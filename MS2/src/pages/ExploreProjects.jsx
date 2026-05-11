@@ -23,7 +23,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
 
 export default function ExploreProjects({showReport = false,}) {
 
@@ -55,7 +55,42 @@ const [reportReason, setReportReason] =
   useState("");
 
   const [projects, setProjects] =
-  useState(getAllProjects());
+  useState(() => getAllProjects());
+
+  useEffect(() => {
+
+  const syncProjects = () => {
+
+    const updatedReports =
+      JSON.parse(
+        localStorage.getItem(
+          "reportedProjects"
+        )
+      ) || [];
+
+    setReportedProjects(
+      updatedReports
+    );
+
+    setProjects(
+      getAllProjects()
+    );
+  };
+
+  window.addEventListener(
+    "storage",
+    syncProjects
+  );
+
+  syncProjects();
+
+  return () =>
+    window.removeEventListener(
+      "storage",
+      syncProjects
+    );
+
+}, []);
 
   const [view, setView] = useState("grid");
 
@@ -418,25 +453,27 @@ const instructorOptions = [
     ) || [];
 
   const newFlaggedProject = {
-    id: selectedProject.id,
+  id: selectedProject.id,
 
-    title: selectedProject.title,
+  title: selectedProject.title,
 
-    student:
-      selectedProject.students ||
-      selectedProject.instructor ||
-      "Unknown",
+  student:
+    selectedProject.students ||
+    selectedProject.instructor ||
+    "Unknown",
 
-    course: getDisplayCourse(selectedProject),
+  course: selectedProject.course,
 
-    reason: reportReason,
+  reason: reportReason,
 
-    flaggedBy: "Instructor Review",
+  flaggedBy: "Instructor Review",
 
-    status: "flagged",
+  status: "flagged",
 
-    active: false,
-  };
+  active: false,
+
+  appealStatus: null,
+};
 
   localStorage.setItem(
     "flaggedProjects",
