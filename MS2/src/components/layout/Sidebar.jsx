@@ -15,6 +15,7 @@ import {
   SearchIcon,
   Settings,
   ShieldCheck,
+  BookCheckIcon,
   User,
  
   ClipboardList,
@@ -59,7 +60,7 @@ const workspaceItems = {
     { label: "Home", icon: Home, path: "/instructor-dashboard" },
     { label: "Explore", icon: SearchIcon, path: "/discover" },
     { label: "Projects", icon: FolderKanban, path: "/view-all-projects" },
-    { label: "My Courses", icon: BookOpen, path: "/instructor/my-courses" },
+    { label: "My Courses", icon: BookCheckIcon, path: "/instructor/my-courses" },
     { label: "Courses", icon: BookOpen, path: "/instructor/courses" },
     { label: "Invitations", icon: ClipboardCheck, path: null },
     { label: "Settings", icon: Settings, path: "/settings" },
