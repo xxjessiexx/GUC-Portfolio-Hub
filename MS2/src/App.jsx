@@ -55,9 +55,11 @@ import FavoriteList from "@/pages/FavoriteList"
 import FavoritePortfolios from "./pages/FavoritePortfolios";
 import FavoriteProjects from "./pages/FavoriteProjects";
 import AdminOverview from "@/pages/admin/AdminOverview";
+import InstructorProjects from "@/pages/InstructorProjects";
 import FeaturedStudents
 from "@/pages/FeaturedStudents";
 import Settings from "./pages/Settings";
+import PublicStudentPortfolio from "./pages/PublicStudentPortfolio";
 
 export default function App() {
   useEffect(() => {
@@ -230,6 +232,14 @@ export default function App() {
   element={
     <ProtectedRoute allowedRoles={["instructor"]}>
       <InstructorMyCourses />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/instructor/projects"
+  element={
+    <ProtectedRoute allowedRoles={["instructor"]}>
+      <InstructorProjects />
     </ProtectedRoute>
   }
 />
@@ -565,6 +575,7 @@ export default function App() {
                 />
               }
             />
+            <Route path="/public-portfolio" element={<PublicStudentPortfolio />} />
           </Routes>
         </UserProfileProvider>
       </NotificationsProvider>
