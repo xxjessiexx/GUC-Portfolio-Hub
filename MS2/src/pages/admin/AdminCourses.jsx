@@ -15,6 +15,7 @@ import FilterSelect from "@/components/common/FilterSelect";
 
 import { useAdminModuleData } from "@/hooks/useAdminModuleData";
 import { AppButton } from "@/components/ui/AppButton";
+import { Link } from "react-router-dom";
 
 const courseGrid =
   "lg:grid-cols-[0.75fr_1.5fr_0.8fr_1.2fr_0.7fr_0.8fr_1.3fr]";
@@ -199,6 +200,7 @@ export default function AdminCourses() {
         />
 
         <AppButton
+          as={Link}
           to="/admin/courses/create"
           className="h-14 rounded-[1.35rem] bg-gradient-to-r from-[#2E4053] to-[#77A9CC] px-8 text-base font-black text-white shadow-none hover:from-[#263849] hover:to-[#6A9DBF]"
         >

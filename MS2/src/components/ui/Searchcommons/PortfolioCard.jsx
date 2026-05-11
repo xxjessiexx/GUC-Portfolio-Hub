@@ -104,7 +104,7 @@ export default function PortfolioCard({
       {/* BUTTON */}
       <div className="flex justify-end mt-6">
       <button
-  onClick={() => navigate("/portfolio")}
+  onClick={() => navigate(`/public-portfolio?userId=${portfolio.id}`)}
   className="
     mt-6
     text-[#69A7FF]
