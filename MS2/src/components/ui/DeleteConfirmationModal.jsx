@@ -1,8 +1,7 @@
 export default function DeleteConfirmationModal({
   open,
   title = "Delete item?",
-  description =
-    "This action cannot be undone.",
+  description = "This action cannot be undone.",
   onCancel,
   onConfirm,
   confirmText = "Delete",
@@ -14,22 +13,22 @@ export default function DeleteConfirmationModal({
       className="
         fixed inset-0 z-[99999]
         flex items-center justify-center
-        bg-black/40
-        backdrop-blur-sm
+        bg-[#102B3C]/18
+        px-6
+        backdrop-blur-[1.5px]
       "
     >
       <div
         className="
           w-full max-w-md
           rounded-[32px]
-          border border-white/40
+          border border-white/70
           bg-white
           p-8
-          shadow-2xl
+          shadow-[0_30px_90px_rgba(44,57,71,0.22)]
         "
       >
         <div className="flex flex-col gap-6">
-
           <div>
             <h2
               className="
@@ -46,6 +45,7 @@ export default function DeleteConfirmationModal({
                 mt-3
                 text-base
                 font-semibold
+                leading-relaxed
                 text-[color:var(--muted)]
               "
             >
@@ -54,13 +54,13 @@ export default function DeleteConfirmationModal({
           </div>
 
           <div className="flex justify-end gap-3">
-
             <button
               type="button"
               onClick={onCancel}
               className="
                 rounded-2xl
                 border border-slate-200
+                bg-white
                 px-5 py-3
                 font-black
                 text-slate-500
@@ -80,13 +80,13 @@ export default function DeleteConfirmationModal({
                 px-5 py-3
                 font-black
                 text-white
+                shadow-[0_14px_30px_rgba(239,68,68,0.28)]
                 transition
                 hover:bg-red-600
               "
             >
               {confirmText}
             </button>
-
           </div>
         </div>
       </div>
