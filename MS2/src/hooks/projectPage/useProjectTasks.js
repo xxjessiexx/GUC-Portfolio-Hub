@@ -5,18 +5,9 @@ import {
   getDisplayName,
   makeId,
 } from "@/utils/projectPage/projectPageHelpers";
-import { getInvitationStatus } from "@/utils/projectPage/normalizeProjectForPage";
 
-function getStudentNotificationTargets(project) {
-  if (!project) return [];
-
-  const acceptedCollaborators = (project.collaboratorIds || []).filter(
-    (id) => getInvitationStatus(project, id) === "accepted"
-  );
-
-  return Array.from(
-    new Set([project.ownerId, ...acceptedCollaborators].filter(Boolean))
-  );
+function sameId(a, b) {
+  return String(a || "") === String(b || "");
 }
 
 export function useProjectTasks({
@@ -25,8 +16,10 @@ export function useProjectTasks({
   setTasks,
   setProject,
   isBachelorProject,
+  canManageTasks,
   canAddInstructorFeedback,
   loggedInUser,
+  currentUser,
   makeNotification,
 }) {
   const [showTaskPopup, setShowTaskPopup] = useState(false);
@@ -44,13 +37,55 @@ export function useProjectTasks({
 
   const [taskFeedbackDrafts, setTaskFeedbackDrafts] = useState({});
 
-  const storeTasks = (nextTasks) => {
-    if (!project?.id || !Array.isArray(nextTasks)) return;
+  const canUpdateThisTaskStatus = (task) => {
+    if (!task || !loggedInUser?.id) return false;
+    if (canManageTasks) return true;
 
-    const orderedTasks = nextTasks.map((task, index) => ({
-      ...task,
-      order: index,
-    }));
+    return (
+      sameId(task.assigneeId, loggedInUser.id) ||
+      sameId(task.assignedToId, loggedInUser.id) ||
+      sameId(task.userId, loggedInUser.id) ||
+      String(task.assignee || "").trim().toLowerCase() ===
+        String(currentUser || getDisplayName(loggedInUser)).trim().toLowerCase()
+    );
+  };
+
+  const storeTasks = (nextTasksOrUpdater) => {
+    if (!project?.id || !canManageTasks) return;
+
+    const resolvedTasks =
+      typeof nextTasksOrUpdater === "function"
+        ? nextTasksOrUpdater(tasks)
+        : nextTasksOrUpdater;
+
+    const orderedTasks = (Array.isArray(resolvedTasks) ? resolvedTasks : []).map(
+      (task, index) => ({
+        ...task,
+        order: index,
+      })
+    );
+
+    setTasks(orderedTasks);
+
+    setProject((current) =>
+      current ? { ...current, tasks: orderedTasks } : current
+    );
+
+    updateProject(project.id, {
+      tasks: orderedTasks,
+      updatedAt: new Date().toISOString(),
+    });
+  };
+
+  const persistTasksWithoutOwnerOnlyCheck = (nextTasks) => {
+    if (!project?.id) return;
+
+    const orderedTasks = (Array.isArray(nextTasks) ? nextTasks : []).map(
+      (task, index) => ({
+        ...task,
+        order: Number.isFinite(Number(task.order)) ? Number(task.order) : index,
+      })
+    );
 
     setTasks(orderedTasks);
 
@@ -65,18 +100,21 @@ export function useProjectTasks({
   };
 
   const updateTaskStatus = (id, newStatus) => {
-    storeTasks(
+    const selectedTask = tasks.find((task) => sameId(task.id, id));
+    if (!canUpdateThisTaskStatus(selectedTask)) return;
+
+    persistTasksWithoutOwnerOnlyCheck(
       tasks.map((task) =>
-        task.id === id ? { ...task, status: newStatus } : task
+        sameId(task.id, id) ? { ...task, status: newStatus } : task
       )
     );
   };
 
   const addTask = () => {
-    if (!project || !newTask.title.trim()) return;
+    if (!project || !canManageTasks || !newTask.title.trim()) return;
 
-    const selectedMember = project.team.find(
-      (member) => String(member.id) === String(newTask.assigneeId)
+    const selectedMember = (project.team || []).find(
+      (member) => sameId(member.id, newTask.assigneeId)
     );
 
     const nextTask = {
@@ -108,20 +146,21 @@ export function useProjectTasks({
   };
 
   const openEditPopup = (task) => {
+    if (!canManageTasks) return;
     setEditingTask(task);
     setShowEditPopup(true);
   };
 
   const saveEditedTask = () => {
-    if (!project || !editingTask) return;
+    if (!project || !canManageTasks || !editingTask) return;
 
-    const selectedMember = project.team.find(
-      (member) => String(member.id) === String(editingTask.assigneeId)
+    const selectedMember = (project.team || []).find(
+      (member) => sameId(member.id, editingTask.assigneeId)
     );
 
     storeTasks(
       tasks.map((task) =>
-        task.id === editingTask.id
+        sameId(task.id, editingTask.id)
           ? {
               ...editingTask,
               assignee: selectedMember?.name || editingTask.assignee,
@@ -135,17 +174,18 @@ export function useProjectTasks({
   };
 
   const deleteTask = (taskId) => {
-    storeTasks(tasks.filter((task) => task.id !== taskId));
+    if (!canManageTasks) return;
+    storeTasks(tasks.filter((task) => !sameId(task.id, taskId)));
   };
 
-  const addTaskFeedback = (taskId, messageOverride = "") => {
+  const addTaskFeedback = (taskId) => {
     if (!project || !canAddInstructorFeedback) return;
 
-    const message = (messageOverride || taskFeedbackDrafts[taskId] || "").trim();
+    const message = taskFeedbackDrafts[taskId]?.trim();
     if (!message) return;
 
     const nextTasks = tasks.map((task) =>
-      task.id === taskId
+      sameId(task.id, taskId)
         ? {
             ...task,
             feedback: [
@@ -162,57 +202,70 @@ export function useProjectTasks({
         : task
     );
 
-    storeTasks(nextTasks);
+    persistTasksWithoutOwnerOnlyCheck(nextTasks);
 
     setTaskFeedbackDrafts((current) => ({
       ...current,
       [taskId]: "",
     }));
 
-    getStudentNotificationTargets(project).forEach((userId) => {
-      makeNotification(
-        userId,
-        "New task feedback",
-        `${getDisplayName(loggedInUser)} commented on a task in ${project.title}.`,
-        project.id
-      );
-    });
+    makeNotification(
+      project.ownerId,
+      "New task feedback",
+      `${getDisplayName(loggedInUser)} commented on a task in ${project.title}.`,
+      project.id
+    );
   };
 
   const deleteTaskFeedback = (taskId, feedbackId) => {
-    storeTasks(
-      tasks.map((task) =>
-        task.id === taskId
+    if (!canAddInstructorFeedback) return;
+
+    const task = tasks.find((item) => sameId(item.id, taskId));
+    const feedback = task?.feedback?.find((item) => sameId(item.id, feedbackId));
+
+    if (!feedback || !sameId(feedback.authorId, loggedInUser?.id)) return;
+
+    persistTasksWithoutOwnerOnlyCheck(
+      tasks.map((taskItem) =>
+        sameId(taskItem.id, taskId)
           ? {
-              ...task,
-              feedback: (task.feedback || []).filter(
-                (item) => item.id !== feedbackId
+              ...taskItem,
+              feedback: (taskItem.feedback || []).filter(
+                (item) => !sameId(item.id, feedbackId)
               ),
             }
-          : task
+          : taskItem
       )
     );
   };
 
-  const editTaskFeedback = (taskId, feedbackId, nextMessage = "") => {
-    const task = tasks.find((item) => item.id === taskId);
-    const feedback = task?.feedback?.find((item) => item.id === feedbackId);
+  const editTaskFeedback = (taskId, feedbackId) => {
+    if (!canAddInstructorFeedback) return;
 
-    if (!feedback || feedback.authorId !== loggedInUser?.id) return;
+    const task = tasks.find((item) => sameId(item.id, taskId));
+    const feedback = task?.feedback?.find((item) => sameId(item.id, feedbackId));
 
-    const cleanMessage = String(nextMessage || "").trim();
-    if (!cleanMessage) return;
+    if (!feedback || !sameId(feedback.authorId, loggedInUser?.id)) {
+      return;
+    }
 
-    storeTasks(
+    const nextMessage = window.prompt(
+      "Edit task feedback",
+      feedback.message || ""
+    );
+
+    if (nextMessage === null || !nextMessage.trim()) return;
+
+    persistTasksWithoutOwnerOnlyCheck(
       tasks.map((item) =>
-        item.id === taskId
+        sameId(item.id, taskId)
           ? {
               ...item,
               feedback: (item.feedback || []).map((entry) =>
-                entry.id === feedbackId
+                sameId(entry.id, feedbackId)
                   ? {
                       ...entry,
-                      message: cleanMessage,
+                      message: nextMessage.trim(),
                       updatedAt: new Date().toISOString(),
                     }
                   : entry
@@ -221,15 +274,6 @@ export function useProjectTasks({
           : item
       )
     );
-
-    getStudentNotificationTargets(project).forEach((userId) => {
-      makeNotification(
-        userId,
-        "Task feedback updated",
-        `${getDisplayName(loggedInUser)} updated feedback on a task in ${project.title}.`,
-        project.id
-      );
-    });
   };
 
   return {
