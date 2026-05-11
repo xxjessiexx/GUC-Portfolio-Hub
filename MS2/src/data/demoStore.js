@@ -9,9 +9,14 @@ import {
   
 } from "@/data/seed/extra-demo-internships-50";
 
+import {
+  extraPortfolioProjectUsers,
+  extraPortfolioProjects50,
+} from "@/data/seed/extra-ms2-projects-50";
 
-const DB_KEY = "guc_demo_database_v8";
-const CHAT_RESET_VERSION = "chat-reset-v7";
+
+const DB_KEY = "guc_demo_database_v9";
+const CHAT_RESET_VERSION = "chat-reset-v1";
 const CHAT_RESET_KEY = "guc_demo_chat_reset_version";
 const CURRENT_USER_KEY = "currentUser";
 const LEGACY_USERS_KEY = "users";
@@ -58,61 +63,122 @@ function dispatchStoreChange() {
 function dispatchUserChange() {
   if (typeof window !== "undefined") window.dispatchEvent(new Event("demo-current-user-change"));
 }
+function ensureBachelorLinks(db = {}) {
+  const courses = Array.isArray(db.courses) ? db.courses : [];
+  const projects = Array.isArray(db.projects) ? db.projects : [];
 
+  const bachelorCourses = courses.filter((course) => {
+    const type = String(course.type || "").toLowerCase();
+    const name = String(course.name || "").toLowerCase();
+    const code = String(course.code || "").toLowerCase();
 
-function ensureBachelorLinks(db) {
-  const courses = db.courses || [];
-  const bachelor = courses.find((course) =>
-    String(course.type || "").toLowerCase() === "bachelor project" ||
-    String(course.name || "").toLowerCase() === "bachelor project" ||
-    String(course.id || "") === "course-bachelor"
+    return (
+      type.includes("bachelor") ||
+      name.includes("bachelor") ||
+      code.includes("bachelor")
+    );
+  });
+
+  if (!bachelorCourses.length) {
+    return db;
+  }
+
+  const bachelorCourseIds = new Set(
+    bachelorCourses.map((course) => String(course.id))
   );
 
-  if (!bachelor?.id) return db;
+  const updatedProjects = projects.map((project) => {
+    const projectCourseId = String(project.courseId || "");
+    const projectType = String(project.type || "").toLowerCase();
+    const projectCourseName = String(project.courseName || project.course || "").toLowerCase();
 
-  const instructorIds = (db.users || [])
-    .filter((user) => normalizeRole(user.role || user.systemRole || user.accountRole) === "instructor")
-    .map((user) => user.id);
+    const isBachelorProject =
+      bachelorCourseIds.has(projectCourseId) ||
+      projectType.includes("bachelor") ||
+      projectCourseName.includes("bachelor");
 
-  const nextUsers = (db.users || []).map((user) => {
-    if (normalizeRole(user.role || user.systemRole || user.accountRole) !== "instructor") return user;
+    if (!isBachelorProject) {
+      return project;
+    }
+
+    const linkedCourse =
+      courses.find((course) => String(course.id) === projectCourseId) ||
+      bachelorCourses[0];
+
     return {
-      ...user,
-      linkedCourseIds: Array.from(new Set([...(user.linkedCourseIds || []), bachelor.id])),
+      ...project,
+      courseId: project.courseId || linkedCourse.id,
+      courseCode: project.courseCode || linkedCourse.code || "",
+      courseName: project.courseName || linkedCourse.name || "Bachelor Project",
+      course: project.course || `${linkedCourse.code || ""} - ${linkedCourse.name || "Bachelor Project"}`.trim(),
+      type: project.type || "bachelor",
+      instructorIds:
+        project.instructorIds?.length
+          ? project.instructorIds
+          : linkedCourse.instructorIds || [],
     };
   });
 
-  const nextCourses = courses.map((course) => {
-    if (course.id !== bachelor.id) return course;
+  const projectIdsByCourse = updatedProjects.reduce((map, project) => {
+    if (!project.courseId) return map;
+
+    const courseId = String(project.courseId);
+
+    if (!map.has(courseId)) {
+      map.set(courseId, new Set());
+    }
+
+    map.get(courseId).add(project.id);
+
+    return map;
+  }, new Map());
+
+  const updatedCourses = courses.map((course) => {
+    const projectIds = projectIdsByCourse.get(String(course.id));
+
     return {
       ...course,
-      status: course.status === "pending-link" ? "active" : course.status || "active",
-      instructorIds: Array.from(new Set([...(course.instructorIds || []), ...instructorIds])),
+      linkedProjectIds: Array.from(
+        new Set([
+          ...(course.linkedProjectIds || []),
+          ...(projectIds ? Array.from(projectIds) : []),
+        ])
+      ),
     };
   });
 
-  const nextLinkRequests = (db.linkRequests || []).filter((request) => {
-    const action = String(request.action || request.type || "link").toLowerCase();
-    return !(String(request.courseId) === String(bachelor.id) && action.includes("link"));
-  });
-
-  const nextNotifications = (db.notifications || []).filter((notification) => {
-    if (notification.type !== "link-request") return true;
-    if (String(notification.relatedCourseId) === String(bachelor.id)) return false;
-    return !String(notification.text || "").toLowerCase().includes("bachelor project");
-  });
-
-  return { ...db, users: nextUsers, courses: nextCourses, linkRequests: nextLinkRequests, notifications: nextNotifications };
+  return {
+    ...db,
+    courses: updatedCourses,
+    projects: updatedProjects,
+  };
 }
-
 function freshDb() {
   const existingUsers = demoSeed.users || [];
   const existingInternships = demoSeed.internships || [];
+  const existingProjects = demoSeed.projects || [];
 
-  const existingUserIds = new Set(existingUsers.map((user) => user.id));
+  const existingUserIds = new Set(existingUsers.map((user) => String(user.id)));
   const existingInternshipIds = new Set(
-    existingInternships.map((internship) => internship.id)
+    existingInternships.map((internship) => String(internship.id))
   );
+  const existingProjectIds = new Set(
+    existingProjects.map((project) => String(project.id))
+  );
+
+  const allProjects = [
+    ...existingProjects,
+    ...extraPortfolioProjects50.filter(
+      (project) => !existingProjectIds.has(String(project.id))
+    ),
+  ];
+  const projectIdsByCourse = allProjects.reduce((map, project) => {
+    if (!project.courseId) return map;
+    const key = String(project.courseId);
+    if (!map.has(key)) map.set(key, new Set());
+    map.get(key).add(project.id);
+    return map;
+  }, new Map());
 
   const mergedSeed = {
     ...demoSeed,
@@ -120,14 +186,29 @@ function freshDb() {
     users: [
       ...existingUsers,
       ...extraDemoEmployerUsers.filter(
-        (user) => !existingUserIds.has(user.id)
+        (user) => !existingUserIds.has(String(user.id))
+      ),
+      ...extraPortfolioProjectUsers.filter(
+        (user) => !existingUserIds.has(String(user.id))
       ),
     ],
+
+    courses: (demoSeed.courses || []).map((course) => ({
+      ...course,
+      linkedProjectIds: Array.from(
+        new Set([
+          ...(course.linkedProjectIds || []),
+          ...(projectIdsByCourse.get(String(course.id)) || []),
+        ])
+      ),
+    })),
+
+    projects: allProjects,
 
     internships: [
       ...existingInternships,
       ...extraDemoInternships.filter(
-        (internship) => !existingInternshipIds.has(internship.id)
+        (internship) => !existingInternshipIds.has(String(internship.id))
       ),
     ],
 
@@ -136,7 +217,6 @@ function freshDb() {
 
   return clone(ensureBachelorLinks(mergedSeed));
 }
-
 export function normalizeRole(value) {
   const role = String(value || "").trim().toLowerCase();
   if (role.includes("admin")) return "admin";
