@@ -218,7 +218,7 @@ export function normalizeProjectForPage(storeProject) {
     },
 
     ownerName: getDisplayName(owner),
-    ownerId: owner?.id || storeProject.ownerId,
+    ownerId: owner?.id || storeProject.ownerId || storeProject.studentId || storeProject.authorId || storeProject.creatorId,
     owner,
 
     collaboratorIds: storeProject.collaboratorIds || [],
