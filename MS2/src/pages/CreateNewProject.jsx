@@ -735,6 +735,8 @@ export default function CreateNewProject() {
           message: "",
         },
       }));
+
+      return;
     }
   };
 

@@ -25,13 +25,50 @@ import { useAdminModuleData } from "@/hooks/useAdminModuleData";
 const projectsGrid =
   "lg:grid-cols-[1.5fr_1.7fr_0.9fr_0.8fr_0.8fr_0.7fr]";
 
+function getDisplayCourse(project) {
+  const projectType = String(project.type || "").toLowerCase();
+
+  const isBachelorProject =
+    projectType.includes("bachelor") ||
+    projectType.includes("thesis");
+
+  return isBachelorProject
+    ? "Bachelor Project"
+    : (
+        project.course ||
+        project.courseName ||
+        project.courseCode ||
+        "Course Project"
+      );
+}
+
 export default function AdminFlaggedProjects() {
   const {
   flaggedProjects,
   actions,
 } = useAdminModuleData();
 
+const savedFlaggedProjects =
+  JSON.parse(
+    localStorage.getItem(
+      "flaggedProjects"
+    )
+  ) || [];
 
+const allFlaggedProjects = [
+
+  ...flaggedProjects,
+
+  ...savedFlaggedProjects.filter(
+    (savedProject) =>
+
+      !flaggedProjects.some(
+        (project) =>
+          project.id ===
+          savedProject.id
+      )
+  ),
+];
 
 const appeals =
   JSON.parse(
@@ -51,16 +88,16 @@ const appeals =
 
   const filtered = useMemo(
     () =>
-      flaggedProjects.filter((project) => {
+      allFlaggedProjects.filter((project) => {
         const haystack =
-          `${project.title} ${project.student} ${project.course} ${project.reason}`.toLowerCase();
+          `${project.title} ${project.student} ${getDisplayCourse(project)} ${project.reason}`.toLowerCase();
 
         return (
           haystack.includes(search.toLowerCase()) &&
           (status === "all" || project.status === status)
         );
       }),
-    [flaggedProjects, search, status]
+    [allFlaggedProjects, search, status]
   );
 
   const openProjectDecision = (project, active) => {
@@ -88,6 +125,57 @@ const appeals =
 
     if (decision.type === "project") {
       actions.setProjectActive(decision.project.id, decision.active, note.trim());
+      if (decision.active) {
+window.dispatchEvent(
+  new Event("storage")
+);
+  const reported =
+    JSON.parse(
+      localStorage.getItem(
+        "reportedProjects"
+      )
+    ) || [];
+
+  const updatedReported =
+    reported.filter(
+      (project) =>
+
+        String(project.projectId) !==
+        String(decision.project.id)
+    );
+
+  localStorage.setItem(
+    "reportedProjects",
+    JSON.stringify(updatedReported)
+  );
+
+  window.dispatchEvent(
+  new Event("storage")
+);
+
+  const flagged =
+    JSON.parse(
+      localStorage.getItem(
+        "flaggedProjects"
+      )
+    ) || [];
+
+  const updatedFlags =
+    flagged.filter(
+      (project) =>
+
+        String(project.id) !==
+        String(decision.project.id)
+    );
+
+  localStorage.setItem(
+    "flaggedProjects",
+    JSON.stringify(updatedFlags)
+  );
+  window.dispatchEvent(
+  new Event("storage")
+);
+}
 
       toast.success(
         decision.active ? "Project activated" : "Project deactivated"
@@ -119,8 +207,10 @@ const updatedAppeals =
 
       ? {
           ...appeal,
+
           status:
             decision.nextStatus,
+
           decisionNote: note,
         }
 
@@ -132,7 +222,7 @@ localStorage.setItem(
   JSON.stringify(updatedAppeals)
 );
 
-/* ACCEPTED */
+/* ACCEPT APPEAL */
 
 if (
   decision.nextStatus ===
@@ -152,8 +242,10 @@ if (
     reported.filter(
       (project) =>
 
-        project.projectId !==
-        decision.appeal.projectId
+        String(project.projectId) !==
+        String(
+          decision.appeal.projectId
+        )
     );
 
   localStorage.setItem(
@@ -161,7 +253,7 @@ if (
     JSON.stringify(updatedReported)
   );
 
-  /* UPDATE FLAG */
+  /* UPDATE FLAGGED */
 
   const flagged =
     JSON.parse(
@@ -170,30 +262,22 @@ if (
       )
     ) || [];
 
+  
+
   const updatedFlags =
-    flagged.map((project) =>
+  flagged.filter(
+    (project) =>
 
-      project.id ===
-      decision.appeal.projectId
-
-        ? {
-            ...project,
-            appealStatus:
-              "accepted",
-
-            status:
-              "resolved",
-
-            active: true,
-          }
-
-        : project
-    );
-
-  localStorage.setItem(
-    "flaggedProjects",
-    JSON.stringify(updatedFlags)
+      String(project.id) !==
+      String(
+        decision.appeal.projectId
+      )
   );
+
+localStorage.setItem(
+  "flaggedProjects",
+  JSON.stringify(updatedFlags)
+);
 }
       toast.success(`Appeal ${decision.nextStatus}`);
     }
@@ -209,7 +293,7 @@ if (
         <div>
           <p className="font-black text-[color:var(--ink)]">{project.title}</p>
           <p className="mt-1 text-xs font-semibold text-[color:var(--muted)]">
-            {project.student} • {project.course}
+            {project.student} • {getDisplayCourse(project)}
           </p>
         </div>
       ),
@@ -356,22 +440,42 @@ if (
               ) : null}
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  className="bg-[color:var(--primary)] text-white hover:opacity-90"
-                  onClick={() => openAppealDecision(appeal, "accepted")}
-                >
-                  Accept appeal
-                </AppButton>
+                {appeal.status !== "rejected" &&
+ appeal.status !== "accepted" ? (
 
-                <AppButton
-                  variant="danger"
-                  size="sm"
-                  onClick={() => openAppealDecision(appeal, "rejected")}
-                >
-                  Reject
-                </AppButton>
+  <AppButton
+    variant="primary"
+    size="sm"
+    className="bg-[color:var(--primary)] text-white hover:opacity-90"
+    onClick={() =>
+      openAppealDecision(
+        appeal,
+        "accepted"
+      )
+    }
+  >
+    Accept appeal
+  </AppButton>
+
+) : null}
+
+                {appeal.status !== "rejected" &&
+ appeal.status !== "accepted" ? (
+
+  <AppButton
+    variant="danger"
+    size="sm"
+    onClick={() =>
+      openAppealDecision(
+        appeal,
+        "rejected"
+      )
+    }
+  >
+    Reject
+  </AppButton>
+
+) : null}
               </div>
             </div>
           ))}
@@ -392,7 +496,7 @@ if (
                 </h2>
 
                 <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
-                  {selectedProject.student} • {selectedProject.course}
+                  {selectedProject.student} • {getDisplayCourse(selectedProject)}
                 </p>
               </div>
 

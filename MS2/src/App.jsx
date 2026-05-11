@@ -253,6 +253,14 @@ export default function App() {
     </ProtectedRoute>
   }
 />
+<Route
+  path="/instructor/projects"
+  element={
+    <ProtectedRoute allowedRoles={["instructor"]}>
+      <InstructorProjects />
+    </ProtectedRoute>
+  }
+/>
 
 <Route
   path="/admin/courses/create"

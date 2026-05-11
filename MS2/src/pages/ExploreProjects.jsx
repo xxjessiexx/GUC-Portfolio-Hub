@@ -23,11 +23,27 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
 
 export default function ExploreProjects({showReport = false,}) {
 
   /* STATE */
+  const getDisplayCourse = (project) => {
+  const projectType = String(project.type || "").toLowerCase();
+
+  const isBachelorProject =
+    projectType.includes("bachelor") ||
+    projectType.includes("thesis");
+
+  return isBachelorProject
+    ? "Bachelor Project"
+    : (
+        project.course ||
+        project.courseName ||
+        project.courseCode ||
+        "Course Project"
+      );
+};
 
   const [reportOpen, setReportOpen] =
   useState(false);
@@ -39,7 +55,42 @@ const [reportReason, setReportReason] =
   useState("");
 
   const [projects, setProjects] =
-  useState(getAllProjects());
+  useState(() => getAllProjects());
+
+  useEffect(() => {
+
+  const syncProjects = () => {
+
+    const updatedReports =
+      JSON.parse(
+        localStorage.getItem(
+          "reportedProjects"
+        )
+      ) || [];
+
+    setReportedProjects(
+      updatedReports
+    );
+
+    setProjects(
+      getAllProjects()
+    );
+  };
+
+  window.addEventListener(
+    "storage",
+    syncProjects
+  );
+
+  syncProjects();
+
+  return () =>
+    window.removeEventListener(
+      "storage",
+      syncProjects
+    );
+
+}, []);
 
   const [view, setView] = useState("grid");
 
@@ -61,6 +112,7 @@ const [reportReason, setReportReason] =
   useState(null);
 
 const [reportedProjects, setReportedProjects] =
+
   useState(() => {
 
     const saved =
@@ -78,7 +130,8 @@ const [reportedProjects, setReportedProjects] =
 
   ...new Set(
     projects.map(
-      (project) => `Course: ${project.course}`
+      (project) =>
+        `Course: ${getDisplayCourse(project)}`
     )
   ),
 ];
@@ -145,7 +198,7 @@ const instructorOptions = [
     const matchesCourse =
   selectedCourse === "All Courses" ||
 
-  project.course === selectedCourse ||
+  getDisplayCourse(project) === selectedCourse ||
 
   project.courseName === selectedCourse ||
 
@@ -166,7 +219,7 @@ const instructorOptions = [
 
   ...new Set(
     projects.map(
-      (project) => `Course: ${project.course}`
+      (project) => `Course: ${getDisplayCourse(project)}`
     )
   ),
 ];
@@ -410,25 +463,27 @@ const instructorOptions = [
     ) || [];
 
   const newFlaggedProject = {
-    id: selectedProject.id,
+  id: selectedProject.id,
 
-    title: selectedProject.title,
+  title: selectedProject.title,
 
-    student:
-      selectedProject.students ||
-      selectedProject.instructor ||
-      "Unknown",
+  student:
+    selectedProject.students ||
+    selectedProject.instructor ||
+    "Unknown",
 
-    course: selectedProject.course,
+  course: selectedProject.course,
 
-    reason: reportReason,
+  reason: reportReason,
 
-    flaggedBy: "Instructor Review",
+  flaggedBy: "Instructor Review",
 
-    status: "flagged",
+  status: "flagged",
 
-    active: false,
-  };
+  active: false,
+
+  appealStatus: null,
+};
 
   localStorage.setItem(
     "flaggedProjects",

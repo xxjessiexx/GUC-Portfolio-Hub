@@ -772,7 +772,9 @@ function PinnedProjectCard({
 
       <div className="space-y-3 p-4">
         <p className="line-clamp-1 text-sm font-black text-[color:var(--ink)]">
-          {project.course}
+          {getProjectBucket(project) === "bachelor"
+            ? "Bachelor Project"
+            : project.course}
         </p>
 
         <ScoreBadge rating={project.rating} />
@@ -914,7 +916,9 @@ function HorizontalProjectCard({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-lg font-black text-[color:var(--ink)]">
-                {project.course}
+                {getProjectBucket(project) === "bachelor"
+                  ? "Bachelor Project"
+                  : project.course}
               </p>
 
               <p className="mt-1 text-xs font-bold text-[color:var(--muted)]">
@@ -1301,7 +1305,10 @@ function ProjectPreviewModal({
             </h2>
 
             <p className="mt-2 text-sm font-semibold text-[color:var(--muted)]">
-              {project.course} • {project.status}
+              {getProjectBucket(project) === "bachelor"
+                ? "Bachelor Project"
+                : project.course}{" "}
+              • {project.status}
             </p>
           </div>
 
@@ -1493,6 +1500,16 @@ function SaveChangesDialog({ open, onCancel, onDiscard, onSave }) {
 
 
 function getCourseLabelFromStore(project, courses) {
+  const projectType = String(project.type || "").toLowerCase();
+
+  const isBachelorProject =
+    projectType.includes("bachelor") ||
+    projectType.includes("thesis");
+
+  if (isBachelorProject) {
+    return "Bachelor Project";
+  }
+
   if (project.course) return project.course;
   if (project.courseCode) return project.courseCode;
   if (project.courseName) return project.courseName;

@@ -46,6 +46,16 @@ const getProjectDescription = (project) =>
   "No description added yet.";
 
 const getProjectCourse = (project, courses) => {
+  const projectType = String(project.type || "").toLowerCase();
+
+  const isBachelorProject =
+    projectType.includes("bachelor") ||
+    projectType.includes("thesis");
+
+  if (isBachelorProject) {
+    return "Bachelor Project";
+  }
+
   if (project.course) return project.course;
   if (project.courseCode) return project.courseCode;
   if (project.courseName) return project.courseName;
@@ -153,7 +163,11 @@ const reportedProjects =
       return (
         name.toLowerCase().includes(search.toLowerCase()) &&
         (filterCourse === "All" ||
-          course.toUpperCase().includes(filterCourse.toUpperCase())) &&
+                filterCourse === "Bachelor Project"
+        ? course === "Bachelor Project"
+        : course
+            .toUpperCase()
+            .includes(filterCourse.toUpperCase())) &&
         (filterVisibility === "All" || visibility === filterVisibility) 
         
       );
@@ -331,20 +345,20 @@ setAppealMessage("");
   }}
 >
   <FilterSelect
-    value={`Course: ${filterCourse}`}
-    onChange={(value) =>
-      setFilterCourse(
-        value.replace("Course: ", "")
-      )
-    }
-    options={[
-      "Course: All",
-      "Course: CSEN",
-      "Course: MET",
-      "Course: DMET",
-      "Course: BI",
-    ]}
-  />
+  value={`Course: ${filterCourse}`}
+  onChange={(value) =>
+    setFilterCourse(
+      value.replace("Course: ", "")
+    )
+  }
+  options={[
+    "Course: All",
+    "Course: CSEN",
+    "Course: MET",
+    "Course: BI",
+    "Course: Bachelor Project",
+  ]}
+/>
 
   <FilterSelect
     value={`Visibility: ${filterVisibility}`}
@@ -506,15 +520,49 @@ setAppealMessage("");
                 "
               >
 
-                <span>
-                  👨‍🏫 {p.instructor ||
-                  "Instructor"}
-                </span>
+                <div className="flex items-center gap-1 text-gray-500">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-4 h-4"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={2}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M17 20h5V4H2v16h5m10 0v-2a4 4 0 00-8 0v2m8 0H9"
+    />
+  </svg>
 
-                <span>
-                  👥 {p.students ||
-                  0} Students
-                </span>
+  <span>
+    {p.instructor || "Instructor"}
+  </span>
+</div>
+
+<div className="flex items-center gap-1 text-gray-500">
+
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-4 h-4"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={2}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M17 20h5v-1a4 4 0 00-5-3.87M9 20H4v-1a4 4 0 015-3.87m8-6a4 4 0 11-8 0 4 4 0 018 0zm6 2a3 3 0 11-6 0 3 3 0 016 0z"
+    />
+  </svg>
+
+  <span>
+    {p.students || 0} Students
+  </span>
+
+</div>
 
               </div>
 
@@ -539,16 +587,35 @@ setAppealMessage("");
       )
     ) || [];
 
-  const projectAppeal =
-    savedAppeals.find(
-      (appeal) =>
-        appeal.projectId === p.id
-    );
+  const projectAppeals =
+  savedAppeals.filter(
+    (appeal) =>
+      appeal.projectId === p.id
+  );
 
-  const appealStatus =
-    projectAppeal?.status;
+const latestAppeal =
+  projectAppeals[
+    projectAppeals.length - 1
+  ];
 
-  return (
+const flagged =
+  JSON.parse(
+    localStorage.getItem(
+      "flaggedProjects"
+    )
+  ) || [];
+
+const currentFlag =
+  flagged.find(
+    (project) =>
+      String(project.id) ===
+      String(p.id)
+  );
+
+const appealStatus =
+  currentFlag?.appealStatus;
+  
+return (
 
     <button
       onClick={(event) => {
@@ -556,11 +623,12 @@ setAppealMessage("");
         event.stopPropagation();
 
         if (
-          appealStatus === "pending" ||
-          appealStatus === "accepted"
-        ) {
-          return;
-        }
+  appealStatus === "pending" ||
+  appealStatus === "accepted" ||
+  appealStatus === "rejected"
+) {
+  return;
+}
 
         setSelectedAppealProject(p);
 
@@ -568,45 +636,47 @@ setAppealMessage("");
       }}
 
       className={`
-        px-5 py-2
-        rounded-full
-        font-bold
-        text-sm
-        transition
+  px-5 py-2
+  rounded-full
+  font-bold
+  text-sm
+  transition
 
-        ${
-          appealStatus === "accepted"
+  ${
+    appealStatus === "pending"
 
-            ? `
-              bg-green-100
-              text-green-600
-            `
+      ? `
+        bg-orange-100
+        text-orange-500
+      `
 
-            : appealStatus === "pending"
+      : appealStatus === "rejected"
 
-            ? `
-              bg-orange-100
-              text-orange-500
-            `
+      ? `
+        bg-red-100
+        text-red-500
+      `
 
-            : `
-              bg-red-100
-              text-red-500
-              hover:bg-red-200
-            `
-        }
-      `}
+      : `
+        bg-red-100
+        text-red-500
+        hover:bg-red-200
+      `
+  }
+`}
     >
 
-      {appealStatus === "accepted"
+     {
+  appealStatus === "pending"
 
-        ? "Resolved"
+    ? "Reviewing Appeal"
 
-        : appealStatus === "pending"
+    : appealStatus === "rejected"
 
-        ? "Reviewing Appeal"
+    ? "Appeal Rejected"
 
-        : "Send Appeal"}
+    : "Send Appeal"
+}
 
     </button>
 
@@ -710,7 +780,7 @@ setAppealMessage("");
                         updated={getProjectUpdated(p)}
                         onClick={() => openProject(p.id)}
                         left={
-                          <div>
+                          <div className="min-w-0 pr-10">
                             <h3
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -725,7 +795,7 @@ setAppealMessage("");
                               {getProjectCourse(p, courses)}
                             </p>
 
-                            <p className="text-sm text-gray-500 min-w-0 line-clamp-2 max-w-xl">
+                            <p className="max-w-sm text-sm text-gray-500 line-clamp-2">
                               {getProjectDescription(p)}
                             </p>
                           </div>
