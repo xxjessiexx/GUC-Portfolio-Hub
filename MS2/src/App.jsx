@@ -56,6 +56,7 @@ import AdminOverview from "@/pages/admin/AdminOverview";
 import FeaturedStudents
 from "@/pages/FeaturedStudents";
 import Settings from "./pages/Settings";
+import PublicStudentPortfolio from "./pages/PublicStudentPortfolio";
 
 export default function App() {
   useEffect(() => {
@@ -542,6 +543,7 @@ export default function App() {
                 />
               }
             />
+            <Route path="/public-portfolio" element={<PublicStudentPortfolio />} />
           </Routes>
         </UserProfileProvider>
       </NotificationsProvider>
