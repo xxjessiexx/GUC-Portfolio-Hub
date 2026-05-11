@@ -667,45 +667,58 @@ export default function ProjectCollaboratorsSection({
     setInviteMessage("");
   };
 
-  const updateInvitationStatus = (user, status, role) => {
-    const now = new Date().toISOString();
-    const currentStatuses = project.invitationStatuses || [];
-    const userId = user?.id;
+ const updateInvitationStatus = (user, status, role) => {
+  const now = new Date().toISOString();
+  const currentStatuses = project.invitationStatuses || [];
+  const userId = user?.id;
 
-    const exists = currentStatuses.some(
-      (item) => String(item.userId) === String(userId)
+  const normalizedRole =
+    role === "instructor" ? "instructor" : "collaborator";
+
+  const exists = currentStatuses.some(
+    (item) => String(item.userId) === String(userId)
+  );
+
+  if (exists) {
+    return currentStatuses.map((item) =>
+      String(item.userId) === String(userId)
+        ? {
+            ...item,
+            role: normalizedRole,
+            status,
+            updatedAt: now,
+            ...(status === "pending"
+              ? {
+                  invitedAt: now,
+                  sentAt: now,
+                  respondedAt: null,
+                }
+              : {
+                  respondedAt: now,
+                }),
+          }
+        : item
     );
+  }
 
-    if (exists) {
-      return currentStatuses.map((item) =>
-        String(item.userId) === String(userId)
-          ? {
-              ...item,
-              role: role || item.role || "student",
-              status,
-              updatedAt: now,
-              ...(status === "pending" ? { invitedAt: now, respondedAt: null } : {}),
-            }
-          : item
-      );
-    }
-
-    return [
-      ...currentStatuses,
-      {
-        userId,
-        role: role || "student",
-        status,
-        invitedAt: now,
-        updatedAt: now,
-      },
-    ];
-  };
+  return [
+    ...currentStatuses,
+    {
+      userId,
+      role: normalizedRole,
+      status,
+      invitedAt: now,
+      sentAt: now,
+      updatedAt: now,
+      respondedAt: null,
+    },
+  ];
+};
 
   const sendInvitation = (user) => {
     if (!project?.id || !canInvitePeople || !user?.id) return;
 
-    const role = inviteMode === "instructor" ? "instructor" : "student";
+    const role = inviteMode === "instructor" ? "instructor" : "collaborator";
     const nextStatuses = updateInvitationStatus(user, "pending", role);
 
     updateProject(project.id, {
