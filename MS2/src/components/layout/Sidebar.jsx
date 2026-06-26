@@ -50,7 +50,7 @@ const workspaceItems = {
     { label: "My Portfolio", icon: User, path: "/student-dashboard/portfolio" },
     { label: "My Projects", icon: FolderKanban, path: "/view-all-projects" },
     { label: "My Applications", icon: ClipboardList, path: "/my-applications" },
-     { label: "Invitations", icon: ClipboardCheck, path: "/invitations" },
+    { label: "Invitations", icon: ClipboardCheck, path: "/invitations" },
     { label: "Internships", icon: Briefcase, path: "/internships" },
     { label: "Favorites", icon: Heart,  path: "/fav-list" },
     { label: "Settings", icon: Settings, path: "/settings" },
@@ -62,7 +62,7 @@ const workspaceItems = {
     { label: "Projects", icon: FolderKanban, path: "/instructor/projects" },
     { label: "My Courses", icon: BookCheckIcon, path: "/instructor/my-courses" },
     { label: "Courses", icon: BookOpen, path: "/instructor/courses" },
-    { label: "Invitations", icon: ClipboardCheck, path: "/instructor/invitations" },
+    { label: "Invitations", icon: ClipboardCheck, path: "/invitations" },
     { label: "Settings", icon: Settings, path: "/settings" },
   ],
 
