@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import NotificationCard from "./notificationCard";
-import { MessageCircle, Bell, Mail, UserPlus } from "lucide-react";
+import {
+  Bell,
+  Grid2X2,
+  Mail,
+  MessageCircle,
+  UserPlus,
+} from "lucide-react";
 import { useNotifications } from "@/context/NotificationsContext";
 import {
   addNotification,
@@ -10,6 +16,7 @@ import {
   normalizeRole,
   updateProject,
 } from "@/data/demoStore";
+import { cn } from "@/lib/utils";
 
 function makeId(prefix) {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
@@ -121,11 +128,11 @@ export default function NotificationsTabs({ notifications }) {
   };
 
   const allTabs = [
-    { key: "all", label: "All" },
-    { key: "unread", label: "Unread" },
-    { key: "feedback", label: "Feedback" },
-    { key: "messages", label: "Messages" },
-    { key: "invites", label: "Invites" },
+    { key: "all", label: "All", icon: Grid2X2 },
+    { key: "unread", label: "Unread", icon: Bell },
+    { key: "feedback", label: "Feedback", icon: MessageCircle },
+    { key: "messages", label: "Messages", icon: Mail },
+    { key: "invites", label: "Invites", icon: UserPlus },
   ];
 
   const tabsByRole = {
@@ -158,44 +165,63 @@ export default function NotificationsTabs({ notifications }) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap gap-3">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.key;
+    <div className="space-y-5">
+      <div className="rounded-[28px] border border-[color:var(--border-soft)] bg-[var(--surface-soft)] p-2 shadow-[var(--shadow-soft)] backdrop-blur-2xl dark:bg-white/[0.035]">
+        <div
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
+        >
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.key;
+            const Icon = tab.icon;
+            const count = counts[tab.key];
 
-          return (
-            <motion.button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.96 }}
-              className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold transition-all duration-300 border
-              ${
-                isActive
-                  ? "border-[var(--dark)] bg-white/10 text-[var(--dark)]/70"
-                  : "border-white/10 bg-[linear-gradient(135deg,var(--dark),var(--primary))] text-white hover:text-white hover:bg-white/10"
-              }`}
-            >
-              <span>{tab.label}</span>
-
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-bold
-                ${
+            return (
+              <motion.button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                className={cn(
+                  "relative flex min-h-12 items-center justify-center gap-2 rounded-2xl px-3 py-2 text-sm font-black transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--gold)]/20",
                   isActive
-                    ? "border border-[var(--dark)] bg-white/10 text-[var(--dark)]/70"
-                    : "bg-white/10 text-white/70"
-                }`}
+                    ? "border border-[color:var(--gold)]/45 bg-[linear-gradient(135deg,rgba(230,199,123,0.34),rgba(230,199,123,0.16))] text-[color:var(--ink)] shadow-[0_16px_35px_rgba(230,199,123,0.16)] dark:text-white"
+                    : "border border-transparent text-[color:var(--muted)] hover:border-[color:var(--border-soft)] hover:bg-[var(--surface-strong)] hover:text-[color:var(--ink)] dark:hover:bg-white/[0.06]"
+                )}
               >
-                {counts[tab.key]}
-              </span>
-            </motion.button>
-          );
-        })}
+                <Icon
+                  className={cn(
+                    "h-4 w-4",
+                    isActive ? "text-[color:var(--gold)]" : "text-current"
+                  )}
+                />
+
+                <span>{tab.label}</span>
+
+                {count > 0 && (
+                  <span
+                    className={cn(
+                      "grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-[11px] font-black",
+                      isActive
+                        ? "bg-[color:var(--gold)] text-[color:var(--ink)]"
+                        : "bg-[color:var(--gold)]/20 text-[color:var(--primary)] dark:text-[color:var(--gold)]"
+                    )}
+                  >
+                    {count}
+                  </span>
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {filteredNotifications.length === 0 ? (
-          <p className="text-sm text-[var(--muted)]">No notifications</p>
+          <div className="rounded-[26px] border border-dashed border-[color:var(--border-soft)] bg-[var(--surface-soft)] p-8 text-center text-sm font-bold text-[color:var(--muted)]">
+            No notifications in this category.
+          </div>
         ) : (
           filteredNotifications.map((n) => (
             <NotificationCard
