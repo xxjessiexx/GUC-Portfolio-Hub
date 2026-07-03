@@ -6,6 +6,71 @@ import { AppCard } from "../ui/AppCard";
 import DeleteConfirmationModal from "../ui/DeleteConfirmationModal";
 import { cn } from "@/lib/utils";
 
+function formatNotificationTime(time) {
+  if (!time) return "";
+
+  const normalizedTime =
+    typeof time === "string" ? time.replace(" at ", " ") : time;
+
+  const date = new Date(normalizedTime);
+
+  if (Number.isNaN(date.getTime())) {
+    return time;
+  }
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  const isSameDay = date.toDateString() === now.toDateString();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+
+  const isSameYear = date.getFullYear() === now.getFullYear();
+
+  if (diffMinutes < 1) {
+    return "Just now";
+  }
+
+  if (diffMinutes < 60) {
+    return `${diffMinutes} min ago`;
+  }
+
+  if (diffHours < 24 && isSameDay) {
+    return date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
+  if (isYesterday) {
+    return "Yesterday";
+  }
+
+  if (diffDays < 7) {
+    return date.toLocaleDateString([], {
+      weekday: "long",
+    });
+  }
+
+  if (isSameYear) {
+    return date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  return date.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export default function NotificationCard({
   id,
   icon,
@@ -20,9 +85,12 @@ export default function NotificationCard({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+
   const menuRef = useRef(null);
 
   const isProjectInvite = type === "project-invite" || type === "invite";
+  const displayTime = formatNotificationTime(time);
 
   const handleCardClick = () => {
     if (unread) {
@@ -49,6 +117,29 @@ export default function NotificationCard({
 
   const handleCancelDelete = () => {
     setDeleteModalOpen(false);
+  };
+
+  const handleMenuToggle = (event) => {
+    event.stopPropagation();
+
+    const buttonRect = event.currentTarget.getBoundingClientRect();
+    const dropdownHeight = 135;
+
+    const notificationsList = event.currentTarget.closest(
+      "[data-notifications-list]"
+    );
+
+    const listBottom =
+      notificationsList?.getBoundingClientRect().bottom ?? window.innerHeight;
+
+    const spaceBelowInList = listBottom - buttonRect.bottom;
+    const spaceBelowInViewport = window.innerHeight - buttonRect.bottom;
+
+    setOpenUpward(
+      spaceBelowInList < dropdownHeight || spaceBelowInViewport < dropdownHeight
+    );
+
+    setMenuOpen((prev) => !prev);
   };
 
   useEffect(() => {
@@ -87,7 +178,7 @@ export default function NotificationCard({
 
           <div className="flex gap-4">
             <div className="relative shrink-0 self-start">
-              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--dark),var(--primary))] text-white shadow-[var(--shadow-soft)]">
+              <div className="grid h-[52px] w-[52px] place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--dark),var(--primary))] text-white shadow-[var(--shadow-soft)]">
                 {icon || <Bell className="h-5 w-5" />}
               </div>
 
@@ -99,17 +190,9 @@ export default function NotificationCard({
             <div className="min-w-0 flex-1 space-y-2">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-sm font-black text-[color:var(--ink)]">
-                      {title}
-                    </h2>
-
-                    {unread && (
-                      <span className="rounded-full bg-[color:var(--gold)]/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-[color:var(--primary)] dark:text-[color:var(--gold)]">
-                        New
-                      </span>
-                    )}
-                  </div>
+                  <h2 className="text-sm font-black text-[color:var(--ink)]">
+                    {title}
+                  </h2>
 
                   <p className="mt-1 line-clamp-2 text-sm font-medium leading-6 text-[color:var(--muted)]">
                     {description}
@@ -118,16 +201,13 @@ export default function NotificationCard({
 
                 <div className="flex shrink-0 items-center gap-2 text-[color:var(--muted)]">
                   <span className="hidden text-xs font-bold sm:inline">
-                    {time}
+                    {displayTime}
                   </span>
 
                   <div ref={menuRef} className="relative">
                     <button
                       type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setMenuOpen((prev) => !prev);
-                      }}
+                      onClick={handleMenuToggle}
                       className={cn(
                         "grid h-9 w-9 place-items-center rounded-full transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--gold)]/20",
                         menuOpen
@@ -143,7 +223,10 @@ export default function NotificationCard({
                     {menuOpen && (
                       <div
                         onClick={(event) => event.stopPropagation()}
-                        className="absolute right-0 top-11 z-[999] w-48 overflow-hidden rounded-2xl border border-[color:var(--border-soft)] bg-[#F3F8FB] p-2 shadow-[0_22px_60px_rgba(16,38,48,0.28)] ring-1 ring-black/5 dark:bg-[var(--surface)]"
+                        className={cn(
+                          "absolute right-0 z-[999] w-48 overflow-hidden rounded-2xl border border-[color:var(--border-soft)] bg-[#F3F8FB] p-2 shadow-[0_22px_60px_rgba(16,38,48,0.28)] ring-1 ring-black/5 dark:bg-[var(--surface)]",
+                          openUpward ? "bottom-11" : "top-11"
+                        )}
                       >
                         {unread && (
                           <button
@@ -180,7 +263,7 @@ export default function NotificationCard({
 
               <div className="flex flex-wrap items-center justify-between gap-3 pt-1 sm:hidden">
                 <p className="text-xs font-bold text-[color:var(--muted)]">
-                  {time}
+                  {displayTime}
                 </p>
               </div>
             </div>

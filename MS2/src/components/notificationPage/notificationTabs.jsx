@@ -41,6 +41,18 @@ function getInvitationStatus(notification, currentUser) {
   return invitation?.status || notification.invitationStatus || "pending";
 }
 
+function getEmptyStateMessage(activeTab) {
+  const messages = {
+    all: "You're all caught up — nothing needs your attention right now.",
+    unread: "Everything is read — nice work.",
+    feedback: "No feedback notifications yet.",
+    messages: "No message notifications yet.",
+    invites: "No invitations waiting right now.",
+  };
+
+  return messages[activeTab] || "You do not have any notifications here yet.";
+}
+
 export default function NotificationsTabs({ notifications }) {
   const { markAsRead, deleteNotification } = useNotifications();
   const [activeTab, setActiveTab] = useState("all");
@@ -149,7 +161,9 @@ export default function NotificationsTabs({ notifications }) {
     if (activeTab === "unread") return n.unread;
     if (activeTab === "feedback") return n.type === "feedback";
     if (activeTab === "messages") return n.type === "message";
-    if (activeTab === "invites") return n.type === "invite" || n.type === "project-invite";
+    if (activeTab === "invites") {
+      return n.type === "invite" || n.type === "project-invite";
+    }
 
     return true;
   });
@@ -217,10 +231,20 @@ export default function NotificationsTabs({ notifications }) {
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3" data-notifications-list>
         {filteredNotifications.length === 0 ? (
-          <div className="rounded-[26px] border border-dashed border-[color:var(--border-soft)] bg-[var(--surface-soft)] p-8 text-center text-sm font-bold text-[color:var(--muted)]">
-            No notifications in this category.
+          <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[30px] border border-[color:var(--border-soft)] bg-[var(--surface)] px-6 py-12 text-center shadow-[var(--shadow-soft)]">
+            <div className="mb-5 grid h-16 w-16 place-items-center rounded-3xl border border-[color:var(--gold)]/25 bg-[color:var(--gold)]/10 text-[color:var(--gold)] shadow-[0_16px_38px_rgba(230,199,123,0.14)]">
+              <Bell className="h-7 w-7" />
+            </div>
+
+            <h3 className="text-lg font-black text-[color:var(--ink)]">
+              No notifications here
+            </h3>
+
+            <p className="mt-2 max-w-sm text-sm font-semibold leading-6 text-[color:var(--muted)]">
+              {getEmptyStateMessage(activeTab)}
+            </p>
           </div>
         ) : (
           filteredNotifications.map((n) => (
