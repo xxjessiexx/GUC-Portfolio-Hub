@@ -15,7 +15,7 @@ import {
 } from "@/data/seed/extra-ms2-projects-50";
 
 
-const DB_KEY = "guc_demo_database_v9";
+const DB_KEY = "guc_demo_database_v10";
 const CHAT_RESET_VERSION = "chat-reset-v17";
 const CHAT_RESET_KEY = "guc_demo_chat_reset_version";
 const CURRENT_USER_KEY = "currentUser";
