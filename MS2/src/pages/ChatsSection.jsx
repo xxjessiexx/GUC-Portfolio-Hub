@@ -18,7 +18,8 @@ import { AppCard } from "@/components/ui/AppCard";
 
 export default function ChatsSection() {
   const currentUser = getCurrentUser();
-  const [searchParams] = useSearchParams();
+
+  const [searchParams, setSearchParams] = useSearchParams();
   const requestedChatId = searchParams.get("chatId");
   const targetUserId = searchParams.get("targetUserId");
 
@@ -26,9 +27,11 @@ export default function ChatsSection() {
 
   const [selectedChatId, setSelectedChatId] = useState(() => {
     if (requestedChatId) return requestedChatId;
+
     if (targetUserId && currentUser?.id) {
       return `draft-${currentUser.id}-${targetUserId}`;
     }
+
     return null;
   });
 
@@ -54,7 +57,10 @@ export default function ChatsSection() {
         (chat) => String(chat.id) === String(requestedChatId)
       );
 
-      if (chatExists) setSelectedChatId(requestedChatId);
+      if (chatExists) {
+        setSelectedChatId(requestedChatId);
+      }
+
       return;
     }
 
@@ -75,6 +81,7 @@ export default function ChatsSection() {
 
     const existingChat = chats.find((chat) => {
       const participantIds = (chat.participantIds || []).map(String);
+
       return (
         participantIds.length === 2 &&
         participantIds.includes(String(currentUser.id)) &&
@@ -119,6 +126,22 @@ export default function ChatsSection() {
     markChatAsRead(selectedChatId, currentUser.id);
   }, [selectedChatId, currentUser?.id, selectedChat?.isDraft]);
 
+  const handleSelectChat = (chatId) => {
+    setSelectedChatId(chatId);
+
+    if (requestedChatId || targetUserId) {
+      setSearchParams({}, { replace: true });
+    }
+  };
+
+  const handleCreatedChat = (chatId) => {
+    setSelectedChatId(chatId);
+
+    if (requestedChatId || targetUserId) {
+      setSearchParams({}, { replace: true });
+    }
+  };
+
   return (
     <DashboardLayout>
       <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -152,12 +175,12 @@ export default function ChatsSection() {
               <ChatSidebar
                 chats={chats}
                 selectedChatId={selectedChatId}
-                setSelectedChatId={setSelectedChatId}
+                setSelectedChatId={handleSelectChat}
               />
 
               <ChatWindow
                 selectedChat={selectedChat}
-                onCreatedChat={(chatId) => setSelectedChatId(chatId)}
+                onCreatedChat={handleCreatedChat}
               />
             </div>
           </div>
