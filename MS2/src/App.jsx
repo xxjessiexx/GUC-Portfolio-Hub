@@ -116,6 +116,14 @@ export default function App() {
             />
 
             <Route
+        path="/public-portfolio"
+        element={<ProtectedRoute  allowedRoles={["student", "instructor", "employer", "admin"]}>
+                    <PublicStudentPortfolio />
+        </ProtectedRoute>
+        }
+      />
+
+            <Route
   path="/invitations"
   element={
     <ProtectedRoute allowedRoles={["student", "instructor"]}>

@@ -326,10 +326,7 @@ function PortfolioHeader({ page, viewMode = "own", viewedName = "", onOpenSaveDi
   return (
     <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.24em] text-[#355872]/45 dark:text-[#9CD5FF]/60">
-          Portfolio Hub
-        </p>
-
+        
         <h1 className="mt-2 text-5xl font-black tracking-tight text-[color:var(--ink)]">
           {isManage
             ? "Manage Portfolio"

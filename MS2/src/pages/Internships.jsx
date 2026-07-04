@@ -453,13 +453,11 @@ export default function Internships() {
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--primary)]">
-              Internships
-            </p>
+            
 
             <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
               Discover Internships
-              <Sparkles className="ml-2 inline h-5 w-5 fill-[color:var(--gold)] text-[color:var(--gold)]" />
+              
             </h1>
 
             <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
@@ -541,7 +539,7 @@ export default function Internships() {
               <div>
                 <h2 className="text-2xl font-black text-[color:var(--ink)]">
                   Featured Internships
-                  <Sparkles className="ml-2 inline h-4 w-4 fill-[color:var(--gold)] text-[color:var(--gold)]" />
+                  
                 </h2>
 
                 <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">

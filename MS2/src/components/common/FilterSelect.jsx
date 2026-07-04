@@ -20,8 +20,16 @@ export default function FilterSelect({
         <SelectValue />
       </SelectTrigger>
 
-      <SelectContent position="popper" className="z-[9999] rounded-2xl" side="bottom" sideOffset={8}
-  avoidCollisions={false}>
+      <SelectContent position="popper"
+  side="bottom"
+  sideOffset={8}
+  avoidCollisions={false}
+  className="
+    z-[9999]
+    rounded-2xl
+    max-h-64
+    overflow-y-auto
+  ">
         {options.map((option) => (
           <SelectItem key={option} value={option}>
             {option}

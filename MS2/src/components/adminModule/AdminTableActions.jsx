@@ -50,6 +50,15 @@ export default function AdminTableActions({
       ].join(" ");
     }
 
+     if (action.success) {
+    return [
+      "flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-bold transition",
+      isDarkMode
+        ? "text-emerald-300 hover:bg-emerald-500/15 hover:text-emerald-200"
+        : "text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700",
+    ].join(" ");
+  }
+
     return [
       "flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-bold transition",
       isDarkMode
@@ -64,6 +73,12 @@ export default function AdminTableActions({
         ? "size-4 text-rose-200"
         : "size-4 text-rose-500";
     }
+
+    if (action.success) {
+    return isDarkMode
+      ? "size-4 text-emerald-300"
+      : "size-4 text-emerald-600";
+  }
 
     return isDarkMode
       ? "size-4 text-[#9CD5FF]"

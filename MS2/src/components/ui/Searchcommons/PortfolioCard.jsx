@@ -15,13 +15,16 @@ export default function PortfolioCard({
   return (
     <AppCard
       className="
-        p-6
-        rounded-[28px]
-        border border-gray-100
-        bg-white/85
-        backdrop-blur-md
-        hover:shadow-md
-        transition
+         h-full
+    flex
+    flex-col
+    p-6
+    rounded-[28px]
+    border border-gray-100
+    bg-white/85
+    backdrop-blur-md
+    hover:shadow-md
+    transition
       "
     >
 
@@ -90,7 +93,7 @@ export default function PortfolioCard({
       </div>
 
       {/* SKILLS */}
-      <div className="flex flex-wrap gap-2 mt-5">
+       <div className="mt-5 flex flex-wrap gap-2">
 
         {portfolio.skills.map((skill) => (
           <CourseBadge
@@ -102,7 +105,7 @@ export default function PortfolioCard({
       </div>
 
       {/* BUTTON */}
-      <div className="flex justify-end mt-6">
+      <div className="mt-auto flex justify-end pt-6">
       <button
   onClick={() => navigate(`/public-portfolio?userId=${portfolio.id}`)}
   className="

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Eye, FileWarning, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
-
+import { Pencil, Plus } from "lucide-react";
 import { AdminPageShell } from "@/components/adminModule/AdminPageShell";
 import { AdminPageHeader } from "@/components/adminModule/AdminPageHeader";
 import { AdminGridTable } from "@/components/adminModule/AdminTable";
@@ -285,6 +285,11 @@ localStorage.setItem(
     setDecision(null);
   };
 
+  const uniqueRows = filtered.map((project, index) => ({
+  ...project,
+  __rowId: `${project.id}-${index}`,
+}));
+
   const projectColumns = [
     {
       key: "title",
@@ -333,27 +338,32 @@ localStorage.setItem(
       label: "Actions",
       render: (project) => (
         <AdminTableActions
-          rowId={project.id}
+          rowId={project.__rowId}
           openMenu={openMenu}
           setOpenMenu={setOpenMenu}
           actions={[
-            {
-              label: "Review project",
-              icon: Eye,
-              onClick: () => setSelectedProject(project),
-            },
-            {
-              label: "Activate project",
-              icon: CheckCircle2,
-              onClick: () => openProjectDecision(project, true),
-            },
-            {
-              label: "Deactivate project",
-              icon: XCircle,
-              danger: true,
-              onClick: () => openProjectDecision(project, false),
-            },
-          ]}
+  {
+    label: "Review project",
+    icon: Eye,
+    onClick: () => setSelectedProject(project),
+  },
+
+  project.active
+    ? {
+        label: "Deactivate project",
+        icon: XCircle,
+        danger: true,
+        onClick: () =>
+          openProjectDecision(project, false),
+      }
+    : {
+  label: "Activate project",
+  icon: CheckCircle2,
+  success: true,
+  onClick: () =>
+    openProjectDecision(project, true),
+}
+]}
         />
       ),
     },
@@ -397,11 +407,11 @@ localStorage.setItem(
       </SearchFilterToolbar>
 
       <AdminGridTable
-        columns={projectColumns}
-        rows={filtered}
-        gridTemplate={projectsGrid}
-        emptyMessage="No flagged projects found"
-      />
+  columns={projectColumns}
+  rows={uniqueRows}
+  gridTemplate={projectsGrid}
+  emptyMessage="No flagged projects found"
+/>
 
       <AppCard className="relative z-0 p-6">
         <SectionHeader
@@ -559,19 +569,25 @@ localStorage.setItem(
                   Close
                 </AppButton>
 
-                <AppButton
-                  variant="brand"
-                  onClick={() => openProjectDecision(selectedProject, true)}
-                >
-                  Activate project
-                </AppButton>
-
+                {selectedProject.active ? (
                 <AppButton
                   variant="danger"
-                  onClick={() => openProjectDecision(selectedProject, false)}
+                  onClick={() =>
+                    openProjectDecision(selectedProject, false)
+                  }
                 >
                   Deactivate project
                 </AppButton>
+              ) : (
+                <AppButton
+                  variant="brand"
+                  onClick={() =>
+                    openProjectDecision(selectedProject, true)
+                  }
+                >
+                  Activate project
+                </AppButton>
+              )}
               </div>
             </div>
           </div>

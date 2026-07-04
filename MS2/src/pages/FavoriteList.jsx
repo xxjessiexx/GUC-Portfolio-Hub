@@ -7,6 +7,8 @@ import FilterSelect from "@/components/common/FilterSelect";
 import Pannelforportfolios from "@/components/ui/Searchcommons/Pannelforportfolios";
 import PortfolioData from "@/data/portfoliosData";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 /* IMPORT DATA */
 import ProjectNameData from "@/data/ProjectNameData";
@@ -49,6 +51,19 @@ export default function FavoriteList() {
   const [selectedSort, setSelectedSort] =
     useState("Newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  useEffect(() => {
+  const refresh = () => {
+    setProjects(getAllProjects());
+    setPortfolios(getAllPortfolios());
+  };
+
+  window.addEventListener("demo-db-change", refresh);
+
+  return () => {
+    window.removeEventListener("demo-db-change", refresh);
+  };
+}, []);
 
   /* FAVORITES */
   const toggleFavorite = (id) => {
@@ -130,15 +145,16 @@ const navigate = useNavigate();
     <DashboardLayout>
 
       {/* MAIN */}
-      <div className="min-h-screen p-8 space-y-6">
+      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
 
         {/* HEADER */}
         <div>
-          <h1 className="text-4xl font-black text-[#16253A]">
+          <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
             Favorite List
           </h1>
 
-          <p className="mt-2 text-gray-600 font-medium">
+          <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
             Your Favorite List from Portfolios and Projects
           </p>
         </div>
@@ -187,7 +203,7 @@ const navigate = useNavigate();
   >
     Explore more projects
   </span>{" "}
-  to add to your favorite list 
+  to add to your favorite list !
 </p>
   </div>
 
@@ -233,12 +249,13 @@ const navigate = useNavigate();
   >
     Explore more portfolios
   </span>{" "}
-  to add to your favorite list 
+  to add to your favorite list !
 </p>
   </div>
 
 )}
       </div>
+      </main>
     </DashboardLayout>
   );
 }

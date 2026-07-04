@@ -121,15 +121,16 @@ const [selectedPortfolio, setSelectedPortfolio] =
   return (
     <DashboardLayout>
 
-      <div className="space-y-6">
+      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
 
         {/* HEADER */}
         <div>
-          <h1 className="text-4xl font-black text-[#16253A]">
+           <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
             Explore Portfolios
           </h1>
 
-          <p className="mt-3 text-lg text-gray-500">
+           <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
             Discover and get inspired by portfolios from talented GUC students across all majors and interests.
           </p>
         </div>
@@ -365,6 +366,7 @@ const [selectedPortfolio, setSelectedPortfolio] =
         </AppModal>
       )}
       </div>
+      </main>
     </DashboardLayout>
   );
 }

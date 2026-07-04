@@ -154,39 +154,51 @@ const reportedProjects =
   };
 
   const filteredProjects = projects
-    .filter((p) => {
-      const name = getProjectName(p);
-      const course = getProjectCourse(p, courses);
-      const visibility = normalizeVisibility(p.visibility);
-      
+  .filter((p) => {
+    const name = getProjectName(p);
+    const course = getProjectCourse(p, courses);
+    const visibility = normalizeVisibility(p.visibility);
 
-      return (
-        name.toLowerCase().includes(search.toLowerCase()) &&
-        (filterCourse === "All" ||
-                filterCourse === "Bachelor Project"
+    const matchesSearch = name
+      .toLowerCase()
+      .includes(search.toLowerCase());
+
+    const matchesCourse =
+      filterCourse === "All"
+        ? true
+        : filterCourse === "Bachelor Project"
         ? course === "Bachelor Project"
         : course
             .toUpperCase()
-            .includes(filterCourse.toUpperCase())) &&
-        (filterVisibility === "All" || visibility === filterVisibility) 
-        
+            .includes(filterCourse.toUpperCase());
+
+    const matchesVisibility =
+      filterVisibility === "All" ||
+      visibility === filterVisibility;
+
+      
+    return (
+      matchesSearch &&
+      matchesCourse &&
+      matchesVisibility
+    );
+  })
+  .sort((a, b) => {
+    if (sortBy === "Alphabetical") {
+      return getProjectName(a).localeCompare(getProjectName(b));
+    }
+
+    if (sortBy === "Updated") {
+      return (
+        new Date(b.updatedAt || b.updated || b.createdAt || 0) -
+        new Date(a.updatedAt || a.updated || a.createdAt || 0)
       );
-    })
-    .sort((a, b) => {
-      if (sortBy === "Alphabetical") {
-        return getProjectName(a).localeCompare(getProjectName(b));
-      }
+    }
 
-      if (sortBy === "Updated") {
-        return (
-          new Date(b.updatedAt || b.updated || b.createdAt || 0) -
-          new Date(a.updatedAt || a.updated || a.createdAt || 0)
-        );
-      }
+    return 0;
 
-      return 0;
-    });
-
+    
+  });
   
 
   
@@ -300,11 +312,25 @@ setAppealMessage("");
 
   return (
     <DashboardLayout>
-      <div className="p-8 space-y-6">
+       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
         <SectionHeader
-          title="My Projects"
-          subtitle="Manage, edit, and organize your projects."
-          action={
+  className="
+    [&_h2]:mt-3
+    [&_h2]:text-4xl
+    [&_h2]:font-black
+    [&_h2]:tracking-tight
+    [&_h2]:text-[color:var(--ink)]
+    sm:[&_h2]:text-5xl
+
+    [&_p]:mt-3
+    [&_p]:text-base
+    [&_p]:font-semibold
+    [&_p]:text-[color:var(--muted)]
+  "
+  title="My Projects"
+  subtitle="Manage, edit, and organize your projects."
+  action={
             <div className="-m-2">
               <span
                 onClick={() => navigate("/create-project")}
@@ -421,16 +447,7 @@ setAppealMessage("");
 
     </div>
 
-    <button
-      className="
-        text-[#4F8CFF]
-        text-sm
-        font-bold
-        hover:underline
-      "
-    >
-      View all flagged →
-    </button>
+    
 
   </div>
 
@@ -762,9 +779,9 @@ return (
 
                 
 
-                <span className="-ml-4">Rating / Comments</span>
+                <span className="ml-2">Rating / Comments</span>
 
-                <span className="pl-7">Actions</span>
+                <span className="pl-16">Actions</span>
               </div>
 
               <DragDropList items={filteredProjects} setItems={setProjects}>
@@ -801,64 +818,60 @@ return (
                           </div>
                         }
                         middle={
-                          <div className="contents">
-                            {/* Visibility */}
-                            <div className="flex justify-center">
-                              <div className="relative w-fit">
-                                <select
-                                  value={visibility}
-                                  onClick={(event) => event.stopPropagation()}
-                                  onChange={(e) =>
-                                    toggleVisibility(p.id, e.target.value)
-                                  }
-                                  className={`appearance-none pl-10 pr-8 py-2 rounded-xl border text-sm font-medium cursor-pointer ${
-                                    visibility === "Public"
-                                      ? "bg-green-50 text-green-700 border-green-200"
-                                      : "bg-gray-100 text-gray-600 border-gray-200"
-                                  }`}
-                                >
-                                  <option value="Public">Public</option>
-                                  <option value="Private">Private</option>
-                                </select>
+  <>
+    {/* Visibility column */}
+    <div className="flex justify-center">
+      <div className="relative w-fit">
+        <select
+          value={visibility}
+          onClick={(event) => event.stopPropagation()}
+          onChange={(e) =>
+            toggleVisibility(p.id, e.target.value)
+          }
+          className={`appearance-none pl-10 pr-8 py-2 rounded-xl border text-sm font-medium cursor-pointer ${
+            visibility === "Public"
+              ? "bg-green-50 text-green-700 border-green-200"
+              : "bg-gray-100 text-gray-600 border-gray-200"
+          }`}
+        >
+          <option value="Public">Public</option>
+          <option value="Private">Private</option>
+        </select>
 
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                  {visibility === "Public" ? (
-                                    <Globe size={16} className="text-green-600" />
-                                  ) : (
-                                    <Lock size={16} className="text-gray-500" />
-                                  )}
-                                </span>
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          {visibility === "Public" ? (
+            <Globe size={16} className="text-green-600" />
+          ) : (
+            <Lock size={16} className="text-gray-500" />
+          )}
+        </span>
 
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                  <ChevronDown
-                                    size={14}
-                                    className="text-gray-400"
-                                  />
-                                </span>
-                              </div>
-                            </div>
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <ChevronDown
+            size={14}
+            className="text-gray-400"
+          />
+        </span>
+      </div>
+    </div>
 
-                            {/* Pin */}
-                            <div className="flex justify-center">
-                              
-                            </div>
+    {/* Rating column */}
+    <div className="flex items-center justify-center gap-2 text-sm text-gray-600 whitespace-nowrap ml-4">
+  <span className="font-medium">
+    {getProjectRating(p)}
+  </span>
 
-                            {/* Rating */}
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <span className="font-medium">
-                                {getProjectRating(p)}
-                              </span>
+  <span className="text-yellow-400">★</span>
 
-                              <span className="text-yellow-400">★</span>
+  <span className="text-gray-400">•</span>
 
-                              <span className="text-gray-400">•</span>
-
-                              <span>{getProjectComments(p)} comments</span>
-                            </div>
-                          </div>
-                        }
-                        right={
-                          <div className="flex gap-2 justify-end -mr-4">
+  <span>{getProjectComments(p)} comments</span>
+</div>
+  </>
+}
+                       right={
+  <div className="flex justify-center gap-2 ml-4
+  ">
                             <button
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -950,6 +963,7 @@ return (
 
   onConfirm={submitAppeal}
 />
+</main>
     </DashboardLayout>
   );
 }

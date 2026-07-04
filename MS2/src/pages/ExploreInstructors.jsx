@@ -104,16 +104,16 @@ const totalPages = Math.ceil(
 );
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
 
         {/* HEADER */}
         <div>
-
-          <h1 className="mt-2 text-4xl font-black text-[#16253A]">
+           <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
             Find Instructors
           </h1>
 
-          <p className="mt-3 text-gray-500 text-lg">
+           <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
             Connect with expert instructors across the GUC community and explore their courses and specialties.
           </p>
         </div>
@@ -199,7 +199,8 @@ const totalPages = Math.ceil(
       setSelectedInstructor(null)
     }
   />
-)}
+)}  
+</main>
     </DashboardLayout>
   );
 }
