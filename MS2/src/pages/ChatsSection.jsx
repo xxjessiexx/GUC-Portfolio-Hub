@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
+import { MessageCircle } from "lucide-react";
 
 import {
   CHAT_STORE_EVENT,
@@ -13,6 +14,7 @@ import {
 
 import ChatSidebar from "@/components/chat/ChatSidebar";
 import ChatWindow from "@/components/chat/ChatWindow";
+import { AppCard } from "@/components/ui/AppCard";
 
 export default function ChatsSection() {
   const currentUser = getCurrentUser();
@@ -119,20 +121,48 @@ export default function ChatsSection() {
 
   return (
     <DashboardLayout>
-      <div className="flex h-[calc(100vh-75px)] p-6">
-        <div className="flex w-full overflow-hidden rounded-3xl bg-white shadow-lg">
-          <ChatSidebar
-            chats={chats}
-            selectedChatId={selectedChatId}
-            setSelectedChatId={setSelectedChatId}
-          />
+      <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <AppCard className="relative overflow-hidden rounded-[32px] border-[color:var(--border-soft)] bg-[var(--surface)] px-4 py-6 shadow-[var(--shadow-soft)] sm:px-6 lg:px-8 lg:py-8">
+          <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,rgba(230,199,123,0.12),transparent_70%)] blur-2xl" />
+          <div className="pointer-events-none absolute bottom-0 left-0 h-72 w-72 -translate-x-1/3 translate-y-1/3 rounded-full bg-[radial-gradient(circle,rgba(156,213,255,0.10),transparent_72%)] blur-2xl" />
 
-          <ChatWindow
-            selectedChat={selectedChat}
-            onCreatedChat={(chatId) => setSelectedChatId(chatId)}
-          />
-        </div>
-      </div>
+          <div className="relative mx-auto max-w-6xl">
+            <header className="mb-6 flex items-start gap-4">
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-[color:var(--gold)]/30 bg-[linear-gradient(135deg,rgba(230,199,123,0.16),rgba(255,255,255,0.18))] text-[color:var(--gold)] shadow-[0_16px_38px_rgba(230,199,123,0.14)] sm:h-16 sm:w-16">
+                <MessageCircle className="h-7 w-7" />
+              </div>
+
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-[color:var(--primary)]">
+                  Message Center
+                </p>
+
+                <h1 className="mt-2 text-3xl font-black tracking-tight text-[color:var(--ink)] sm:text-4xl">
+                  Chats
+                </h1>
+
+                <p className="mt-2 text-sm font-semibold leading-6 text-[color:var(--muted)]">
+                  Keep track of project conversations, feedback, and recruiter
+                  chats.
+                </p>
+              </div>
+            </header>
+
+            <div className="mt-7 grid h-[620px] overflow-hidden rounded-[30px] lg:grid-cols-[360px_1fr]">
+              <ChatSidebar
+                chats={chats}
+                selectedChatId={selectedChatId}
+                setSelectedChatId={setSelectedChatId}
+              />
+
+              <ChatWindow
+                selectedChat={selectedChat}
+                onCreatedChat={(chatId) => setSelectedChatId(chatId)}
+              />
+            </div>
+          </div>
+        </AppCard>
+      </section>
     </DashboardLayout>
   );
 }
