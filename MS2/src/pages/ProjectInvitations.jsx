@@ -112,13 +112,24 @@ export default function ProjectInvitations() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <SectionHeader
-          eyebrow="Project workspace"
-          title="Project Invitations"
-          subtitle="Review invitations sent to you from different projects. Accepting adds you to the project; rejecting keeps you out of the team."
-        />
+      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+  <SectionHeader
+  className="
+    [&_h2]:text-4xl
+    sm:[&_h2]:text-5xl
+    [&_h2]:font-black
+    [&_h2]:tracking-tight
 
+    [&_p]:mt-3
+    [&_p]:text-base
+    [&_p]:font-semibold
+    [&_p]:text-[color:var(--muted)]
+  "
+  
+  title="Project Invitations"
+  subtitle="Review invitations sent to you from different projects. Accepting adds you to the project; rejecting keeps you out of the team."
+/>
         <div className="grid gap-4 md:grid-cols-4">
           {filters.map((filter) => {
             const active = activeFilter === filter.id;
@@ -323,6 +334,7 @@ export default function ProjectInvitations() {
           </div>
         )}
       </div>
+      </main>
     </DashboardLayout>
   );
 }

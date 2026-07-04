@@ -38,13 +38,14 @@ export default function DiscoverPage() {
     <DashboardLayout>
       
         {/* HEADER */}
-        <div className=" space-y-6">
+          <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
         <div>
-          <h1 className="text-4xl xl:text-4xl font-black text-[#0F2233]">
+           <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
             Discover
           </h1>
 
-          <p className="mt-2 text-gray-500 font-medium text-m">
+          <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
             Discover projects, portfolios, and course instructors across the GUC community.
           </p>
         </div>
@@ -94,8 +95,9 @@ export default function DiscoverPage() {
 
 </div>
         
-      </div>
+      </div></main>
     </DashboardLayout>
+    
   );
 }
 

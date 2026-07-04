@@ -3,21 +3,22 @@ export default function CourseBadge({
   className = "",
 }) {
   return (
-    <p
+    <span
       className={`
-        inline-block
-        mt-1.5
-        px-3
-        py-1
-        rounded-full
-        bg-[#E8F0FF]
-        text-[#3B5FCC]
-        text-[12px]
-        font-medium
+        inline-flex items-center 
+       rounded-full border
+        border-[#355872]/20 
+        bg-[#355872] px-3 py-1.5 
+        text-xs font-black 
+        text-white 
+        shadow-[0_8px_18px_rgba(53,88,114,0.14)]
+         dark:border-white/10 
+         dark:bg-[#9CD5FF] 
+         dark:text-[#071521]
         ${className}
       `}
     >
       {course}
-    </p>
+    </span>
   );
 }
