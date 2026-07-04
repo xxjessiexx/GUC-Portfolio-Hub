@@ -15,7 +15,7 @@ import {
 } from "@/data/seed/extra-ms2-projects-50";
 
 
-const DB_KEY = "guc_demo_database_v10";
+const DB_KEY = "guc_demo_database_v11";
 const CHAT_RESET_VERSION = "chat-reset-v17";
 const CHAT_RESET_KEY = "guc_demo_chat_reset_version";
 const CURRENT_USER_KEY = "currentUser";
@@ -1658,8 +1658,17 @@ export function markChatAsRead(chatId, userId = getCurrentUser()?.id) {
   notifyChatsChanged();
 }
 
-export function addChatMessage(chatId, text, senderId = getCurrentUser()?.id) {
-  if (!chatId || !senderId || !text?.trim()) return null;
+export function addChatMessage(
+  chatId,
+  text,
+  senderId = getCurrentUser()?.id,
+  options = {}
+) {
+  const attachments = options.attachments || [];
+
+  if (!chatId || !senderId || (!text?.trim() && attachments.length === 0)) {
+    return null;
+  }
 
   const db = getDemoDb();
 
@@ -1677,7 +1686,8 @@ export function addChatMessage(chatId, text, senderId = getCurrentUser()?.id) {
       .slice(2, 8)}`,
     senderId,
     sender: "me",
-    text: text.trim(),
+    text: text?.trim() || "",
+    attachments,
     createdAt: now.toISOString(),
     time: now.toLocaleTimeString([], {
       hour: "2-digit",
@@ -1692,14 +1702,20 @@ export function addChatMessage(chatId, text, senderId = getCurrentUser()?.id) {
   const senderUser = getUserById(senderId);
 
   const senderName =
-  senderUser?.name ||
-  senderUser?.fullName ||
-  senderUser?.displayName ||
-  senderUser?.companyName ||
-  "Someone";
+    senderUser?.name ||
+    senderUser?.fullName ||
+    senderUser?.displayName ||
+    senderUser?.companyName ||
+    "Someone";
+
+  const rawPreview =
+    text?.trim() ||
+    (attachments.length > 0
+      ? `Sent an attachment: ${attachments[0].name}`
+      : "Sent a message");
 
   const messagePreview =
-    text.trim().length > 90 ? `${text.trim().slice(0, 90)}...` : text.trim();
+    rawPreview.length > 90 ? `${rawPreview.slice(0, 90)}...` : rawPreview;
 
   const newNotifications = otherParticipantIds.map((receiverId) => ({
     id: `notif-message-${String(chatId)}-${String(receiverId)}-${Date.now()}-${Math.random()

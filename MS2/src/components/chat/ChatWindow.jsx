@@ -2,6 +2,7 @@ import ChatHeader from "./ChatHeader";
 import MessageBubble from "./MessageBubble";
 import MessageInput from "./MessageInput";
 import { useRef, useEffect, useState } from "react";
+import { MessageCircle } from "lucide-react";
 
 import {
   addChatMessage,
@@ -10,10 +11,7 @@ import {
   getOrCreateDirectChat,
 } from "@/data/demoStore";
 
-export default function ChatWindow({
-  selectedChat,
-  onCreatedChat,
-}) {
+export default function ChatWindow({ selectedChat, onCreatedChat }) {
   const messagesContainerRef = useRef(null);
   const currentUser = getCurrentUser();
 
@@ -28,10 +26,8 @@ export default function ChatWindow({
   const shouldUseScriptedReply = () => {
     if (!selectedChat) return false;
 
-    // Only Omar Adel / employer chat should auto-reply
     if (selectedChat.id !== "chat-student-employer") return false;
 
-    // Only the student should receive Omar's scripted replies
     if (currentUser?.id !== "student-demo-1") return false;
 
     const replies = selectedChat.scriptedReplies || [];
@@ -40,42 +36,45 @@ export default function ChatWindow({
     return Boolean(replies[replyIndex]);
   };
 
-  const handleSendMessage = (text) => {
-    if (!selectedChat) return;
-    if (!text.trim()) return;
+  const handleSendMessage = (text, attachments = []) => {
+  if (!selectedChat) return;
+  if (!text.trim() && attachments.length === 0) return;
 
-    let activeChat = selectedChat;
+  let activeChat = selectedChat;
 
-    if (selectedChat.isDraft) {
-      activeChat = getOrCreateDirectChat(selectedChat.targetUserId, currentUser?.id);
+  if (selectedChat.isDraft) {
+    activeChat = getOrCreateDirectChat(
+      selectedChat.targetUserId,
+      currentUser?.id
+    );
 
-      if (!activeChat?.id) return;
+    if (!activeChat?.id) return;
 
-      onCreatedChat?.(activeChat.id);
-    }
+    onCreatedChat?.(activeChat.id);
+  }
 
-    addChatMessage(activeChat.id, text, currentUser?.id);
+  addChatMessage(activeChat.id, text, currentUser?.id, { attachments });
 
-    if (!shouldUseScriptedReply()) return;
+  if (!shouldUseScriptedReply()) return;
 
-    const replies = activeChat.scriptedReplies || [];
-    const replyIndex = activeChat.scriptedReplyIndex || 0;
-    const nextReply = replies[replyIndex];
-    const otherParticipantId = getOtherParticipantId();
+  const replies = activeChat.scriptedReplies || [];
+  const replyIndex = activeChat.scriptedReplyIndex || 0;
+  const nextReply = replies[replyIndex];
+  const otherParticipantId = getOtherParticipantId();
 
-    if (!nextReply || !otherParticipantId) return;
+  if (!nextReply || !otherParticipantId) return;
 
-    setIsTyping(true);
+  setIsTyping(true);
 
-    window.setTimeout(() => {
-      addScriptedChatReply(activeChat.id, nextReply, otherParticipantId, {
-        markAsUnread: false,
-        createNotification: false,
-      });
+  window.setTimeout(() => {
+    addScriptedChatReply(activeChat.id, nextReply, otherParticipantId, {
+      markAsUnread: false,
+      createNotification: false,
+    });
 
-      setIsTyping(false);
-    }, 1800);
-  };
+    setIsTyping(false);
+  }, 1800);
+};
 
   useEffect(() => {
     setIsTyping(false);
@@ -93,30 +92,40 @@ export default function ChatWindow({
 
   if (!selectedChat) {
     return (
-      <div className="flex flex-1 items-center justify-center bg-[#f8f8f8]">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-700">
-            Your Messages
-          </h2>
+      <section className="flex h-full min-h-0 flex-1 bg-transparent px-6 py-6">
+        <div className="flex h-full w-full items-center justify-center rounded-[28px] border border-[color:var(--border-soft)] bg-[rgba(255,255,255,0.24)]">
+          <div className="max-w-sm -translate-y-2 text-center">
+            <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-3xl border border-[color:var(--gold)]/25 bg-[color:var(--gold)]/10 text-[color:var(--gold)] shadow-[0_16px_38px_rgba(230,199,123,0.14)]">
+              <MessageCircle className="h-7 w-7" />
+            </div>
 
-          <p className="mt-3 text-gray-500">
-            Select a conversation to start chatting
-          </p>
+            <h2 className="text-xl font-black text-[color:var(--ink)]">
+              Select a conversation
+            </h2>
+
+            <p className="mt-2 text-sm font-semibold leading-6 text-[color:var(--muted)]">
+              Choose a chat from the left to view messages and continue your
+              project conversations.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <section className="flex h-full min-h-0 flex-1 flex-col bg-transparent">
       <ChatHeader selectedChat={selectedChat} />
 
-      {/* Messages */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto bg-[#f8f8f8] p-8"
+        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden border-y border-[color:var(--border-soft)] bg-[linear-gradient(135deg,rgba(156,213,255,0.16),rgba(255,255,255,0.34))] px-6 py-7"
       >
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="mx-auto mb-2 rounded-full border border-[color:var(--border-soft)] bg-[var(--surface)] px-4 py-1.5 text-xs font-black text-[color:var(--muted)] shadow-sm">
+            Today
+          </div>
+
           {(selectedChat.messages || []).map((message) => (
             <MessageBubble
               key={message.id}
@@ -126,17 +135,17 @@ export default function ChatWindow({
           ))}
 
           {selectedChat.isDraft && (
-            <div className="mx-auto rounded-full border border-dashed border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-400">
+            <div className="mx-auto rounded-full border border-dashed border-[color:var(--border-soft)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[color:var(--muted)]">
               Send a message to start this conversation.
             </div>
           )}
 
           {isTyping && (
             <div className="flex justify-start">
-              <div className="flex items-center gap-1 rounded-3xl bg-[#ececec] px-5 py-4">
-                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500 [animation-delay:-0.2s]" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500 [animation-delay:-0.1s]" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-gray-500" />
+              <div className="flex items-center gap-1 rounded-3xl border border-[color:var(--border-soft)] bg-[var(--surface)] px-5 py-4 shadow-sm">
+                <span className="h-2 w-2 animate-bounce rounded-full bg-[color:var(--muted)] [animation-delay:-0.2s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-[color:var(--muted)] [animation-delay:-0.1s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-[color:var(--muted)]" />
               </div>
             </div>
           )}
@@ -144,6 +153,6 @@ export default function ChatWindow({
       </div>
 
       <MessageInput onSend={handleSendMessage} />
-    </div>
+    </section>
   );
 }
