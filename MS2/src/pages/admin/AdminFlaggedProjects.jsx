@@ -372,7 +372,7 @@ localStorage.setItem(
   return (
     <AdminPageShell>
       <AdminPageHeader
-        eyebrow="Safety & Moderation"
+        
         title="Flagged Projects and Appeals"
         description="Review flagged projects, inspect appeal messages, record decisions, and activate or deactivate projects with confirmation notes."
         icon={FileWarning}
@@ -497,9 +497,7 @@ localStorage.setItem(
           <div className="w-full max-w-4xl rounded-[32px] border border-white/40 bg-[var(--surface)] p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-[color:var(--primary)]">
-                  Project Moderation
-                </p>
+                
 
                 <h2 className="mt-2 text-3xl font-black text-[color:var(--ink)]">
                   {selectedProject.title}
@@ -564,6 +562,10 @@ localStorage.setItem(
               <div className="flex flex-wrap justify-end gap-3">
                 <AppButton
                   variant="glass"
+                  className="bg-[#F8FAFC]
+border border-[#D7E1EC]
+text-[#355872]
+hover:bg-[#EFF4F8]"
                   onClick={() => setSelectedProject(null)}
                 >
                   Close
@@ -572,18 +574,25 @@ localStorage.setItem(
                 {selectedProject.active ? (
                 <AppButton
                   variant="danger"
-                  onClick={() =>
-                    openProjectDecision(selectedProject, false)
-                  }
+                  onClick={() => {
+  openProjectDecision(selectedProject, true);
+  setSelectedProject(null);
+}}
                 >
                   Deactivate project
                 </AppButton>
               ) : (
                 <AppButton
                   variant="brand"
-                  onClick={() =>
-                    openProjectDecision(selectedProject, true)
-                  }
+                  className="
+    bg-[image:var(--nav-gradient)]
+    text-white
+    hover:brightness-110
+  "
+                  onClick={() => {
+  openProjectDecision(selectedProject, true);
+  setSelectedProject(null);
+}}
                 >
                   Activate project
                 </AppButton>

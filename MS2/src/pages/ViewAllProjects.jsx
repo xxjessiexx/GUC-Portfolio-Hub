@@ -335,7 +335,7 @@ setAppealMessage("");
               <span
                 onClick={() => navigate("/create-project")}
                 className="inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
-                bg-[#2C4E80] shadow-md hover:bg-[#243f69] transition-all cursor-pointer"
+                bg-[image:var(--nav-gradient)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer"
               >
                 + Create Project
               </span>
@@ -770,7 +770,7 @@ return (
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-[3.5fr_1.2fr_1.7fr_1.2fr_1.5fr_1fr] px-10 py-3 text-xs font-semibold text-gray-500 uppercase">
+              <div className="grid grid-cols-[3.7fr_1.3fr_1.3fr_1.7fr_1.6fr_1fr] px-10 py-3 text-xs font-semibold text-gray-500 uppercase">
                 <span className="pl-12">Project</span>
 
                 <span className="-ml-14">Updated</span>
@@ -779,7 +779,9 @@ return (
 
                 
 
-                <span className="ml-2">Rating / Comments</span>
+                <div className="flex justify-center">
+  <span>Rating / Comments</span>
+</div>
 
                 <span className="pl-16">Actions</span>
               </div>
@@ -856,18 +858,22 @@ return (
     </div>
 
     {/* Rating column */}
-    <div className="flex items-center justify-center gap-2 text-sm text-gray-600 whitespace-nowrap ml-4">
-  <span className="font-medium">
-    {getProjectRating(p)}
+    <div className="w-full flex flex-col items-center justify-center text-sm text-gray-600">
+  <div className="flex items-center gap-1">
+    <span className="font-medium">
+      {getProjectRating(p)}
+    </span>
+
+    <span className="text-yellow-400">★</span>
+  </div>
+
+  <span className="mt-1">
+    {getProjectComments(p)} comments
   </span>
-
-  <span className="text-yellow-400">★</span>
-
-  <span className="text-gray-400">•</span>
-
-  <span>{getProjectComments(p)} comments</span>
 </div>
   </>
+
+  
 }
                        right={
   <div className="flex justify-center gap-2 ml-4

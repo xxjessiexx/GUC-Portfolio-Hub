@@ -14,6 +14,7 @@ import FilterSelect from "@/components/common/FilterSelect";
 import { useLocation } from "react-router-dom";
 import { useNavigate }
 from "react-router-dom";
+import Pagination from "@/components/ui/Searchcommons/Pagination";
 
 import {
   FolderOpen,
@@ -30,6 +31,10 @@ import {
   toggleFavoritePortfolio,
 } from "@/data/demoStore";
 
+import { useEffect } from "react";
+
+
+
 export default function ExplorePortfolios({showReport = false}) {
   const navigate = useNavigate();
   const [reportOpen, setReportOpen] =
@@ -38,7 +43,9 @@ export default function ExplorePortfolios({showReport = false}) {
 const [selectedPortfolio, setSelectedPortfolio] =
   useState(null);
 
+const ITEMS_PER_PAGE = 6;
 
+const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedMajor, setSelectedMajor] =
     useState("All Majors");
@@ -95,7 +102,14 @@ const [selectedPortfolio, setSelectedPortfolio] =
         portfolio.skills.includes(selectedSkill);
 
 
-        
+        useEffect(() => {
+  setCurrentPage(1);
+}, [
+  search,
+  selectedMajor,
+  selectedSkill,
+  selectedSort,
+]);
 
 
       return (
@@ -117,6 +131,16 @@ const [selectedPortfolio, setSelectedPortfolio] =
 
       return 0;
     });
+
+    const totalPages = Math.ceil(
+  filteredPortfolios.length / ITEMS_PER_PAGE
+);
+
+const paginatedPortfolios =
+  filteredPortfolios.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <DashboardLayout>
@@ -223,22 +247,33 @@ const [selectedPortfolio, setSelectedPortfolio] =
 
 
             {/* PORTFOLIOS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {/* PORTFOLIOS */}
+<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
 
-              {filteredPortfolios.map((portfolio) => (
-                <PortfolioCard
-                  key={portfolio.id}
-                  portfolio={portfolio}
-                  toggleFavorite={toggleFavorite}
-                  showReport={showReport}
-                  onReport={(portfolio) => {
-                    setSelectedPortfolio(portfolio);
-                    setReportOpen(true);
-                  }}
-                />
-              ))}
+  {paginatedPortfolios.map((portfolio) => (
+    <PortfolioCard
+      key={portfolio.id}
+      portfolio={portfolio}
+      toggleFavorite={toggleFavorite}
+      showReport={showReport}
+      onReport={(portfolio) => {
+        setSelectedPortfolio(portfolio);
+        setReportOpen(true);
+      }}
+    />
+  ))}
 
-            </div>
+</div>
+
+{totalPages > 1 && (
+  <div className="mt-8 flex justify-center">
+    <Pagination
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+    />
+  </div>
+)}
           </div>
 
           {/* RIGHT SIDEBAR */}

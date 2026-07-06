@@ -77,8 +77,22 @@ export function AdminActionDialog({
               ) : null}
 
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <AppButton variant="glass" onClick={onCancel}>{cancelLabel}</AppButton>
-                <AppButton variant={tone === "danger" ? "danger" : "brand"} onClick={onConfirm}>
+                <AppButton
+  variant="glass"
+  onClick={onCancel}
+  className="
+    bg-[#F3F6FA]
+    border border-[#D5DEE8]
+    text-[#355872]
+    hover:bg-[#E9F0F7]
+    hover:border-[#C3D2E3]
+  "
+>{cancelLabel}</AppButton>
+                <AppButton variant={tone === "danger" ? "danger" : "brand"} onClick={onConfirm} className="
+    bg-[image:var(--nav-gradient)]
+    text-white
+    hover:brightness-110
+  ">
                   {confirmLabel}
                 </AppButton>
               </div>

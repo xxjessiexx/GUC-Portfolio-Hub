@@ -28,7 +28,7 @@ export default function PrimaryActionButton({
         flex items-center gap-2
         px-5 py-3
         rounded-2xl
-        bg-[#284C7A]
+        bg-[image:var(--nav-gradient)]
         text-white
         font-semibold
         shadow-sm

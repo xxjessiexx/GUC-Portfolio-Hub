@@ -5,16 +5,17 @@ export default function CourseBadge({
   return (
     <span
       className={`
-        inline-flex items-center 
-       rounded-full border
-        border-[#355872]/20 
-        bg-[#355872] px-3 py-1.5 
-        text-xs font-black 
-        text-white 
-        shadow-[0_8px_18px_rgba(53,88,114,0.14)]
-         dark:border-white/10 
-         dark:bg-[#9CD5FF] 
-         dark:text-[#071521]
+  inline-flex items-center
+  rounded-full border
+  border-white/10
+  bg-[image:var(--nav-gradient)]
+  px-3 py-1.5
+  text-xs font-black
+  text-[#EBEDE3]
+  shadow-[0_8px_18px_rgba(53,88,114,0.14)]
+  dark:bg-[image:var(--nav-gradient)]
+  dark:#F4F2F2
+
         ${className}
       `}
     >

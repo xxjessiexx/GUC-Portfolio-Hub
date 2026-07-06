@@ -78,7 +78,7 @@ export default function DiscoverCard({
           </p>
 
           {/* BUTTON */}
-          <div className="mt-8 whitespace-nowrap">
+          <div className="mt-8 whitespace-nowrap ">
             <PrimaryActionButton text={buttonText} />
           </div>
         </div>
