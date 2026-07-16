@@ -161,7 +161,7 @@ const totalPages = Math.ceil(
 {/* TOP BAR */}
 <div className="flex items-center justify-between">
 
-  <h2 className="font-bold text-[#16253A]">
+  <h2 className="font-bold text-[var(--ink)]">
     {filteredInstructors.length} instructors found
   </h2>
 
@@ -182,7 +182,7 @@ const totalPages = Math.ceil(
         {/* FOOTER */}
         <div className="flex items-center justify-between pt-2">
   
-            <p className="text-sm text-gray-500 font-medium">
+            <p className="text-sm font-medium text-[var(--muted)]">
                 Showing 1 to 4 of {filteredInstructors.length} instructors
             </p>
         <Pagination

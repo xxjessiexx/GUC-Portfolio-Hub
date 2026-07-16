@@ -13,15 +13,17 @@ export default function Pannelforprojects({
 }) {
   const navigate = useNavigate();
   return (
-    <AppCard
-      className="
-        p-6
-        rounded-[30px]
-        bg-white/65
-        border border-gray-100
-        shadow-sm
-      "
-    >
+     <AppCard
+  className="
+    p-6
+    rounded-[30px]
+
+    bg-[var(--card-bg)]
+    border border-[var(--card-border)]
+
+    shadow-[var(--shadow-card)]
+  "
+>
       {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
 
@@ -30,7 +32,7 @@ export default function Pannelforprojects({
             className="
               text-2xl
               font-black
-              text-[#16253A]
+              text-[var(--ink)]
             "
           >
            Your Favorite Projects
@@ -44,7 +46,8 @@ export default function Pannelforprojects({
     navigate("/favorite-projects")
   }
   className="
-    text-[#69A7FF]
+    text-[var(--primary)]
+hover:text-[var(--accent)]
     font-semibold
     flex items-center gap-2
     hover:underline

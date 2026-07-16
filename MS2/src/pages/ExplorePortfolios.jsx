@@ -159,11 +159,7 @@ const paginatedPortfolios =
           </p>
         </div>
 
-        {/* CONTENT */}
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
-
-          {/* LEFT */}
-          <div className="space-y-5">
+        <div className="space-y-5">
 
             {/* SEARCH + FILTERS */}
 <SearchFilterToolbar
@@ -274,7 +270,7 @@ const paginatedPortfolios =
     />
   </div>
 )}
-          </div>
+        
 
           {/* RIGHT SIDEBAR */}
           <div className="space-y-5">
@@ -282,111 +278,10 @@ const paginatedPortfolios =
             
 
             {/* FEATURED */}
-            <AppCard
-            className="
-              p-6
-              rounded-[28px]
-              bg-white/65
-              border border-gray-100
-              shadow-sm
-            "
-          >
-                
-              <h3 className="text-xl font-black text-[#16253A]">
-                Featured Students
-              </h3>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Outstanding portfolios to check out.
-              </p>
-
-              <div className="mt-6 space-y-4">
-
-                {portfolios
-  .filter(
-    (portfolio) =>
-      portfolio.projects >= 6
-  )
-  .slice(0, 3)
-  .map((student) => (
-                  <div
-                    key={student.id}
-                    className="
-                      flex items-center justify-between
-                      p-3
-                      rounded-[20px]
-                      bg-white
-                      border border-gray-100
-                      shadow-sm
-                    "
-                  >
-
-                    <div className="flex items-center gap-3">
-
-                      <img
-                        src={student.image}
-                        alt={student.name}
-                        className="
-                          w-12 h-12
-                          rounded-full
-                          object-cover
-                        "
-                      />
-
-                      <div>
-                        <h4 className="font-bold text-[#16253A]">
-                          {student.name}
-                        </h4>
-
-                        <p className="text-sm text-gray-500">
-                          {student.major}
-                        </p>
-                      </div>
-                      
-                    </div>
-
-                    <div
-                        className="
-                            px-4 py-2
-                            rounded-full
-                            bg-[#EEF5FF]
-                            text-[#69A7FF]
-                            text-sm
-                            font-bold
-                            whitespace-nowrap
-                            flex items-center justify-center
-                    "
-                    >
-                    {student.projects} Projects
-                    </div>
-                   
-                  </div>
-                ))}
-              </div>
-
-              <PrimaryActionButton
-            onClick={() =>
-              navigate("/featured-students")
-            }
-            text="View All Portfolios"
-            className="
-              mt-6
-              w-full
-              h-14
-              rounded-2xl
-              bg-[#284C7A]
-              text-white
-              font-bold
-              flex items-center justify-center gap-2
-              hover:bg-[#1E3C63]
-              transition
-            "
-          >
+            
             
 
-            
-          </PrimaryActionButton>
-            </AppCard>
+
 
           </div>
         </div>

@@ -15,14 +15,16 @@ export default function Pannelforportfolios({
 
   return (
     <AppCard
-      className="
-        p-6
-        rounded-[30px]
-        bg-white/65
-        border border-gray-100
-        shadow-sm
-      "
-    >
+  className="
+    p-6
+    rounded-[30px]
+
+    bg-[var(--card-bg)]
+    border border-[var(--card-border)]
+
+    shadow-[var(--shadow-card)]
+  "
+>
       {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -30,7 +32,7 @@ export default function Pannelforportfolios({
             className="
               text-2xl
               font-black
-              text-[#16253A]
+              text-[var(--ink)]
             "
           >
             Your Favorite Portfolios
@@ -44,7 +46,8 @@ export default function Pannelforportfolios({
     navigate("/favorite-portfolios")
   }
   className="
-    text-[#69A7FF]
+    text-[var(--primary)]
+hover:text-[var(--accent)]
     font-semibold
     flex items-center gap-2
     hover:underline
@@ -76,9 +79,10 @@ export default function Pannelforportfolios({
         {portfolios.map((portfolio) => (
   <div key={portfolio.id} className="w-full min-w-0">
     <PortfolioCard
-      portfolio={portfolio}
-      toggleFavorite={toggleFavorite}
-    />
+  portfolio={portfolio}
+  toggleFavorite={toggleFavorite}
+  compactBadges={true}
+/>
   </div>
 ))}
       </div>

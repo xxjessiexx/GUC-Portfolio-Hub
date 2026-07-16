@@ -7,9 +7,20 @@ export default function FilterPanel({
   clearLabel = "Clear filters",
 }) {
   return (
-    <div className="mt-5 rounded-3xl border border-white/70 bg-white/60 p-5 shadow-[var(--shadow-soft)]">
+    <div
+      className="
+        mt-5
+        rounded-3xl
+        p-5
+
+        bg-[var(--surface)]
+        border border-[var(--card-border)]
+        shadow-[var(--shadow-soft)]
+        backdrop-blur-md
+      "
+    >
       <div className="mb-5 flex items-center justify-between gap-4">
-        <h3 className="text-lg font-black text-[color:var(--ink)]">
+        <h3 className="text-lg font-black text-[var(--ink)]">
           {title}
         </h3>
 
@@ -17,7 +28,27 @@ export default function FilterPanel({
           <button
             type="button"
             onClick={onClear}
-            className="inline-flex h-10 items-center justify-center rounded-2xl border border-[#D7E5F2] bg-white px-4 text-sm font-black text-[color:var(--primary)] shadow-sm transition hover:border-[color:var(--primary)] hover:bg-[#F4F9FF]"
+            className="
+              inline-flex
+              h-10
+              items-center
+              justify-center
+              rounded-2xl
+              px-4
+
+              bg-[var(--surface-strong)]
+              border border-[var(--border-blue)]
+
+              text-sm
+              font-black
+              text-[var(--primary)]
+
+              shadow-[var(--shadow-soft)]
+              transition-all
+
+              hover:bg-[var(--surface-elevated)]
+              hover:border-[var(--primary)]
+            "
           >
             {clearLabel}
           </button>

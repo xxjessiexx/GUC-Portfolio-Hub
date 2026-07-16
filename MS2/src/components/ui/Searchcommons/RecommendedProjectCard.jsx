@@ -13,11 +13,13 @@ export default function RecommendedProjectCard({
   return (
     <div
       className="
-        border border-gray-100
-        rounded-[24px]
-        p-5
-        bg-white/85
-        hover:shadow-md
+        border border-[var(--card-border)]
+rounded-[24px]
+p-5
+bg-[var(--surface)]
+hover:bg-[var(--surface-strong)]
+shadow-[var(--shadow-soft)]
+transition-all
         transition
       "
     >
@@ -39,7 +41,7 @@ export default function RecommendedProjectCard({
 
           {/* TITLE */}
           <div className="min-w-0">
-            <h3 className="text-[20px] font-black text-[#16253A] leading-tight ">
+            <h3 className="text-[20px] font-black text-[var(--ink)] leading-tight ">
               {project.title}
             </h3>
 
@@ -47,7 +49,7 @@ export default function RecommendedProjectCard({
   className="
     mt-1
     text-[15px]
-    text-gray-500
+    text-[var(--muted)]
     font-semibold
     whitespace-nowrap
   "
@@ -58,7 +60,9 @@ export default function RecommendedProjectCard({
         </div>
 
         {/* BADGE */}
-        <div className="px-3 py-1 rounded-full bg-[#EEF5FF] text-[#5E8DDA] text-xs font-semibold">
+        <div className="px-3 py-1 rounded-full bg-[var(--surface-soft)]
+text-[var(--primary)]
+border border-[var(--border-blue)] text-xs font-semibold">
           Public
         </div>
       </div>
@@ -67,7 +71,7 @@ export default function RecommendedProjectCard({
       <p
   className="
     text-[15px]
-    text-gray-500
+    text-[var(--muted)]
     mt-4
     leading-7
     min-h-[96px]
@@ -93,7 +97,7 @@ export default function RecommendedProjectCard({
     flex items-center justify-between
     mt-6
     text-sm
-    text-gray-500
+    text-[var(--muted)]
     font-medium
   "
 >

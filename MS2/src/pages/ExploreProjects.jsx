@@ -340,36 +340,83 @@ const instructorOptions = [
         {/* TOP BAR */}
         <div className="flex items-center justify-between">
 
-          <h2 className="font-bold text-[#16253A]">
+          <h2 className="font-bold text-[var(--ink)]">
             {filteredProjects.length} projects found
           </h2>
 
           {/* VIEW BUTTONS */}
-          <div className="flex gap-2">
+          {/* VIEW BUTTONS */}
+<div
+  className="
+    flex
+    gap-2
+    p-1
+    rounded-2xl
 
-            <button
-              onClick={() => setView("grid")}
-              className={`p-3 rounded-xl border transition ${
-                view === "grid"
-                  ? "bg-[#2C4E80] text-white"
-                  : "bg-white"
-              }`}
-            >
-              <Grid2X2 size={18} />
-            </button>
+    bg-[var(--card-bg)]
+    border border-[var(--card-border)]
+  "
+>
 
-            <button
-              onClick={() => setView("list")}
-              className={`p-3 rounded-xl border transition ${
-                view === "list"
-                  ? "bg-[#2C4E80] text-white"
-                  : "bg-white"
-              }`}
-            >
-              <List size={18} />
-            </button>
+  <button
+    onClick={() => setView("grid")}
+    className={`
+      p-3
+      rounded-xl
+      transition-all
+      duration-300
 
-          </div>
+      ${
+        view === "grid"
+          ? `
+            bg-[var(--surface-elevated)]
+            text-[var(--primary)]
+            border
+            border-[var(--primary)]
+            shadow-[var(--shadow-soft)]
+          `
+          : `
+            bg-transparent
+            text-[var(--muted)]
+            hover:bg-[var(--surface-soft)]
+            hover:text-[var(--primary)]
+          `
+      }
+    `}
+  >
+    <Grid2X2 size={18} />
+  </button>
+
+  <button
+    onClick={() => setView("list")}
+    className={`
+      p-3
+      rounded-xl
+      transition-all
+      duration-300
+
+      ${
+        view === "list"
+          ? `
+            bg-[var(--surface-elevated)]
+            text-[var(--primary)]
+            border
+            border-[var(--primary)]
+            shadow-[var(--shadow-soft)]
+          `
+          : `
+            bg-transparent
+            text-[var(--muted)]
+            hover:bg-[var(--surface-soft)]
+            hover:text-[var(--primary)]
+          `
+      }
+    `}
+  >
+    <List size={18} />
+  </button>
+
+</div>
         </div>
 
         {/* PROJECTS */}

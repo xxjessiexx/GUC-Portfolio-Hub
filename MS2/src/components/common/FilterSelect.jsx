@@ -15,7 +15,23 @@ export default function FilterSelect({
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
-        className={`h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-black text-[color:var(--ink)] shadow-sm ${className}`}
+        className={`h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-black text-[color:var(--ink)] shadow-sm background:
+var(--surface);
+
+border:
+var(--border-soft);
+
+color:
+var(--ink);
+
+hover:
+var(--surface-elevated);
+
+focus border:
+var(--primary);
+
+focus ring:
+var(--ring-soft); ${className}`}
       >
         <SelectValue />
       </SelectTrigger>

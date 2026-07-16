@@ -12,19 +12,26 @@ export default function AppModal({
         fixed inset-0 z-[99999]
         flex items-start justify-center
         overflow-y-auto
-        bg-[#102B3C]/18
+        bg-black/45
+backdrop-blur-sm
         px-6 pb-10 pt-28
-        backdrop-blur-[1.5px]
+        
       "
     >
       <div
         className={`
           w-full ${maxWidth}
           rounded-[32px]
-          border border-white/70
-          bg-white
-          p-6
-          shadow-[0_30px_90px_rgba(44,57,71,0.22)]
+
+bg-[var(--card-bg-strong)]
+border border-[var(--card-border)]
+
+text-[var(--ink)]
+
+p-6
+
+shadow-[var(--shadow-card)]
+backdrop-blur-xl
         `}
       >
         <div className="mb-6 flex items-center justify-between">
@@ -38,10 +45,14 @@ export default function AppModal({
             className="
               grid h-10 w-10 place-items-center
               rounded-2xl
-              bg-slate-100
+              
               text-[color:var(--muted)]
               transition
-              hover:bg-slate-200
+              bg-[var(--surface)]
+border border-[var(--card-border)]
+
+hover:bg-[var(--surface-elevated)]
+hover:border-[var(--primary)]
             "
             aria-label="Close modal"
           >

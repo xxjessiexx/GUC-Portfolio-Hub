@@ -5,14 +5,24 @@ import CourseBadge from "@/components/ui/CourseBadge";
 export default function InstructorCard({ instructor,onView }) {
   return (
     <AppCard
-      className="
-        p-6
-        rounded-[28px]
-        border border-gray-100
-        bg-white
-        shadow-sm
-      "
-    >
+  className="
+    p-6
+    rounded-[28px]
+
+    bg-[var(--card-bg)]
+    border border-[var(--card-border)]
+
+    shadow-[var(--shadow-card)]
+    hover:shadow-[var(--shadow-lifted)]
+
+    backdrop-blur-md
+    transition-all
+    duration-300
+
+    hover:-translate-y-1
+    hover:border-[var(--primary)]
+  "
+>
       <div
         className="
           grid
@@ -32,29 +42,31 @@ export default function InstructorCard({ instructor,onView }) {
           />
 
           <div>
-            <h2 className="text-2xl font-black text-[#16253A]">
+            <h2 className="text-2xl font-black text-[var(--ink)]">
               {instructor.name}
             </h2>
 
-            <p className="mt-1 text-gray-500 font-semibold">
+            <p className="mt-1 text-[var(--muted)] font-semibold">
               {instructor.role}
             </p>
 
-            <p className="mt-2 text-[#69A7FF] font-semibold">
+            <p className="mt-2 text-[var(--primary)] font-semibold">
               {instructor.department}
             </p>
           </div>
         </div>
 
         {/* CENTER */}
-        <div className="space-y-4 xl:border-l xl:border-r border-gray-100 xl:px-6">
+        <div className="space-y-4 xl:border-l
+xl:border-r
+border-[var(--card-border)] xl:px-6">
 
-          <div className="flex items-center gap-3 text-gray-500">
+          <div className="flex items-center gap-3 text-[var(--muted)]">
             <Mail size={18} />
             <span>{instructor.email}</span>
           </div>
 
-          <div className="flex items-center gap-3 text-gray-500">
+          <div className="flex items-center gap-3 text-[var(--muted)]">
             <MapPin size={18} />
             <span>{instructor.office}</span>
           </div>
@@ -62,7 +74,7 @@ export default function InstructorCard({ instructor,onView }) {
 
         {/* COURSES */}
         <div>
-          <h3 className="font-black text-[#16253A] mb-3">
+          <h3 className="font-black text-[var(--ink)] mb-3">
             Courses Taught
           </h3>
 
@@ -82,16 +94,23 @@ export default function InstructorCard({ instructor,onView }) {
           <button
   onClick={onView}
   className="
-    h-12
-    px-6
-    rounded-full
-    border border-[#CFE2FF]
-    text-[#69A7FF]
-    font-semibold
-    flex items-center gap-2
-    hover:bg-[#EEF5FF]
-    transition
-  "
+h-12
+px-6
+rounded-full
+
+border border-[var(--border-blue)]
+bg-[var(--surface)]
+
+text-[var(--primary)]
+font-semibold
+
+flex items-center gap-2
+
+transition-all
+
+hover:bg-[var(--surface-elevated)]
+hover:border-[var(--primary)]
+"
 >
   <Eye size={18} />
   View Profile

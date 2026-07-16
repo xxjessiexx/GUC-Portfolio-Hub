@@ -124,6 +124,15 @@
     color 220ms var(--ease-out-expo),
     border-color 220ms var(--ease-out-expo),
     box-shadow 220ms var(--ease-out-expo);
+
+     --favorite: #ef4444;
+  --favorite-bg: rgba(255,255,255,.9);
+  --favorite-border: rgba(229,231,235,1);
+  --favorite-idle: #9CA3AF;
+
+  --project-badge-bg: #EEF5FF;
+--project-badge-text: #69A7FF;
+--project-badge-border: transparent;
 }
 .dark {
   --primary: #8fc3e6;
@@ -195,6 +204,10 @@
 --card-bg-strong: rgba(10, 25, 38, 0.96);
 --card-border: rgba(156, 213, 255, 0.105);
 
+--project-badge-bg: var(--surface-soft);
+--project-badge-text: var(--primary);
+--project-badge-border: var(--border-blue);
+
 --muted: #9FB2C1;
    --border-blue: rgba(156, 213, 255, 0.1);
   --input-bg: rgba(255, 255, 255, 0.05);
@@ -239,6 +252,14 @@
     #355872 52%,
     #7aaace
   );
+
+  --favorite: var(--gold);
+
+  --favorite-bg: var(--surface);
+
+  --favorite-border: var(--card-border);
+
+  --favorite-idle: var(--muted);
 
   --auth-button-shadow:
     0 24px 54px rgba(0, 0, 0, 0.36),
