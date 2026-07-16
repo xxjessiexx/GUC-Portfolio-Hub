@@ -11,35 +11,24 @@ export default function RecommendedProjectsSection({
       className="
         p-3
         rounded-[30px]
-        bg-white/65
-        border border-gray-100
-        shadow-sm
+        bg-[var(--card-bg)]
+border border-[var(--card-border)]
+shadow-[var(--shadow-card)]
       "
     >
       {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-black text-[#16253A] ml-3">
+          <h2 className="text-2xl font-black text-[var(--ink)] mt-1 ml-4">
             Recommended Projects
           </h2>
 
-          <p className="text-gray-500 mt-1 ml-4">
+          <p className="text-[var(--muted)] mt-1 ml-6">
             Curated projects you might find interesting.
           </p>
         </div>
 
-        <button
-          className="
-            text-[#69A7FF]
-            font-semibold
-            flex items-center gap-2
-            hover:underline
-          "
-        >
-          View More Recommendations
-
-          
-        </button>
+        
       </div>
 
       {/* CARDS */}

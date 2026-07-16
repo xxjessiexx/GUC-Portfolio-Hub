@@ -34,6 +34,9 @@ export default function PrimaryActionButton({
         shadow-sm
         hover:bg-[#1F3D63]
         transition
+        
+         hover:brightness-110
+    hover:saturate-110
         ${className}
       `}
     >

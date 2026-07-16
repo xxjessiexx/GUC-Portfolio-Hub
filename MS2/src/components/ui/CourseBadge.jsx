@@ -8,7 +8,9 @@ export default function CourseBadge({
   inline-flex items-center
   rounded-full border
   border-white/10
-  bg-[image:var(--nav-gradient)]
+  bg-[var(--surface-strong)]
+border-[var(--border-blue)]
+text-[var(--ink)]
   px-3 py-1.5
   text-xs font-black
   text-[#EBEDE3]

@@ -36,7 +36,27 @@ export default function SearchFilterToolbar({
               value={searchValue}
               onChange={(event) => onSearchChange(event.target.value)}
               placeholder={searchPlaceholder}
-              className="h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] pl-11 font-semibold text-[color:var(--ink)]"
+              className="
+  h-12
+  rounded-2xl
+
+  border border-[var(--border-soft)]
+
+  bg-[var(--surface)]
+
+  pl-11
+
+  text-[color:var(--ink)]
+  placeholder:text-[color:var(--muted)]
+
+  font-semibold
+
+  transition-all
+
+  focus:border-[var(--primary)]
+  focus:ring-2
+  focus:ring-[var(--ring-soft)]
+"
             />
           </div>
         )}
@@ -55,7 +75,33 @@ export default function SearchFilterToolbar({
           <button
             type="button"
             onClick={onToggleFilters}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-white/70 bg-white/60 px-5 text-sm font-black text-[color:var(--primary)] shadow-sm transition hover:bg-white/80"
+            className="
+inline-flex
+h-12
+items-center
+justify-center
+gap-2
+
+rounded-2xl
+
+border border-[var(--border-soft)]
+
+bg-[var(--surface)]
+
+px-5
+
+text-sm
+font-black
+
+text-[color:var(--ink)]
+
+shadow-[var(--shadow-soft)]
+
+transition-all
+
+hover:bg-[var(--surface-elevated)]
+hover:border-[var(--primary)]
+"
           >
             <SlidersHorizontal className="h-4 w-4" />
             Filters

@@ -130,8 +130,7 @@ export default function InstructorProfileCard({
           className="
             mt-6
             text-3xl
-            font-black
-            text-[#16253A]
+            text-[var(--ink)]
           "
         >
           {name}
@@ -140,8 +139,7 @@ export default function InstructorProfileCard({
         <p
           className="
             mt-2
-            font-semibold
-            text-gray-400
+            text-[var(--muted)]
           "
         >
           @{username}
@@ -150,7 +148,7 @@ export default function InstructorProfileCard({
         <p
           className="
             font-semibold
-            text-gray-400
+            text-[var(--muted)]
           "
         >
           {email}
@@ -191,8 +189,10 @@ export default function InstructorProfileCard({
                     flex h-14 w-14
                     items-center justify-center
                     rounded-full
-                    bg-[#EEF5FF]
-                    text-[#284C7A]
+                    bg-[var(--surface-strong)]
+text-[var(--primary)]
+border border-[var(--border-blue)]
+hover:bg-[var(--surface-elevated)]
                     transition
                     hover:scale-105
                   "
@@ -212,7 +212,7 @@ export default function InstructorProfileCard({
             className="
               text-2xl
               font-black
-              text-[#16253A]
+              text-[var(--ink)]
             "
           >
             Instructor Information
@@ -220,13 +220,13 @@ export default function InstructorProfileCard({
 
           <div className="mt-6 space-y-5">
             <div className="flex items-center gap-3">
-              <Briefcase className="text-[#284C7A]" />
+              <Briefcase className="text-[var(--primary)]" />
 
               <span
                 className="
                   text-lg
                   font-semibold
-                  text-gray-600
+                  text-[var(--muted)]
                 "
               >
                 {title}
@@ -234,13 +234,13 @@ export default function InstructorProfileCard({
             </div>
 
             <div className="flex items-center gap-3">
-              <MapPin className="text-[#284C7A]" />
+              <MapPin className="text-[var(--primary)]" />
 
               <span
                 className="
                   text-lg
                   font-semibold
-                  text-gray-600
+                  text-[var(--muted)]
                 "
               >
                 {office}
@@ -250,9 +250,11 @@ export default function InstructorProfileCard({
         </div>
 
         {instructor.bio && (
-          <div className="rounded-3xl border border-gray-100 bg-[#F8FBFF] p-5">
-            <h4 className="font-black text-[#16253A]">About</h4>
-            <p className="mt-2 leading-7 text-gray-600">{instructor.bio}</p>
+          <div className="rounded-3xl
+border border-[var(--card-border)]
+bg-[var(--surface)] p-5">
+            <h4 className="font-black text-[var(--ink)]">About</h4>
+            <p className="mt-2 leading-7 text-[var(--muted)]">{instructor.bio}</p>
           </div>
         )}
 
@@ -261,9 +263,9 @@ export default function InstructorProfileCard({
           className="
             mt-10
             grid grid-cols-2 gap-y-6
-            border-t border-gray-100
+            border-t border-[var(--card-border)]
             pt-8
-            md:grid-cols-4
+            md:grid-cols-[1fr_1fr_1.4fr_1fr]
           "
         >
           <ProfileStat
@@ -302,18 +304,21 @@ function ProfileStat({
       className="
         px-4
         text-center
-        md:border-r md:border-gray-100
+        md:border-r
+md:border-[var(--card-border)]
       "
     >
       <h3
-        className="
-          text-2xl
-          font-black
-          text-[#16253A]
-        "
-      >
-        {value}
-      </h3>
+  className="
+text-xl
+font-black
+text-[var(--ink)]
+truncate
+"
+>
+  {value}
+
+</h3>
 
       <p
         className="

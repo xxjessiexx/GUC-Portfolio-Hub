@@ -24,6 +24,10 @@ export default function DiscoverCard({
         min-h-[180px]
         flex flex-col justify-between
         text-[color:var(--ink)]
+
+        hover:-translate-y-1
+  hover:border-[var(--primary)]
+
       "
     >
       <div
@@ -42,7 +46,8 @@ export default function DiscoverCard({
             className="
               w-12 h-12 sm:w-14 sm:h-14
               rounded-2xl
-              bg-[color:var(--surface-strong)]
+              bg-[var(--surface-elevated)]
+border border-[var(--border-blue)]
               flex items-center justify-center
               text-[color:var(--secondary)]
               mb-4
@@ -85,23 +90,29 @@ export default function DiscoverCard({
 
         {/* RIGHT IMAGE */}
         <div
-          className="
-            hidden md:flex
-            items-center
-            justify-center
-            self-center
-          "
-        >
+  className="
+    hidden md:flex
+    items-center
+    justify-center
+    self-center
+
+    rounded-3xl
+    p-5
+
+    bg-[var(--surface-soft)]
+    border border-[var(--card-border)]
+  "
+>
           <img
-            src={image}
-            alt={title}
-            className="
-              w-36
-              xl:w-40
-              object-contain
-              opacity-90
-            "
-          />
+  src={image}
+  alt={title}
+  className="
+    w-36
+    xl:w-40
+    object-contain
+    opacity-90
+  "
+/>
         </div>
       </div>
     </AppCard>

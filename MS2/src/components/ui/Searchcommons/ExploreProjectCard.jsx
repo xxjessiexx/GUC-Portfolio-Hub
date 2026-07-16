@@ -9,6 +9,7 @@ import {
 import { AppCard } from "../AppCard";
 import { useNavigate } from "react-router-dom";
 import FavoriteButton from "@/components/ui/Searchcommons/FavoriteButton";
+import CourseBadge from "@/components/ui/CourseBadge";
 
 export default function ExploreProjectCard({
   project,
@@ -22,21 +23,29 @@ export default function ExploreProjectCard({
   return (
     <AppCard
       className={`
-        overflow-hidden
-        rounded-3xl
-        border border-[color:var(--card-border)]
-        bg-[color:var(--card-bg-strong)]
-        shadow-[var(--shadow-card)]
-        hover:shadow-[var(--shadow-lifted)]
-        transition
-        text-[color:var(--ink)]
+  overflow-hidden
+  rounded-3xl
 
-        ${
-          view === "grid"
-            ? "max-w-[320px]"
-            : "w-full flex flex-row h-[220px]"
-        }
-      `}
+  bg-[var(--card-bg)]
+  border border-[var(--card-border)]
+
+  shadow-[var(--shadow-card)]
+  hover:shadow-[var(--shadow-lifted)]
+
+  backdrop-blur-md
+
+  transition-all
+  duration-300
+
+  hover:-translate-y-1
+  hover:border-[var(--primary)]
+
+  ${
+    view === "grid"
+      ? "max-w-[320px]"
+      : "w-full flex flex-row h-[220px]"
+  }
+`}
     >
       {/* IMAGE */}
       <div className="relative">
@@ -158,24 +167,15 @@ export default function ExploreProjectCard({
         </div>
 
         {/* TAGS */}
-        <div className="mt-4 flex flex-wrap gap-2">
-          {project.tags.map((tag) => (
-            <span
-              key={tag}
-              className="
-                px-3 py-1
-                rounded-full
-                bg-[color:var(--surface-strong)]
-                text-[color:var(--secondary)]
-                text-xs
-                font-semibold
-                border border-[color:var(--card-border)]
-              "
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        {/* TAGS */}
+<div className="mt-2 flex flex-wrap gap-2">
+  {project.tags.map((tag) => (
+    <CourseBadge
+      key={tag}
+      course={tag}
+    />
+  ))}
+</div>
       </div>
     </AppCard>
   );
