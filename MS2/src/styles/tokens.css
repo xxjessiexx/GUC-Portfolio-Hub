@@ -6,8 +6,18 @@
   --dark: #2C3947;
   --gold: #E6C77B;
 
+  --private-bg: #F3F4F6;
+  --private-border: #CBD5E1;
+  --private-text: #6B7280;
+
   --muted: #7B8794;
   --ink: #102630;
+
+   --badge-bg: #355872;
+  --badge-border: #4B6F8D;
+  --badge-text: #ffffff;
+
+  --favorite-heart: #ef4444; /* Tailwind red-500 */
 
   --card-bg: rgba(255, 255, 255, 0.66);
   --card-bg-strong: rgba(255, 255, 255, 0.78);
@@ -142,6 +152,12 @@
   --dark: #eaf4fa;
   --gold: #e6c77b;
 
+  --favorite-heart: var(--gold);
+
+  --badge-bg: var(--nav-gradient);
+  --badge-border: var(--border-blue);
+  --badge-text: var(--ink);
+
   --muted: #9cb0bf;
   --ink: #f3f8fb;
 
@@ -261,6 +277,11 @@
 
   --favorite-idle: var(--muted);
 
+
+  --private-bg: var(--surface-soft);
+  --private-border: var(--card-border);
+  --private-text: var(--muted);
+  
   --auth-button-shadow:
     0 24px 54px rgba(0, 0, 0, 0.36),
     0 12px 34px rgba(122, 170, 206, 0.16);

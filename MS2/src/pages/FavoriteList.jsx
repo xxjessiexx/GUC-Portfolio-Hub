@@ -10,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
+import { FolderOpen, UserRound } from "lucide-react";
+
 /* IMPORT DATA */
 import ProjectNameData from "@/data/ProjectNameData";
 import Pannelforprojects from "@/components/ui/Searchcommons/Pannelforprojects";
@@ -184,28 +186,60 @@ const navigate = useNavigate();
 ) : (
 
   <div
+  className="
+    flex items-center justify-center
+    gap-6
+    py-16
+    rounded-[32px]
+
+    bg-[var(--card-bg)]
+    border border-dashed border-[var(--card-border)]
+
+    shadow-[var(--shadow-card)]
+    backdrop-blur-md
+  "
+>
+  <div
     className="
+      w-20 h-20
+      rounded-full
+      border border-[var(--border-blue)]
+      bg-[var(--surface-soft)]
+
       flex items-center justify-center
-      py-16
-      rounded-[32px]
-      border border-dashed border-gray-200
-      bg-white/60
     "
   >
-    <p className="text-lg font-semibold text-gray-400">
-  <span
-    onClick={() => navigate("/explore-projects")}
-    className="
-      text-[#69A7FF]
-      cursor-pointer
-      hover:underline
-    "
-  >
-    Explore more projects
-  </span>{" "}
-  to add to your favorite list !
-</p>
+    <FolderOpen
+      size={25}
+      className="text-[var(--primary)]"
+    />
   </div>
+
+  <div>
+    <span
+      onClick={() => navigate("/explore-projects")}
+      className="
+        cursor-pointer
+        font-bold
+        text-2xl
+        text-[var(--primary)]
+        hover:text-[var(--accent)]
+      "
+    >
+      Explore more projects
+    </span>
+
+    <span
+      className="
+        ml-2
+        text-2xl
+        text-[var(--muted)]
+      "
+    >
+      to add to your favorite list!
+    </span>
+  </div>
+</div>
 
 )}
 
@@ -230,28 +264,60 @@ const navigate = useNavigate();
 ) : (
 
   <div
+  className="
+    flex items-center justify-center
+    gap-6
+    py-16
+    rounded-[32px]
+
+    bg-[var(--card-bg)]
+    border border-dashed border-[var(--card-border)]
+
+    shadow-[var(--shadow-card)]
+    backdrop-blur-md
+  "
+>
+  <div
     className="
+      w-20 h-20
+      rounded-full
+      border border-[var(--border-blue)]
+      bg-[var(--surface-soft)]
+
       flex items-center justify-center
-      py-16
-      rounded-[32px]
-      border border-dashed border-gray-200
-      bg-white/60
     "
   >
-    <p className="text-lg font-semibold text-gray-400">
-  <span
-    onClick={() => navigate("/explore-portfolio")}
-    className="
-      text-[#69A7FF]
-      cursor-pointer
-      hover:underline
-    "
-  >
-    Explore more portfolios
-  </span>{" "}
-  to add to your favorite list !
-</p>
+    <UserRound
+      size={20}
+      className="text-[var(--primary)]"
+    />
   </div>
+
+  <div>
+    <span
+      onClick={() => navigate("/explore-projects")}
+      className="
+        cursor-pointer
+        font-bold
+        text-2xl
+        text-[var(--primary)]
+        hover:text-[var(--accent)]
+      "
+    >
+      Explore more portfolios
+    </span>
+
+    <span
+      className="
+        ml-2
+        text-2xl
+        text-[var(--muted)]
+      "
+    >
+      to add to your favorite list!
+    </span>
+  </div>
+</div>
 
 )}
       </div>

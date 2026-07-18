@@ -32,13 +32,13 @@ export default function FavoriteButton({
 "
     >
       <Heart
-        size={18}
-        className={
-          favorite
-  ? "fill-red-500 text-red-500 dark:fill-[var(--gold)] dark:text-[var(--gold)]"
-  : "text-gray-400 dark:text-[var(--muted)]"
-        }
-      />
+  size={18}
+  className={
+    favorite
+      ? "fill-[var(--favorite-heart)] text-[var(--favorite-heart)]"
+      : "text-gray-400 dark:text-[var(--muted)]"
+  }
+/>
     </button>
   );
 }

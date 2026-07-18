@@ -64,63 +64,59 @@ export default function PortfolioCard({
   {/* LEFT */}
   <div className="flex gap-5">
 
-    <img
-      src={portfolio.image}
-      alt={portfolio.name}
-      className="w-20 h-20 rounded-full object-cover"
-    />
+    {/* Avatar */}
+<img
+  src={portfolio.image}
+  alt={portfolio.name}
+  className="w-20 h-20 rounded-full object-cover mt-5"
+/>
 
-    <div className="flex flex-col gap-2">
-
-      {/* Projects */}
-      <div
-        className="
-          inline-flex
-          w-fit
-          items-center
-          gap-2
-          px-3
-          py-1
-          rounded-full
-          bg-[var(--project-badge-bg)]
-          text-[var(--project-badge-text)]
-          border border-[var(--project-badge-border)]
-          text-xs
-          font-bold
-        "
-      >
-        <FolderOpen className="w-3 h-3" />
-        {portfolio.projects} Projects
-      </div>
-
-      {/* Outstanding */}
-      {portfolio.projects >= 6 && (
-        <div
-          className="
-            inline-flex
-            w-fit
-            items-center
-            gap-2
-            px-3
-            py-1
-            rounded-full
-            border
-            border-[var(--gold)]
-            bg-[rgba(230,199,123,0.12)]
-            text-[var(--gold)]
-            text-xs
-            font-semibold
-          "
-        >
-          <BadgeCheck className="w-3 h-3 fill-current" />
-          Outstanding
-        </div>
-      )}
-    </div>
+{/* Badges */}
+<div className="absolute top-0 left-20 flex items-center gap-14 mt-4 left-20">
+  {/* Projects */}
+  <div
+    className="
+      inline-flex
+      items-center
+      gap-2
+      px-3
+      py-1
+      rounded-full
+      bg-[var(--project-badge-bg)]
+      text-[var(--project-badge-text)]
+      border border-[var(--project-badge-border)]
+      text-xs
+      font-bold
+    "
+  >
+    <FolderOpen className="w-3 h-3" />
+    {portfolio.projects} Projects
   </div>
 
-  {/* RIGHT */}
-  
+  {/* Outstanding */}
+  {portfolio.projects >= 6 && (
+    <div
+      className="
+        inline-flex
+        items-center
+        gap-2
+        px-3
+        py-1
+        rounded-full
+        border border-[var(--gold)]
+        bg-[rgba(230,199,123,0.12)]
+        text-[var(--gold)]
+        text-xs
+        font-semibold
+        ml-2
+      "
+    >
+      <BadgeCheck className="w-3 h-3 fill-current" />
+      Outstanding
+    </div>
+  )}
+</div>
+</div>
 </div>
 
 
