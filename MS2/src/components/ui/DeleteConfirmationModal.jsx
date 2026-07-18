@@ -24,10 +24,11 @@ export default function DeleteConfirmationModal({
         className="
           w-full max-w-md
           rounded-[32px]
-          border border-white/70
-          bg-white
+          border bg-[var(--card-bg)]
+border-[var(--card-border)]
+backdrop-blur-xl
           p-8
-          shadow-[0_30px_90px_rgba(44,57,71,0.22)]
+         shadow-[var(--shadow-card)]
         "
       >
         <div className="flex flex-col gap-6">

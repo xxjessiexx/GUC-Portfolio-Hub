@@ -1,11 +1,20 @@
 import { cn } from "@/lib/utils";
 
 const tones = {
-  blue: "border-[color:var(--accent)]/55 bg-[color:var(--accent)]/25 text-[color:var(--primary)]",
-  gold: "border-[color:var(--gold)]/45 bg-[color:var(--gold)]/20 text-[color:var(--primary)]",
-  white: "border-white/60 bg-white/60 text-[color:var(--primary)]",
-  dark: "border-white/15 bg-white/10 text-white",
-  muted: "border-[color:var(--border-blue)] bg-white/50 text-[color:var(--muted)]",
+  blue:
+    "border-[var(--accent)]/40 bg-[var(--accent)]/15 text-[var(--primary)]",
+
+  gold:
+    "border-[var(--gold)]/40 bg-[var(--gold)]/15 text-[var(--gold)]",
+
+  white:
+    "border-[var(--card-border)] bg-[var(--surface)] text-[var(--ink)]",
+
+  dark:
+    "border-[var(--card-border)] bg-[var(--surface-soft)] text-[var(--ink)]",
+
+  muted:
+    "border-[var(--card-border)] bg-[var(--surface-soft)] text-[var(--muted)]",
 };
 
 export default function AppBadge({ tone = "blue", className, children }) {

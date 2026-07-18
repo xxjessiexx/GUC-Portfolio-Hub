@@ -5,13 +5,16 @@ const toneByStatus = {
   approved: "blue",
   accepted: "blue",
   resolved: "blue",
-  inactive: "muted",
+
+  inactive: "inactive",
+
   pending: "gold",
-  "needs-review": "gold",
   flagged: "gold",
-  rejected: "muted",
   "under-review": "gold",
+  "needs-review": "gold",
   submitted: "gold",
+
+  rejected: "muted",
   none: "muted",
 };
 

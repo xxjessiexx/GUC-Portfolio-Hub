@@ -153,12 +153,26 @@ const reportedProjects =
     refreshProjects();
   };
 
+  const courseOptions = [
+  "Course: All",
+  ...Array.from(
+    new Set(
+      projects.map((project) =>
+        getProjectCourse(project, courses)
+      )
+    )
+  ).map((course) => `Course: ${course}`),
+];
+
+
   const filteredProjects = projects
   .filter((p) => {
     const name = getProjectName(p);
     const course = getProjectCourse(p, courses);
     const visibility = normalizeVisibility(p.visibility);
 
+
+  
     const matchesSearch = name
       .toLowerCase()
       .includes(search.toLowerCase());
@@ -269,18 +283,15 @@ const reportedProjects =
     ) || [];
 
   const updatedFlags =
-    flagged.map((project) =>
-
-      project.id ===
-      selectedAppealProject.id
-
-        ? {
-            ...project,
-            appealStatus: "pending",
-          }
-
-        : project
-    );
+  flagged.map((project) =>
+    String(project.id) === String(selectedAppealProject.id)
+      ? {
+          ...project,
+          appealStatus: "pending",
+          status: "under-review",
+        }
+      : project
+  );
 
   localStorage.setItem(
     "flaggedProjects",
@@ -290,17 +301,13 @@ const reportedProjects =
   refreshProjects();
 
 setProjects((prev) =>
-
   prev.map((project) =>
-
-    project.id ===
-    selectedAppealProject.id
-
+    String(project.id) === String(selectedAppealProject.id)
       ? {
           ...project,
           appealStatus: "pending",
+          status: "under-review",
         }
-
       : project
   )
 );
@@ -373,17 +380,9 @@ setAppealMessage("");
   <FilterSelect
   value={`Course: ${filterCourse}`}
   onChange={(value) =>
-    setFilterCourse(
-      value.replace("Course: ", "")
-    )
+    setFilterCourse(value.replace("Course: ", ""))
   }
-  options={[
-    "Course: All",
-    "Course: CSEN",
-    "Course: MET",
-    "Course: BI",
-    "Course: Bachelor Project",
-  ]}
+  options={courseOptions}
 />
 
   <FilterSelect
@@ -414,7 +413,8 @@ setAppealMessage("");
         className="
           text-xl
           font-black
-          text-[#243B6B]
+          text-[var(--ink)]
+          shadow-[var(--shadow-soft)]
         "
       >
         Flagged Projects
@@ -424,8 +424,11 @@ setAppealMessage("");
         className="
           w-7 h-7
           rounded-full
-          bg-red-100
-          text-red-500
+          border border-red-500/20
+bg-red-500/10
+text-red-400
+hover:bg-red-500/20
+dark:bg-[rgba(239,68,68,0.18)]
           flex items-center justify-center
           text-sm font-bold
         "
@@ -474,16 +477,20 @@ setAppealMessage("");
             openProject(p.id)
           }
           className="
-            border
+            
             rounded-3xl
-            bg-white
+            
             px-5 py-4
             flex items-center
             justify-between
             gap-6
-            hover:bg-slate-50
+            
             transition
             cursor-pointer
+            bg-[var(--card-bg)]
+border border-[var(--card-border)]
+hover:bg-[var(--surface-elevated)]
+transition-colors
           "
         >
 
@@ -507,7 +514,7 @@ setAppealMessage("");
                 className="
                   text-[22px]
                   font-black
-                  text-[#16253A]
+                  text-[var(--ink)]
                   truncate
                 "
               >
@@ -516,7 +523,7 @@ setAppealMessage("");
 
               <p
                 className="
-                  text-gray-500
+                  text-[var(--primary)]
                   font-semibold
                   mt-1
                 "
@@ -532,12 +539,12 @@ setAppealMessage("");
                   flex items-center
                   gap-4
                   mt-3
-                  text-gray-500
+                  text-[var(--primary)]
                   text-sm
                 "
               >
 
-                <div className="flex items-center gap-1 text-gray-500">
+                <div className="flex items-center gap-1 text-[var(--muted)]0">
   <svg
     xmlns="http://www.w3.org/2000/svg"
     className="w-4 h-4"
@@ -558,7 +565,7 @@ setAppealMessage("");
   </span>
 </div>
 
-<div className="flex items-center gap-1 text-gray-500">
+<div className="flex items-center gap-1 text-[var(--muted)]">
 
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -670,13 +677,19 @@ return (
       : appealStatus === "rejected"
 
       ? `
-        bg-red-100
-        text-red-500
+        border border-red-500/20
+bg-red-500/10
+text-red-400
+hover:bg-red-500/20
+dark:bg-[rgba(239,68,68,0.18)]
       `
 
       : `
-        bg-red-100
-        text-red-500
+       border border-red-500/20
+bg-red-500/10
+text-red-400
+hover:bg-red-500/20
+dark:bg-[rgba(239,68,68,0.18)]
         hover:bg-red-200
       `
   }
@@ -730,14 +743,27 @@ return (
 </AppCard>
 
         {/* All Projects */}
-        <AppCard className="p-4">
+        
+
+
+          <AppCard
+className="
+p-6
+bg-[var(--card-bg)]
+border
+border-[var(--card-border)]
+shadow-[var(--shadow-card)]
+rounded-[28px]
+"
+>
           <div className="flex items-center gap-3 mb-4 ml-3">
 
   <Label
+
     className="
       text-xl
       font-black
-      text-[#243B6B]
+      text-[var(--ink)]
     "
   >
     All My Projects
@@ -747,8 +773,9 @@ return (
     className="
       w-7 h-7
       rounded-full
-      bg-[#EEF4FF]
-      text-[#4F8CFF]
+     bg-[var(--project-badge-bg)]
+text-[var(--project-badge-text)]
+border border-[var(--project-badge-border)]
       flex items-center justify-center
       text-sm
       font-bold
@@ -761,7 +788,7 @@ return (
 
           {filteredProjects.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-10 text-center">
-              <h3 className="text-lg font-bold text-[#243B6B]">
+              <h3 className="text-lg font-bold text-[var(--ink)]">
                 No projects found
               </h3>
               <p className="mt-2 text-sm text-slate-500">
@@ -770,7 +797,7 @@ return (
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-[3.7fr_1.3fr_1.3fr_1.7fr_1.6fr_1fr] px-10 py-3 text-xs font-semibold text-gray-500 uppercase">
+              <div className="grid grid-cols-[3.7fr_1.3fr_1.3fr_1.7fr_1.6fr_1fr] px-10 py-3 text-xs font-semibold text-[var(--muted)] uppercase">
                 <span className="pl-12">Project</span>
 
                 <span className="-ml-14">Updated</span>
@@ -801,20 +828,29 @@ return (
                         left={
                           <div className="min-w-0 pr-10">
                             <h3
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                openProject(p.id);
-                              }}
-                              className="font-bold text-[16px] text-[#16253A] max-w-md truncate leading-none cursor-pointer hover:text-blue-600"
-                            >
-                              {getProjectName(p)}
-                            </h3>
+  onClick={(event) => {
+    event.stopPropagation();
+    openProject(p.id);
+  }}
+  className="
+    font-bold
+    text-[16px]
+    text-[var(--ink)]
+    max-w-md
+    truncate
+    leading-none
+    cursor-pointer
+    hover:text-[var(--primary)]
+  "
+>
+  {getProjectName(p)}
+</h3>
 
-                            <p className="text-[#3B82F6] text-sm font-semibold mt-1">
+                            <p className="text-[var(--primary)] text-sm font-semibold mt-1">
                               {getProjectCourse(p, courses)}
                             </p>
 
-                            <p className="max-w-sm text-sm text-gray-500 line-clamp-2">
+                            <p className="max-w-sm text-sm text-[var(--muted)] line-clamp-2">
                               {getProjectDescription(p)}
                             </p>
                           </div>
@@ -830,11 +866,22 @@ return (
           onChange={(e) =>
             toggleVisibility(p.id, e.target.value)
           }
-          className={`appearance-none pl-10 pr-8 py-2 rounded-xl border text-sm font-medium cursor-pointer ${
-            visibility === "Public"
-              ? "bg-green-50 text-green-700 border-green-200"
-              : "bg-gray-100 text-gray-600 border-gray-200"
-          }`}
+         className={`appearance-none pl-10 pr-8 py-2 rounded-xl border text-sm font-medium cursor-pointer ${
+  visibility === "Public"
+    ? `
+        bg-green-100
+        text-green-700
+        border-green-200
+        dark:bg-emerald-500/10
+        dark:text-emerald-400
+        dark:border-emerald-500/20
+      `
+    : `
+    bg-[var(--private-bg)]
+    text-[var(--private-text)]
+    border-[var(--private-border)]
+  `
+}`}
         >
           <option value="Public">Public</option>
           <option value="Private">Private</option>
@@ -844,7 +891,7 @@ return (
           {visibility === "Public" ? (
             <Globe size={16} className="text-green-600" />
           ) : (
-            <Lock size={16} className="text-gray-500" />
+            <Lock size={16} className="text-[var(--muted)]" />
           )}
         </span>
 
@@ -858,7 +905,7 @@ return (
     </div>
 
     {/* Rating column */}
-    <div className="w-full flex flex-col items-center justify-center text-sm text-gray-600">
+    <div className="w-full flex flex-col items-center justify-center text-sm text-[var(--muted)]">
   <div className="flex items-center gap-1">
     <span className="font-medium">
       {getProjectRating(p)}
@@ -883,7 +930,9 @@ return (
                                 event.stopPropagation();
                                 editProject(p.id);
                               }}
-                              className="p-2 rounded border hover:bg-gray-100"
+                              className="p-2 rounded border border-[var(--card-border)]
+text-[var(--muted)]
+hover:bg-[var(--surface-soft)]"
                             >
                               <Pencil size={16} />
                             </button>
@@ -897,8 +946,11 @@ return (
                                   p-2
                                   rounded
                                   border
-                                  hover:bg-red-100
-                                  text-red-500
+                                 border border-red-500/20
+bg-red-500/10
+text-red-400
+hover:bg-red-500/20
+dark:bg-[rgba(239,68,68,0.18)]
                                 "
                               >
                                 <Trash2 size={16} />

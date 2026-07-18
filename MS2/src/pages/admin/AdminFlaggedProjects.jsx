@@ -78,6 +78,8 @@ const appeals =
   ) || [];
 
 
+  
+
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [selectedProject, setSelectedProject] = useState(null);
@@ -125,6 +127,27 @@ const appeals =
 
     if (decision.type === "project") {
       actions.setProjectActive(decision.project.id, decision.active, note.trim());
+      const flagged =
+  JSON.parse(localStorage.getItem("flaggedProjects")) || [];
+
+const updatedFlagged = flagged.map(project =>
+  String(project.id) === String(decision.project.id)
+    ? {
+        ...project,
+        active: decision.active,
+        status: decision.active ? "resolved" : "flagged",
+        adminNote: note.trim(),
+      }
+    : project
+);
+
+localStorage.setItem(
+  "flaggedProjects",
+  JSON.stringify(updatedFlagged)
+);
+
+window.dispatchEvent(new Event("storage"));
+
       if (decision.active) {
 window.dispatchEvent(
   new Event("storage")
@@ -153,28 +176,9 @@ window.dispatchEvent(
   new Event("storage")
 );
 
-  const flagged =
-    JSON.parse(
-      localStorage.getItem(
-        "flaggedProjects"
-      )
-    ) || [];
+  
 
-  const updatedFlags =
-    flagged.filter(
-      (project) =>
-
-        String(project.id) !==
-        String(decision.project.id)
-    );
-
-  localStorage.setItem(
-    "flaggedProjects",
-    JSON.stringify(updatedFlags)
-  );
-  window.dispatchEvent(
-  new Event("storage")
-);
+window.dispatchEvent(new Event("storage"));
 }
 
       toast.success(
@@ -222,9 +226,29 @@ localStorage.setItem(
   JSON.stringify(updatedAppeals)
 );
 
+if (decision.nextStatus === "rejected") {
+  const flagged =
+    JSON.parse(localStorage.getItem("flaggedProjects")) || [];
+
+  const updatedFlagged = flagged.map(project =>
+  String(project.id) === String(decision.appeal.projectId)
+    ? {
+        ...project,
+        status: "flagged",
+        appealStatus: "rejected",
+      }
+    : project
+);
+  localStorage.setItem(
+    "flaggedProjects",
+    JSON.stringify(updatedFlagged)
+  );
+}
+
 /* ACCEPT APPEAL */
 
 if (
+
   decision.nextStatus ===
   "accepted"
 ) {
@@ -256,28 +280,24 @@ if (
   /* UPDATE FLAGGED */
 
   const flagged =
-    JSON.parse(
-      localStorage.getItem(
-        "flaggedProjects"
-      )
-    ) || [];
+  JSON.parse(localStorage.getItem("flaggedProjects")) || [];
 
-  
-
-  const updatedFlags =
-  flagged.filter(
-    (project) =>
-
-      String(project.id) !==
-      String(
-        decision.appeal.projectId
-      )
-  );
+const updatedFlagged = flagged.map(project =>
+  String(project.id) === String(decision.appeal.projectId)
+    ? {
+        ...project,
+        status: "resolved",
+        appealStatus: "accepted",
+      }
+    : project
+);
 
 localStorage.setItem(
   "flaggedProjects",
-  JSON.stringify(updatedFlags)
+  JSON.stringify(updatedFlagged)
 );
+
+window.dispatchEvent(new Event("storage"));
 }
       toast.success(`Appeal ${decision.nextStatus}`);
     }
@@ -421,10 +441,21 @@ localStorage.setItem(
         />
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          {appeals.map((appeal) => (
+          {[...appeals].reverse().map((appeal) => (
             <div
               key={appeal.id}
-              className="rounded-3xl border border-white/70 bg-white/55 p-5 shadow-[0_14px_35px_rgba(53,88,114,0.06)]"
+              className="
+  rounded-3xl
+  p-5
+
+  bg-[var(--card-bg)]
+  border border-[var(--card-border)]
+
+  shadow-[var(--shadow-card)]
+  backdrop-blur-md
+
+  transition-colors duration-300
+"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -444,7 +475,22 @@ localStorage.setItem(
               </p>
 
               {appeal.decisionNote ? (
-                <p className="mt-3 rounded-2xl bg-white/65 p-3 text-xs font-bold leading-5 text-[color:var(--muted)]">
+                <p
+  className="
+    mt-3
+    rounded-2xl
+    p-3
+    text-xs
+    font-bold
+    leading-5
+
+    bg-[var(--surface-soft)]
+    border border-[var(--card-border)]
+    text-[color:var(--muted)]
+
+    transition-colors
+  "
+>
                   Admin note: {appeal.decisionNote}
                 </p>
               ) : null}
@@ -493,8 +539,9 @@ localStorage.setItem(
       </AppCard>
 
       {selectedProject ? (
-        <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-[color:var(--ink)]/35 px-4 pt-32 pb-8 backdrop-blur-sm">
-          <div className="w-full max-w-4xl rounded-[32px] border border-white/40 bg-[var(--surface)] p-6 shadow-2xl">
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-[color:var(--ink)]/45 px-4 pt-32 pb-8 backdrop-blur-sm">
+          <div className="w-full max-w-4xl rounded-[32px] border border-[var(--card-border)] bg-[var(--card-bg)]
+backdrop-blur-md p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 
@@ -518,7 +565,15 @@ localStorage.setItem(
             </div>
 
             <div className="mt-6 space-y-5">
-              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+              <div className="
+  rounded-3xl
+  p-5
+
+  bg-[var(--surface-soft)]
+  border border-[var(--card-border)]
+
+  transition-colors
+">
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
                   Flag Reason
                 </p>
@@ -528,7 +583,15 @@ localStorage.setItem(
                 </p>
               </div>
 
-              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+              <div className="
+  rounded-3xl
+  p-5
+
+  bg-[var(--surface-soft)]
+  border border-[var(--card-border)]
+
+  transition-colors
+">
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
                   Flag Source
                 </p>
@@ -538,7 +601,15 @@ localStorage.setItem(
                 </p>
               </div>
 
-              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+              <div className="
+  rounded-3xl
+  p-5
+
+  bg-[var(--surface-soft)]
+  border border-[var(--card-border)]
+
+  transition-colors
+">
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
                   Project State
                 </p>
@@ -549,7 +620,15 @@ localStorage.setItem(
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+              <div className="
+  rounded-3xl
+  p-5
+
+  bg-[var(--surface-soft)]
+  border border-[var(--card-border)]
+
+  transition-colors
+">
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
                   Latest Admin Note
                 </p>
@@ -562,10 +641,13 @@ localStorage.setItem(
               <div className="flex flex-wrap justify-end gap-3">
                 <AppButton
                   variant="glass"
-                  className="bg-[#F8FAFC]
-border border-[#D7E1EC]
-text-[#355872]
-hover:bg-[#EFF4F8]"
+                  className="
+bg-[var(--card-bg)]
+backdrop-blur-md
+border border-[var(--card-border)]
+text-[var(--ink)]
+hover:bg-[var(--surface-elevated)]
+"
                   onClick={() => setSelectedProject(null)}
                 >
                   Close

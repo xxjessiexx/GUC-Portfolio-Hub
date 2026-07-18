@@ -262,22 +262,20 @@ const instructorOptions = [
 ) : (
 
   <div
-    className="
-      flex items-center justify-center
-      py-24
-      rounded-[32px]
-      border border-dashed border-gray-200
-      bg-white/60
-    "
-  >
-    <p
-      className="
-        text-xl
-        font-semibold
-        text-gray-400
-        text-center
-      "
-    >
+  className="
+    flex items-center justify-center
+    py-16
+    rounded-[32px]
+
+    bg-[var(--card-bg)]
+    border
+    border-dashed
+    border-[var(--card-border)]
+
+    shadow-[var(--shadow-card)]
+  "
+>
+  <p className="text-lg font-semibold text-[var(--muted)]">
       Explore more projects to add to your
       favorite list 
     </p>

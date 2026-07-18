@@ -96,14 +96,23 @@ export default function AdminTableActions({
       ].join(" ");
 
   const menuClassName = isDarkMode
-    ? [
-        "absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-3xl border p-1 shadow-[0_24px_70px_rgba(0,0,0,0.35)] backdrop-blur-xl",
-        "border-white/10 bg-[#182432]/95",
-      ].join(" ")
-    : [
-        "absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-3xl border p-1 shadow-[0_24px_70px_rgba(16,32,45,0.2)]",
-        "border-[#A7C3D6] bg-white",
-      ].join(" ");
+  ? [
+      "absolute right-0 top-12 z-[9999]",
+      "mt-2 w-52 overflow-hidden rounded-3xl p-1",
+      "border border-white/10",
+      "bg-[#182432]/95 backdrop-blur-xl",
+      "shadow-[0_24px_70px_rgba(0,0,0,0.35)]",
+    ].join(" ")
+  : [
+      "absolute right-0 top-12 z-[9999]",
+      "mt-2 w-52 overflow-hidden rounded-3xl p-1",
+      "border border-[#A7C3D6]",
+      "bg-white",
+      "shadow-[0_24px_70px_rgba(16,32,45,0.18)]",
+    ].join(" ");
+
+
+      
 
   return (
     <div className="relative">
@@ -119,7 +128,7 @@ export default function AdminTableActions({
       </button>
 
       {openMenu === rowId && (
-        <div className="absolute right-0 top-12 z-[9999] mt-2 w-52 overflow-hidden rounded-3xl border border-white/70 bg-white shadow-[0_24px_70px_rgba(16,32,45,0.18)]">
+        <div className={menuClassName}>
           {actions.map((action) => (
             <button
               key={action.label}
