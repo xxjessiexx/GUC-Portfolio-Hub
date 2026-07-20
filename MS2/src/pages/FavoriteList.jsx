@@ -295,7 +295,7 @@ const navigate = useNavigate();
 
   <div>
     <span
-      onClick={() => navigate("/explore-projects")}
+      onClick={() => navigate("/explore-portfolio")}
       className="
         cursor-pointer
         font-bold

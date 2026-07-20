@@ -159,6 +159,20 @@ const instructorOptions = [
       return 0;
     });
 
+    useEffect(() => {
+  const refresh = () => {
+    setProjects(getAllProjects());
+  };
+
+  window.addEventListener("demo-db-change", refresh);
+
+  return () =>
+    window.removeEventListener(
+      "demo-db-change",
+      refresh
+    );
+}, []);
+
   return (
     <DashboardLayout>
 

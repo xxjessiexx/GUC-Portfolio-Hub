@@ -119,6 +119,20 @@ const skillOptions = [
       return 0;
     });
 
+    useEffect(() => {
+  const refresh = () => {
+    setPortfolios(getAllPortfolios());
+  };
+
+  window.addEventListener("demo-db-change", refresh);
+
+  return () =>
+    window.removeEventListener(
+      "demo-db-change",
+      refresh
+    );
+}, []);
+
   return (
     <DashboardLayout>
 
