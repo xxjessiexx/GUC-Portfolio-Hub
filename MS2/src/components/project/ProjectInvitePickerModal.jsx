@@ -21,7 +21,8 @@ function UserAvatar({ user }) {
   const initial = name.charAt(0).toUpperCase() || "?";
 
   return (
-    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[rgba(156,213,255,0.35)] text-sm font-black text-[var(--primary)] ring-2 ring-white">
+    <div className="flex h-10 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[rgba(156,213,255,0.35)] text-sm font-black text-[var(--primary)] ring-2 ring-[1.5px]
+ring-[var(--card-border)]">
       {src ? (
         <img
           src={src}
@@ -53,36 +54,142 @@ export default function ProjectInvitePickerModal({
   const isInstructorMode = mode === "instructor";
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#152536]/35 px-4 py-8 backdrop-blur-sm">
-      <div className="relative w-full max-w-3xl overflow-hidden rounded-[2rem] border border-white/70 bg-[#F7F8F0] p-0 text-[color:var(--ink)] shadow-[0_30px_90px_rgba(53,88,114,0.28)]">
-        <div className="flex items-start justify-between gap-4 border-b border-[color:var(--border-blue)]/70 bg-white/55 px-7 py-6">
+    <div className="
+fixed
+inset-0
+z-[9999]
+flex
+items-center
+justify-center
+bg-[rgba(44,57,71,.30)]
+backdrop-blur-md
+p-8
+">
+      <div
+  
+className="
+relative
+w-full
+max-w-[870px]
+min-h-[620px]
+max-h-[88vh]
+overflow-hidden
+rounded-[32px]
+
+bg-[var(--auth-card-bg)]
+border
+border-[#7AAACE]/40
+shadow-[0_20px_60px_rgba(53,88,114,.18),0_0_0_1px_rgba(122,170,206,.18)]
+shadow-[var(--auth-card-shadow)]
+
+backdrop-blur-2xl
+backdrop-saturate-150
+flex
+flex-col
+translate-y-8
+
+"
+
+>
+
+  <div
+    className="
+    absolute
+    inset-0
+    pointer-events-none
+    overflow-hidden
+    "
+>
+    <div
+        className="
+        absolute
+        -top-24
+        -right-24
+        h-72
+        w-72
+        rounded-full
+        bg-[var(--accent)]
+        opacity-20
+        blur-[90px]
+        "
+    />
+
+    <div
+        className="
+        absolute
+        -bottom-20
+        -left-20
+        h-60
+        w-60
+        rounded-full
+        bg-[var(--secondary)]
+        opacity-10
+        blur-[80px]
+        "
+    />
+</div>
+        <div
+className="
+flex
+items-start
+justify-between
+gap-6
+border-b
+border-[var(--border-blue)]
+bg-[image:var(--dashboard-preview-gradient)]
+px-8
+py-7
+"
+>
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[color:var(--primary)]">
-              {isInstructorMode ? "Course instructor" : "Student collaborator"}
-            </p>
+           <h2 className="text-[32px]
+leading-none font-black text-white">
+    {isInstructorMode
+        ? "Invite Instructor"
+        : "Invite Collaborators"}
+</h2>
 
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-[color:var(--ink)]">
-              {isInstructorMode ? "Invite instructor" : "Invite collaborator"}
-            </h2>
-
-            <p className="mt-2 max-w-xl text-sm font-semibold leading-6 text-[color:var(--muted)]">
-              {isInstructorMode
-                ? "Search instructors linked to the selected course. They will appear as no reply until they respond."
-                : "Search students from the same list used on the project page. They will appear as no reply until they respond."}
-            </p>
+<p className="mt-2   text-base text-white/80 max-w-lg leading-6">
+    {isInstructorMode
+        ? "Search and invite the course instructor."
+        : "Search students and invite them to collaborate on this project."}
+</p>
           </div>
+
 
           <button
             type="button"
             onClick={onClose}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/70 bg-white/80 text-[color:var(--primary)] shadow-[0_10px_28px_rgba(53,88,114,0.08)] transition hover:-translate-y-0.5 hover:bg-white"
+            className="grid h-10 w-11 shrink-0 place-items-center rounded-2xl border border-[var(--card-border)]
+bg-[var(--surface-elevated)]
+backdrop-blur-lg
+text-[color:var(--primary)] shadow-sm
+transition-all hover:bg-[var(--surface-strong)]
+hover:scale-105"
             aria-label="Close invite picker"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="space-y-5 px-7 py-6">
+
+        <div
+className="
+bg-gradient-to-b
+    from-[#7AAACE]/10
+    to-transparent
+space-y-6
+px-8
+py-6
+bg-transparent
+before:absolute
+before:inset-0
+before:bg-[linear-gradient(180deg,rgba(255,255,255,.08),transparent)]
+before:pointer-events-none
+relative
+dark:bg-transparent
+"
+>
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[color:var(--muted)]" />
 
@@ -90,7 +197,23 @@ export default function ProjectInvitePickerModal({
               value={query}
               onChange={(event) => onQueryChange(event.target.value)}
               placeholder="Search by email, first name, or last name"
-              className="min-h-12 w-full rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 pl-11 text-sm font-semibold text-[color:var(--ink)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] outline-none placeholder:text-[color:var(--muted)]/65 transition focus-visible:border-[color:var(--accent)] focus-visible:ring-2 focus-visible:ring-[color:var(--ring-soft)]"
+             className="
+h-14
+w-full
+rounded-xl
+border
+border-[var(--border-blue)]
+bg-[var(--surface-elevated)]
+px-5
+pl-11
+text-base
+text-[var(--ink)]
+shadow-[var(--shadow-soft)]
+placeholder:text-[var(--muted)]
+focus:border-[var(--secondary)]
+focus:ring-2
+focus:ring-[var(--secondary)]
+"
               autoFocus
             />
           </div>
@@ -101,13 +224,24 @@ export default function ProjectInvitePickerModal({
             </p>
           ) : null}
 
-          <div className="max-h-[430px] space-y-3 overflow-y-auto pr-1">
+          <div className="invite-scroll max-h-[340px] space-y-2 overflow-y-auto pr-2">
             {candidates.length === 0 ? (
-              <div className="rounded-[1.5rem] border border-dashed border-[color:var(--primary)]/20 bg-white/55 p-6">
+              <div className="flex
+flex-col
+items-start
+justify-center
+rounded-[26px]
+border
+border-dashed
+border-[var(--card-border)]
+bg-[var(--surface)]
+backdrop-blur-lg
+py-16
+text-center">
                 <p className="text-sm font-black text-[color:var(--ink)]">
                   No matching users
                 </p>
-                <p className="mt-1 text-xs font-semibold leading-5 text-[color:var(--muted)]">
+                <p className="mt-1 max-w-sm text-sm text-[var(--muted)]">
                   {isInstructorMode
                     ? "Select a course first or search for another linked instructor."
                     : "No available student collaborators match this search."}
@@ -117,8 +251,27 @@ export default function ProjectInvitePickerModal({
               candidates.map((user) => (
                 <div
                   key={user.id}
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-[1.5rem] border border-white/70 bg-white/75 p-4 shadow-[0_12px_30px_rgba(53,88,114,0.06)]"
-                >
+                  className="
+group
+flex
+items-start
+justify-between
+gap-5
+rounded-xl
+border
+border-[var(--card-border)]
+bg-white/55
+dark:bg-white/5
+backdrop-blur-lg
+px-5
+py-4
+transition-all
+duration-200
+hover:bg-[var(--surface-strong)]
+hover:shadow-[var(--shadow-brand)]
+hover:-translate-y-1
+"
+>
                   <div className="flex min-w-0 items-center gap-3">
                     <UserAvatar user={user} />
 
@@ -135,9 +288,23 @@ export default function ProjectInvitePickerModal({
                   <button
                     type="button"
                     onClick={() => onSelectUser(user)}
-                    className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[var(--primary)] px-4 text-xs font-black text-white shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:bg-[var(--dark)]"
+                    className="
+inline-flex
+h-9
+items-center
+gap-2
+rounded-lg
+bg-[image:var(--gradient-brand)]
+px-4
+text-sm
+font-semibold
+text-white
+transition
+hover:scale-105
+hover:brightness-110
+"
                   >
-                    <UserPlus className="size-4" />
+                    <UserPlus className="size-4 hover:scale-105" />
                     Invite
                   </button>
                 </div>
@@ -146,15 +313,7 @@ export default function ProjectInvitePickerModal({
           </div>
         </div>
 
-        <div className="flex justify-end border-t border-[color:var(--border-blue)]/70 bg-white/40 px-7 py-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="min-h-11 rounded-2xl border border-[color:var(--border-blue)] bg-white px-5 font-black text-[color:var(--ink)] shadow-sm transition hover:bg-[var(--surface-soft)]"
-          >
-            Close
-          </button>
-        </div>
+       
       </div>
     </div>
   );

@@ -143,6 +143,23 @@
   --project-badge-bg: #EEF5FF;
 --project-badge-text: #69A7FF;
 --project-badge-border: transparent;
+
+.invite-scroll::-webkit-scrollbar{
+    width:8px;
+}
+
+.invite-scroll::-webkit-scrollbar-track{
+    background:transparent;
+}
+
+.invite-scroll::-webkit-scrollbar-thumb{
+    background:var(--border-blue);
+    border-radius:999px;
+}
+
+.invite-scroll::-webkit-scrollbar-thumb:hover{
+    background:var(--primary);
+}
 }
 .dark {
   --primary: #8fc3e6;
