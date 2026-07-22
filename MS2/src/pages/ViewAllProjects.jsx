@@ -342,7 +342,16 @@ setAppealMessage("");
               <span
                 onClick={() => navigate("/create-project")}
                 className="inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
-                bg-[image:var(--nav-gradient)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer"
+                bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+hover:bg-[linear-gradient(135deg,#355872_0%,#46739A_55%,#8CC3EA_100%)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer  hover:-translate-y-1
+      hover:scale-[1.02]
+      hover:brightness-110
+      hover:shadow-[0_24px_50px_rgba(53,88,114,.35)]  shadow-[0_12px_30px_rgba(53,88,114,.22)]
+
+      transition-all
+      duration-300
+      ease-out
+      hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)]"
               >
                 + Create Project
               </span>
