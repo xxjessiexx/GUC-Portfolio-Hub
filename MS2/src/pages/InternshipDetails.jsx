@@ -12,6 +12,9 @@ import {
   Star,
 } from "lucide-react";
 
+
+import { AdminActionDialog } from "@/components/adminModule/AdminActionDialog";
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
@@ -488,33 +491,18 @@ export default function InternshipDetails() {
         </div>
       </main>
 
-      <AlertDialog open={applyDialogOpen} onOpenChange={setApplyDialogOpen}>
-        <AlertDialogContent className="z-[9999] rounded-3xl border border-white/70 bg-white/95 p-6 shadow-[0_24px_80px_rgba(44,57,71,0.25)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#102030]">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black text-[color:var(--ink)]">
-              Apply to this internship?
-            </AlertDialogTitle>
-
-            <AlertDialogDescription className="text-base leading-7 text-[color:var(--muted)]">
-              Are you sure you want to apply to "{internship.title}" at{" "}
-              {internship.company}?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-2xl">
-              Cancel
-            </AlertDialogCancel>
-
-            <AlertDialogAction
-              onClick={confirmApply}
-              className="rounded-2xl bg-[color:var(--primary)] font-bold text-white hover:bg-[color:var(--dark)]"
-            >
-              Yes, Apply
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <AdminActionDialog
+  open={applyDialogOpen}
+  title="Apply to this internship?"
+  description={`Are you sure you want to apply to "${internship.title}" at ${internship.company}?`}
+  confirmLabel="Yes, Apply"
+  cancelLabel="Cancel"
+  tone="brand"
+  headerIcon={<Send className="size-5" />}
+  dialogClassName="max-w-xl min-h-[300px]"
+  onCancel={() => setApplyDialogOpen(false)}
+  onConfirm={confirmApply}
+/>
     </DashboardLayout>
   );
 }
@@ -561,7 +549,15 @@ function CheckItem({ text }) {
 function RelatedInternshipCard({ internship }) {
   return (
     <Link to={`/internships/${internship.id}`}>
-      <div className="rounded-2xl border border-white/70 bg-white/55 p-4 transition hover:-translate-y-1 hover:bg-white/75">
+      <div className="
+rounded-2xl
+border border-[color:var(--border)]
+bg-[color:var(--card)]
+p-4
+transition
+hover:-translate-y-1
+hover:bg-[color:var(--card-hover)]
+">
         <h4 className="font-black text-[color:var(--ink)]">
           {internship.title}
         </h4>

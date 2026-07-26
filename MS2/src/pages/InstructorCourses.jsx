@@ -160,13 +160,18 @@ export default function InstructorCourses() {
 
   return (
     <DashboardLayout workspace="instructor" workspaceLabel="Instructor Workspace">
-      <div className="space-y-6">
-        <AdminPageHeader
-          eyebrow="Course instructor access"
-          title="Courses"
-          description="View every course in the academic catalog and request to link or unlink yourself from the courses you teach. Bachelor Project is automatically linked for all course instructors."
-          icon={BookOpen}
-        />
+      
+
+        <div className="min-h-screen p-8 space-y-6">
+  
+
+<h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
+           Courses
+          </h1>
+
+          <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
+            View every course in the academic catalog and request to link or unlink yourself from the courses you teach. Bachelor Project is automatically linked for all course instructors.
+            </p>
 
         <AppCard variant="strong" radius="lg" padding="lg">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

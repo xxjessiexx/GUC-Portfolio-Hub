@@ -533,8 +533,7 @@ export default function MyApplications() {
                     type="date"
                     value={selectedDate}
                     onChange={(event) => setSelectedDate(event.target.value)}
-                    className="h-12 w-full rounded-2xl border border-white/70 bg-[var(--input-bg)] pl-11 pr-3 text-sm font-black text-[color:var(--ink)] shadow-sm"
-                  />
+                    className="h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] pl-11 pr-3 text-sm font-black text-[color:var(--ink)] shadow-sm"/>
                 </div>
               </SearchFilterToolbar>
 
@@ -632,7 +631,17 @@ export default function MyApplications() {
                       </div>
 
                       <Link to={`/internships/${application.internshipId}`}>
-                        <AppButton className="rounded-2xl border border-white/70 bg-white/60 px-4 font-black text-[color:var(--primary)] hover:bg-white/80">
+                      <AppButton
+  className="
+    rounded-2xl
+    border border-[color:var(--border)]
+    bg-[color:var(--card)]
+    px-4
+    font-black
+    text-[color:var(--primary)]
+    hover:bg-[color:var(--card-hover)]
+  "
+>
                           View Internship
                         </AppButton>
                       </Link>
@@ -721,7 +730,17 @@ export default function MyApplications() {
                   {savedApplications.length > 0 ? (
                     savedApplications.map((item) => (
                       <Link key={item.id} to={`/internships/${item.internshipId}`}>
-                        <div className="flex items-center justify-between rounded-2xl border border-white/70 bg-white/55 p-4 transition hover:bg-white/75">
+                        <div
+  className="
+    flex items-center justify-between
+    rounded-2xl
+    border border-[color:var(--border)]
+    bg-[color:var(--card)]
+    p-4
+    transition
+    hover:bg-[color:var(--card-hover)]
+  "
+>
                           <div>
                             <p className="font-black text-[color:var(--ink)]">
                               {item.title}
@@ -764,12 +783,12 @@ function Tab({ label, count, active, onClick }) {
       onClick={onClick}
       className={`border-r border-[color:var(--primary)]/10 px-4 py-4 last:border-r-0 transition ${
         active
-          ? "bg-[color:var(--accent)]/25 text-[color:var(--primary)]"
-          : "bg-white/30 text-[color:var(--muted)] hover:bg-white/50"
+  ? "bg-[color:var(--accent)]/20 text-[color:var(--primary)]"
+  : "bg-[color:var(--surface)] text-[color:var(--muted)] hover:bg-[color:var(--surface-hover)]"
       }`}
     >
       {label}
-      <span className="ml-2 rounded-full bg-white/60 px-2 py-0.5 text-xs">
+      <span className="ml-2 rounded-full bg-[color:var(--card)] px-2 py-0.5 text-xs text-[color:var(--ink)]">
         {count}
       </span>
     </button>
@@ -790,7 +809,16 @@ function OverviewRow({ label, value, color }) {
 
 function InterviewCard({ day, month, company, role, time }) {
   return (
-    <div className="mb-3 rounded-2xl border border-white/70 bg-white/55 p-4 last:mb-0">
+    <div
+  className="
+    mb-3
+    rounded-2xl
+    border border-[color:var(--border)]
+    bg-[color:var(--card)]
+    p-4
+    last:mb-0
+  "
+>
       <div className="flex gap-4">
         <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[color:var(--accent)]/25 text-center">
           <div>

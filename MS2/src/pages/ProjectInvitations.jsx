@@ -113,23 +113,16 @@ export default function ProjectInvitations() {
   return (
     <DashboardLayout>
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-  <SectionHeader
-  className="
-    [&_h2]:text-4xl
-    sm:[&_h2]:text-5xl
-    [&_h2]:font-black
-    [&_h2]:tracking-tight
-
-    [&_p]:mt-3
-    [&_p]:text-base
-    [&_p]:font-semibold
-    [&_p]:text-[color:var(--muted)]
-  "
+      <div className="min-h-screen p-4 space-y-6">
   
-  title="Project Invitations"
-  subtitle="Review invitations sent to you from different projects. Accepting adds you to the project; rejecting keeps you out of the team."
-/>
+
+<h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
+            Project Invitations
+          </h1>
+
+          <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
+            Review invitations sent to you from different projects. Accepting adds you to the project; rejecting keeps you out of the team
+        </p>
         <div className="grid gap-4 md:grid-cols-4">
           {filters.map((filter) => {
             const active = activeFilter === filter.id;

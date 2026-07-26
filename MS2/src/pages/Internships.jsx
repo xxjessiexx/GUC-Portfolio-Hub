@@ -593,11 +593,11 @@ export default function Internships() {
                 <button
                   type="button"
                   onClick={() => setViewMode("grid")}
-                  className={`grid h-11 w-11 place-items-center rounded-2xl border border-white/70 ${
-                    viewMode === "grid"
-                      ? "bg-[color:var(--primary)] text-white"
-                      : "bg-white/60 text-[color:var(--primary)]"
-                  }`}
+                  className={`grid h-11 w-11 place-items-center rounded-2xl border border-[color:var(--border)] ${
+  viewMode === "grid"
+    ? "bg-[color:var(--primary)] text-white"
+    : "bg-[color:var(--card)] text-[color:var(--primary)] hover:bg-[color:var(--card-hover)]"
+}`}
                 >
                   <Grid2X2 className="h-4 w-4" />
                 </button>
@@ -605,11 +605,11 @@ export default function Internships() {
                 <button
                   type="button"
                   onClick={() => setViewMode("list")}
-                  className={`grid h-11 w-11 place-items-center rounded-2xl border border-white/70 ${
-                    viewMode === "list"
-                      ? "bg-[color:var(--primary)] text-white"
-                      : "bg-white/60 text-[color:var(--primary)]"
-                  }`}
+                  className={`grid h-11 w-11 place-items-center rounded-2xl border border-[color:var(--border)] ${
+  viewMode === "list"
+    ? "bg-[color:var(--primary)] text-white"
+    : "bg-[color:var(--card)] text-[color:var(--primary)] hover:bg-[color:var(--card-hover)]"
+}`}
                 >
                   <List className="h-4 w-4" />
                 </button>
@@ -646,7 +646,15 @@ export default function Internships() {
                 <AppButton
                   type="button"
                   onClick={() => setVisibleCount((count) => count + 6)}
-                  className="rounded-2xl border border-white/70 bg-white/60 px-6 font-black text-[color:var(--primary)] hover:bg-white/80"
+                 className="
+    rounded-2xl
+    border border-[color:var(--border)]
+    bg-[color:var(--card)]
+    px-6
+    font-black
+    text-[color:var(--primary)]
+    hover:bg-[color:var(--card-hover)]
+  "
                 >
                   Load more internships
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -700,8 +708,14 @@ function FeaturedInternshipCard({
 
         <button
           type="button"
-          onClick={onSave}
-          className="grid h-10 w-10 place-items-center rounded-2xl bg-white/60 text-[color:var(--primary)] transition hover:bg-white/80"
+          onClick={onSave}className="
+grid h-10 w-10 place-items-center
+rounded-2xl
+bg-[color:var(--card)]
+text-[color:var(--primary)]
+transition
+hover:bg-[color:var(--card-hover)]
+" 
         >
           <Bookmark
             className={`h-5 w-5 ${
@@ -731,7 +745,15 @@ function FeaturedInternshipCard({
         <AppButton
           type="button"
           onClick={onPreview}
-          className="rounded-2xl border border-white/70 bg-white/60 px-5 font-black text-[color:var(--primary)] hover:bg-white/80"
+          className="
+rounded-2xl
+border border-[color:var(--border)]
+bg-[color:var(--card)]
+px-5
+font-black
+text-[color:var(--primary)]
+hover:bg-[color:var(--card-hover)]
+"
         >
           <Eye className="mr-2 h-4 w-4" />
           Preview
@@ -780,7 +802,14 @@ function InternshipCard({
           <button
             type="button"
             onClick={onSave}
-            className="grid h-10 w-10 place-items-center rounded-2xl bg-white/60 text-[color:var(--primary)] transition hover:bg-white/80"
+           className="
+grid h-10 w-10 place-items-center
+rounded-2xl
+bg-[color:var(--card)]
+text-[color:var(--primary)]
+transition
+hover:bg-[color:var(--card-hover)]
+"
           >
             <Bookmark
               className={`h-5 w-5 ${
@@ -817,7 +846,9 @@ function InternshipCard({
         <AppButton
           type="button"
           onClick={onPreview}
-          className="rounded-2xl border border-white/70 bg-white/60 px-4 font-black text-[color:var(--primary)] hover:bg-white/80"
+          className="rounded-2xl border border-[color:var(--border)]
+bg-[color:var(--card)]
+hover:bg-[color:var(--card-hover)] px-4 font-black text-[color:var(--primary)] hover:bg-white/80"
         >
           <Eye className="mr-2 h-4 w-4" />
           Preview
@@ -827,7 +858,9 @@ function InternshipCard({
           type="button"
           onClick={onApply}
           disabled={isApplied}
-          className="rounded-2xl border border-white/70 bg-white/60 px-4 font-black text-[color:var(--primary)] hover:bg-white/80 disabled:opacity-60"
+          className="rounded-2xl border border-[color:var(--border)]
+bg-[color:var(--card)]
+hover:bg-[color:var(--card-hover)] px-4 font-black text-[color:var(--primary)]  disabled:opacity-60"
         >
           <Send className="mr-2 h-4 w-4" />
           {isApplied ? "Applied" : "Apply"}
@@ -902,7 +935,9 @@ function PreviewModal({
           <AppButton
             type="button"
             onClick={onSave}
-            className="rounded-2xl border border-white/70 bg-white/60 px-5 font-black text-[color:var(--primary)]"
+            className="rounded-2xl border border-[color:var(--border)]
+bg-[color:var(--card)]
+hover:bg-[color:var(--card-hover)] px-5 font-black text-[color:var(--primary)]"
           >
             <Bookmark className="mr-2 h-4 w-4" />
             {isSaved ? "Unsave" : "Save"}

@@ -185,7 +185,7 @@ function InstructorHero({ instructor, snapshot }) {
           </p>
 
           <div className="flex flex-col gap-5 md:flex-row md:items-start">
-            <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-[26px] border border-white/60 bg-[linear-gradient(135deg,var(--dark),var(--primary)_55%,var(--secondary))] text-2xl font-black text-white shadow-[0_18px_45px_rgba(53,88,114,0.2)] dark:border-white/10">
+            <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-[26px] border border-[color:var(--border)]  bg-[linear-gradient(135deg,var(--dark),var(--primary)_55%,var(--secondary))] text-2xl font-black text-white shadow-[0_18px_45px_rgba(53,88,114,0.2)] dark:border-white/10">
               {avatar ? (
                 <img src={avatar} alt={name} className="h-full w-full object-cover" />
               ) : (
@@ -203,7 +203,8 @@ function InstructorHero({ instructor, snapshot }) {
               </p>
 
               <div className="mt-5 flex flex-wrap gap-3">
-                <span className="inline-flex h-9 items-center rounded-full border border-[#7AAACE]/30 bg-white/65 px-4 text-xs font-black text-[var(--primary)] shadow-[0_10px_24px_rgba(53,88,114,0.08)]">
+                <span className="inline-flex h-9 items-center rounded-full border border-[#7AAACE]/30 bg-[color:var(--card)]
+border-[color:var(--border)] px-4 text-xs font-black text-[var(--primary)] shadow-[0_10px_24px_rgba(53,88,114,0.08)]">
                   {instructor.title || "Course Instructor"}
                 </span>
                 <span className="inline-flex h-9 items-center rounded-full border border-[#7AAACE]/30 bg-white/65 px-4 text-xs font-black text-[var(--primary)] shadow-[0_10px_24px_rgba(53,88,114,0.08)]">

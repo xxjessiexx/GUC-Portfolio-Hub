@@ -124,13 +124,16 @@ export default function InstructorMyCourses() {
 
   return (
     <DashboardLayout workspace="instructor" workspaceLabel="Instructor Workspace">
-      <div className="space-y-6">
-        <AdminPageHeader
-          eyebrow="My teaching courses"
-          title="My Courses"
-          description="These are the courses currently linked to your instructor account. You can request unlinking for normal courses; Bachelor Project stays automatically linked."
-          icon={BookMarked}
-        />
+      <div className="min-h-screen p-8 space-y-6">
+        
+
+        <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
+            My Courses
+          </h1>
+
+          <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
+            These are the courses currently linked to your instructor account. You can request unlinking for normal courses; Bachelor Project stays automatically linked.
+          </p>
 
         <AppCard variant="strong" radius="lg" padding="lg">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

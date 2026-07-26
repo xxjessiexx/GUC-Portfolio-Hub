@@ -4,6 +4,7 @@ import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import {  Send } from "lucide-react";
 
 const toneStyles = {
   danger: "text-red-500 bg-red-500/10 border-red-500/20",
@@ -11,12 +12,16 @@ const toneStyles = {
   brand: "text-[color:var(--primary)] bg-[color:var(--accent)]/15 border-[color:var(--accent)]/30",
 };
 
+
 export function AdminActionDialog({
   open,
   title,
   description,
+  dialogClassName,
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
+  showIcon = true,
+  headerIcon = null,
   tone = "brand",
   noteLabel = "Admin note / reason",
   notePlaceholder = "Add a short reason for audit history...",
@@ -42,15 +47,23 @@ export function AdminActionDialog({
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ type: "spring", stiffness: 260, damping: 24 }}
             onMouseDown={(event) => event.stopPropagation()}
-            className="w-full max-w-lg"
+             className={cn("w-full max-w-lg", dialogClassName)}
           >
             <AppCard variant="strong" radius="xl" padding="lg" className="shadow-[0_28px_90px_rgba(16,32,45,0.24)]">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <div className={cn("rounded-2xl border p-3", toneStyles[tone] || toneStyles.brand)}>
-                    <AlertTriangle className="size-5" />
-                  </div>
-                  <div>
+  {showIcon && (
+    <div
+      className={cn(
+        "rounded-2xl border p-3",
+        toneStyles[tone] || toneStyles.brand
+      )}
+    >
+      {headerIcon ?? <AlertTriangle className="size-5" />}
+    </div>
+  )}
+
+  <div>
                     <h2 className="text-2xl font-black tracking-tight text-[color:var(--ink)]">{title}</h2>
                     {description ? <p className="mt-2 text-sm font-semibold leading-6 text-[color:var(--muted)]">{description}</p> : null}
                   </div>

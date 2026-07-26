@@ -249,14 +249,13 @@ export default function InstructorProjects() {
 
   return (
     <DashboardLayout workspace="instructor">
-      <div className="space-y-6">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <div className="min-h-screen p-8 space-y-6">
          <div>
-          <h1 className="text-4xl font-black text-[#16253A]">
+          <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
             Course Projects
           </h1>
 
-          <p className="mt-2 text-gray-600 font-medium">
+          <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
             Review and flag only the student projects attached to your linked courses.
           </p>
         </div>
@@ -271,7 +270,7 @@ export default function InstructorProjects() {
   </span>{" "}
   visible projects
 </div>
-        </div>
+        
 
         <SearchFilterToolbar
           searchValue={search}
