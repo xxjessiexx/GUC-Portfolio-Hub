@@ -123,6 +123,8 @@
     var(--secondary)
   );
 
+   --project-blue: #2196F3;
+   --project-blue-title:#133458;
   --card: rgba(255,255,255,.75);
   --card-hover: rgba(255,255,255,.95);
   --border: rgba(53,88,114,.15);
@@ -168,6 +170,8 @@
  
 }
 .dark {
+  --project-blue: #9CD5FF;
+  --project-blue-title:#eaf4fa;
   --primary: #8fc3e6;
   --secondary: #6ea0c4;
   --accent: #9cd5ff;

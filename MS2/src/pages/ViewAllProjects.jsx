@@ -844,18 +844,23 @@ border border-[var(--project-badge-border)]
   className="
     font-bold
     text-[16px]
-    text-[var(--ink)]
+    text-[var(--project-blue-title)]
     max-w-md
     truncate
     leading-none
     cursor-pointer
-    hover:text-[var(--primary)]
+    transition-colors
+    duration-200
+    hover:text-[#90CAF9]
   "
 >
   {getProjectName(p)}
 </h3>
 
-                            <p className="text-[var(--primary)] text-sm font-semibold mt-1">
+                            <p className="mt-1
+    text-sm
+    font-semibold
+    text-[var(--project-blue)]">
                               {getProjectCourse(p, courses)}
                             </p>
 
