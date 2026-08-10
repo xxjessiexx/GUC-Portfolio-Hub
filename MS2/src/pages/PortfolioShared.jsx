@@ -117,7 +117,7 @@ const buttonBase =
   "inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-black transition hover:-translate-y-0.5";
 
 const primaryButton =
-  "bg-[#355872] text-white shadow-[0_16px_40px_rgba(53,88,114,0.22)] hover:bg-[#253F53] dark:bg-[#9CD5FF] dark:text-[#071521] dark:hover:bg-white";
+  "bg-[#355872] text-white shadow-[0_16px_40px_rgba(53,88,114,0.22)] hover:bg-[#253F53] dark:bg-[#9CD5FF] dark:hover:bg-[#7AAACE]";
 
 const softButton =
   "border border-[#355872]/15 bg-white/80 text-[#355872] hover:bg-white dark:border-white/10 dark:bg-white/[0.06] dark:text-[#9CD5FF] dark:hover:bg-white/[0.1]";
@@ -327,7 +327,7 @@ function PortfolioHeader({ page, viewMode = "own", viewedName = "", onOpenSaveDi
     <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
         
-        <h1 className="mt-2 text-5xl font-black tracking-tight text-[color:var(--ink)]">
+        <h1 className="mt-2 text-5xl font-black tracking-tight text-[color:var(--ink)]  ">
           {isManage
             ? "Manage Portfolio"
             : isPublic
@@ -346,7 +346,18 @@ function PortfolioHeader({ page, viewMode = "own", viewedName = "", onOpenSaveDi
 
       <div className="flex flex-wrap gap-3">
         {isPublic ? null : page === "preview" ? (
-          <PrimaryButton to="/manage-portfolio" className="px-7">
+          <PrimaryButton to="/manage-portfolio" className="px-7 inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
+                bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+hover:bg-[linear-gradient(135deg,#355872_0%,#46739A_55%,#8CC3EA_100%)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer  hover:-translate-y-1
+      hover:scale-[1.02]
+      hover:brightness-110
+      hover:shadow-[0_24px_50px_rgba(53,88,114,.35)]  shadow-[0_12px_30px_rgba(53,88,114,.22)]
+
+      transition-all
+      duration-300
+      ease-out
+      hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)]"
+              >
             <Edit3 className="h-4 w-4" />
             Manage Portfolio
           </PrimaryButton>
@@ -1070,15 +1081,35 @@ function InternshipsGrid({
         {useInlineExpand ? (
           <PrimaryButton
             onClick={onToggleExpand}
-            className="h-14 min-w-[150px] rounded-[1.35rem] bg-gradient-to-r from-[#2E4053] to-[#77A9CC] px-8 text-base shadow-none hover:from-[#263849] hover:to-[#6A9DBF]"
-          >
+            className="inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
+                bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+hover:bg-[linear-gradient(135deg,#355872_0%,#46739A_55%,#8CC3EA_100%)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer  hover:-translate-y-1
+      hover:scale-[1.02]
+      hover:brightness-110
+      hover:shadow-[0_24px_50px_rgba(53,88,114,.35)]  shadow-[0_12px_30px_rgba(53,88,114,.22)]
+
+      transition-all
+      duration-300
+      ease-out
+      hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)]"
+              >
             {isExpanded ? "Show Less" : "View All"}
           </PrimaryButton>
         ) : (
           <PrimaryButton
             to="/internships"
-            className="h-14 min-w-[150px] rounded-[1.35rem] bg-gradient-to-r from-[#2E4053] to-[#77A9CC] px-8 text-base shadow-none hover:from-[#263849] hover:to-[#6A9DBF]"
-          >
+           className="inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
+                bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+hover:bg-[linear-gradient(135deg,#355872_0%,#46739A_55%,#8CC3EA_100%)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer  hover:-translate-y-1
+      hover:scale-[1.02]
+      hover:brightness-110
+      hover:shadow-[0_24px_50px_rgba(53,88,114,.35)]  shadow-[0_12px_30px_rgba(53,88,114,.22)]
+
+      transition-all
+      duration-300
+      ease-out
+      hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)]"
+              >
             View All
           </PrimaryButton>
         )}
@@ -1231,15 +1262,35 @@ function ProjectsGrid({
           useInlineExpand ? (
             <PrimaryButton
               onClick={onToggleExpand}
-              className="h-14 min-w-[150px] rounded-[1.35rem] bg-gradient-to-r from-[#2E4053] to-[#77A9CC] px-8 text-base shadow-none hover:from-[#263849] hover:to-[#6A9DBF]"
-            >
+              className="inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
+                bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+hover:bg-[linear-gradient(135deg,#355872_0%,#46739A_55%,#8CC3EA_100%)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer  hover:-translate-y-1
+      hover:scale-[1.02]
+      hover:brightness-110
+      hover:shadow-[0_24px_50px_rgba(53,88,114,.35)]  shadow-[0_12px_30px_rgba(53,88,114,.22)]
+
+      transition-all
+      duration-300
+      ease-out
+      hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)]"
+              >
               {isExpanded ? "Show Less" : "View All"}
             </PrimaryButton>
           ) : (
             <PrimaryButton
               to="/view-all-projects"
-              className="h-14 min-w-[150px] rounded-[1.35rem] bg-gradient-to-r from-[#2E4053] to-[#77A9CC] px-8 text-base shadow-none hover:from-[#263849] hover:to-[#6A9DBF]"
-            >
+              className="inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
+                bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+hover:bg-[linear-gradient(135deg,#355872_0%,#46739A_55%,#8CC3EA_100%)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer  hover:-translate-y-1
+      hover:scale-[1.02]
+      hover:brightness-110
+      hover:shadow-[0_24px_50px_rgba(53,88,114,.35)]  shadow-[0_12px_30px_rgba(53,88,114,.22)]
+
+      transition-all
+      duration-300
+      ease-out
+      hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)]"
+              >
               View All
             </PrimaryButton>
           )
