@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import SideToast from "@/components/ui/SideToast";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 
@@ -297,6 +298,13 @@ export default function Internships() {
   const [applyInternship, setApplyInternship] = useState(null);
   const [coverLetter, setCoverLetter] = useState("");
 
+  const [toast, setToast] = useState({
+  open: false,
+  title: "",
+  description: "",
+  type: "success",
+});
+
   const refreshInternships = () => {
     const users = getCollection("users") || [];
     const storeInternships = getCollection("internships") || [];
@@ -421,14 +429,23 @@ export default function Internships() {
   };
 
   const confirmApply = () => {
-    if (!applyInternship) return;
+  if (!applyInternship) return;
 
-    applyToInternship(applyInternship.id, coverLetter);
+  const internshipTitle = applyInternship.title;
 
-    setApplyInternship(null);
-    setCoverLetter("");
-    refreshInternships();
-  };
+  applyToInternship(applyInternship.id, coverLetter);
+
+  setApplyInternship(null);
+  setCoverLetter("");
+  refreshInternships();
+
+  setToast({
+    open: true,
+    title: "Application submitted!",
+    description: `You successfully applied for ${internshipTitle}.`,
+    type: "success",
+  });
+};
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -678,7 +695,7 @@ export default function Internships() {
           />
         )}
 
-        {applyInternship && (
+                {applyInternship && (
           <ApplyModal
             internship={applyInternship}
             coverLetter={coverLetter}
@@ -689,6 +706,20 @@ export default function Internships() {
           />
         )}
       </main>
+
+      <SideToast
+        open={toast.open}
+        title={toast.title}
+        description={toast.description}
+        type={toast.type}
+        onClose={() =>
+          setToast((current) => ({
+            ...current,
+            open: false,
+          }))
+        }
+      />
+
     </DashboardLayout>
   );
 }

@@ -568,6 +568,8 @@ export default function AdminFlaggedProjects() {
 
   return (
     <AdminPageShell>
+      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
       <AdminPageHeader
         title="Flagged Projects and Appeals"
         description="Review flagged projects, inspect appeal messages, record decisions, and activate or deactivate projects with confirmation notes."
@@ -1007,6 +1009,8 @@ export default function AdminFlaggedProjects() {
         }}
         onConfirm={confirmDecision}
       />
+      </div>
+      </main>
 
       <SideToast
         open={toastData.open}

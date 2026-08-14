@@ -23,7 +23,9 @@ import {
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { student } from "@/data/studentDashboardData";
+import { useState } from "react";
 
+import { AdminActionDialog } from "@/components/adminModule/AdminActionDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -116,14 +118,15 @@ export default function Sidebar({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-
+const [logoutOpen, setLogoutOpen] = useState(false);
   const activeWorkspace = workspaceItems[workspace] ? workspace : "student";
   const items = workspaceItems[activeWorkspace];
 
   const handleLogout = () => {
-    sessionStorage.removeItem("currentUser");
-    navigate("/", { replace: true });
-  };
+  setLogoutOpen(false);
+  sessionStorage.removeItem("currentUser");
+  navigate("/", { replace: true });
+};
 
   const handleNavigate = (path) => {
     if (!path) return;
@@ -131,6 +134,7 @@ export default function Sidebar({
   };
 
   return (
+     <>
     <aside
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
@@ -193,57 +197,44 @@ export default function Sidebar({
             
           
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.02 }}
-                whileTap={tapScale}
-                className={`group relative flex w-full items-center rounded-2xl border border-red-400/20 bg-red-500/10 text-red-300 transition-all duration-300 hover:bg-red-500/20 ${
-                  open
-                    ? "justify-start gap-3 px-4 py-3"
-                    : "justify-center py-3"
-                }`}
-              >
-                <LogOut className="h-5 w-5" />
+          <motion.button
+  type="button"
+  onClick={() => setLogoutOpen(true)}
+  whileHover={{ scale: 1.02 }}
+  whileTap={tapScale}
+  className={`group relative flex w-full items-center rounded-2xl border border-red-400/20 bg-red-500/10 text-red-300 transition-all duration-300 hover:bg-red-500/20 ${
+    open
+      ? "justify-start gap-3 px-4 py-3"
+      : "justify-center py-3"
+  }`}
+>
+  <LogOut className="h-5 w-5" />
 
-                {open && <span className="font-bold">Logout</span>}
+  {open && <span className="font-bold">Logout</span>}
 
-                {!open && (
-                  <span className="pointer-events-none absolute left-[76px] z-50 rounded-xl bg-[color:var(--ink)] px-3 py-2 text-xs font-bold text-white opacity-0 shadow-xl transition group-hover:opacity-100">
-                    Logout
-                  </span>
-                )}
-              </motion.button>
-            </AlertDialogTrigger>
-
-            <AlertDialogContent className="z-[9999] rounded-3xl border border-white/70 bg-white p-6 shadow-[0_24px_80px_rgba(44,57,71,0.25)] dark:border-white/10 dark:bg-[color:var(--surface-elevated)]">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-2xl font-black text-[color:var(--ink)]">
-                  Log out?
-                </AlertDialogTitle>
-
-                <AlertDialogDescription className="text-base leading-7 text-[color:var(--muted)]">
-                  You will be signed out of your account.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-
-              <AlertDialogFooter>
-                <AlertDialogCancel className="rounded-2xl">
-                  Cancel
-                </AlertDialogCancel>
-
-                <AlertDialogAction
-                  onClick={handleLogout}
-                  className="rounded-2xl bg-[color:var(--primary)] font-bold text-white hover:bg-[color:var(--dark)] dark:text-[color:var(--background)]"
-                >
-                  Yes, log out
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+  {!open && (
+    <span className="pointer-events-none absolute left-[76px] z-50 rounded-xl bg-[color:var(--ink)] px-3 py-2 text-xs font-bold text-white opacity-0 shadow-xl transition group-hover:opacity-100">
+      Logout
+    </span>
+  )}
+</motion.button>
         </div>
       </div>
+      
     </aside>
+
+    <AdminActionDialog
+      open={logoutOpen}
+      title="Log out?"
+      description="You will be signed out of your account."
+      confirmLabel="Yes, log out"
+      cancelLabel="Cancel"
+      showIcon={false}
+      tone="brand"
+      onCancel={() => setLogoutOpen(false)}
+      onConfirm={handleLogout}
+      dialogClassName="!max-w-[500px]"
+    />
+  </>
   );
 }

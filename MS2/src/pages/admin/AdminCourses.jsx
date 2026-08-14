@@ -10,21 +10,28 @@ import AdminTableActions from "@/components/adminModule/AdminTableActions";
 import AdminCourseEditPanel from "@/components/adminModule/AdminCourseEditPanel";
 import { AdminStatusBadge } from "@/components/adminModule/AdminStatusBadge";
 import { AdminActionDialog } from "@/components/adminModule/AdminActionDialog";
-
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import FilterSelect from "@/components/common/FilterSelect";
 
 import { useAdminModuleData } from "@/hooks/useAdminModuleData";
 import { AppButton } from "@/components/ui/AppButton";
-import { Link } from "react-router-dom";
+import SideToast from "@/components/ui/SideToast";
+import { Link, useNavigate } from "react-router-dom";
 
 const courseGrid =
   "lg:grid-cols-[0.75fr_1.5fr_0.8fr_1.2fr_0.7fr_0.8fr_1.3fr]";
 
 export default function AdminCourses() {
   const { courses, actions } = useAdminModuleData();
-
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [toast, setToast] = useState({
+  open: false,
+  title: "",
+  description: "",
+  type: "success",
+});
   const [status, setStatus] = useState("all");
   const [editingCourse, setEditingCourse] = useState(null);
   const [decision, setDecision] = useState(null);
@@ -281,36 +288,60 @@ export default function AdminCourses() {
 
   return (
     <AdminPageShell>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <AdminPageHeader
-          eyebrow="Academic Catalog"
-          title="Course Management"
-          description="View, edit, activate, deactivate, and delete course records used across projects and instructor linking."
-        />
-
-        <AppButton
-          as={Link}
-          to="/admin/courses/create"
-          className="
-            h-14
-            rounded-[1.35rem]
-            bg-gradient-to-r
-            from-[#2E4053]
-            to-[#77A9CC]
-            px-8
-            text-base
-            font-black
-            text-white
-            shadow-none
-            hover:from-[#263849]
-            hover:to-[#6A9DBF]
-          "
-        >
-          <Plus className="size-5" />
-          Create Course
-        </AppButton>
-      </div>
-
+      <SideToast
+  open={toast.open}
+  title={toast.title}
+  description={toast.description}
+  type={toast.type}
+  onClose={() =>
+    setToast((current) => ({
+      ...current,
+      open: false,
+    }))
+  }
+/>
+      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl space-y-6">
+              <SectionHeader
+        className="
+          [&_h2]:mt-3
+          [&_h2]:text-4xl
+          [&_h2]:font-black
+          [&_h2]:tracking-tight
+          [&_h2]:text-[color:var(--ink)]
+          sm:[&_h2]:text-5xl
+      
+          [&_p]:mt-3
+          [&_p]:text-base
+          [&_p]:font-semibold
+          [&_p]:text-[color:var(--muted)]
+        "
+        title="Course Management"
+        subtitle="View, edit, activate, deactivate, and delete course records used across projects and instructor linking."
+        action={
+                  <div className="-m-2">
+                    <span
+                      onClick={() => navigate("/admin/courses/create")}
+                      className="inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
+                      bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+      hover:bg-[linear-gradient(135deg,#355872_0%,#46739A_55%,#8CC3EA_100%)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer  hover:-translate-y-1
+            hover:scale-[1.02]
+            hover:brightness-110
+            hover:shadow-[0_24px_50px_rgba(53,88,114,.35)]  shadow-[0_12px_30px_rgba(53,88,114,.22)]
+      
+            transition-all
+            duration-300
+            ease-out
+            hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)]"
+                    >
+                      + Create Course
+                      
+                    </span>
+                    
+                  </div>
+                }
+              />
+      
       <AdminCourseEditPanel
         editingCourse={editingCourse}
         setEditingCourse={setEditingCourse}
@@ -369,6 +400,11 @@ export default function AdminCourses() {
         emptyMessage="No courses found"
       />
 
+      </div>
+      
+      </main>
+
+      
       <AdminActionDialog
         open={Boolean(decision)}
         tone={

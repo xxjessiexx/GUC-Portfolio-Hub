@@ -24,7 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import AppModal from "@/components/common/AppModal";
 import FilterSelect from "@/components/common/FilterSelect";
 import StatusBadge from "@/components/common/StatusBadge";
-
+import SideToast from "@/components/ui/SideToast";
 
 
 const INTERNSHIPS_STORAGE_KEY = "guc-portfolio-internships";
@@ -111,6 +111,12 @@ export default function CreateInternship() {
   const [touched, setTouched] = useState({});
   const [message, setMessage] = useState({ type: "", text: "" });
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [toast, setToast] = useState({
+  open: false,
+  title: "",
+  description: "",
+  type: "success",
+});
 
   const responsibilitiesList = useMemo(() => {
     return formData.responsibilities
@@ -235,14 +241,21 @@ export default function CreateInternship() {
   };
 
   const handleSaveDraft = () => {
-    const draft = buildStoredInternship("draft");
-    saveInternship(draft);
+  const draft = buildStoredInternship("draft");
+  saveInternship(draft);
 
-    setMessage({
-      type: "success",
-      text: "Internship draft saved successfully.",
-    });
-  };
+  setMessage({
+    type: "success",
+    text: "Internship draft saved successfully.",
+  });
+
+  setToast({
+    open: true,
+    title: "Draft saved successfully",
+    description: "Your internship draft has been saved.",
+    type: "success",
+  });
+};
 
   const handlePublish = (event) => {
     event.preventDefault();
@@ -266,17 +279,43 @@ export default function CreateInternship() {
       type: "success",
       text: "Internship published successfully.",
     });
+
+    setToast({
+  open: true,
+  title: "Internship published successfully",
+  description: "Your internship has been published successfully.",
+  type: "success",
+});
   };
 
   const resetForm = () => {
-    setFormData(initialInternshipData);
-    setErrors({});
-    setTouched({});
-    setMessage({ type: "", text: "" });
-  };
+  setFormData(initialInternshipData);
+  setErrors({});
+  setTouched({});
+  setMessage({ type: "", text: "" });
+
+  setToast({
+    open: true,
+    title: "Form cleared successfully",
+    description: "The internship form has been reset.",
+    type: "success",
+  });
+};
 
   return (
     <DashboardLayout >
+      <SideToast
+      open={toast.open}
+      title={toast.title}
+      description={toast.description}
+      type={toast.type}
+      onClose={() =>
+        setToast((current) => ({
+          ...current,
+          open: false,
+        }))
+      }
+    />
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
         <form onSubmit={handlePublish} className="mx-auto max-w-7xl space-y-6">
           <AppCard className="p-6 sm:p-8">

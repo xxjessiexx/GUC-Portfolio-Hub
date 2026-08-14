@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowUpDown,
@@ -21,8 +26,10 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import SideToast from "@/components/ui/SideToast";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { AdminActionDialog } from "@/components/adminModule/AdminActionDialog";
 import { AppCard } from "@/components/ui/AppCard";
 import { Input } from "@/components/ui/input";
 import { useUserProfile } from "@/context/UserProfileContext";
@@ -121,6 +128,12 @@ const primaryButton =
 
 const softButton =
   "border border-[#355872]/15 bg-white/80 text-[#355872] hover:bg-white dark:border-white/10 dark:bg-white/[0.06] dark:text-[#9CD5FF] dark:hover:bg-white/[0.1]";
+
+  
+
+
+
+
 
 function PrimaryButton({
   children,
@@ -1501,48 +1514,24 @@ function DeleteProjectDialog({ project, onCancel, onConfirm }) {
 
 function SaveChangesDialog({ open, onCancel, onDiscard, onSave }) {
   return (
-    <AlertDialog open={open} onOpenChange={(state) => !state && onCancel()}>
-      <AlertDialogContent className="max-w-md rounded-[2rem] border border-[#355872]/18 bg-[#F7F8F0] px-8 py-7 text-[color:var(--ink)] shadow-[0_30px_80px_rgba(53,88,114,0.22)] dark:border-white/10 dark:bg-[#102030]">
-        <AlertDialogHeader className="text-left">
-          <AlertDialogTitle className="text-3xl font-black tracking-tight text-[color:var(--ink)]">
-            Save portfolio changes?
-          </AlertDialogTitle>
-
-          <AlertDialogDescription className="pt-2 text-base font-semibold leading-7 text-[color:var(--muted)]">
-            Save your portfolio updates and go to preview, discard this editing
-            session, or cancel and keep editing.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <div className="my-5 h-px w-full bg-[#355872]/12 dark:bg-white/10" />
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="inline-flex h-11 items-center justify-center rounded-full border border-[#355872]/16 bg-white px-5 font-black text-[color:var(--ink)] hover:bg-white/80 dark:border-white/10 dark:bg-white/10"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            onClick={onDiscard}
-            className="inline-flex h-11 items-center justify-center rounded-full border border-red-200 bg-red-50 px-5 font-black text-red-600 hover:bg-red-100 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-300"
-          >
-            Discard Changes
-          </button>
-
-          <button
-            type="button"
-            onClick={onSave}
-            className={`inline-flex h-11 items-center justify-center rounded-full px-5 font-black ${primaryButton}`}
-          >
-            Save & Preview
-          </button>
-        </div>
-      </AlertDialogContent>
-    </AlertDialog>
+    <AdminActionDialog
+      open={open}
+      title="Save portfolio changes?"
+      description="Save your portfolio updates and go to preview, discard this editing session, or cancel and keep editing."
+      cancelLabel="Cancel"
+      secondaryLabel="Discard Changes"
+      confirmLabel="Save & Preview"
+      showIcon={false}
+      tone="brand"
+      dialogClassName="
+  !max-w-[560px]
+  [&>div]:!min-h-0
+  [&>div]:!h-auto
+"
+      onCancel={onCancel}
+      onSecondary={onDiscard}
+      onConfirm={onSave}
+    />
   );
 }
 
@@ -1654,6 +1643,34 @@ export function PortfolioPageShell({ page = "preview" }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { profile } = useUserProfile();
+
+  const location = useLocation();
+
+const [toast, setToast] = useState({
+  open: false,
+  title: "",
+  description: "",
+  type: "success",
+});
+
+useEffect(() => {
+  const storedToast = sessionStorage.getItem("portfolioToast");
+
+  if (!storedToast) return;
+
+  try {
+    const parsedToast = JSON.parse(storedToast);
+
+    setToast({
+      open: true,
+      ...parsedToast,
+    });
+  } catch {
+    // ignore invalid stored toast
+  }
+
+  sessionStorage.removeItem("portfolioToast");
+}, [location.pathname]);
 
   const [storeProjects, setStoreProjects] = useState([]);
   const [courses, setCourses] = useState([]);
@@ -1877,27 +1894,60 @@ export function PortfolioPageShell({ page = "preview" }) {
       deleteProjectFromStore(projectId);
     });
 
-    setDraftOverrides({});
-    setDraftDeletedProjectIds([]);
-    setShowSaveDialog(false);
+   setDraftOverrides({});
+setDraftDeletedProjectIds([]);
+setShowSaveDialog(false);
 
-    refreshPortfolioData();
-    navigate("/portfolio");
+refreshPortfolioData();
+
+sessionStorage.setItem(
+  "portfolioToast",
+  JSON.stringify({
+    title: "Portfolio saved successfully",
+    description: "Your portfolio changes have been saved.",
+    type: "success",
+  })
+);
+
+navigate("/portfolio");
   };
 
   const handleDiscardChanges = () => {
-    setDraftOverrides({});
-    setDraftDeletedProjectIds([]);
-    setShowSaveDialog(false);
+  setDraftOverrides({});
+  setDraftDeletedProjectIds([]);
+  setShowSaveDialog(false);
 
-    refreshPortfolioData();
-    navigate("/portfolio");
-  };
+  refreshPortfolioData();
+
+  sessionStorage.setItem(
+    "portfolioToast",
+    JSON.stringify({
+      title: "Changes discarded",
+      description: "Your unsaved portfolio changes have been discarded.",
+      type: "success",
+    })
+  );
+
+  navigate("/portfolio");
+};
 
   const canManageProfile = page === "manage" && viewMode !== "public";
 
   return (
     <DashboardLayout>
+
+      <SideToast
+      open={toast.open}
+      title={toast.title}
+      description={toast.description}
+      type={toast.type}
+      onClose={() =>
+        setToast((current) => ({
+          ...current,
+          open: false,
+        }))
+      }
+    />
       <ProjectPreviewModal
         project={previewProject}
         onClose={() => setPreviewProject(null)}
@@ -1918,8 +1968,8 @@ export function PortfolioPageShell({ page = "preview" }) {
         onDiscard={handleDiscardChanges}
         onSave={handleSaveChanges}
       />
-
-      <div className="space-y-6">
+      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+     <div className="mx-auto max-w-7xl space-y-6">
         <PortfolioHeader
           page={page}
           viewMode={viewMode}
@@ -1980,6 +2030,7 @@ export function PortfolioPageShell({ page = "preview" }) {
           }
         />
       </div>
+      </main>
     </DashboardLayout>
   );
 }

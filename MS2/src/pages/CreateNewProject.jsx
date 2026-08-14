@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { FaGithub as Github } from "react-icons/fa";
-
+import SideToast from "@/components/ui/SideToast";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ProjectInvitePickerModal from "@/components/project/ProjectInvitePickerModal";
 import { AppButton } from "@/components/ui/AppButton";
@@ -70,6 +70,8 @@ const selectTriggerStyles = cn(
   inputStyles,
   "h-12 w-full justify-between py-0 text-left"
 );
+
+
 
 function makeInviteNotificationId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
@@ -584,6 +586,13 @@ function validateProjectField(field, data) {
 
 export default function CreateNewProject() {
   const [availableCourses, setAvailableCourses] = useState(FALLBACK_COURSES);
+
+  const [toast, setToast] = useState({
+  open: false,
+  title: "",
+  description: "",
+  type: "success",
+});
 
   useEffect(() => {
     const courses = getCollection("courses") || [];
@@ -1198,6 +1207,14 @@ export default function CreateNewProject() {
         message:
           "Project saved successfully. Files and creation time were saved too.",
       });
+
+      setToast({
+  open: true,
+  title: "Project created successfully",
+  description: "Your project has been created successfully.",
+  type: "success",
+
+});
     } catch (error) {
       console.error("Failed to save project:", error);
       setSaveMessage({
@@ -1211,6 +1228,19 @@ export default function CreateNewProject() {
 
   return (
     <DashboardLayout>
+      <SideToast
+      open={toast.open}
+      title={toast.title}
+      description={toast.description}
+      type={toast.type}
+      onClose={() =>
+        setToast((current) => ({
+          ...current,
+          open: false,
+        }))
+      }
+    />
+
       <ProjectInvitePickerModal
         open={dialogs.collab.open || dialogs.instructor.open}
         mode={inviteMode}
@@ -1562,7 +1592,14 @@ export default function CreateNewProject() {
                       instructor: { open: false, value: "", error: "" },
                     });
                     setSaveMessage({ type: "", message: "" });
+                    setToast({
+                    open: true,
+                    title: "Draft reset successfully",
+                    description: "Your project draft has been reset.",
+                    type: "success",
+                  });
                   }}
+                  
                   disabled={isSaving}
                   className="min-h-12 rounded-2xl border border-white/70 bg-[var(--surface-strong)] px-6 font-black text-[color:var(--primary)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] transition hover:-translate-y-0.5 hover:bg-[var(--surface-elevated)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
