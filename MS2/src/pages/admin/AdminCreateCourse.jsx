@@ -11,7 +11,6 @@ import {
   RotateCcw,
   UserRound,
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { AdminPageShell } from "@/components/adminModule/AdminPageShell";
 import { AdminPageHeader } from "@/components/adminModule/AdminPageHeader";
@@ -21,11 +20,17 @@ import {
   AdminMotionCard,
   RequirementLine,
 } from "@/components/adminModule/AdminFormPrimitives";
-import { adminInputStyles, cardMotion, pageMotion } from "@/lib/adminFormTokens";
+
+import {
+  adminInputStyles,
+  cardMotion,
+  pageMotion,
+} from "@/lib/adminFormTokens";
 
 import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
 import { Input } from "@/components/ui/input";
+
 import {
   Select,
   SelectContent,
@@ -35,8 +40,14 @@ import {
 } from "@/components/ui/select";
 
 import { useAdminModuleData } from "@/hooks/useAdminModuleData";
+import { useToast } from "@/context/ToastContext";
 
-const COURSE_TYPES = ["Course", "Bachelor Project", "Elective", "Lab"];
+const COURSE_TYPES = [
+  "Course",
+  "Bachelor Project",
+  "Elective",
+  "Lab",
+];
 
 const emptyCourse = {
   code: "",
@@ -48,20 +59,28 @@ const emptyCourse = {
 
 export default function AdminCreateCourse() {
   const navigate = useNavigate();
+
   const { courses, actions } = useAdminModuleData();
+  const { showToast } = useToast();
 
   const [form, setForm] = useState(emptyCourse);
   const [submitted, setSubmitted] = useState(false);
 
-  const update = (key, value) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const update = (key, value) => {
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
 
-  const normalizedCode = form.code.trim().toUpperCase();
+  const normalizedCode =
+    form.code.trim().toUpperCase();
 
   const duplicateCode = useMemo(
     () =>
       courses.some(
-        (course) => course.code.toUpperCase() === normalizedCode
+        (course) =>
+          course.code.toUpperCase() === normalizedCode
       ),
     [courses, normalizedCode]
   );
@@ -73,6 +92,7 @@ export default function AdminCreateCourse() {
         : duplicateCode
         ? "This course code already exists."
         : "",
+
     name:
       submitted && !form.name.trim()
         ? "Course name is required."
@@ -86,27 +106,62 @@ export default function AdminCreateCourse() {
     form.instructor.trim(),
   ].filter(Boolean).length;
 
-  const canSubmit = normalizedCode && form.name.trim() && !duplicateCode;
+  const canSubmit =
+    normalizedCode &&
+    form.name.trim() &&
+    !duplicateCode;
 
   const submit = (event) => {
     event.preventDefault();
+
     setSubmitted(true);
 
-    if (!canSubmit) return;
+    if (!normalizedCode || !form.name.trim()) {
+      showToast({
+        title: "Missing course details",
+        description:
+          "Course code and name are required.",
+        type: "error",
+      });
+
+      return;
+    }
+
+    if (duplicateCode) {
+      showToast({
+        title: "Course already exists",
+        description: `${normalizedCode} is already in the catalog.`,
+        type: "error",
+      });
+
+      return;
+    }
+
+    if (!canSubmit) {
+      return;
+    }
 
     actions.addCourse({
       code: normalizedCode,
       name: form.name.trim(),
       type: form.type,
-      instructor: form.instructor.trim() || "Unassigned",
+      instructor:
+        form.instructor.trim() || "Unassigned",
       note: form.note.trim(),
     });
 
-    toast.success("Course created", {
+    showToast({
+      title: "Course created",
       description: `${normalizedCode} was added to the catalog.`,
+      type: "success",
     });
 
     navigate("/admin/courses");
+  };
+
+  const resetForm = () => {
+    setForm(emptyCourse);
+    setSubmitted(false);
   };
 
   return (
@@ -157,7 +212,10 @@ export default function AdminCreateCourse() {
                     <Input
                       value={form.code}
                       onChange={(event) =>
-                        update("code", event.target.value)
+                        update(
+                          "code",
+                          event.target.value
+                        )
                       }
                       placeholder="CSEN501"
                       className={adminInputStyles}
@@ -174,7 +232,10 @@ export default function AdminCreateCourse() {
                     <Input
                       value={form.name}
                       onChange={(event) =>
-                        update("name", event.target.value)
+                        update(
+                          "name",
+                          event.target.value
+                        )
                       }
                       placeholder="Software Engineering"
                       className={adminInputStyles}
@@ -200,15 +261,22 @@ export default function AdminCreateCourse() {
                   >
                     <Select
                       value={form.type}
-                      onValueChange={(value) => update("type", value)}
+                      onValueChange={(value) =>
+                        update("type", value)
+                      }
                     >
-                      <SelectTrigger className={adminInputStyles}>
+                      <SelectTrigger
+                        className={adminInputStyles}
+                      >
                         <SelectValue />
                       </SelectTrigger>
 
                       <SelectContent>
                         {COURSE_TYPES.map((type) => (
-                          <SelectItem key={type} value={type}>
+                          <SelectItem
+                            key={type}
+                            value={type}
+                          >
                             {type}
                           </SelectItem>
                         ))}
@@ -224,7 +292,10 @@ export default function AdminCreateCourse() {
                     <Input
                       value={form.instructor}
                       onChange={(event) =>
-                        update("instructor", event.target.value)
+                        update(
+                          "instructor",
+                          event.target.value
+                        )
                       }
                       placeholder="Dr. Mariam Hassan"
                       className={adminInputStyles}
@@ -239,7 +310,10 @@ export default function AdminCreateCourse() {
                   <textarea
                     value={form.note}
                     onChange={(event) =>
-                      update("note", event.target.value)
+                      update(
+                        "note",
+                        event.target.value
+                      )
                     }
                     rows={3}
                     placeholder="Why is this course being added?"
@@ -251,16 +325,25 @@ export default function AdminCreateCourse() {
 
             <motion.div
               variants={cardMotion}
-              className="flex flex-col-reverse gap-3 rounded-[28px] border border-white/70 bg-white/45 p-4 shadow-[0_18px_45px_rgba(53,88,114,0.08)] sm:flex-row sm:justify-end"
+              className="
+                flex
+                flex-col-reverse
+                gap-3
+                rounded-[28px]
+                border
+                border-white/70
+                bg-white/45
+                p-4
+                shadow-[0_18px_45px_rgba(53,88,114,0.08)]
+                sm:flex-row
+                sm:justify-end
+              "
             >
               <AppButton
                 type="button"
                 variant="glass"
                 className="rounded-2xl px-6 py-3 font-black"
-                onClick={() => {
-                  setForm(emptyCourse);
-                  setSubmitted(false);
-                }}
+                onClick={resetForm}
               >
                 <RotateCcw className="size-4" />
                 Reset
@@ -268,7 +351,18 @@ export default function AdminCreateCourse() {
 
               <AppButton
                 type="submit"
-                className="rounded-2xl bg-[color:var(--primary)] px-6 py-3 font-black text-white shadow-[0_14px_30px_rgba(31,58,92,0.22)] transition hover:-translate-y-0.5 hover:bg-[color:var(--primary)]/90"
+                className="
+                  rounded-2xl
+                  bg-[color:var(--primary)]
+                  px-6
+                  py-3
+                  font-black
+                  text-white
+                  shadow-[0_14px_30px_rgba(31,58,92,0.22)]
+                  transition
+                  hover:-translate-y-0.5
+                  hover:bg-[color:var(--primary)]/90
+                "
               >
                 <Plus className="size-4" />
                 Create course
@@ -280,7 +374,12 @@ export default function AdminCreateCourse() {
             variants={cardMotion}
             className="space-y-4 xl:sticky xl:top-6 xl:self-start"
           >
-            <AppCard variant="strong" radius="lg" padding="lg" className="p-5">
+            <AppCard
+              variant="strong"
+              radius="lg"
+              padding="lg"
+              className="p-5"
+            >
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[color:var(--secondary)]">
                 Live preview
               </p>
@@ -295,24 +394,40 @@ export default function AdminCreateCourse() {
                 </p>
 
                 <p className="mt-2 text-sm font-semibold text-[color:var(--muted)]">
-                  {form.type} • {form.instructor || "Unassigned"}
+                  {form.type} •{" "}
+                  {form.instructor || "Unassigned"}
                 </p>
               </div>
 
               <div className="mt-4 space-y-2">
-                <RequirementLine done={Boolean(normalizedCode && !duplicateCode)}>
+                <RequirementLine
+                  done={Boolean(
+                    normalizedCode &&
+                      !duplicateCode
+                  )}
+                >
                   Unique course code
                 </RequirementLine>
 
-                <RequirementLine done={Boolean(form.name.trim())}>
+                <RequirementLine
+                  done={Boolean(
+                    form.name.trim()
+                  )}
+                >
                   Course name added
                 </RequirementLine>
 
-                <RequirementLine done={Boolean(form.type)}>
+                <RequirementLine
+                  done={Boolean(form.type)}
+                >
                   Course type selected
                 </RequirementLine>
 
-                <RequirementLine done={Boolean(form.instructor.trim())}>
+                <RequirementLine
+                  done={Boolean(
+                    form.instructor.trim()
+                  )}
+                >
                   Instructor assigned or intentionally blank
                 </RequirementLine>
               </div>
