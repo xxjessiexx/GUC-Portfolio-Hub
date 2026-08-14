@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pencil, Plus } from "lucide-react";
-import { toast } from "sonner";
+
+import SideToast from "@/components/ui/SideToast";
 
 import { AdminPageShell } from "@/components/adminModule/AdminPageShell";
 import { AdminPageHeader } from "@/components/adminModule/AdminPageHeader";
@@ -31,6 +32,26 @@ export default function AdminCourses() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState(null);
 
+  const [toastData, setToastData] = useState({
+    open: false,
+    title: "",
+    description: "",
+    type: "success",
+  });
+
+  useEffect(() => {
+    if (!toastData.open) return;
+
+    const timer = setTimeout(() => {
+      setToastData((current) => ({
+        ...current,
+        open: false,
+      }));
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [toastData.open]);
+
   const filtered = useMemo(
     () =>
       courses.filter((course) => {
@@ -46,61 +67,108 @@ export default function AdminCourses() {
   );
 
   const startEditing = (course) => {
-    setEditingCourse({ ...course, note: "" });
+    setEditingCourse({
+      ...course,
+      note: "",
+    });
   };
 
   const openDecision = (course, action, nextStatus) => {
-    setDecision({ course, action, nextStatus });
+    setDecision({
+      course,
+      action,
+      nextStatus,
+    });
+
     setNote("");
   };
 
   const saveEdit = () => {
-    if (!editingCourse?.code?.trim() || !editingCourse?.name?.trim()) {
-      toast.error("Course code and name are required.");
+    if (
+      !editingCourse?.code?.trim() ||
+      !editingCourse?.name?.trim()
+    ) {
+      setToastData({
+        open: true,
+        title: "Missing course details",
+        description: "Course code and name are required.",
+        type: "error",
+      });
+
       return;
     }
+
+    const updatedCode =
+      editingCourse.code.trim().toUpperCase();
 
     actions.updateCourse(
       editingCourse.id,
       {
-        code: editingCourse.code.trim().toUpperCase(),
+        code: updatedCode,
         name: editingCourse.name.trim(),
-        type: editingCourse.type.trim() || "Course",
-        instructor: editingCourse.instructor.trim() || "Unassigned",
+        type:
+          editingCourse.type.trim() ||
+          "Course",
+        instructor:
+          editingCourse.instructor.trim() ||
+          "Unassigned",
       },
       editingCourse.note?.trim()
     );
 
-    toast.success("Course updated", {
-      description: `${editingCourse.code.toUpperCase()} was updated.`,
+    setToastData({
+      open: true,
+      title: "Course updated",
+      description: `${updatedCode} was updated successfully.`,
+      type: "success",
     });
 
     setEditingCourse(null);
   };
 
   const confirmDecision = () => {
+    if (!decision) return;
+
     if (
-      (decision.action === "delete" || decision.nextStatus === "inactive") &&
+      (decision.action === "delete" ||
+        decision.nextStatus === "inactive") &&
       !note.trim()
     ) {
       return;
     }
 
     if (decision.action === "delete") {
-      actions.deleteCourse(decision.course.id, note.trim());
+      actions.deleteCourse(
+        decision.course.id,
+        note.trim()
+      );
+
+      setToastData({
+        open: true,
+        title: "Course deleted",
+        description: `${decision.course.code} was deleted successfully.`,
+        type: "success",
+      });
     } else {
       actions.setCourseStatus(
         decision.course.id,
         decision.nextStatus,
         note.trim()
       );
+
+      setToastData({
+        open: true,
+        title:
+          decision.nextStatus === "active"
+            ? "Course activated"
+            : "Course deactivated",
+        description: `${decision.course.code} was marked ${decision.nextStatus}.`,
+        type: "success",
+      });
     }
 
-    toast.success(
-      decision.action === "delete" ? "Course deleted" : "Course status updated"
-    );
-
     setDecision(null);
+    setNote("");
   };
 
   const courseColumns = [
@@ -109,10 +177,13 @@ export default function AdminCourses() {
       label: "Code",
       render: (course) => (
         <p className="font-black text-[color:var(--ink)]">
-          {course.type === "Bachelor Project" ? "-" : course.code}
+          {course.type === "Bachelor Project"
+            ? "-"
+            : course.code}
         </p>
       ),
     },
+
     {
       key: "name",
       label: "Course",
@@ -122,16 +193,18 @@ export default function AdminCourses() {
         </p>
       ),
     },
+
     {
-        key: "type",
-        label: "Type",
-        render: (course) =>
-          course.type === "Bachelor Project" ? null : (
-            <p className="text-sm font-semibold text-[color:var(--muted)]">
-              {course.type}
-            </p>
-          ),
-      },
+      key: "type",
+      label: "Type",
+      render: (course) =>
+        course.type === "Bachelor Project" ? null : (
+          <p className="text-sm font-semibold text-[color:var(--muted)]">
+            {course.type}
+          </p>
+        ),
+    },
+
     {
       key: "instructor",
       label: "Instructor",
@@ -141,6 +214,7 @@ export default function AdminCourses() {
         </p>
       ),
     },
+
     {
       key: "linkedProjects",
       label: "Projects",
@@ -150,11 +224,15 @@ export default function AdminCourses() {
         </p>
       ),
     },
+
     {
       key: "status",
       label: "Status",
-      render: (course) => <AdminStatusBadge status={course.status} />,
+      render: (course) => (
+        <AdminStatusBadge status={course.status} />
+      ),
     },
+
     {
       key: "actions",
       label: "Actions",
@@ -167,8 +245,10 @@ export default function AdminCourses() {
             {
               label: "Edit course",
               icon: Pencil,
-              onClick: () => startEditing(course),
+              onClick: () =>
+                startEditing(course),
             },
+
             {
               label:
                 course.status === "active"
@@ -178,13 +258,20 @@ export default function AdminCourses() {
                 openDecision(
                   course,
                   "status",
-                  course.status === "active" ? "inactive" : "active"
+                  course.status === "active"
+                    ? "inactive"
+                    : "active"
                 ),
             },
+
             {
               label: "Delete course",
               danger: true,
-              onClick: () => openDecision(course, "delete"),
+              onClick: () =>
+                openDecision(
+                  course,
+                  "delete"
+                ),
             },
           ]}
         />
@@ -194,7 +281,6 @@ export default function AdminCourses() {
 
   return (
     <AdminPageShell>
-      
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <AdminPageHeader
           eyebrow="Academic Catalog"
@@ -205,7 +291,20 @@ export default function AdminCourses() {
         <AppButton
           as={Link}
           to="/admin/courses/create"
-          className="h-14 rounded-[1.35rem] bg-gradient-to-r from-[#2E4053] to-[#77A9CC] px-8 text-base font-black text-white shadow-none hover:from-[#263849] hover:to-[#6A9DBF]"
+          className="
+            h-14
+            rounded-[1.35rem]
+            bg-gradient-to-r
+            from-[#2E4053]
+            to-[#77A9CC]
+            px-8
+            text-base
+            font-black
+            text-white
+            shadow-none
+            hover:from-[#263849]
+            hover:to-[#6A9DBF]
+          "
         >
           <Plus className="size-5" />
           Create Course
@@ -215,7 +314,9 @@ export default function AdminCourses() {
       <AdminCourseEditPanel
         editingCourse={editingCourse}
         setEditingCourse={setEditingCourse}
-        onCancel={() => setEditingCourse(null)}
+        onCancel={() =>
+          setEditingCourse(null)
+        }
         onSave={saveEdit}
       />
 
@@ -225,15 +326,33 @@ export default function AdminCourses() {
         searchPlaceholder="Search courses..."
         showFilters
         filtersOpen={filtersOpen}
-        onToggleFilters={() => setFiltersOpen((current) => !current)}
+        onToggleFilters={() =>
+          setFiltersOpen(
+            (current) => !current
+          )
+        }
         filterTitle="Filter courses"
-        onClearFilters={() => setStatus("all")}
+        onClearFilters={() =>
+          setStatus("all")
+        }
       >
         <FilterSelect
-          value={`Status: ${status === "all" ? "All statuses" : status}`}
+          value={`Status: ${
+            status === "all"
+              ? "All statuses"
+              : status
+          }`}
           onChange={(value) => {
-            const next = value.replace("Status: ", "");
-            setStatus(next === "All statuses" ? "all" : next);
+            const next = value.replace(
+              "Status: ",
+              ""
+            );
+
+            setStatus(
+              next === "All statuses"
+                ? "all"
+                : next
+            );
           }}
           options={[
             "Status: All statuses",
@@ -253,7 +372,8 @@ export default function AdminCourses() {
       <AdminActionDialog
         open={Boolean(decision)}
         tone={
-          decision?.action === "delete" || decision?.nextStatus === "inactive"
+          decision?.action === "delete" ||
+          decision?.nextStatus === "inactive"
             ? "danger"
             : "brand"
         }
@@ -261,22 +381,46 @@ export default function AdminCourses() {
           decision?.action === "delete"
             ? "Delete this course?"
             : `${
-                decision?.nextStatus === "inactive" ? "Deactivate" : "Activate"
+                decision?.nextStatus ===
+                "inactive"
+                  ? "Deactivate"
+                  : "Activate"
               } this course?`
         }
         description={
-          decision ? `${decision.course.code} - ${decision.course.name}` : ""
+          decision
+            ? `${decision.course.code} - ${decision.course.name}`
+            : ""
         }
         confirmLabel={
-          decision?.action === "delete" ? "Delete course" : "Confirm change"
+          decision?.action === "delete"
+            ? "Delete course"
+            : "Confirm change"
         }
         noteRequired={
-          decision?.action === "delete" || decision?.nextStatus === "inactive"
+          decision?.action === "delete" ||
+          decision?.nextStatus === "inactive"
         }
         noteValue={note}
         onNoteChange={setNote}
-        onCancel={() => setDecision(null)}
+        onCancel={() => {
+          setDecision(null);
+          setNote("");
+        }}
         onConfirm={confirmDecision}
+      />
+
+      <SideToast
+        open={toastData.open}
+        title={toastData.title}
+        description={toastData.description}
+        type={toastData.type}
+        onClose={() =>
+          setToastData((current) => ({
+            ...current,
+            open: false,
+          }))
+        }
       />
     </AdminPageShell>
   );
