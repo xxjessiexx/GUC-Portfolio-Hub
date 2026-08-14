@@ -255,8 +255,10 @@ const displayedEmployers = dbEmployers.length ? dbEmployers : employers;
 
   return (
     <AdminPageShell>
+      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
       <AdminPageHeader
-        eyebrow="Employer Verification"
+        
         title="Company Applications"
         description="Review company details, inspect documents, record a decision reason, and approve or reject employer accounts."
         icon={Building2}
@@ -552,6 +554,8 @@ const displayedEmployers = dbEmployers.length ? dbEmployers : employers;
         onCancel={() => setDecision(null)}
         onConfirm={confirmDecision}
       />
+      </div>
+      </main>
     </AdminPageShell>
   );
 }

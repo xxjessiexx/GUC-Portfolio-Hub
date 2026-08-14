@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import ProjectInvitePickerModal from "@/components/project/ProjectInvitePickerModal";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   CheckCircle2,
@@ -14,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { FaGithub as Github } from "react-icons/fa";
+import SideToast from "@/components/ui/SideToast";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppButton } from "@/components/ui/AppButton";
@@ -437,72 +439,8 @@ function ChipInput({
   );
 }
 
-function InviteDialog({
-  open,
-  onOpenChange,
-  title,
-  description,
-  placeholder,
-  actionLabel,
-  value,
-  onValueChange,
-  onConfirm,
-  error,
-}) {
-  return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-[39rem] rounded-[2rem] border border-[color:var(--accent)]/55 bg-[#F7F8F0] px-8 py-7 text-[color:var(--ink)] shadow-[0_30px_80px_rgba(53,88,114,0.22)] dark:bg-[#152536]">
-        <AlertDialogHeader className="space-y-3 text-left">
-          <AlertDialogTitle className="text-3xl font-black tracking-tight text-[color:var(--ink)]">
-            {title}
-          </AlertDialogTitle>
-
-          <AlertDialogDescription className="text-base font-semibold leading-7 text-[color:var(--muted)]">
-            {description}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <div className="mt-5 space-y-3">
-          <FieldShell label="Email address" icon={Users}>
-            <Input
-              className={inputStyles}
-              placeholder={placeholder}
-              value={value}
-              onChange={(event) => onValueChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  onConfirm(event);
-                }
-              }}
-              autoFocus
-            />
-          </FieldShell>
-
-          <FieldFeedback
-            error={error}
-            helper="Enter the email you want to invite."
-          />
-        </div>
-
-        <div className="my-6 h-px w-full bg-[color:var(--border-blue)]/70" />
-
-        <AlertDialogFooter className="flex-row justify-end gap-3">
-          <AlertDialogCancel className="min-h-11 rounded-2xl border border-[color:var(--border-blue)] bg-white px-5 font-black text-[color:var(--ink)] shadow-sm transition hover:bg-[var(--surface-soft)] hover:text-[color:var(--ink)]">
-            Cancel
-          </AlertDialogCancel>
-
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="min-h-11 rounded-2xl bg-[var(--primary)] px-5 font-black text-white shadow-[var(--shadow-soft)] transition hover:bg-[var(--dark)]"
-          >
-            {actionLabel}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
+ 
+  
 
 function InviteBox({
   title,
@@ -632,6 +570,12 @@ export default function EditProject() {
     message: "",
   });
 
+  const [toast, setToast] = useState({
+  open: false,
+  title: "",
+  description: "",
+  type: "success",
+});
   const [inviteFeedback, setInviteFeedback] = useState({
     collab: { type: "", message: "" },
     instructor: { type: "", message: "" },
@@ -641,6 +585,8 @@ export default function EditProject() {
     collab: { open: false, value: "", error: "" },
     instructor: { open: false, value: "", error: "" },
   });
+
+  const users = useMemo(() => getCollection("users") || [], []);
 
   const updateField = (field, value) => {
     const nextData = { ...formData, [field]: value };
@@ -749,6 +695,78 @@ export default function EditProject() {
     setSaveMessage({ type: "", message: "" });
   };
 
+  const getDisplayName = (user) => {
+  return (
+    user?.name ||
+    user?.fullName ||
+    user?.companyName ||
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+    user?.email ||
+    "Unknown User"
+  );
+};
+
+const normalizeUserRole = (value) => {
+  const role = String(value || "").trim().toLowerCase();
+
+  if (role.includes("instructor") || role.includes("teacher")) {
+    return "instructor";
+  }
+
+  return "student";
+};
+
+const inviteMode = dialogs.instructor.open ? "instructor" : "student";
+
+const inviteQuery =
+  inviteMode === "instructor"
+    ? dialogs.instructor.value
+    : dialogs.collab.value;
+
+const inviteCandidates = useMemo(() => {
+  const existing =
+    inviteMode === "instructor"
+      ? formData.instructors
+      : formData.collaborators;
+
+  return users
+    .filter((user) => {
+      const role = normalizeUserRole(user.role);
+
+      if (inviteMode === "instructor") {
+        if (role !== "instructor") return false;
+      } else {
+        if (role !== "student") return false;
+      }
+
+      if (existing.includes(user.email)) {
+        return false;
+      }
+
+      const query = String(inviteQuery || "").trim().toLowerCase();
+
+      if (!query) return true;
+
+      return [
+        user.email,
+        user.name,
+        user.fullName,
+        user.firstName,
+        user.lastName,
+        `${user.firstName || ""} ${user.lastName || ""}`,
+      ].some((value) =>
+        String(value || "").toLowerCase().includes(query)
+      );
+    })
+    .slice(0, 12);
+}, [
+  users,
+  inviteMode,
+  inviteQuery,
+  formData.collaborators,
+  formData.instructors,
+]);
+
   const openInviteDialog = (kind) => {
     setDialogs((current) => ({
       ...current,
@@ -777,83 +795,59 @@ export default function EditProject() {
   };
 
   const updateInviteValue = (kind, value) => {
-    setDialogs((current) => {
-      const existing =
-        kind === "collab" ? formData.collaborators : formData.instructors;
-      const error =
-        current[kind].error || value
-          ? validateInviteEmail(value, existing)
-          : "";
+  setDialogs((current) => ({
+    ...current,
+    [kind]: {
+      ...current[kind],
+      value,
+      error: "",
+    },
+  }));
+};
 
-      return {
-        ...current,
-        [kind]: {
-          ...current[kind],
-          value,
-          error,
-        },
-      };
-    });
-  };
+  const selectInviteUser = (user) => {
+  if (!user?.email) return;
 
-  const confirmInvite = (kind) => (event) => {
-    event.preventDefault();
+  const kind = dialogs.instructor.open ? "instructor" : "collab";
 
-    const currentDialog = dialogs[kind];
-    const existing =
-      kind === "collab" ? formData.collaborators : formData.instructors;
-    const error = validateInviteEmail(currentDialog.value, existing);
+  const field =
+    kind === "instructor"
+      ? "instructors"
+      : "collaborators";
 
-    if (error) {
-      setDialogs((current) => ({
-        ...current,
-        [kind]: {
-          ...current[kind],
-          error,
-        },
-      }));
-
-      setInviteFeedback((current) => ({
-        ...current,
-        [kind]: { type: "error", message: error },
-      }));
-
-      return;
+  setFormData((current) => {
+    if (current[field].includes(user.email)) {
+      return current;
     }
 
-    const cleanEmail = currentDialog.value.trim().toLowerCase();
-
-    setFormData((current) => ({
+    return {
       ...current,
-      [kind === "collab" ? "collaborators" : "instructors"]: [
-        ...current[kind === "collab" ? "collaborators" : "instructors"],
-        cleanEmail,
-      ],
-    }));
+      [field]: [...current[field], user.email],
+    };
+  });
 
-    setDialogs((current) => ({
-      ...current,
-      [kind]: {
-        open: false,
-        value: "",
-        error: "",
-      },
-    }));
+  setInviteFeedback((current) => ({
+    ...current,
+    [kind]: {
+      type: "success",
+      message: `${getDisplayName(user)} added successfully.`,
+    },
+  }));
 
-    setInviteFeedback((current) => ({
-      ...current,
-      [kind]: {
-        type: "success",
-        message:
-          kind === "collab"
-            ? "Collaborator added successfully."
-            : "Course instructor added successfully.",
-      },
-    }));
+  setDialogs((current) => ({
+    ...current,
+    [kind]: {
+      open: false,
+      value: "",
+      error: "",
+    },
+  }));
 
-    setSaveMessage({ type: "", message: "" });
-  };
-
+  setSaveMessage({
+    type: "",
+    message: "",
+  });
+};
   const removeCollaborator = (emailToRemove) => {
     setFormData((current) => ({
       ...current,
@@ -925,11 +919,12 @@ export default function EditProject() {
         type: "error",
         message: "Please fix the highlighted fields before creating the project.",
       });
+      
       return;
     }
 
     setIsSaving(true);
-    setSaveMessage({ type: "", message: "" });
+    
 
     try {
       const now = new Date().toISOString();
@@ -949,6 +944,7 @@ export default function EditProject() {
         ...loadedProject,
         id: projectId,
         title: formData.title.trim(),
+        name: formData.title.trim(),
         type: isBachelorProject ? "Bachelor Project" : "Course Project",
         courseName: isBachelorProject ? "" : formData.courseName.trim(),
         courseCode: isBachelorProject ? "" : loadedProject.courseCode,
@@ -981,11 +977,12 @@ export default function EditProject() {
         instructor: { type: "", message: "" },
       });
 
-      setSaveMessage({
-        type: "success",
-        message:
-          "Project updated successfully. Changes and update time were saved.",
-      });
+      setToast({
+  open: true,
+  title: "Project updated successfully",
+  description: "Your project changes have been saved.",
+  type: "success",
+});
     } catch (error) {
       console.error("Failed to save project:", error);
       setSaveMessage({
@@ -1000,6 +997,18 @@ export default function EditProject() {
   if (!loadedProject) {
     return (
       <DashboardLayout>
+        <SideToast
+      open={toast.open}
+      title={toast.title}
+      description={toast.description}
+      type={toast.type}
+      onClose={() =>
+        setToast((current) => ({
+          ...current,
+          open: false,
+        }))
+      }
+    />
         <AppCard className="p-8">
           <h1 className="text-3xl font-black text-[color:var(--ink)]">
             Project not found
@@ -1021,31 +1030,42 @@ export default function EditProject() {
 
   return (
     <DashboardLayout>
-      <InviteDialog
-        open={dialogs.collab.open}
-        onOpenChange={(open) => setInviteDialogOpen("collab", open)}
-        title="Invite collaborator"
-        description="Add a student email to invite them as a collaborator on this project."
-        placeholder="student email"
-        actionLabel="Add collaborator"
-        value={dialogs.collab.value}
-        onValueChange={(value) => updateInviteValue("collab", value)}
-        onConfirm={confirmInvite("collab")}
-        error={dialogs.collab.error}
-      />
-
-      <InviteDialog
-        open={dialogs.instructor.open}
-        onOpenChange={(open) => setInviteDialogOpen("instructor", open)}
-        title="Invite course instructor"
-        description="Add an instructor email to invite them to review or supervise this project."
-        placeholder="instructor email"
-        actionLabel="Add instructor"
-        value={dialogs.instructor.value}
-        onValueChange={(value) => updateInviteValue("instructor", value)}
-        onConfirm={confirmInvite("instructor")}
-        error={dialogs.instructor.error}
-      />
+       <SideToast
+      open={toast.open}
+      title={toast.title}
+      description={toast.description}
+      type={toast.type}
+      onClose={() =>
+        setToast((current) => ({
+          ...current,
+          open: false,
+        }))
+      }
+    />
+      <ProjectInvitePickerModal
+  open={dialogs.collab.open || dialogs.instructor.open}
+  mode={inviteMode}
+  query={inviteQuery}
+  message={
+    inviteMode === "instructor"
+      ? inviteFeedback.instructor.message
+      : inviteFeedback.collab.message
+  }
+  candidates={inviteCandidates}
+  onClose={() => {
+    setInviteDialogOpen("collab", false);
+    setInviteDialogOpen("instructor", false);
+  }}
+  onQueryChange={(value) =>
+    updateInviteValue(
+      inviteMode === "instructor"
+        ? "instructor"
+        : "collab",
+      value
+    )
+  }
+  onSelectUser={selectInviteUser}
+/>
 
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
         <form onSubmit={handleSubmit} className="mx-auto max-w-7xl space-y-6">
@@ -1315,6 +1335,13 @@ export default function EditProject() {
                       instructor: { type: "", message: "" },
                     });
                     setSaveMessage({ type: "", message: "" });
+                    setToast({
+  open: true,
+  title: "Project reset successfully",
+  description: "Your project changes have been reset.",
+  type: "success",
+});
+
                   }}
                   disabled={isSaving}
                   className="min-h-12 rounded-2xl border border-white/70 bg-[var(--surface-strong)] px-6 font-black text-[color:var(--primary)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] transition hover:-translate-y-0.5 hover:bg-[var(--surface-elevated)] disabled:cursor-not-allowed disabled:opacity-60"

@@ -12,9 +12,9 @@ import {
   UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
-
+import SideToast from "@/components/ui/SideToast";
 import { AdminPageShell } from "@/components/adminModule/AdminPageShell";
-import { AdminPageHeader } from "@/components/adminModule/AdminPageHeader";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import {
   AdminField,
   AdminFormSectionHeader,
@@ -47,6 +47,12 @@ const emptyCourse = {
 };
 
 export default function AdminCreateCourse() {
+  const [toast, setToast] = useState({
+  open: false,
+  title: "",
+  description: "",
+  type: "success",
+});
   const navigate = useNavigate();
   const { courses, actions } = useAdminModuleData();
 
@@ -102,10 +108,12 @@ export default function AdminCreateCourse() {
       note: form.note.trim(),
     });
 
-    toast.success("Course created", {
-      description: `${normalizedCode} was added to the catalog.`,
-    });
-
+    setToast({
+  open: true,
+  title: "Course added successfully",
+  description: "The new course has been added.",
+  type: "success",
+});
     navigate("/admin/courses");
   };
 
@@ -116,22 +124,61 @@ export default function AdminCreateCourse() {
         value: Math.round((completion / 4) * 100),
       }}
     >
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={pageMotion}
-        className="space-y-5"
-      >
-        <motion.div variants={cardMotion}>
-          <AdminPageHeader
-            eyebrow="Academic Catalog"
-            title="Create Course"
-            description="Add a course record that instructors can link to and students can use when publishing projects."
-            actionLabel="Back to Courses"
-            actionTo="/admin/courses"
-            icon={ArrowLeft}
-          />
-        </motion.div>
+      <SideToast
+      open={toast.open}
+      title={toast.title}
+      description={toast.description}
+      type={toast.type}
+      onClose={() =>
+        setToast((current) => ({
+          ...current,
+          open: false,
+        }))
+      }
+    />
+
+
+        <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+                              <div className="mx-auto max-w-7xl space-y-6">
+                                <SectionHeader
+                          className="
+                            [&_h2]:mt-3
+                            [&_h2]:text-4xl
+                            [&_h2]:font-black
+                            [&_h2]:tracking-tight
+                            [&_h2]:text-[color:var(--ink)]
+                            sm:[&_h2]:text-5xl
+                        
+                            [&_p]:mt-3
+                            [&_p]:text-base
+                            [&_p]:font-semibold
+                            [&_p]:text-[color:var(--muted)]
+                          "
+                          title="Create Course"
+                          subtitle="Add a course record that instructors can link to and students can use when publishing projects."
+                          action={
+                                    <div className="-m-2">
+                                      <span
+                                        onClick={() => navigate("/admin/courses")}
+                                        className="inline-flex gap-2 items-center rounded-2xl px-9 py-3 text-white font-semibold 
+                                        bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+                        hover:bg-[linear-gradient(135deg,#355872_0%,#46739A_55%,#8CC3EA_100%)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer  hover:-translate-y-1
+                              hover:scale-[1.02]
+                              hover:brightness-110
+                              hover:shadow-[0_24px_50px_rgba(53,88,114,.35)]  shadow-[0_12px_30px_rgba(53,88,114,.22)]
+                        
+                              transition-all
+                              duration-300
+                              ease-out
+                              hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)]"
+                                      >
+                                        <ArrowLeft className="h-5 w-5" />
+                                        
+                                        Back to Courses
+                                      </span>
+                                    </div>
+                                  }
+                                />
 
         <form
           onSubmit={submit}
@@ -260,8 +307,15 @@ export default function AdminCreateCourse() {
                 onClick={() => {
                   setForm(emptyCourse);
                   setSubmitted(false);
+                  setToast({
+                  open: true,
+                  title: "Course reset successfully",
+                  description: "The course has been reset.",
+                  type: "success",
+                });
                 }}
               >
+
                 <RotateCcw className="size-4" />
                 Reset
               </AppButton>
@@ -319,7 +373,8 @@ export default function AdminCreateCourse() {
             </AppCard>
           </motion.aside>
         </form>
-      </motion.div>
+      </div>
+      </main>
     </AdminPageShell>
   );
 }

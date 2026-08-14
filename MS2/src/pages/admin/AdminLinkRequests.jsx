@@ -175,6 +175,7 @@ export default function AdminLinkRequests() {
   const selectedCopy = selectedRequest ? getRequestCopy(selectedRequest) : null;
 
   return (
+    
     <AdminPageShell
       notifications={pendingRequests.map((request) => {
         const copy = getRequestCopy(request);
@@ -185,8 +186,10 @@ export default function AdminLinkRequests() {
         };
       })}
     >
+      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
       <AdminPageHeader
-        eyebrow="Instructor course access"
+        
         title="Link requests"
         description="Accept or reject course link and unlink requests from course instructors. Approved requests update the instructor-course links everywhere in the demo database."
         icon={Link2}
@@ -423,6 +426,8 @@ export default function AdminLinkRequests() {
         onCancel={() => setDecision(null)}
         onConfirm={confirmDecision}
       />
+       </div>
+    </main>
     </AdminPageShell>
   );
 }

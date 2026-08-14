@@ -37,7 +37,7 @@ const normalizeVisibility = (value) => {
 };
 
 const getProjectName = (project) =>
-  project.name || project.title || "Untitled Project";
+  project.title || project.name || "Untitled Project";
 
 const getProjectDescription = (project) =>
   project.description ||

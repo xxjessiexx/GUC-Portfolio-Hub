@@ -30,6 +30,8 @@ export function AdminActionDialog({
   onNoteChange,
   onCancel,
   onConfirm,
+  secondaryLabel,
+  onSecondary,
 }) {
   return (
     <AnimatePresence>
@@ -90,25 +92,52 @@ export function AdminActionDialog({
               ) : null}
 
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <AppButton
-  variant="glass"
-  onClick={onCancel}
-  className="
-    bg-[#F3F6FA]
-    border border-[#D5DEE8]
-    text-[#355872]
-    hover:bg-[#E9F0F7]
-    hover:border-[#C3D2E3]
-  "
->{cancelLabel}</AppButton>
-                <AppButton variant={tone === "danger" ? "danger" : "brand"} onClick={onConfirm} className="
-    bg-[image:var(--nav-gradient)]
-    text-white
-    hover:brightness-110
-  ">
-                  {confirmLabel}
-                </AppButton>
-              </div>
+  <AppButton
+    variant="glass"
+    onClick={onCancel}
+    className="
+      bg-[#F3F6FA]
+      border border-[#D5DEE8]
+      text-[#355872]
+      hover:bg-[#E9F0F7]
+      hover:border-[#C3D2E3]
+    "
+  >
+    {cancelLabel}
+  </AppButton>
+
+  {secondaryLabel && onSecondary ? (
+    <AppButton
+      onClick={onSecondary}
+      className="
+        border
+        border-red-300
+        bg-red-50
+        text-red-500
+        hover:bg-red-100
+
+        dark:border-red-400/25
+        dark:bg-red-500/10
+        dark:text-red-300
+        dark:hover:bg-red-500/20
+      "
+    >
+      {secondaryLabel}
+    </AppButton>
+  ) : null}
+
+  <AppButton
+    variant={tone === "danger" ? "danger" : "brand"}
+    onClick={onConfirm}
+    className="
+      bg-[image:var(--nav-gradient)]
+      text-white
+      hover:brightness-110
+    "
+  >
+    {confirmLabel}
+  </AppButton>
+</div>
             </AppCard>
           </motion.div>
         </motion.div>

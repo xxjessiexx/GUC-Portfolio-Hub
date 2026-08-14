@@ -481,6 +481,7 @@ export default function MyApplications() {
     <DashboardLayout >
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
+          
           <div>
             <h1 className="text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
               My Applications

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Eye, EyeOff, KeyRound, Mail, RotateCcw, ShieldCheck, UserPlus, UserRound } from "lucide-react";
 import { toast } from "sonner";
-
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { AdminPageShell } from "@/components/adminModule/AdminPageShell";
 import { AdminField, AdminFormSectionHeader, AdminMotionCard, RequirementLine } from "@/components/adminModule/AdminFormPrimitives";
 import { adminInputStyles, cardMotion, pageMotion } from "@/lib/adminFormTokens";
@@ -11,6 +11,7 @@ import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
 import { Input } from "@/components/ui/input";
 import { useAdminModuleData } from "@/hooks/useAdminModuleData";
+import SideToast from "@/components/ui/SideToast";
 import { AdminPageHeader } from "@/components/adminModule/AdminPageHeader";
 
 const emptyAdmin = { name: "", email: "", username: "", password: "", note: "" };
@@ -23,7 +24,7 @@ export default function AdminCreateAccount() {
   const [submitted, setSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
-
+    
   const normalizedEmail = form.email.trim().toLowerCase();
   const normalizedUsername = form.username.trim().toLowerCase();
   const emailValid = EMAIL_REGEX.test(normalizedEmail);
@@ -39,33 +40,89 @@ export default function AdminCreateAccount() {
   };
   const completion = [form.name.trim(), emailValid && !duplicateEmail, normalizedUsername && !duplicateUsername, passwordStrongEnough].filter(Boolean).length;
   const canSubmit = form.name.trim() && emailValid && normalizedUsername && passwordStrongEnough && !duplicateEmail && !duplicateUsername;
-
+const [toast, setToast] = useState({
+  open: false,
+  title: "",
+  description: "",
+  type: "success",
+});
   const submit = (event) => {
     event.preventDefault();
     setSubmitted(true);
     if (!canSubmit) return;
     actions.createAdminUser({ name: form.name.trim(), email: normalizedEmail, username: normalizedUsername, password: form.password, note: form.note.trim() });
-    toast.success("Admin account created", { description: `${form.name.trim()} can now sign in as an administrator.` });
-    navigate("/admin/users");
+    sessionStorage.setItem(
+  "adminToast",
+  JSON.stringify({
+    title: "Admin account created",
+    description: `${form.name.trim()} can now sign in as an administrator.`,
+    type: "success",
+  })
+);
+
+navigate("/admin/users");
   };
 
   return (
     <AdminPageShell sidebarProgress={{ label: "Account readiness", value: Math.round((completion / 4) * 100) }}>
-      <motion.div initial="hidden" animate="visible" variants={pageMotion} className="space-y-5">
-        <motion.div variants={cardMotion}>
-          <AppButton as={Link} to="/admin/users" variant="glass" size="sm" className="w-fit"><ArrowLeft className="size-4" />Back to users</AppButton>
-        </motion.div>
+      
+    <SideToast
+  open={toast.open}
+  title={toast.title}
+  description={toast.description}
+  type={toast.type}
+  onClose={() =>
+    setToast((current) => ({
+      ...current,
+      open: false,
+    }))
+  }
+/>
 
-        <motion.div variants={cardMotion}>
-          <AdminPageHeader
-            eyebrow="Admin Access"
-            title="Create Admin Account"
-            description="Provision another administrator using the required username and password flow."
-            actionLabel="Back to Users"
-            actionTo="/admin/users"
-            icon={ArrowLeft}
-          />
-        </motion.div>
+          <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+                      <div className="mx-auto max-w-7xl space-y-6">
+                        <SectionHeader
+                  className="
+                    [&_h2]:mt-3
+                    [&_h2]:text-4xl
+                    [&_h2]:font-black
+                    [&_h2]:tracking-tight
+                    [&_h2]:text-[color:var(--ink)]
+                    sm:[&_h2]:text-5xl
+                
+                    [&_p]:mt-3
+                    [&_p]:text-base
+                    [&_p]:font-semibold
+                    [&_p]:text-[color:var(--muted)]
+                  "
+                  title="Create Admin Account"
+                  subtitle="Provision another administrator using the required username and password flow."
+                  action={
+                            <div className="-m-2">
+                              <span
+                                onClick={() => navigate("/admin/users")}
+                                className="inline-flex gap-2 items-center rounded-2xl px-9 py-3 text-white font-semibold 
+                                bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+                hover:bg-[linear-gradient(135deg,#355872_0%,#46739A_55%,#8CC3EA_100%)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer  hover:-translate-y-1
+                      hover:scale-[1.02]
+                      hover:brightness-110
+                      hover:shadow-[0_24px_50px_rgba(53,88,114,.35)]  shadow-[0_12px_30px_rgba(53,88,114,.22)]
+                
+                      transition-all
+                      duration-300
+                      ease-out
+                      hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)]"
+                              >
+                                <ArrowLeft className="h-5 w-5" />
+                                
+                                Back to Users
+                              </span>
+                            </div>
+                          }
+                        />
+          
+          
+      
 
         <form onSubmit={submit} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="space-y-4">
@@ -114,9 +171,16 @@ export default function AdminCreateAccount() {
                 variant="glass"
                 className="rounded-2xl px-6 py-3 font-black"
                 onClick={() => {
-                  setForm(emptyAdmin);
-                  setSubmitted(false);
-                }}
+                setForm(emptyAdmin);
+                setSubmitted(false);
+
+                setToast({
+                  open: true,
+                  title: "Form reset successfully",
+                  description: "All admin account fields have been cleared.",
+                  type: "success",
+                });
+              }}
               >
                 <RotateCcw className="size-4" />
                 Reset
@@ -150,7 +214,9 @@ export default function AdminCreateAccount() {
             </AppCard>
           </motion.aside>
         </form>
-      </motion.div>
+      
+      </div>
+      </main>
     </AdminPageShell>
   );
 }

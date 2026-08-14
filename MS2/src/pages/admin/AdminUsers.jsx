@@ -149,8 +149,10 @@ export default function AdminUsers() {
 
   return (
     <AdminPageShell>
+      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
       <AdminPageHeader
-        eyebrow="User Management"
+        
         title="Manage Platform Users"
         description="View all users with their full name, email and role. Activation changes use confirmation notes for safer admin workflows."
       />
@@ -212,6 +214,10 @@ export default function AdminUsers() {
         onCancel={() => setDecision(null)}
         onConfirm={confirmDecision}
       />
+
+      </div>
+    </main>
     </AdminPageShell>
+    
   );
 }
