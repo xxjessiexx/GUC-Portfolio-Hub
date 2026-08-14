@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
-import { CheckCircle2, UserPlus, XCircle } from "lucide-react";
-import { toast } from "sonner";
+import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, XCircle } from "lucide-react";
+
+import SideToast from "@/components/ui/SideToast";
 
 import { AdminPageShell } from "@/components/adminModule/AdminPageShell";
 import { AdminPageHeader } from "@/components/adminModule/AdminPageHeader";
@@ -27,6 +28,26 @@ export default function AdminUsers() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState(null);
 
+  const [toastData, setToastData] = useState({
+    open: false,
+    title: "",
+    description: "",
+    type: "success",
+  });
+
+  useEffect(() => {
+    if (!toastData.open) return;
+
+    const timer = setTimeout(() => {
+      setToastData((current) => ({
+        ...current,
+        open: false,
+      }));
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [toastData.open]);
+
   const filteredUsers = useMemo(
     () =>
       users.filter((user) => {
@@ -42,20 +63,39 @@ export default function AdminUsers() {
   );
 
   const openDecision = (user, nextStatus) => {
-    setDecision({ user, nextStatus });
+    setDecision({
+      user,
+      nextStatus,
+    });
+
     setNote("");
   };
 
   const confirmDecision = () => {
-    if (decision.nextStatus === "inactive" && !note.trim()) return;
+    if (!decision) return;
 
-    actions.setUserStatus(decision.user.id, decision.nextStatus, note.trim());
+    if (decision.nextStatus === "inactive" && !note.trim()) {
+      return;
+    }
 
-    toast.success(`Account ${decision.nextStatus}`, {
+    actions.setUserStatus(
+      decision.user.id,
+      decision.nextStatus,
+      note.trim()
+    );
+
+    setToastData({
+      open: true,
+      title:
+        decision.nextStatus === "active"
+          ? "Account activated"
+          : "Account deactivated",
       description: `${decision.user.name} was marked ${decision.nextStatus}.`,
+      type: "success",
     });
 
     setDecision(null);
+    setNote("");
   };
 
   const userColumns = [
@@ -64,7 +104,9 @@ export default function AdminUsers() {
       label: "User",
       render: (user) => (
         <div>
-          <p className="font-black text-[color:var(--ink)]">{user.name}</p>
+          <p className="font-black text-[color:var(--ink)]">
+            {user.name}
+          </p>
 
           <p className="mt-1 text-xs font-semibold text-[color:var(--muted)]">
             {user.email}
@@ -117,7 +159,9 @@ export default function AdminUsers() {
     {
       key: "status",
       label: "Status",
-      render: (user) => <AdminStatusBadge status={user.status} />,
+      render: (user) => (
+        <AdminStatusBadge status={user.status} />
+      ),
     },
     {
       key: "actions",
@@ -132,14 +176,16 @@ export default function AdminUsers() {
               label: "Activate account",
               icon: CheckCircle2,
               disabled: user.status === "active",
-              onClick: () => openDecision(user, "active"),
+              onClick: () =>
+                openDecision(user, "active"),
             },
             {
               label: "Deactivate account",
               icon: XCircle,
               danger: true,
               disabled: user.status === "inactive",
-              onClick: () => openDecision(user, "inactive"),
+              onClick: () =>
+                openDecision(user, "inactive"),
             },
           ].filter((action) => !action.disabled)}
         />
@@ -163,15 +209,22 @@ export default function AdminUsers() {
         searchPlaceholder="Search users..."
         showFilters
         filtersOpen={filtersOpen}
-        onToggleFilters={() => setFiltersOpen((current) => !current)}
+        onToggleFilters={() =>
+          setFiltersOpen((current) => !current)
+        }
         filterTitle="Filter users"
         onClearFilters={() => setStatus("all")}
       >
         <FilterSelect
-          value={`Status: ${status === "all" ? "All statuses" : status}`}
+          value={`Status: ${
+            status === "all"
+              ? "All statuses"
+              : status
+          }`}
           onChange={(value) =>
             setStatus(
-              value.replace("Status: ", "") === "All statuses"
+              value.replace("Status: ", "") ===
+                "All statuses"
                 ? "all"
                 : value.replace("Status: ", "")
             )
@@ -194,29 +247,52 @@ export default function AdminUsers() {
 
       <AdminActionDialog
         open={Boolean(decision)}
-        tone={decision?.nextStatus === "inactive" ? "danger" : "brand"}
+        tone={
+          decision?.nextStatus === "inactive"
+            ? "danger"
+            : "brand"
+        }
         title={
           decision?.nextStatus === "inactive"
             ? "Deactivate this account?"
             : "Activate this account?"
         }
         description={
-          decision ? `${decision.user.name} will be marked ${decision.nextStatus}.` : ""
+          decision
+            ? `${decision.user.name} will be marked ${decision.nextStatus}.`
+            : ""
         }
         confirmLabel={
           decision?.nextStatus === "inactive"
             ? "Deactivate account"
             : "Activate account"
         }
-        noteRequired={decision?.nextStatus === "inactive"}
+        noteRequired={
+          decision?.nextStatus === "inactive"
+        }
         noteValue={note}
         onNoteChange={setNote}
-        onCancel={() => setDecision(null)}
+        onCancel={() => {
+          setDecision(null);
+          setNote("");
+        }}
         onConfirm={confirmDecision}
       />
 
       </div>
     </main>
+      <SideToast
+        open={toastData.open}
+        title={toastData.title}
+        description={toastData.description}
+        type={toastData.type}
+        onClose={() =>
+          setToastData((current) => ({
+            ...current,
+            open: false,
+          }))
+        }
+      />
     </AdminPageShell>
     
   );
