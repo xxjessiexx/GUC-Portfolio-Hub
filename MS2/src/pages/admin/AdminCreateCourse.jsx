@@ -164,7 +164,7 @@ export default function AdminCreateCourse() {
   description: "The new course has been added.",
   type: "success",
 });
-    navigate("/admin/courses");
+    
   };
 
   const resetForm = () => {

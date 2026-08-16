@@ -11,6 +11,11 @@ import {
   Sparkles,
   Trash2,
   X,
+  Users,
+  WalletCards,
+  ClipboardList,
+  CircleX,
+  Globe2,
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -189,31 +194,37 @@ export default function CreateInternship() {
     }));
   };
 
-  const validateAllFields = () => {
-    const nextErrors = {
-      title: validateInternshipField("title", formData),
-      department: validateInternshipField("department", formData),
-      duration: validateInternshipField("duration", formData),
-      deadline: validateInternshipField("deadline", formData),
-      description: validateInternshipField("description", formData),
-      responsibilities: validateInternshipField("responsibilities", formData),
-      requirements: validateInternshipField("requirements", formData),
-    };
-
-    setErrors(nextErrors);
-    setTouched({
-      title: true,
-      department: true,
-      duration: true,
-      deadline: true,
-      description: true,
-      responsibilities: true,
-      requirements: true,
-    });
-
-    return Object.values(nextErrors).every((value) => !value);
+ const validateAllFields = () => {
+  const nextErrors = {
+    title: validateInternshipField("title", formData),
+    department: validateInternshipField("department", formData),
+    duration: validateInternshipField("duration", formData),
+    deadline: validateInternshipField("deadline", formData),
+    description: validateInternshipField("description", formData),
+    responsibilities: validateInternshipField(
+      "responsibilities",
+      formData
+    ),
+    requirements: validateInternshipField(
+      "requirements",
+      formData
+    ),
   };
 
+  setErrors(nextErrors);
+
+  setTouched({
+    title: true,
+    department: true,
+    duration: true,
+    deadline: true,
+    description: true,
+    responsibilities: true,
+    requirements: true,
+  });
+
+  return Object.values(nextErrors).every((value) => !value);
+};
   const buildStoredInternship = (status) => {
     const now = new Date().toISOString();
 
@@ -261,12 +272,15 @@ export default function CreateInternship() {
     event.preventDefault();
 
     if (!validateAllFields()) {
-      setMessage({
-        type: "error",
-        text: "Please fix the highlighted fields before publishing.",
-      });
-      return;
-    }
+  setToast({
+    open: true,
+    title: "Unable to publish internship",
+    description: "Please check the highlighted fields and try again.",
+    type: "error",
+  });
+
+  return;
+}
 
     const published = buildStoredInternship("published");
     saveInternship(published);
@@ -581,17 +595,7 @@ export default function CreateInternship() {
                   You can preview before publishing.
                 </p>
 
-                {message.text && (
-                  <p
-                    className={`mt-1 text-xs font-black ${
-                      message.type === "error"
-                        ? "text-red-500"
-                        : "text-[color:var(--primary)]"
-                    }`}
-                  >
-                    {message.text}
-                  </p>
-                )}
+                
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -627,65 +631,247 @@ export default function CreateInternship() {
       </main>
 
       {previewOpen && (
-        <AppModal
-          title="Internship Preview"
-          onClose={() => setPreviewOpen(false)}
-          maxWidth="max-w-[52rem]"
+  <AppModal
+    title=""
+    onClose={() => setPreviewOpen(false)}
+    maxWidth="max-w-[54rem]"
+  >
+    <div className="-m-2 sm:-m-3">
+      {/* Header */}
+      <div className="flex items-start gap-4">
+        <div
+          className="
+            flex
+            h-12
+            w-12
+            shrink-0
+            items-center
+            justify-center
+            rounded-2xl
+            bg-[linear-gradient(135deg,#355872_0%,#7AAACE_100%)]
+            text-white
+            shadow-[0_12px_28px_rgba(53,88,114,.22)]
+          "
         >
-          <p className="text-base leading-7 text-[color:var(--muted)]">
+          <Sparkles className="h-5 w-5" />
+        </div>
+
+        <div>
+          <h2 className="text-3xl font-black tracking-tight text-[color:var(--ink)]">
+            Internship Preview
+          </h2>
+
+          <p className="mt-2 text-sm font-semibold leading-6 text-[color:var(--muted)]">
             This is how the internship information will look before publishing.
           </p>
+        </div>
+      </div>
 
-          <div className="mt-4 rounded-[1.5rem] border border-[color:var(--primary)]/10 bg-[var(--surface-soft)] p-5">
-            <h3 className="text-2xl font-black text-[color:var(--ink)]">
+      {/* Internship hero */}
+      <div
+        className="
+          relative
+          mt-7
+          overflow-hidden
+          rounded-[28px]
+          border
+          border-[color:var(--border-blue)]
+          bg-[linear-gradient(135deg,rgba(156,213,255,.22)_0%,rgba(247,248,240,.72)_55%,rgba(122,170,206,.16)_100%)]
+          p-6
+          shadow-[0_18px_45px_rgba(53,88,114,.10)]
+          dark:bg-[linear-gradient(135deg,rgba(53,88,114,.38)_0%,rgba(16,32,48,.92)_55%,rgba(122,170,206,.12)_100%)]
+        "
+      >
+        <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[color:var(--accent)]/20 blur-3xl" />
+
+        <div className="relative flex items-center gap-4">
+          <div
+            className="
+              flex
+              h-16
+              w-16
+              shrink-0
+              items-center
+              justify-center
+              rounded-[22px]
+              border
+              border-white/60
+              bg-white/60
+              text-[color:var(--primary)]
+              shadow-[0_10px_26px_rgba(53,88,114,.12)]
+              backdrop-blur-xl
+              dark:bg-white/10
+            "
+          >
+            <Briefcase className="h-7 w-7" />
+          </div>
+
+          <div>
+            <h3 className="text-3xl font-black text-[color:var(--ink)]">
               {formData.title || "Untitled Internship"}
             </h3>
 
-            <p className="mt-2 text-sm font-semibold leading-6 text-[color:var(--muted)]">
-              {formData.description || "No description added yet."}
-            </p>
+            <p
+  className="
+    mt-2
+    max-w-2xl
+    text-sm
+    font-semibold
+    leading-6
 
-            <div className="mt-5 grid gap-2">
-              <PreviewRow label="Department" value={formData.department} />
-              <PreviewRow label="Work Mode" value={formData.workMode} />
-              <PreviewRow label="Duration" value={formData.duration} />
-              <PreviewRow label="Start Date" value={formData.startDate} />
-              <PreviewRow label="Deadline" value={formData.deadline} />
-              <PreviewRow label="Openings" value={formData.openings} />
-              <PreviewRow label="Stipend" value={formData.stipend} />
-              <PreviewRow
-                label="Hiring Active"
-                value={formData.hiringActive ? "Yes" : "No"}
-              />
-              <PreviewRow
-                label="Position Filled"
-                value={formData.positionFilled ? "Yes" : "No"}
-              />
-            </div>
-
-            <div className="mt-5 grid gap-5 md:grid-cols-2">
-              <PreviewList title="Responsibilities" items={responsibilitiesList} />
-              <PreviewList title="Requirements" items={requirementsList} />
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-2">
-              {[...formData.skills, ...formData.languages].map((item) => (
-                <StatusBadge key={item} status={item} />
-              ))}
-            </div>
+    text-[#294B67]
+    dark:text-[#9CD5FF]
+  "
+>
+  {formData.description || "No description added yet."}
+</p>
           </div>
+        </div>
+      </div>
 
-          <div className="mt-6 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setPreviewOpen(false)}
-              className="h-12 rounded-2xl bg-[color:var(--primary)] px-6 font-black text-white"
-            >
-              Looks Good
-            </button>
-          </div>
-        </AppModal>
+      {/* Information grid */}
+      {/* Information grid */}
+<div
+  className="
+    mt-5
+    grid
+    grid-cols-1
+    gap-3
+    rounded-[24px]
+    border
+    border-[color:var(--border-blue)]
+    bg-[var(--surface-elevated)]
+    p-4
+    shadow-[0_18px_45px_rgba(53,88,114,.08)]
+
+    sm:grid-cols-2
+    lg:grid-cols-3
+  "
+>
+        <PreviewInfoCard
+          icon={Briefcase}
+          label="Department"
+          value={formData.department}
+        />
+
+        <PreviewInfoCard
+          icon={Briefcase}
+          label="Work Mode"
+          value={formData.workMode}
+        />
+
+        <PreviewInfoCard
+          icon={CalendarDays}
+          label="Duration"
+          value={formData.duration}
+        />
+
+        <PreviewInfoCard
+          icon={CalendarDays}
+          label="Start Date"
+          value={formData.startDate}
+        />
+
+        <PreviewInfoCard
+          icon={CalendarDays}
+          label="Deadline"
+          value={formData.deadline}
+        />
+
+        <PreviewInfoCard
+          icon={Plus}
+          label="Openings"
+          value={formData.openings}
+        />
+
+        <PreviewInfoCard
+          icon={Briefcase}
+          label="Stipend"
+          value={formData.stipend}
+        />
+
+        <PreviewInfoCard
+          icon={CheckCircle2}
+          label="Hiring Active"
+          value={formData.hiringActive ? "Yes" : "No"}
+          positive={formData.hiringActive}
+        />
+
+        <PreviewInfoCard
+          icon={CheckCircle2}
+          label="Position Filled"
+          value={formData.positionFilled ? "Yes" : "No"}
+          positive={formData.positionFilled}
+        />
+      </div>
+
+      {/* Responsibilities + Requirements */}
+      <div className="mt-5 grid gap-5 md:grid-cols-2">
+        <div
+          className="
+            rounded-[24px]
+            border
+            border-[color:var(--border-blue)]
+            bg-[var(--surface-soft)]
+            p-5
+          "
+        >
+          <PreviewList
+            title="Responsibilities"
+            items={responsibilitiesList}
+          />
+        </div>
+
+        <div
+          className="
+            rounded-[24px]
+            border
+            border-[color:var(--border-blue)]
+            bg-[var(--surface-soft)]
+            p-5
+          "
+        >
+          <PreviewList
+            title="Requirements"
+            items={requirementsList}
+          />
+        </div>
+      </div>
+
+      {/* Skills */}
+      {[...formData.skills, ...formData.languages].length > 0 && (
+        <div className="mt-5 flex flex-wrap gap-2">
+          {[...formData.skills, ...formData.languages].map((item) => (
+            <StatusBadge key={item} status={item} />
+          ))}
+        </div>
       )}
+
+      {/* Footer */}
+      <div className="mt-7 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setPreviewOpen(false)}
+          className="
+            h-12
+            rounded-2xl
+            bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+            px-7
+            font-black
+            text-white
+            shadow-[0_12px_30px_rgba(53,88,114,.22)]
+            transition-all
+            duration-300
+            hover:-translate-y-0.5
+            hover:brightness-110
+          "
+        >
+          Looks Good
+        </button>
+      </div>
+    </div>
+  </AppModal>
+)}
     </DashboardLayout>
   );
 }
@@ -813,6 +999,83 @@ function ToggleCard({ title, description, checked, onCheckedChange }) {
             [&>span]:data-[state=checked]:translate-x-5
           "
         />
+      </div>
+    </div>
+  );
+}
+
+function PreviewInfoCard({
+  icon: Icon,
+  label,
+  value,
+  positive = false,
+}) {
+  return (
+    <div
+      className="
+        flex
+        min-h-[88px]
+        items-center
+        gap-3
+        rounded-2xl
+        border
+        px-4
+        py-3
+
+        border-[color:var(--card-border)]
+        bg-[var(--surface-soft)]
+
+        shadow-[0_4px_14px_rgba(53,88,114,.04)]
+
+        transition-all
+        duration-200
+
+        hover:-translate-y-0.5
+        hover:border-[color:var(--secondary)]/40
+        hover:bg-[var(--surface-strong)]
+        hover:shadow-[0_8px_20px_rgba(53,88,114,.08)]
+      "
+    >
+      <div
+        className="
+          flex
+          h-10
+          w-10
+          shrink-0
+          items-center
+          justify-center
+          rounded-xl
+
+          bg-[color:var(--accent)]/18
+          text-[color:var(--primary)]
+
+          dark:bg-[color:var(--accent)]/12
+          dark:text-[color:var(--accent)]
+        "
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+
+      <div className="min-w-0">
+        <p
+          className="
+            text-sm
+            font-black
+            text-[color:var(--ink)]
+          "
+        >
+          {label}
+        </p>
+
+        <p
+          className={`mt-0.5 text-sm font-semibold ${
+            positive
+              ? "text-green-600 dark:text-green-400"
+              : "text-[color:var(--muted)]"
+          }`}
+        >
+          {value || "Not added"}
+        </p>
       </div>
     </div>
   );

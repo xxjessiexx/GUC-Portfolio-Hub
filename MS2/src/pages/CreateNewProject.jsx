@@ -1029,19 +1029,23 @@ export default function CreateNewProject() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const isValid = validateAllFields();
+    
 
-    if (!isValid) {
-      setSaveMessage({
-        type: "error",
-        message:
-          "Please fix the highlighted fields before creating the project.",
-      });
-      return;
-    }
+const isValid = validateAllFields();
 
-    setIsSaving(true);
-    setSaveMessage({ type: "", message: "" });
+if (!isValid) {
+  setToast({
+    open: true,
+    title: "Unable to create project",
+    description: "Please check the highlighted fields and try again.",
+    type: "error",
+  });
+
+  return;
+}
+
+setIsSaving(true);
+setSaveMessage({ type: "", message: "" });
 
     try {
       const now = new Date().toISOString();
@@ -1202,11 +1206,7 @@ export default function CreateNewProject() {
         instructor: { open: false, value: "", error: "" },
       });
 
-      setSaveMessage({
-        type: "success",
-        message:
-          "Project saved successfully. Files and creation time were saved too.",
-      });
+      
 
       setToast({
   open: true,
@@ -1219,8 +1219,17 @@ export default function CreateNewProject() {
       console.error("Failed to save project:", error);
       setSaveMessage({
         type: "error",
-        message: "Could not save the project. Please try again.",
+        message: "Please check the highlighted fields.",
       });
+
+      setToast({
+    open: true,
+    title: "Project could not be created",
+    description:
+       "Please check the highlighted fields and try again.",
+    type: "error",
+  });
+
     } finally {
       setIsSaving(false);
     }

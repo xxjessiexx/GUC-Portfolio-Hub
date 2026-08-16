@@ -97,136 +97,108 @@ const [toast, setToast] = useState({
   description: "",
   type: "success",
 });
-  const submit = (event) => {
-    event.preventDefault();
+ 
+          const submit = (event) => {
+  event.preventDefault();
 
-    setSubmitted(true);
-    if (!canSubmit) return;
-    actions.createAdminUser({ name: form.name.trim(), email: normalizedEmail, username: normalizedUsername, password: form.password, note: form.note.trim() });
-    sessionStorage.setItem(
-  "adminToast",
-  JSON.stringify({
-    title: "Admin account created",
-    description: `${form.name.trim()} can now sign in as an administrator.`,
-    type: "success",
-  })
-);
+  setSubmitted(true);
 
-navigate("/admin/users");
-
-    if (!form.name.trim()) {
-      showToast({
-        title: "Missing admin details",
-        description:
-          "Full name, email, username, and password are required.",
-        type: "error",
-      });
-
-      return;
-    }
-
-    if (!normalizedEmail) {
-      showToast({
-        title: "Missing admin details",
-        description:
-          "Full name, email, username, and password are required.",
-        type: "error",
-      });
-
-      return;
-    }
-
-    if (!emailValid) {
-      showToast({
-        title: "Invalid email",
-        description:
-          "Enter a valid email address.",
-        type: "error",
-      });
-
-      return;
-    }
-
-    if (duplicateEmail) {
-      showToast({
-        title: "Email already exists",
-        description: `${normalizedEmail} is already registered.`,
-        type: "error",
-      });
-
-      return;
-    }
-
-    if (!normalizedUsername) {
-      showToast({
-        title: "Missing admin details",
-        description:
-          "Full name, email, username, and password are required.",
-        type: "error",
-      });
-
-      return;
-    }
-
-    if (duplicateUsername) {
-      showToast({
-        title: "Username already exists",
-        description: `@${normalizedUsername} is already in use.`,
-        type: "error",
-      });
-
-      return;
-    }
-
-    if (!form.password) {
-      showToast({
-        title: "Missing admin details",
-        description:
-          "Full name, email, username, and password are required.",
-        type: "error",
-      });
-
-      return;
-    }
-
-    if (!passwordStrongEnough) {
-      showToast({
-        title: "Password too short",
-        description:
-          "Password must be at least 6 characters.",
-        type: "error",
-      });
-
-      return;
-    }
-
-    if (!canSubmit) {
-      return;
-    }
-
-    actions.createAdminUser({
-      name:
-        form.name.trim(),
-      email:
-        normalizedEmail,
-      username:
-        normalizedUsername,
-      password:
-        form.password,
-      note:
-        form.note.trim(),
+  if (!form.name.trim()) {
+    setToast({
+      open: true,
+      title: "Unable to create admin",
+      description: "Please check the highlighted fields and try again.",
+      type: "error",
     });
 
-    showToast({
-      title:
-        "Admin account created",
+    return;
+  }
+
+  if (!normalizedEmail) {
+    setToast({
+      open: true,
+      title: "Unable to create admin",
+      description: "Please check the highlighted fields and try again.",
+      type: "error",
+    });
+
+    return;
+  }
+
+  if (!emailValid) {
+    setToast({
+      open: true,
+      title: "Unable to create admin",
+      description: "Please check the highlighted fields and try again.",
+      type: "error",
+    });
+
+    return;
+  }
+
+  if (duplicateEmail) {
+    setToast({
+      open: true,
+      title: "Unable to create admin",
+      description: "Please check the highlighted fields and try again.",
+      type: "error",
+    });
+
+    return;
+  }
+
+  if (!normalizedUsername) {
+    setToast({
+      open: true,
+      title: "Unable to create admin",
+      description: "Please check the highlighted fields and try again.",
+      type: "error",
+    });
+
+    return;
+  }
+
+  if (duplicateUsername) {
+    setToast({
+      open: true,
+      title: "Unable to create admin",
+      description: "Please check the highlighted fields and try again.",
+      type: "error",
+    });
+
+    return;
+  }
+
+  if (!form.password || !passwordStrongEnough) {
+    setToast({
+      open: true,
+      title: "Unable to create admin",
+      description: "Please check the highlighted fields and try again.",
+      type: "error",
+    });
+
+    return;
+  }
+
+  actions.createAdminUser({
+    name: form.name.trim(),
+    email: normalizedEmail,
+    username: normalizedUsername,
+    password: form.password,
+    note: form.note.trim(),
+  });
+
+  sessionStorage.setItem(
+    "adminToast",
+    JSON.stringify({
+      title: "Admin account created",
       description: `${form.name.trim()} can now sign in as an administrator.`,
       type: "success",
-    });
+    })
+  );
 
-    navigate("/admin/users");
-  };
-
+  
+};
   const resetForm = () => {
     setForm(emptyAdmin);
     setSubmitted(false);

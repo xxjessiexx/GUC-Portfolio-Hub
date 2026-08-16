@@ -914,16 +914,16 @@ const inviteCandidates = useMemo(() => {
 
     const isValid = validateAllFields();
 
-    if (!isValid) {
-      setSaveMessage({
-        type: "error",
-        message: "Please fix the highlighted fields before creating the project.",
-      });
-      
-      return;
-    }
+if (!isValid) {
+  setToast({
+    open: true,
+    title: "Unable to save changes",
+    description: "Please check the highlighted fields and try again.",
+    type: "error",
+  });
 
-    setIsSaving(true);
+  return;
+}
     
 
     try {
@@ -984,12 +984,15 @@ const inviteCandidates = useMemo(() => {
   type: "success",
 });
     } catch (error) {
-      console.error("Failed to save project:", error);
-      setSaveMessage({
-        type: "error",
-        message: "Could not save the project. Please try again.",
-      });
-    } finally {
+  console.error("Failed to save project:", error);
+
+  setToast({
+    open: true,
+    title: "Project could not be updated",
+    description: "Please check the highlighted fields and try again.",
+    type: "error",
+  });
+} finally {
       setIsSaving(false);
     }
   };
@@ -1308,18 +1311,7 @@ const inviteCandidates = useMemo(() => {
                     : "This project will be saved as a private draft."}
                 </p>
 
-                {saveMessage.message ? (
-                  <p
-                    className={cn(
-                      "mt-1 text-xs font-black",
-                      saveMessage.type === "error"
-                        ? "text-red-500"
-                        : "text-[color:var(--primary)]"
-                    )}
-                  >
-                    {saveMessage.message}
-                  </p>
-                ) : null}
+               
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

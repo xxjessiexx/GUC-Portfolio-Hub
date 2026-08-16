@@ -11,9 +11,9 @@ import {
   Send,
   Sparkles,
   Trash2,
+  Users,
   X,
 } from "lucide-react";
-
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
@@ -25,6 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import AppModal from "@/components/common/AppModal";
 import FilterSelect from "@/components/common/FilterSelect";
 import StatusBadge from "@/components/common/StatusBadge";
+import SideToast from "@/components/ui/SideToast";
 
 import { internshipsData } from "@/data/internshipsData";
 
@@ -110,6 +111,13 @@ export default function EditInternship() {
   const [touched, setTouched] = useState({});
   const [message, setMessage] = useState({ type: "", text: "" });
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  const [toast, setToast] = useState({
+  open: false,
+  title: "",
+  description: "",
+  type: "success",
+});
   useEffect(() => {
   const storedInternships = getStoredInternships();
 
@@ -278,47 +286,73 @@ export default function EditInternship() {
   };
 
   const handleSaveDraft = () => {
-    const draft = buildStoredInternship("draft");
-    updateStoredInternship(draft);
+  const draft = buildStoredInternship("draft");
+  updateStoredInternship(draft);
 
-    setMessage({
-      type: "success",
-      text: "Internship draft changes saved successfully.",
-    });
-  };
+  setToast({
+    open: true,
+    title: "Draft saved successfully",
+    description: "Your internship draft changes have been saved.",
+    type: "success",
+  });
+};
   const handlePublish = (event) => {
     event.preventDefault();
 
     if (!validateAllFields()) {
-      setMessage({
-        type: "error",
-        text: "Please fix the highlighted fields before publishing.",
-      });
-      return;
-    }
+  setToast({
+    open: true,
+    title: "Unable to save changes",
+    description: "Please check the highlighted fields and try again.",
+    type: "error",
+  });
+
+  return;
+}
 
     const published = buildStoredInternship("published");
     updateStoredInternship(published);
 
-    setMessage({
-    type: "success",
-    text: "Internship updated successfully.",
-    });
+    setToast({
+  open: true,
+  title: "Internship updated successfully",
+  description: "Your internship changes have been saved.",
+  type: "success",
+});
 
-    setTimeout(() => {
-    navigate("/manage-internships");
-    }, 700);
+setTimeout(() => {
+  navigate("/manage-internships");
+}, 1200);
     };
 
   const resetForm = () => {
-    setFormData(initialInternshipData);
-    setErrors({});
-    setTouched({});
-    setMessage({ type: "", text: "" });
-  };
+  setFormData(initialInternshipData);
+  setErrors({});
+  setTouched({});
+  setMessage({ type: "", text: "" });
 
+  setToast({
+    open: true,
+    title: "Form cleared successfully",
+    description: "All internship fields have been cleared.",
+    type: "success",
+  });
+};
   return (
     <DashboardLayout >
+
+      <SideToast
+      open={toast.open}
+      title={toast.title}
+      description={toast.description}
+      type={toast.type}
+      onClose={() =>
+        setToast((current) => ({
+          ...current,
+          open: false,
+        }))
+      }
+    />
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
         <form onSubmit={handlePublish} className="mx-auto max-w-7xl space-y-6">
           <AppCard className="p-6 sm:p-8">
@@ -583,17 +617,7 @@ export default function EditInternship() {
                   You can preview before publishing.
                 </p>
 
-                {message.text && (
-                  <p
-                    className={`mt-1 text-xs font-black ${
-                      message.type === "error"
-                        ? "text-red-500"
-                        : "text-[color:var(--primary)]"
-                    }`}
-                  >
-                    {message.text}
-                  </p>
-                )}
+               
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -628,63 +652,248 @@ export default function EditInternship() {
         </form>
       </main>
 
+      
+          
+        
       {previewOpen && (
         <AppModal
-          title="Internship Preview"
+          title=""
           onClose={() => setPreviewOpen(false)}
-          maxWidth="max-w-[52rem]"
+          maxWidth="max-w-[54rem]"
         >
-          <p className="text-base leading-7 text-[color:var(--muted)]">
-            This is how the internship information will look before publishing.
-          </p>
-
-          <div className="mt-4 rounded-[1.5rem] border border-[color:var(--primary)]/10 bg-[var(--surface-soft)] p-5">
-            <h3 className="text-2xl font-black text-[color:var(--ink)]">
-              {formData.title || "Untitled Internship"}
-            </h3>
-
-            <p className="mt-2 text-sm font-semibold leading-6 text-[color:var(--muted)]">
-              {formData.description || "No description added yet."}
-            </p>
-
-            <div className="mt-5 grid gap-2">
-              <PreviewRow label="Department" value={formData.department} />
-              <PreviewRow label="Work Mode" value={formData.workMode} />
-              <PreviewRow label="Duration" value={formData.duration} />
-              <PreviewRow label="Start Date" value={formData.startDate} />
-              <PreviewRow label="Deadline" value={formData.deadline} />
-              <PreviewRow label="Openings" value={formData.openings} />
-              <PreviewRow label="Stipend" value={formData.stipend} />
-              <PreviewRow
+          <div className="-m-2 sm:-m-3">
+            {/* Header */}
+            <div className="flex items-start gap-4">
+              <div
+                className="
+                  flex
+                  h-12
+                  w-12
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-2xl
+                  bg-[linear-gradient(135deg,#355872_0%,#7AAACE_100%)]
+                  text-white
+                  shadow-[0_12px_28px_rgba(53,88,114,.22)]
+                "
+              >
+                <Sparkles className="h-5 w-5" />
+              </div>
+      
+              <div>
+                <h2 className="text-3xl font-black tracking-tight text-[color:var(--ink)]">
+                  Internship Preview
+                </h2>
+      
+                <p className="mt-2 text-sm font-semibold leading-6 text-[color:var(--muted)]">
+                  This is how the internship information will look before publishing.
+                </p>
+              </div>
+            </div>
+      
+            {/* Internship hero */}
+            <div
+              className="
+                relative
+                mt-7
+                overflow-hidden
+                rounded-[28px]
+                border
+                border-[color:var(--border-blue)]
+                bg-[linear-gradient(135deg,rgba(156,213,255,.22)_0%,rgba(247,248,240,.72)_55%,rgba(122,170,206,.16)_100%)]
+                p-6
+                shadow-[0_18px_45px_rgba(53,88,114,.10)]
+                dark:bg-[linear-gradient(135deg,rgba(53,88,114,.38)_0%,rgba(16,32,48,.92)_55%,rgba(122,170,206,.12)_100%)]
+              "
+            >
+              <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[color:var(--accent)]/20 blur-3xl" />
+      
+              <div className="relative flex items-center gap-4">
+                <div
+                  className="
+                    flex
+                    h-16
+                    w-16
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-[22px]
+                    border
+                    border-white/60
+                    bg-white/60
+                    text-[color:var(--primary)]
+                    shadow-[0_10px_26px_rgba(53,88,114,.12)]
+                    backdrop-blur-xl
+                    dark:bg-white/10
+                  "
+                >
+                  <Briefcase className="h-7 w-7" />
+                </div>
+      
+                <div>
+                  <h3 className="text-3xl font-black text-[color:var(--ink)]">
+                    {formData.title || "Untitled Internship"}
+                  </h3>
+      
+                  <p
+        className="
+          mt-2
+          max-w-2xl
+          text-sm
+          font-semibold
+          leading-6
+      
+          text-[#294B67]
+          dark:text-[#9CD5FF]
+        "
+      >
+        {formData.description || "No description added yet."}
+      </p>
+                </div>
+              </div>
+            </div>
+      
+            {/* Information grid */}
+            {/* Information grid */}
+      <div
+        className="
+          mt-5
+          grid
+          grid-cols-1
+          gap-3
+          rounded-[24px]
+          border
+          border-[color:var(--border-blue)]
+          bg-[var(--surface-elevated)]
+          p-4
+          shadow-[0_18px_45px_rgba(53,88,114,.08)]
+      
+          sm:grid-cols-2
+          lg:grid-cols-3
+        "
+      >
+              <PreviewInfoCard
+                icon={Briefcase}
+                label="Department"
+                value={formData.department}
+              />
+      
+              <PreviewInfoCard
+                icon={Briefcase}
+                label="Work Mode"
+                value={formData.workMode}
+              />
+      
+              <PreviewInfoCard
+                icon={CalendarDays}
+                label="Duration"
+                value={formData.duration}
+              />
+      
+              <PreviewInfoCard
+                icon={CalendarDays}
+                label="Start Date"
+                value={formData.startDate}
+              />
+      
+              <PreviewInfoCard
+                icon={CalendarDays}
+                label="Deadline"
+                value={formData.deadline}
+              />
+      
+              <PreviewInfoCard
+                icon={Plus}
+                label="Openings"
+                value={formData.openings}
+              />
+      
+              <PreviewInfoCard
+                icon={Briefcase}
+                label="Stipend"
+                value={formData.stipend}
+              />
+      
+              <PreviewInfoCard
+                icon={CheckCircle2}
                 label="Hiring Active"
                 value={formData.hiringActive ? "Yes" : "No"}
+                positive={formData.hiringActive}
               />
-              <PreviewRow
+      
+              <PreviewInfoCard
+                icon={CheckCircle2}
                 label="Position Filled"
                 value={formData.positionFilled ? "Yes" : "No"}
+                positive={formData.positionFilled}
               />
             </div>
-
+      
+            {/* Responsibilities + Requirements */}
             <div className="mt-5 grid gap-5 md:grid-cols-2">
-              <PreviewList title="Responsibilities" items={responsibilitiesList} />
-              <PreviewList title="Requirements" items={requirementsList} />
+              <div
+                className="
+                  rounded-[24px]
+                  border
+                  border-[color:var(--border-blue)]
+                  bg-[var(--surface-soft)]
+                  p-5
+                "
+              >
+                <PreviewList
+                  title="Responsibilities"
+                  items={responsibilitiesList}
+                />
+              </div>
+      
+              <div
+                className="
+                  rounded-[24px]
+                  border
+                  border-[color:var(--border-blue)]
+                  bg-[var(--surface-soft)]
+                  p-5
+                "
+              >
+                <PreviewList
+                  title="Requirements"
+                  items={requirementsList}
+                />
+              </div>
             </div>
-
-            <div className="mt-5 flex flex-wrap gap-2">
-              {[...formData.skills, ...formData.languages].map((item) => (
-                <StatusBadge key={item} status={item} />
-              ))}
+      
+            {/* Skills */}
+            {[...formData.skills, ...formData.languages].length > 0 && (
+              <div className="mt-5 flex flex-wrap gap-2">
+                {[...formData.skills, ...formData.languages].map((item) => (
+                  <StatusBadge key={item} status={item} />
+                ))}
+              </div>
+            )}
+      
+            {/* Footer */}
+            <div className="mt-7 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(false)}
+                className="
+                  h-12
+                  rounded-2xl
+                  bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+                  px-7
+                  font-black
+                  text-white
+                  shadow-[0_12px_30px_rgba(53,88,114,.22)]
+                  transition-all
+                  duration-300
+                  hover:-translate-y-0.5
+                  hover:brightness-110
+                "
+              >
+                Looks Good
+              </button>
             </div>
-          </div>
-
-          <div className="mt-6 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setPreviewOpen(false)}
-              className="h-12 rounded-2xl bg-[color:var(--primary)] px-6 font-black text-white"
-            >
-              Looks Good
-            </button>
           </div>
         </AppModal>
       )}
@@ -833,6 +1042,83 @@ function ToggleCard({ title, description, checked, onCheckedChange }) {
   );
 }
 
+     
+function PreviewInfoCard({
+  icon: Icon,
+  label,
+  value,
+  positive = false,
+}) {
+  return (
+    <div
+      className="
+        flex
+        min-h-[88px]
+        items-center
+        gap-3
+        rounded-2xl
+        border
+        px-4
+        py-3
+
+        border-[color:var(--card-border)]
+        bg-[var(--surface-soft)]
+
+        shadow-[0_4px_14px_rgba(53,88,114,.04)]
+
+        transition-all
+        duration-200
+
+        hover:-translate-y-0.5
+        hover:border-[color:var(--secondary)]/40
+        hover:bg-[var(--surface-strong)]
+        hover:shadow-[0_8px_20px_rgba(53,88,114,.08)]
+      "
+    >
+      <div
+        className="
+          flex
+          h-10
+          w-10
+          shrink-0
+          items-center
+          justify-center
+          rounded-xl
+
+          bg-[color:var(--accent)]/18
+          text-[color:var(--primary)]
+
+          dark:bg-[color:var(--accent)]/12
+          dark:text-[color:var(--accent)]
+        "
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+
+      <div className="min-w-0">
+        <p
+          className="
+            text-sm
+            font-black
+            text-[color:var(--ink)]
+          "
+        >
+          {label}
+        </p>
+
+        <p
+          className={`mt-0.5 text-sm font-semibold ${
+            positive
+              ? "text-green-600 dark:text-green-400"
+              : "text-[color:var(--muted)]"
+          }`}
+        >
+          {value || "Not added"}
+        </p>
+      </div>
+    </div>
+  );
+}
 function PreviewRow({ label, value }) {
   return (
     <div className="grid gap-1 border-b border-[color:var(--primary)]/10 py-3 sm:grid-cols-[160px_1fr]">

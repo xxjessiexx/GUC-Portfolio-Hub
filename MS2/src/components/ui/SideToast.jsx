@@ -6,6 +6,8 @@ import {
   X,
 } from "lucide-react";
 
+import { useEffect } from "react";
+
 const toastStyles = {
   success: {
     container: "border-[#CDEED8] bg-[#F1FBF4]",
@@ -45,6 +47,16 @@ export default function SideToast({
 }) {
   const style = toastStyles[type] || toastStyles.success;
   const Icon = style.Icon;
+
+  useEffect(() => {
+  if (!open || !onClose) return;
+
+  const timer = setTimeout(() => {
+    onClose();
+  }, 5000);
+
+  return () => clearTimeout(timer);
+}, [open, onClose]);
 
   return (
     <AnimatePresence>
