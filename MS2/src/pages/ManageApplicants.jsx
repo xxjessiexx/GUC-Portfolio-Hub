@@ -34,6 +34,7 @@ import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 const applicantsData = [
   {
     id: "applicant-1",
+    userId: "REAL_OMAR_USER_ID",
     name: "Omar Hassan",
     university: "GUC",
     major: "Computer Science",
@@ -47,6 +48,7 @@ const applicantsData = [
   },
   {
     id: "applicant-2",
+    userId: "REAL_NOURAN_USER_ID",
     name: "Nouran Mohamed",
     university: "GUC",
     major: "Computer Science",
@@ -60,6 +62,7 @@ const applicantsData = [
   },
   {
     id: "applicant-3",
+    userId: "REAL_YOUSSEF_USER_ID",
     name: "Youssef Ahmed",
     university: "Ain Shams University",
     major: "Software Engineering",
@@ -73,6 +76,7 @@ const applicantsData = [
   },
   {
     id: "applicant-4",
+    userId: "REAL_HANA_USER_ID",
     name: "Hana Ashraf",
     university: "GUC",
     major: "Information Systems",
@@ -86,6 +90,7 @@ const applicantsData = [
   },
   {
     id: "applicant-5",
+    userId: "REAL_AHMED_USER_ID",
     name: "Ahmed Tarek",
     university: "Helwan University",
     major: "Computer Science",
@@ -99,6 +104,7 @@ const applicantsData = [
   },
   {
     id: "applicant-6",
+    userId: "REAL_MALAK_USER_ID",
     name: "Malak Ayman",
     university: "GUC",
     major: "Computer Science",
@@ -112,6 +118,7 @@ const applicantsData = [
   },
   {
     id: "applicant-7",
+    userId: "REAL_KAREEM_USER_ID",
     name: "Kareem Mostafa",
     university: "Cairo University",
     major: "Software Engineering",
@@ -125,6 +132,7 @@ const applicantsData = [
   },
   {
     id: "applicant-8",
+    userId: "REAL_SALMA_USER_ID",
     name: "Salma Ahmed",
     university: "Mansoura University",
     major: "Information Systems",
@@ -401,10 +409,11 @@ export default function ManageApplicants() {
                     className="grid gap-4 border-b border-[color:var(--primary)]/10 px-5 py-5 last:border-b-0 lg:grid-cols-[1.4fr_0.95fr_0.5fr_1.15fr_0.95fr_0.45fr_0.55fr_0.85fr_0.75fr] lg:items-center"
                   >
                     <button
+
                       type="button"
                       onClick={() =>
-                        navigate(`/portfolio/${applicant.portfolioId}`)
-                      }
+                        navigate(`/public-portfolio?userId=${applicant.userId}`)
+  }
                       className="flex items-center gap-3 text-left"
                     >
                       <InitialsAvatar name={applicant.name} />
@@ -485,8 +494,11 @@ export default function ManageApplicants() {
                       <button
                         type="button"
                         onClick={() =>
-                          navigate(`/portfolio/${applicant.portfolioId}`)
-                        }
+                         
+
+                           navigate(`/public-portfolio?userId=${applicant.userId}`)
+  }
+                        
                         className="grid h-9 w-9 place-items-center rounded-xl bg-white/60 text-[color:var(--primary)]"
                       >
                         <Eye className="h-4 w-4" />
