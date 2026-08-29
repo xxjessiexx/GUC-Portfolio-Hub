@@ -29,7 +29,10 @@ import StatusBadge from "@/components/common/StatusBadge";
 import AppModal from "@/components/common/AppModal";
 
 
-import { internshipsData } from "@/data/internshipsData";
+import {
+  getCurrentUser,
+  getInternshipsForEmployer,
+} from "@/data/demoStore";
 import FilterPanel from "@/components/common/FilterPanel";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 
@@ -46,7 +49,9 @@ function isDeadlinePassed(deadline) {
 export default function ManageInternships() {
   const navigate = useNavigate();
 
-  const [internships, setInternships] = useState(internshipsData);
+  const [internships, setInternships] = useState(() =>
+  getInternshipsForEmployer(getCurrentUser()?.id)
+);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] =
     useState("All Departments");
@@ -60,11 +65,19 @@ export default function ManageInternships() {
   const [showAllCandidates, setShowAllCandidates] = useState(false);
   const [showAllActivity, setShowAllActivity] = useState(false);
 
-  useEffect(() => {
-    const closeMenu = () => setOpenMenuId(null);
-    window.addEventListener("click", closeMenu);
-    return () => window.removeEventListener("click", closeMenu);
-  }, []);
+useEffect(() => {
+  const refresh = () => {
+    setInternships(getInternshipsForEmployer(getCurrentUser()?.id));
+  };
+
+  window.addEventListener("demo-db-change", refresh);
+  window.addEventListener("demo-current-user-change", refresh);
+
+  return () => {
+    window.removeEventListener("demo-db-change", refresh);
+    window.removeEventListener("demo-current-user-change", refresh);
+  };
+}, []);
 
   const departments = useMemo(
     () => [

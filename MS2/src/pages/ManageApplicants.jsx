@@ -1,11 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Bookmark,
   CheckCircle2,
   Download,
   Eye,
-  FileText,
   MessageSquare,
   Star,
   Users,
@@ -26,131 +25,95 @@ import {
 import InitialsAvatar from "@/components/common/InitialsAvatar";
 import MetricCard from "@/components/common/MetricCard";
 import FilterSelect from "@/components/common/FilterSelect";
-import AppModal from "@/components/common/AppModal";
-
 
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 
-const applicantsData = [
-  {
-    id: "applicant-1",
-    userId: "REAL_OMAR_USER_ID",
-    name: "Omar Hassan",
-    university: "GUC",
-    major: "Computer Science",
-    semester: "6th",
-    skills: ["Python", "Django", "AWS", "SQL"],
-    strength: "Excellent",
-    projects: 8,
-    score: 95,
-    status: "Shortlisted",
-    portfolioId: "portfolio-omar",
-  },
-  {
-    id: "applicant-2",
-    userId: "REAL_NOURAN_USER_ID",
-    name: "Nouran Mohamed",
-    university: "GUC",
-    major: "Computer Science",
-    semester: "5th",
-    skills: ["React", "TypeScript", "Node.js", "UI/UX"],
-    strength: "Excellent",
-    projects: 7,
-    score: 92,
-    status: "Shortlisted",
-    portfolioId: "portfolio-nouran",
-  },
-  {
-    id: "applicant-3",
-    userId: "REAL_YOUSSEF_USER_ID",
-    name: "Youssef Ahmed",
-    university: "Ain Shams University",
-    major: "Software Engineering",
-    semester: "6th",
-    skills: ["Java", "Spring Boot", "Docker", "SQL"],
-    strength: "Excellent",
-    projects: 6,
-    score: 89,
-    status: "Nominated",
-    portfolioId: "portfolio-youssef",
-  },
-  {
-    id: "applicant-4",
-    userId: "REAL_HANA_USER_ID",
-    name: "Hana Ashraf",
-    university: "GUC",
-    major: "Information Systems",
-    semester: "4th",
-    skills: ["Figma", "UI/UX", "React", "CSS"],
-    strength: "Very Good",
-    projects: 5,
-    score: 87,
-    status: "Shortlisted",
-    portfolioId: "portfolio-hana",
-  },
-  {
-    id: "applicant-5",
-    userId: "REAL_AHMED_USER_ID",
-    name: "Ahmed Tarek",
-    university: "Helwan University",
-    major: "Computer Science",
-    semester: "5th",
-    skills: ["Python", "Django", "PostgreSQL", "API"],
-    strength: "Very Good",
-    projects: 4,
-    score: 84,
-    status: "Nominated",
-    portfolioId: "portfolio-ahmed",
-  },
-  {
-    id: "applicant-6",
-    userId: "REAL_MALAK_USER_ID",
-    name: "Malak Ayman",
-    university: "GUC",
-    major: "Computer Science",
-    semester: "4th",
-    skills: ["C++", "Data Structures", "OOP"],
-    strength: "Good",
-    projects: 3,
-    score: 78,
-    status: "Reviewing",
-    portfolioId: "portfolio-malak",
-  },
-  {
-    id: "applicant-7",
-    userId: "REAL_KAREEM_USER_ID",
-    name: "Kareem Mostafa",
-    university: "Cairo University",
-    major: "Software Engineering",
-    semester: "6th",
-    skills: ["Go", "Docker", "Kubernetes", "SQL"],
-    strength: "Good",
-    projects: 3,
-    score: 76,
-    status: "Accepted",
-    portfolioId: "portfolio-kareem",
-  },
-  {
-    id: "applicant-8",
-    userId: "REAL_SALMA_USER_ID",
-    name: "Salma Ahmed",
-    university: "Mansoura University",
-    major: "Information Systems",
-    semester: "5th",
-    skills: ["JavaScript", "React", "Node.js"],
-    strength: "Fair",
-    projects: 2,
-    score: 68,
-    status: "Rejected",
-    portfolioId: "portfolio-salma",
-  },
-];
+import {
+  getInternshipById,
+  getProjectsForUser,
+  getUserById,
+  setApplicantStatus,
+} from "@/data/demoStore";
 
-const favoriteCandidates = [
-  { name: "Mariam Khaled", match: 86 },
-  { name: "Omar Adel", match: 82 },
-  { name: "Salma Tamer", match: 79 },
-];
+const INTERNSHIP_ID_ALIASES = {
+  "emp-int-1": "internship-1",
+  "emp-int-2": "internship-2",
+  "emp-int-3": "internship-3",
+};
+
+function resolveInternshipId(internshipId) {
+  return INTERNSHIP_ID_ALIASES[internshipId] || internshipId;
+}
+
+const STATUS_LABELS = {
+  pending: "Reviewing",
+  reviewing: "Reviewing",
+  shortlisted: "Shortlisted",
+  nominated: "Nominated",
+  accepted: "Accepted",
+  rejected: "Rejected",
+};
+
+function toStatusLabel(value) {
+  const normalized = String(value || "pending").trim().toLowerCase();
+  return STATUS_LABELS[normalized] ||
+    normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
+function toStoreStatus(value) {
+  return String(value || "pending").trim().toLowerCase();
+}
+
+function buildApplicant(application, internship) {
+  const student = getUserById(application.studentId);
+  if (!student) return null;
+
+  const projects = getProjectsForUser(student.id) || [];
+  const internshipSkills = new Set(
+    (internship?.skills || []).map((skill) => String(skill).toLowerCase())
+  );
+  const matchedSkills = (student.skills || []).filter((skill) =>
+    internshipSkills.has(String(skill).toLowerCase())
+  ).length;
+
+  const score = Number(
+    application.score ??
+      Math.min(98, 72 + matchedSkills * 5 + Math.min(projects.length, 6) * 2)
+  );
+
+  const strength =
+    application.strength ||
+    (score >= 90
+      ? "Excellent"
+      : score >= 82
+      ? "Very Good"
+      : score >= 74
+      ? "Good"
+      : "Fair");
+
+  return {
+    id: application.id || `${internship?.id || "internship"}-${student.id}`,
+    userId: student.id,
+    name: student.name || student.email || "Student",
+    image:
+      student.profileImage ||
+      student.image ||
+      student.avatar ||
+      "",
+    university: student.university || student.faculty || "GUC",
+    major: student.major || student.faculty || "Computer Science",
+    semester:
+      student.semester != null
+        ? `${String(student.semester).replace(/(st|nd|rd|th)$/i, "")}th`
+        : student.level || "—",
+    skills: student.skills || [],
+    strength,
+    projects: projects.length,
+    score,
+    status: toStatusLabel(application.status),
+    portfolioId: student.id,
+  };
+}
 
 function statusStyles(status) {
   if (status === "Accepted") return "bg-green-100 text-green-700";
@@ -166,15 +129,32 @@ export default function ManageApplicants() {
   const navigate = useNavigate();
   const { internshipId } = useParams();
 
-  const [applicants, setApplicants] = useState(applicantsData);
+  const [applicants, setApplicants] = useState([]);
+  const [internship, setInternship] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMajor, setSelectedMajor] = useState("All Majors");
   const [selectedSemester, setSelectedSemester] = useState("All Semesters");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
   const [sortBy, setSortBy] = useState("Top Score");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [notesOpen, setNotesOpen] = useState(false);
-  const [notes, setNotes] = useState("");
+
+  const loadApplicants = () => {
+    const selectedInternship = getInternshipById(resolveInternshipId(internshipId));
+    setInternship(selectedInternship);
+    setApplicants(
+      (selectedInternship?.applications || [])
+        .map((application) => buildApplicant(application, selectedInternship))
+        .filter(Boolean)
+    );
+  };
+
+  useEffect(() => {
+    loadApplicants();
+
+    const handleStoreChange = () => loadApplicants();
+    window.addEventListener("demo-db-change", handleStoreChange);
+    return () => window.removeEventListener("demo-db-change", handleStoreChange);
+  }, [internshipId]);
 
   const majors = ["All Majors", ...new Set(applicants.map((a) => a.major))];
   const semesters = [
@@ -233,9 +213,17 @@ export default function ManageApplicants() {
   };
 
   const updateApplicantStatus = (id, status) => {
+    const applicant = applicants.find((item) => item.id === id);
+    if (!applicant) return;
+
+    setApplicantStatus(
+      resolveInternshipId(internshipId),
+      applicant.userId,
+      toStoreStatus(status)
+    );
     setApplicants((current) =>
-      current.map((applicant) =>
-        applicant.id === id ? { ...applicant, status } : applicant
+      current.map((item) =>
+        item.id === id ? { ...item, status } : item
       )
     );
   };
@@ -281,17 +269,17 @@ export default function ManageApplicants() {
   };
 
   return (
-    <DashboardLayout >
+    <DashboardLayout>
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
             <div>
               <h1 className="text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
-                Applicants — Software Engineering Intern
+                Applicants — {internship?.title || "Software Engineering Intern"}
               </h1>
 
               <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
-                Greenbyte Solutions • Internship ID: {internshipId}
+                {internship?.companyName || internship?.company || "Greenbyte Solutions"} • Internship ID: {internshipId}
               </p>
             </div>
 
@@ -338,7 +326,7 @@ export default function ManageApplicants() {
             />
           </section>
 
-          <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
+          <div className="w-full">
             <div className="space-y-6">
               <SearchFilterToolbar
                 searchValue={searchTerm}
@@ -409,14 +397,29 @@ export default function ManageApplicants() {
                     className="grid gap-4 border-b border-[color:var(--primary)]/10 px-5 py-5 last:border-b-0 lg:grid-cols-[1.4fr_0.95fr_0.5fr_1.15fr_0.95fr_0.45fr_0.55fr_0.85fr_0.75fr] lg:items-center"
                   >
                     <button
-
                       type="button"
                       onClick={() =>
                         navigate(`/public-portfolio?userId=${applicant.userId}`)
-  }
+                      }
                       className="flex items-center gap-3 text-left"
                     >
-                      <InitialsAvatar name={applicant.name} />
+                      {applicant.image ? (
+                        <img
+                          src={applicant.image}
+                          alt={applicant.name}
+                          className="h-12 w-12 shrink-0 rounded-full object-cover"
+                          onError={(event) => {
+                            event.currentTarget.style.display = "none";
+                            event.currentTarget.nextElementSibling?.classList.remove(
+                              "hidden"
+                            );
+                          }}
+                        />
+                      ) : null}
+
+                      <div className={applicant.image ? "hidden" : ""}>
+                        <InitialsAvatar name={applicant.name} />
+                      </div>
 
                       <div>
                         <p className="font-black text-[color:var(--ink)] hover:text-[color:var(--primary)]">
@@ -515,153 +518,8 @@ export default function ManageApplicants() {
                 ))}
               </AppCard>
             </div>
-
-            <aside className="space-y-6">
-              <AppCard className="p-6">
-                <div
-  onClick={() =>
-    navigate("/featured-students")
-  }
-  className="cursor-pointer"
->
-  <SideHeader
-    title="Shortlisted"
-    action="View all"
-  />
-</div>
-                {applicants
-                  .filter((a) => a.status === "Shortlisted")
-                  .slice(0, 4)
-                  .map((candidate) => (
-                    <CandidateMini key={candidate.id} candidate={candidate} />
-                  ))}
-              </AppCard>
-
-              <AppCard className="p-6">
-                <div
-  onClick={() =>
-    navigate("/featured-students")
-  }
-  className="cursor-pointer"
->
-  <SideHeader
-    title="Suggested from Favorites"
-    action="View all"
-  />
-</div>
-
-                {favoriteCandidates.map((candidate) => (
-                  <div
-                    key={candidate.name}
-                    className="mb-3 flex items-center justify-between rounded-2xl border border-white/70 bg-white/55 p-4 last:mb-0"
-                  >
-                    <div className="flex items-center gap-3">
-                      <InitialsAvatar name={candidate.name} />
-                      <div>
-                        <p className="font-black text-[color:var(--ink)]">
-                          {candidate.name}
-                        </p>
-                        <p className="text-sm font-semibold text-[color:var(--muted)]">
-                          Match {candidate.match}%
-                        </p>
-                      </div>
-                    </div>
-
-                    <span className="rounded-xl bg-green-100 px-2.5 py-1 text-xs font-black text-green-700">
-                      {candidate.match}
-                    </span>
-                  </div>
-                ))}
-              </AppCard>
-
-              <AppCard className="p-6">
-                <SideHeader title="Upcoming Interviews" action="View calendar" />
-
-                <Interview
-                  day="22"
-                  name="Omar Hassan"
-                  type="Technical Interview"
-                  time="11:00 AM"
-                />
-                <Interview
-                  day="22"
-                  name="Nouran Mohamed"
-                  type="Behavioral Interview"
-                  time="1:30 PM"
-                />
-                <Interview
-                  day="23"
-                  name="Youssef Ahmed"
-                  type="Technical Interview"
-                  time="10:00 AM"
-                />
-              </AppCard>
-
-              <AppCard className="p-6">
-                <div className="flex gap-3">
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[color:var(--accent)]/25 text-[color:var(--primary)]">
-                    <FileText className="h-5 w-5" />
-                  </div>
-
-                  <div>
-                    <h2 className="font-black text-[color:var(--ink)]">
-                      Add notes & feedback
-                    </h2>
-
-                    <p className="mt-1 text-sm font-semibold leading-6 text-[color:var(--muted)]">
-                      Collaborate with your team and track applicant feedback.
-                    </p>
-
-                    <AppButton
-                      type="button"
-                      onClick={() => setNotesOpen(true)}
-                      className="mt-4 rounded-2xl border border-white/70 bg-white/60 px-5 font-black text-[color:var(--primary)]"
-                    >
-                      Open Notes
-                    </AppButton>
-                  </div>
-                </div>
-              </AppCard>
-            </aside>
           </div>
         </div>
-
-        {notesOpen && (
-          <AppModal
-            title="Applicant Notes & Feedback"
-            onClose={() => setNotesOpen(false)}
-            maxWidth="max-w-xl"
-          >
-            <p className="mt-2 text-sm font-semibold text-[color:var(--muted)]">
-              Add internal notes for your hiring team.
-            </p>
-
-            <textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Write feedback, interview comments, or next steps..."
-              className="mt-5 min-h-[180px] w-full rounded-2xl border border-[color:var(--primary)]/15 bg-white p-4 font-semibold text-[color:var(--ink)] outline-none focus:ring-4 focus:ring-[color:var(--accent)]/25"
-            />
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setNotesOpen(false)}
-                className="h-12 rounded-2xl border border-gray-200 bg-white px-6 font-black text-[color:var(--muted)]"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setNotesOpen(false)}
-                className="h-12 rounded-2xl bg-[color:var(--primary)] px-6 font-black text-white"
-              >
-                Save Notes
-              </button>
-            </div>
-          </AppModal>
-        )}
       </main>
     </DashboardLayout>
   );
@@ -697,60 +555,3 @@ function StrengthBar({ strength }) {
   );
 }
 
-function SideHeader({ title, action }) {
-  return (
-    <div className="mb-5 flex items-center justify-between">
-      <h2 className="text-xl font-black text-[color:var(--ink)]">{title}</h2>
-      <button
-        type="button"
-        className="text-sm font-black text-[color:var(--primary)]"
-      >
-        {action}
-      </button>
-    </div>
-  );
-}
-
-function CandidateMini({ candidate }) {
-  return (
-    <div className="mb-3 flex items-center justify-between rounded-2xl border border-white/70 bg-white/55 p-4 last:mb-0">
-      <div className="flex items-center gap-3">
-        <InitialsAvatar name={candidate.name} />
-        <div>
-          <p className="font-black text-[color:var(--ink)]">{candidate.name}</p>
-          <p className="text-sm font-semibold text-[color:var(--muted)]">
-            Match {candidate.score}%
-          </p>
-        </div>
-      </div>
-
-      <span className="rounded-xl bg-green-100 px-2.5 py-1 text-xs font-black text-green-700">
-        {candidate.score}
-      </span>
-    </div>
-  );
-}
-
-function Interview({ day, name, type, time }) {
-  return (
-    <div className="mb-3 flex items-center gap-3 rounded-2xl border border-white/70 bg-white/55 p-4 last:mb-0">
-      <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[color:var(--accent)]/25 text-center">
-        <div>
-          <p className="text-xs font-black text-[color:var(--primary)]">MAY</p>
-          <p className="text-lg font-black text-[color:var(--ink)]">{day}</p>
-        </div>
-      </div>
-
-      <div className="flex-1">
-        <p className="font-black text-[color:var(--ink)]">{name}</p>
-        <p className="text-sm font-semibold text-[color:var(--muted)]">
-          {type}
-        </p>
-      </div>
-
-      <span className="text-xs font-bold text-[color:var(--muted)]">
-        {time}
-      </span>
-    </div>
-  );
-}

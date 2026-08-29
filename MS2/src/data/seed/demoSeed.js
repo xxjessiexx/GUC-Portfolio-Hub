@@ -7,7 +7,7 @@ import {
 } from "./extra-demo-internships-50"
 
 
-export const DEMO_DATA_VERSION = "ms2-linked-demo-v6-merged-audited-2026-05-09";
+export const DEMO_DATA_VERSION = "ms2-linked-demo-v8-applicants-2026-08-29";
 
 export const usersSeed = [
   {
@@ -1966,820 +1966,879 @@ export const projectsSeed = [
     "rating": 4.7
   }
 ];
+const makeApplications = (internshipId, studentRows, coverLetter) => {
+  const statusMeta = {
+    reviewing: {
+      nextStep: "Under review",
+      note: "Application is currently being reviewed against the role requirements.",
+    },
+    shortlisted: {
+      nextStep: "Portfolio review",
+      note: "Strong portfolio match; shortlisted for the next review step.",
+    },
+    nominated: {
+      nextStep: "Interview preparation",
+      note: "High-potential candidate nominated for interview consideration.",
+    },
+    accepted: {
+      nextStep: "Offer accepted",
+      note: "Strong match for the role and accepted in the demo evaluation flow.",
+    },
+    rejected: {
+      nextStep: "Application closed",
+      note: "Application closed after evaluation for this role.",
+    },
+  };
+
+  return studentRows.map(([studentId, status, score], index) => {
+    const slug = studentId.replace(/^student-/, "");
+    const day = String(index + 1).padStart(2, "0");
+
+    return {
+      id: `application-${internshipId.replace("internship-", "")}-${slug}`,
+      studentId,
+      status,
+      score,
+      coverLetter,
+      appliedAt: `2026-05-${day}`,
+      displayDate: `May ${index + 1}, 2026`,
+      ...statusMeta[status],
+    };
+  });
+};
+
+const buildInternship = (data, studentRows, coverLetter) => ({
+  ...data,
+  applicants: studentRows.length,
+  applications: makeApplications(data.id, studentRows, coverLetter),
+});
 
 export const internshipsSeed = [
-  {
-    "id": "internship-1",
-    "isDemo": true,
-    "employerId": "employer-demo-1",
-    "company": "TechBridge",
-    "companyName": "TechBridge",
-    "title": "Frontend Engineering Intern",
-    "details": "Work on practical product features with mentorship, documentation, and weekly review sessions.",
-    "overview": "A hands-on internship designed for students with strong portfolios and practical software experience.",
-    "responsibilities": [
-      "Build and document production-style features.",
-      "Collaborate with mentors and review progress weekly.",
-      "Present a final portfolio-ready deliverable."
-    ],
-    "requirements": [
-      "Active student portfolio.",
-      "Strong fundamentals in the required skills.",
-      "Good communication and documentation habits."
-    ],
-    "skills": [
-      "React",
-      "Tailwind"
-    ],
-    "languages": [
-      "JavaScript"
-    ],
-    "duration": "3 months",
-    "deadline": "2026-06-10",
-    "startDate": "2026-07-01",
-    "postedAt": "Posted 1 days ago",
-    "location": "New Cairo, Egypt",
-    "workMode": "Hybrid",
-    "stipend": "EGP 3,000 / month",
-    "rating": 4.2,
-    "reviews": 60,
-    "featured": false,
-    "department": "Engineering",
-    "status": "Filled",
-    "isFilled": true,
-    "isArchived": false,
-    "archived": false,
-    "applicants": 18,
-    "companyAbout": "TechBridge hires internship-ready students with strong portfolios, clean documentation, and practical software experience.",
-    "benefits": [
-      "Mentorship",
-      "Certificate",
-      "Portfolio project",
-      "Flexible schedule"
-    ],
-    "eligibility": [
-      "Undergraduate Students",
-      "GUC students preferred",
-      "Portfolio recommended"
-    ],
-    "applications": [
-      {
-        "id": "application-1-yasmin",
-        "studentId": "student-demo-1",
-        "status": "rejected",
-        "coverLetter": "I am interested because my portfolio contains related projects and I can contribute quickly.",
-        "appliedAt": "2026-05-01",
-        "displayDate": "May 1, 2026",
-        "nextStep": "Application closed",
-        "note": "Rejected in the evaluation flow."
-      }
-    ]
-  },
-  {
-    "id": "internship-2",
-    "isDemo": true,
-    "employerId": "employer-demo-1",
-    "company": "TechBridge",
-    "companyName": "TechBridge",
-    "title": "AI Perception Intern",
-    "details": "Work on practical product features with mentorship, documentation, and weekly review sessions.",
-    "overview": "A hands-on internship designed for students with strong portfolios and practical software experience.",
-    "responsibilities": [
-      "Build and document production-style features.",
-      "Collaborate with mentors and review progress weekly.",
-      "Present a final portfolio-ready deliverable."
-    ],
-    "requirements": [
-      "Active student portfolio.",
-      "Strong fundamentals in the required skills.",
-      "Good communication and documentation habits."
-    ],
-    "skills": [
-      "Python",
-      "OpenCV",
-      "YOLO"
-    ],
-    "languages": [
-      "Python"
-    ],
-    "duration": "2 months",
-    "deadline": "2026-06-11",
-    "startDate": "2026-07-02",
-    "postedAt": "Posted 2 days ago",
-    "location": "New Cairo, Egypt",
-    "workMode": "Remote",
-    "stipend": "EGP 3,250 / month",
-    "rating": 4.3,
-    "reviews": 67,
-    "featured": true,
-    "department": "AI",
-    "status": "Filled",
-    "isFilled": true,
-    "isArchived": false,
-    "archived": false,
-    "applicants": 23,
-    "companyAbout": "TechBridge hires internship-ready students with strong portfolios, clean documentation, and practical software experience.",
-    "benefits": [
-      "Mentorship",
-      "Certificate",
-      "Portfolio project",
-      "Flexible schedule"
-    ],
-    "eligibility": [
-      "Undergraduate Students",
-      "GUC students preferred",
-      "Portfolio recommended"
-    ],
-    "applications": [
-      {
-        "id": "application-2-yasmin",
-        "studentId": "student-demo-1",
-        "status": "rejected",
-        "coverLetter": "I am interested because my portfolio contains related projects and I can contribute quickly.",
-        "appliedAt": "2026-05-02",
-        "displayDate": "May 2, 2026",
-        "nextStep": "Application closed",
-        "note": "Rejected in the evaluation flow."
-      }
-    ]
-  },
-  {
-    "id": "internship-3",
-    "isDemo": true,
-    "employerId": "employer-demo-1",
-    "company": "TechBridge",
-    "companyName": "TechBridge",
-    "title": "Backend API Intern",
-    "details": "Work on practical product features with mentorship, documentation, and weekly review sessions.",
-    "overview": "A hands-on internship designed for students with strong portfolios and practical software experience.",
-    "responsibilities": [
-      "Build and document production-style features.",
-      "Collaborate with mentors and review progress weekly.",
-      "Present a final portfolio-ready deliverable."
-    ],
-    "requirements": [
-      "Active student portfolio.",
-      "Strong fundamentals in the required skills.",
-      "Good communication and documentation habits."
-    ],
-    "skills": [
-      "Node.js",
-      "REST APIs"
-    ],
-    "languages": [
-      "JavaScript",
-      "SQL"
-    ],
-    "duration": "3 months",
-    "deadline": "2026-06-12",
-    "startDate": "2026-07-03",
-    "postedAt": "Posted 3 days ago",
-    "location": "New Cairo, Egypt",
-    "workMode": "Hybrid",
-    "stipend": "EGP 3,500 / month",
-    "rating": 4.4,
-    "reviews": 74,
-    "featured": false,
-    "department": "Backend",
-    "status": "Filled",
-    "isFilled": true,
-    "isArchived": false,
-    "archived": false,
-    "applicants": 28,
-    "companyAbout": "TechBridge hires internship-ready students with strong portfolios, clean documentation, and practical software experience.",
-    "benefits": [
-      "Mentorship",
-      "Certificate",
-      "Portfolio project",
-      "Flexible schedule"
-    ],
-    "eligibility": [
-      "Undergraduate Students",
-      "GUC students preferred",
-      "Portfolio recommended"
-    ],
-    "applications": [
-      {
-        "id": "application-3-yasmin",
-        "studentId": "student-demo-1",
-        "status": "rejected",
-        "coverLetter": "I am interested because my portfolio contains related projects and I can contribute quickly.",
-        "appliedAt": "2026-05-03",
-        "displayDate": "May 3, 2026",
-        "nextStep": "Application closed",
-        "note": "Rejected in the evaluation flow."
-      }
-    ]
-  },
-  {
-    "id": "internship-4",
-    "isDemo": true,
-    "employerId": "employer-demo-1",
-    "company": "TechBridge",
-    "companyName": "TechBridge",
-    "title": "UI/UX Product Intern",
-    "details": "Work on practical product features with mentorship, documentation, and weekly review sessions.",
-    "overview": "A hands-on internship designed for students with strong portfolios and practical software experience.",
-    "responsibilities": [
-      "Build and document production-style features.",
-      "Collaborate with mentors and review progress weekly.",
-      "Present a final portfolio-ready deliverable."
-    ],
-    "requirements": [
-      "Active student portfolio.",
-      "Strong fundamentals in the required skills.",
-      "Good communication and documentation habits."
-    ],
-    "skills": [
-      "Figma",
-      "UI/UX"
-    ],
-    "languages": [
-      "HTML/CSS"
-    ],
-    "duration": "2 months",
-    "deadline": "2026-06-13",
-    "startDate": "2026-07-04",
-    "postedAt": "Posted 4 days ago",
-    "location": "New Cairo, Egypt",
-    "workMode": "Remote",
-    "stipend": "EGP 3,750 / month",
-    "rating": 4.5,
-    "reviews": 81,
-    "featured": false,
-    "department": "Design",
-    "status": "Filled",
-    "isFilled": true,
-    "isArchived": false,
-    "archived": false,
-    "applicants": 33,
-    "companyAbout": "TechBridge hires internship-ready students with strong portfolios, clean documentation, and practical software experience.",
-    "benefits": [
-      "Mentorship",
-      "Certificate",
-      "Portfolio project",
-      "Flexible schedule"
-    ],
-    "eligibility": [
-      "Undergraduate Students",
-      "GUC students preferred",
-      "Portfolio recommended"
-    ],
-    "applications": [
-      {
-        "id": "application-4-yasmin",
-        "studentId": "student-demo-1",
-        "status": "rejected",
-        "coverLetter": "I am interested because my portfolio contains related projects and I can contribute quickly.",
-        "appliedAt": "2026-05-04",
-        "displayDate": "May 4, 2026",
-        "nextStep": "Application closed",
-        "note": "Rejected in the evaluation flow."
-      }
-    ]
-  },
-  {
-    "id": "internship-5",
-    "isDemo": true,
-    "employerId": "employer-greenbyte",
-    "company": "Greenbyte Solutions",
-    "companyName": "Greenbyte Solutions",
-    "title": "Software Engineering Intern",
-    "details": "Work on practical product features with mentorship, documentation, and weekly review sessions.",
-    "overview": "A hands-on internship designed for students with strong portfolios and practical software experience.",
-    "responsibilities": [
-      "Build and document production-style features.",
-      "Collaborate with mentors and review progress weekly.",
-      "Present a final portfolio-ready deliverable."
-    ],
-    "requirements": [
-      "Active student portfolio.",
-      "Strong fundamentals in the required skills.",
-      "Good communication and documentation habits."
-    ],
-    "skills": [
-      "JavaScript",
-      "Git"
-    ],
-    "languages": [
-      "JavaScript"
-    ],
-    "duration": "3 months",
-    "deadline": "2026-06-14",
-    "startDate": "2026-07-05",
-    "postedAt": "Posted 5 days ago",
-    "location": "Cairo, Egypt",
-    "workMode": "Hybrid",
-    "stipend": "EGP 4,000 / month",
-    "rating": 4.6,
-    "reviews": 88,
-    "featured": true,
-    "department": "Engineering",
-    "status": "Open",
-    "isFilled": false,
-    "isArchived": false,
-    "archived": false,
-    "applicants": 38,
-    "companyAbout": "Software house offering practical engineering internships.",
-    "benefits": [
-      "Mentorship",
-      "Certificate",
-      "Portfolio project",
-      "Flexible schedule"
-    ],
-    "eligibility": [
-      "Undergraduate Students",
-      "GUC students preferred",
-      "Portfolio recommended"
-    ],
-    "applications": [
-      {
-        "id": "application-5-yasmin",
-        "studentId": "student-demo-1",
-        "status": "accepted",
-        "coverLetter": "I am interested because my portfolio contains related projects and I can contribute quickly.",
-        "appliedAt": "2026-05-05",
-        "displayDate": "May 5, 2026",
-        "nextStep": "Offer accepted",
-        "note": "Accepted as part of the portfolio evaluation flow."
-      }
-    ]
-  },
-  {
-    "id": "internship-6",
-    "isDemo": true,
-    "employerId": "employer-codewave",
-    "company": "CodeWave Labs",
-    "companyName": "CodeWave Labs",
-    "title": "Frontend Developer Intern",
-    "details": "Work on practical product features with mentorship, documentation, and weekly review sessions.",
-    "overview": "A hands-on internship designed for students with strong portfolios and practical software experience.",
-    "responsibilities": [
-      "Build and document production-style features.",
-      "Collaborate with mentors and review progress weekly.",
-      "Present a final portfolio-ready deliverable."
-    ],
-    "requirements": [
-      "Active student portfolio.",
-      "Strong fundamentals in the required skills.",
-      "Good communication and documentation habits."
-    ],
-    "skills": [
-      "React",
-      "JavaScript"
-    ],
-    "languages": [
-      "JavaScript"
-    ],
-    "duration": "2 months",
-    "deadline": "2026-06-15",
-    "startDate": "2026-07-06",
-    "postedAt": "Posted 6 days ago",
-    "location": "Cairo, Egypt",
-    "workMode": "Remote",
-    "stipend": "EGP 4,250 / month",
-    "rating": 4.2,
-    "reviews": 95,
-    "featured": false,
-    "department": "Frontend",
-    "status": "Open",
-    "isFilled": false,
-    "isArchived": false,
-    "archived": false,
-    "applicants": 43,
-    "companyAbout": "Product lab focused on modern frontend and web apps.",
-    "benefits": [
-      "Mentorship",
-      "Certificate",
-      "Portfolio project",
-      "Flexible schedule"
-    ],
-    "eligibility": [
-      "Undergraduate Students",
-      "GUC students preferred",
-      "Portfolio recommended"
-    ],
-    "applications": [
-      {
-        "id": "application-6-yasmin",
-        "studentId": "student-demo-1",
-        "status": "accepted",
-        "coverLetter": "I am interested because my portfolio contains related projects and I can contribute quickly.",
-        "appliedAt": "2026-05-06",
-        "displayDate": "May 6, 2026",
-        "nextStep": "Offer accepted",
-        "note": "Accepted as part of the portfolio evaluation flow."
-      }
-    ]
-  },
-  {
-    "id": "internship-7",
-    "isDemo": true,
-    "employerId": "employer-designlab",
-    "company": "DesignLab Cairo",
-    "companyName": "DesignLab Cairo",
-    "title": "UI/UX Design Intern",
-    "details": "Work on practical product features with mentorship, documentation, and weekly review sessions.",
-    "overview": "A hands-on internship designed for students with strong portfolios and practical software experience.",
-    "responsibilities": [
-      "Build and document production-style features.",
-      "Collaborate with mentors and review progress weekly.",
-      "Present a final portfolio-ready deliverable."
-    ],
-    "requirements": [
-      "Active student portfolio.",
-      "Strong fundamentals in the required skills.",
-      "Good communication and documentation habits."
-    ],
-    "skills": [
-      "Figma",
-      "Prototyping"
-    ],
-    "languages": [
-      "HTML/CSS"
-    ],
-    "duration": "3 months",
-    "deadline": "2026-06-16",
-    "startDate": "2026-07-07",
-    "postedAt": "Posted 7 days ago",
-    "location": "Cairo, Egypt",
-    "workMode": "Hybrid",
-    "stipend": "EGP 4,500 / month",
-    "rating": 4.3,
-    "reviews": 102,
-    "featured": false,
-    "department": "Design",
-    "status": "Open",
-    "isFilled": false,
-    "isArchived": false,
-    "archived": false,
-    "applicants": 48,
-    "companyAbout": "Design studio mentoring UI/UX and product students.",
-    "benefits": [
-      "Mentorship",
-      "Certificate",
-      "Portfolio project",
-      "Flexible schedule"
-    ],
-    "eligibility": [
-      "Undergraduate Students",
-      "GUC students preferred",
-      "Portfolio recommended"
-    ],
-    "applications": [
-      {
-        "id": "application-7-yasmin",
-        "studentId": "student-demo-1",
-        "status": "accepted",
-        "coverLetter": "I am interested because my portfolio contains related projects and I can contribute quickly.",
-        "appliedAt": "2026-05-07",
-        "displayDate": "May 7, 2026",
-        "nextStep": "Offer accepted",
-        "note": "Accepted as part of the portfolio evaluation flow."
-      }
-    ]
-  },
-  {
-    "id": "internship-8",
-    "isDemo": true,
-    "employerId": "employer-niletech",
-    "company": "NileTech AI",
-    "companyName": "NileTech AI",
-    "title": "Data Analyst Intern",
-    "details": "Work on practical product features with mentorship, documentation, and weekly review sessions.",
-    "overview": "A hands-on internship designed for students with strong portfolios and practical software experience.",
-    "responsibilities": [
-      "Build and document production-style features.",
-      "Collaborate with mentors and review progress weekly.",
-      "Present a final portfolio-ready deliverable."
-    ],
-    "requirements": [
-      "Active student portfolio.",
-      "Strong fundamentals in the required skills.",
-      "Good communication and documentation habits."
-    ],
-    "skills": [
-      "Python",
-      "SQL"
-    ],
-    "languages": [
-      "Python",
-      "SQL"
-    ],
-    "duration": "2 months",
-    "deadline": "2026-06-17",
-    "startDate": "2026-07-01",
-    "postedAt": "Posted 8 days ago",
-    "location": "Cairo, Egypt",
-    "workMode": "Remote",
-    "stipend": "EGP 4,750 / month",
-    "rating": 4.4,
-    "reviews": 109,
-    "featured": false,
-    "department": "Data",
-    "status": "Open",
-    "isFilled": false,
-    "isArchived": false,
-    "archived": false,
-    "applicants": 53,
-    "companyAbout": "AI company hiring interns for applied ML and data products.",
-    "benefits": [
-      "Mentorship",
-      "Certificate",
-      "Portfolio project",
-      "Flexible schedule"
-    ],
-    "eligibility": [
-      "Undergraduate Students",
-      "GUC students preferred",
-      "Portfolio recommended"
-    ],
-    "applications": [
-      {
-        "id": "application-8-yasmin",
-        "studentId": "student-demo-1",
-        "status": "accepted",
-        "coverLetter": "I am interested because my portfolio contains related projects and I can contribute quickly.",
-        "appliedAt": "2026-05-08",
-        "displayDate": "May 8, 2026",
-        "nextStep": "Offer accepted",
-        "note": "Accepted as part of the portfolio evaluation flow."
-      }
-    ]
-  },
-  {
-    "id": "internship-9",
-    "isDemo": true,
-    "employerId": "employer-robocairo",
-    "company": "RoboCairo",
-    "companyName": "RoboCairo",
-    "title": "Robotics Software Intern",
-    "details": "Work on practical product features with mentorship, documentation, and weekly review sessions.",
-    "overview": "A hands-on internship designed for students with strong portfolios and practical software experience.",
-    "responsibilities": [
-      "Build and document production-style features.",
-      "Collaborate with mentors and review progress weekly.",
-      "Present a final portfolio-ready deliverable."
-    ],
-    "requirements": [
-      "Active student portfolio.",
-      "Strong fundamentals in the required skills.",
-      "Good communication and documentation habits."
-    ],
-    "skills": [
-      "C++",
-      "Robotics"
-    ],
-    "languages": [
-      "C++"
-    ],
-    "duration": "3 months",
-    "deadline": "2026-06-18",
-    "startDate": "2026-07-02",
-    "postedAt": "Posted 9 days ago",
-    "location": "Cairo, Egypt",
-    "workMode": "Hybrid",
-    "stipend": "EGP 5,000 / month",
-    "rating": 4.5,
-    "reviews": 116,
-    "featured": false,
-    "department": "Robotics",
-    "status": "Open",
-    "isFilled": false,
-    "isArchived": false,
-    "archived": false,
-    "applicants": 58,
-    "companyAbout": "Robotics startup building perception and embedded prototypes.",
-    "benefits": [
-      "Mentorship",
-      "Certificate",
-      "Portfolio project",
-      "Flexible schedule"
-    ],
-    "eligibility": [
-      "Undergraduate Students",
-      "GUC students preferred",
-      "Portfolio recommended"
-    ],
-    "applications": [
-      {
-        "id": "application-9-yasmin",
-        "studentId": "student-demo-1",
-        "status": "accepted",
-        "coverLetter": "I am interested because my portfolio contains related projects and I can contribute quickly.",
-        "appliedAt": "2026-05-09",
-        "displayDate": "May 9, 2026",
-        "nextStep": "Offer accepted",
-        "note": "Accepted as part of the portfolio evaluation flow."
-      }
-    ]
-  },
-  {
-    "id": "internship-10",
-    "isDemo": true,
-    "employerId": "employer-delta",
-    "company": "Delta Fintech",
-    "companyName": "Delta Fintech",
-    "title": "Fintech Backend Intern",
-    "details": "Work on practical product features with mentorship, documentation, and weekly review sessions.",
-    "overview": "A hands-on internship designed for students with strong portfolios and practical software experience.",
-    "responsibilities": [
-      "Build and document production-style features.",
-      "Collaborate with mentors and review progress weekly.",
-      "Present a final portfolio-ready deliverable."
-    ],
-    "requirements": [
-      "Active student portfolio.",
-      "Strong fundamentals in the required skills.",
-      "Good communication and documentation habits."
-    ],
-    "skills": [
-      "Node.js",
-      "SQL"
-    ],
-    "languages": [
-      "JavaScript",
-      "SQL"
-    ],
-    "duration": "2 months",
-    "deadline": "2026-06-19",
-    "startDate": "2026-07-03",
-    "postedAt": "Posted 10 days ago",
-    "location": "Cairo, Egypt",
-    "workMode": "Remote",
-    "stipend": "EGP 5,250 / month",
-    "rating": 4.6,
-    "reviews": 123,
-    "featured": false,
-    "department": "Backend",
-    "status": "Open",
-    "isFilled": false,
-    "isArchived": false,
-    "archived": false,
-    "applicants": 63,
-    "companyAbout": "Fintech product team looking for backend and data interns.",
-    "benefits": [
-      "Mentorship",
-      "Certificate",
-      "Portfolio project",
-      "Flexible schedule"
-    ],
-    "eligibility": [
-      "Undergraduate Students",
-      "GUC students preferred",
-      "Portfolio recommended"
-    ],
-    "applications": [
-      {
-        "id": "application-10-yasmin",
-        "studentId": "student-demo-1",
-        "status": "accepted",
-        "coverLetter": "I am interested because my portfolio contains related projects and I can contribute quickly.",
-        "appliedAt": "2026-05-10",
-        "displayDate": "May 10, 2026",
-        "nextStep": "Offer accepted",
-        "note": "Accepted as part of the portfolio evaluation flow."
-      }
-    ]
-  },
-  {
-    "id": "internship-11",
-    "isDemo": true,
-    "employerId": "employer-demo-1",
-    "company": "TechBridge",
-    "companyName": "TechBridge",
-    "title": "Portfolio Product Intern",
-    "details": "Work on practical product features with mentorship, documentation, and weekly review sessions.",
-    "overview": "A hands-on internship designed for students with strong portfolios and practical software experience.",
-    "responsibilities": [
-      "Build and document production-style features.",
-      "Collaborate with mentors and review progress weekly.",
-      "Present a final portfolio-ready deliverable."
-    ],
-    "requirements": [
-      "Active student portfolio.",
-      "Strong fundamentals in the required skills.",
-      "Good communication and documentation habits."
-    ],
-    "skills": [
-      "React",
-      "Product"
-    ],
-    "languages": [
-      "JavaScript"
-    ],
-    "duration": "3 months",
-    "deadline": "2026-06-20",
-    "startDate": "2026-07-04",
-    "postedAt": "Posted 11 days ago",
-    "location": "New Cairo, Egypt",
-    "workMode": "Hybrid",
-    "stipend": "EGP 5,500 / month",
-    "rating": 4.2,
-    "reviews": 130,
-    "featured": true,
-    "department": "Product",
-    "status": "Open",
-    "isFilled": false,
-    "isArchived": false,
-    "archived": false,
-    "applicants": 68,
-    "companyAbout": "TechBridge hires internship-ready students with strong portfolios, clean documentation, and practical software experience.",
-    "benefits": [
-      "Mentorship",
-      "Certificate",
-      "Portfolio project",
-      "Flexible schedule"
-    ],
-    "eligibility": [
-      "Undergraduate Students",
-      "GUC students preferred",
-      "Portfolio recommended"
-    ],
-    "applications": [
-      {
-        "id": "application-11-yasmin",
-        "studentId": "student-demo-1",
-        "status": "accepted",
-        "coverLetter": "I am interested because my portfolio contains related projects and I can contribute quickly.",
-        "appliedAt": "2026-05-11",
-        "displayDate": "May 11, 2026",
-        "nextStep": "Offer accepted",
-        "note": "Accepted as part of the portfolio evaluation flow."
-      }
-    ]
-  },
-  {
-    "id": "internship-12",
-    "isDemo": true,
-    "employerId": "employer-niletech",
-    "company": "NileTech AI",
-    "companyName": "NileTech AI",
-    "title": "Machine Learning Intern",
-    "details": "Work on practical product features with mentorship, documentation, and weekly review sessions.",
-    "overview": "A hands-on internship designed for students with strong portfolios and practical software experience.",
-    "responsibilities": [
-      "Build and document production-style features.",
-      "Collaborate with mentors and review progress weekly.",
-      "Present a final portfolio-ready deliverable."
-    ],
-    "requirements": [
-      "Active student portfolio.",
-      "Strong fundamentals in the required skills.",
-      "Good communication and documentation habits."
-    ],
-    "skills": [
-      "Python",
-      "ML"
-    ],
-    "languages": [
-      "Python"
-    ],
-    "duration": "2 months",
-    "deadline": "2026-06-21",
-    "startDate": "2026-07-05",
-    "postedAt": "Posted 12 days ago",
-    "location": "Cairo, Egypt",
-    "workMode": "Remote",
-    "stipend": "EGP 5,750 / month",
-    "rating": 4.3,
-    "reviews": 137,
-    "featured": false,
-    "department": "AI",
-    "status": "Open",
-    "isFilled": false,
-    "isArchived": false,
-    "archived": false,
-    "applicants": 73,
-    "companyAbout": "AI company hiring interns for applied ML and data products.",
-    "benefits": [
-      "Mentorship",
-      "Certificate",
-      "Portfolio project",
-      "Flexible schedule"
-    ],
-    "eligibility": [
-      "Undergraduate Students",
-      "GUC students preferred",
-      "Portfolio recommended"
-    ],
-    "applications": [
-      {
-        "id": "application-12-yasmin",
-        "studentId": "student-demo-1",
-        "status": "rejected",
-        "coverLetter": "I am interested because my portfolio contains related projects and I can contribute quickly.",
-        "appliedAt": "2026-05-12",
-        "displayDate": "May 12, 2026",
-        "nextStep": "Application closed",
-        "note": "Rejected in the evaluation flow."
-      }
-    ],
-    ... extraDemoInternships,
-  }
+  buildInternship(
+    {
+      id: "internship-1",
+      isDemo: true,
+      employerId: "employer-demo-1",
+      company: "TechBridge",
+      companyName: "TechBridge",
+      title: "Frontend Engineering Intern",
+      details:
+        "Work on practical product features with mentorship, documentation, and weekly review sessions.",
+      overview:
+        "A hands-on internship designed for students with strong portfolios and practical software experience.",
+      responsibilities: [
+        "Build and document production-style features.",
+        "Collaborate with mentors and review progress weekly.",
+        "Present a final portfolio-ready deliverable.",
+      ],
+      requirements: [
+        "Active student portfolio.",
+        "Strong fundamentals in the required skills.",
+        "Good communication and documentation habits.",
+      ],
+      skills: ["React", "Tailwind"],
+      languages: ["JavaScript"],
+      duration: "3 months",
+      deadline: "2026-06-10",
+      startDate: "2026-07-01",
+      postedAt: "Posted 1 days ago",
+      location: "New Cairo, Egypt",
+      workMode: "Hybrid",
+      stipend: "EGP 3,000 / month",
+      rating: 4.2,
+      reviews: 60,
+      featured: false,
+      department: "Engineering",
+      status: "Filled",
+      isFilled: true,
+      isArchived: false,
+      archived: false,
+      companyAbout:
+        "TechBridge hires internship-ready students with strong portfolios, clean documentation, and practical software experience.",
+      benefits: [
+        "Mentorship",
+        "Certificate",
+        "Portfolio project",
+        "Flexible schedule",
+      ],
+      eligibility: [
+        "Undergraduate Students",
+        "GUC students preferred",
+        "Portfolio recommended",
+      ],
+    },
+    [
+      ["student-demo-1", "rejected", 95],
+      ["student-farida", "reviewing", 93],
+      ["student-lina-mourad", "accepted", 91],
+      ["student-malak-fouad", "shortlisted", 89],
+      ["student-mariam-saleh", "reviewing", 87],
+      ["student-farah-mohsen", "nominated", 85],
+      ["student-mostafa-ezz", "rejected", 83],
+      ["student-jana-hussein", "shortlisted", 81],
+      ["student-hana-gamal", "reviewing", 79],
+      ["student-laila-saad", "accepted", 77],
+      ["student-sara-nagy", "nominated", 75],
+      ["student-noor", "shortlisted", 73],
+    ],
+    "I am interested in contributing to production-style engineering work and strengthening my portfolio through practical team experience."
+  ),
 
+  buildInternship(
+    {
+      id: "internship-2",
+      isDemo: true,
+      employerId: "employer-demo-1",
+      company: "TechBridge",
+      companyName: "TechBridge",
+      title: "AI Perception Intern",
+      details:
+        "Work on practical product features with mentorship, documentation, and weekly review sessions.",
+      overview:
+        "A hands-on internship designed for students with strong portfolios and practical software experience.",
+      responsibilities: [
+        "Build and document production-style features.",
+        "Collaborate with mentors and review progress weekly.",
+        "Present a final portfolio-ready deliverable.",
+      ],
+      requirements: [
+        "Active student portfolio.",
+        "Strong fundamentals in the required skills.",
+        "Good communication and documentation habits.",
+      ],
+      skills: ["Python", "OpenCV", "YOLO"],
+      languages: ["Python"],
+      duration: "2 months",
+      deadline: "2026-06-11",
+      startDate: "2026-07-02",
+      postedAt: "Posted 2 days ago",
+      location: "New Cairo, Egypt",
+      workMode: "Remote",
+      stipend: "EGP 3,250 / month",
+      rating: 4.3,
+      reviews: 67,
+      featured: true,
+      department: "AI",
+      status: "Filled",
+      isFilled: true,
+      isArchived: false,
+      archived: false,
+      companyAbout:
+        "TechBridge hires internship-ready students with strong portfolios, clean documentation, and practical software experience.",
+      benefits: [
+        "Mentorship",
+        "Certificate",
+        "Portfolio project",
+        "Flexible schedule",
+      ],
+      eligibility: [
+        "Undergraduate Students",
+        "GUC students preferred",
+        "Portfolio recommended",
+      ],
+    },
+    [
+      ["student-demo-1", "rejected", 94],
+      ["student-nour-el-din", "accepted", 92],
+      ["student-seif-kamal", "shortlisted", 90],
+      ["student-dina-ashraf", "reviewing", 88],
+      ["student-ali-maher", "nominated", 86],
+      ["student-ahmed-tarek", "shortlisted", 84],
+      ["student-noor", "reviewing", 82],
+      ["student-youssef-nabil", "rejected", 80],
+      ["student-salma", "reviewing", 78],
+      ["student-ziad-hatem", "shortlisted", 76],
+    ],
+    "I am interested in applied AI work and would like to contribute my technical project experience while learning from the team."
+  ),
+
+  buildInternship(
+    {
+      id: "internship-3",
+      isDemo: true,
+      employerId: "employer-demo-1",
+      company: "TechBridge",
+      companyName: "TechBridge",
+      title: "Backend API Intern",
+      details:
+        "Work on practical product features with mentorship, documentation, and weekly review sessions.",
+      overview:
+        "A hands-on internship designed for students with strong portfolios and practical software experience.",
+      responsibilities: [
+        "Build and document production-style features.",
+        "Collaborate with mentors and review progress weekly.",
+        "Present a final portfolio-ready deliverable.",
+      ],
+      requirements: [
+        "Active student portfolio.",
+        "Strong fundamentals in the required skills.",
+        "Good communication and documentation habits.",
+      ],
+      skills: ["Node.js", "Express", "REST APIs"],
+      languages: ["JavaScript"],
+      duration: "3 months",
+      deadline: "2026-06-12",
+      startDate: "2026-07-03",
+      postedAt: "Posted 3 days ago",
+      location: "Cairo, Egypt",
+      workMode: "Hybrid",
+      stipend: "EGP 3,500 / month",
+      rating: 4.4,
+      reviews: 74,
+      featured: false,
+      department: "Engineering",
+      status: "Open",
+      isFilled: false,
+      isArchived: false,
+      archived: false,
+      companyAbout:
+        "TechBridge hires internship-ready students with strong portfolios, clean documentation, and practical software experience.",
+      benefits: [
+        "Mentorship",
+        "Certificate",
+        "Portfolio project",
+        "Flexible schedule",
+      ],
+      eligibility: [
+        "Undergraduate Students",
+        "GUC students preferred",
+        "Portfolio recommended",
+      ],
+    },
+    [
+      ["student-omar-sherif", "accepted", 96],
+      ["student-demo-1", "rejected", 94],
+      ["student-karim-adel", "shortlisted", 92],
+      ["student-youssef-nabil", "nominated", 90],
+      ["student-mostafa-ezz", "reviewing", 88],
+      ["student-ahmed-tarek", "shortlisted", 86],
+      ["student-ali-maher", "reviewing", 84],
+      ["student-ziad-hatem", "rejected", 82],
+      ["student-mai", "nominated", 80],
+      ["student-yasmine", "reviewing", 78],
+      ["student-seif-kamal", "shortlisted", 76],
+    ],
+    "I am interested in backend engineering and API development and would like to contribute to production-ready services."
+  ),
+
+  buildInternship(
+    {
+      id: "internship-4",
+      isDemo: true,
+      employerId: "employer-demo-1",
+      company: "TechBridge",
+      companyName: "TechBridge",
+      title: "UI/UX Product Intern",
+      details:
+        "Work on practical product features with mentorship, documentation, and weekly review sessions.",
+      overview:
+        "A hands-on internship designed for students with strong portfolios and practical software experience.",
+      responsibilities: [
+        "Build and document production-style features.",
+        "Collaborate with mentors and review progress weekly.",
+        "Present a final portfolio-ready deliverable.",
+      ],
+      requirements: [
+        "Active student portfolio.",
+        "Strong fundamentals in the required skills.",
+        "Good communication and documentation habits.",
+      ],
+      skills: ["Figma", "UI/UX", "Prototyping"],
+      languages: [],
+      duration: "2 months",
+      deadline: "2026-06-13",
+      startDate: "2026-07-04",
+      postedAt: "Posted 4 days ago",
+      location: "New Cairo, Egypt",
+      workMode: "Hybrid",
+      stipend: "EGP 3,750 / month",
+      rating: 4.5,
+      reviews: 81,
+      featured: true,
+      department: "Design",
+      status: "Open",
+      isFilled: false,
+      isArchived: false,
+      archived: false,
+      companyAbout:
+        "TechBridge hires internship-ready students with strong portfolios, clean documentation, and practical software experience.",
+      benefits: [
+        "Mentorship",
+        "Certificate",
+        "Portfolio project",
+        "Flexible schedule",
+      ],
+      eligibility: [
+        "Undergraduate Students",
+        "GUC students preferred",
+        "Portfolio recommended",
+      ],
+    },
+    [
+      ["student-malak-fouad", "accepted", 95],
+      ["student-lina-mourad", "shortlisted", 93],
+      ["student-farida", "nominated", 91],
+      ["student-mariam-saleh", "reviewing", 89],
+      ["student-jana-hussein", "shortlisted", 87],
+      ["student-farah-mohsen", "reviewing", 85],
+      ["student-laila-saad", "accepted", 83],
+      ["student-sara-nagy", "nominated", 81],
+      ["student-salma", "shortlisted", 79],
+      ["student-demo-1", "rejected", 77],
+    ],
+    "I am interested in product design and user experience and would like to contribute to polished, user-centered digital products."
+  ),
+
+  buildInternship(
+    {
+      id: "internship-5",
+      isDemo: true,
+      employerId: "employer-demo-2",
+      company: "NileSoft",
+      companyName: "NileSoft",
+      title: "Software Engineering Intern",
+      details:
+        "Join the engineering team and contribute to software features, testing, and documentation.",
+      overview:
+        "A practical software engineering internship focused on collaborative development and strong fundamentals.",
+      responsibilities: [
+        "Implement software features.",
+        "Participate in code reviews.",
+        "Write tests and technical documentation.",
+      ],
+      requirements: [
+        "Strong programming fundamentals.",
+        "Experience with software projects.",
+        "Ability to work collaboratively.",
+      ],
+      skills: ["Java", "JavaScript", "SQL"],
+      languages: ["Java", "JavaScript"],
+      duration: "3 months",
+      deadline: "2026-06-14",
+      startDate: "2026-07-05",
+      postedAt: "Posted 5 days ago",
+      location: "Cairo, Egypt",
+      workMode: "Hybrid",
+      stipend: "EGP 4,000 / month",
+      rating: 4.6,
+      reviews: 88,
+      featured: false,
+      department: "Engineering",
+      status: "Open",
+      isFilled: false,
+      isArchived: false,
+      archived: false,
+      companyAbout:
+        "NileSoft builds enterprise and consumer software products with a focus on engineering quality.",
+      benefits: [
+        "Mentorship",
+        "Certificate",
+        "Technical workshops",
+        "Flexible schedule",
+      ],
+      eligibility: [
+        "Undergraduate Students",
+        "Computer Science or Engineering students",
+        "Portfolio recommended",
+      ],
+    },
+    [
+      ["student-demo-1", "accepted", 96],
+      ["student-yasmine", "shortlisted", 94],
+      ["student-karim-adel", "nominated", 92],
+      ["student-omar-sherif", "reviewing", 90],
+      ["student-youssef-nabil", "shortlisted", 88],
+      ["student-ahmed-tarek", "accepted", 86],
+      ["student-mostafa-ezz", "reviewing", 84],
+      ["student-ali-maher", "nominated", 82],
+      ["student-mai", "shortlisted", 80],
+      ["student-seif-kamal", "reviewing", 78],
+      ["student-ziad-hatem", "rejected", 76],
+      ["student-hana-gamal", "reviewing", 74],
+    ],
+    "I am interested in gaining deeper software engineering experience and contributing to real development work."
+  ),
+
+  buildInternship(
+    {
+      id: "internship-6",
+      isDemo: true,
+      employerId: "employer-demo-2",
+      company: "NileSoft",
+      companyName: "NileSoft",
+      title: "Frontend Developer Intern",
+      details:
+        "Build responsive interfaces and collaborate closely with designers and backend developers.",
+      overview:
+        "A frontend-focused internship for students interested in modern web development and product interfaces.",
+      responsibilities: [
+        "Develop responsive frontend components.",
+        "Integrate frontend features with APIs.",
+        "Collaborate with design and backend teams.",
+      ],
+      requirements: [
+        "Experience with modern frontend development.",
+        "Understanding of responsive design.",
+        "Strong attention to detail.",
+      ],
+      skills: ["React", "JavaScript", "CSS"],
+      languages: ["JavaScript"],
+      duration: "3 months",
+      deadline: "2026-06-15",
+      startDate: "2026-07-06",
+      postedAt: "Posted 6 days ago",
+      location: "Cairo, Egypt",
+      workMode: "Remote",
+      stipend: "EGP 4,250 / month",
+      rating: 4.4,
+      reviews: 95,
+      featured: true,
+      department: "Engineering",
+      status: "Open",
+      isFilled: false,
+      isArchived: false,
+      archived: false,
+      companyAbout:
+        "NileSoft builds enterprise and consumer software products with a focus on engineering quality.",
+      benefits: [
+        "Mentorship",
+        "Certificate",
+        "Technical workshops",
+        "Flexible schedule",
+      ],
+      eligibility: [
+        "Undergraduate Students",
+        "Computer Science or Engineering students",
+        "Portfolio recommended",
+      ],
+    },
+    [
+      ["student-lina-mourad", "accepted", 96],
+      ["student-farida", "shortlisted", 94],
+      ["student-demo-1", "accepted", 92],
+      ["student-malak-fouad", "nominated", 90],
+      ["student-mariam-saleh", "reviewing", 88],
+      ["student-farah-mohsen", "shortlisted", 86],
+      ["student-jana-hussein", "reviewing", 84],
+      ["student-laila-saad", "accepted", 82],
+      ["student-sara-nagy", "nominated", 80],
+      ["student-noor", "reviewing", 78],
+      ["student-hana-gamal", "shortlisted", 76],
+    ],
+    "I am interested in frontend development and building responsive, polished interfaces for real users."
+  ),
+
+  buildInternship(
+    {
+      id: "internship-7",
+      isDemo: true,
+      employerId: "employer-demo-3",
+      company: "DesignLab",
+      companyName: "DesignLab",
+      title: "UI/UX Design Intern",
+      details:
+        "Work with product teams on user research, wireframes, prototypes, and polished interface designs.",
+      overview:
+        "A design internship focused on product thinking, usability, and portfolio-ready design work.",
+      responsibilities: [
+        "Create wireframes and prototypes.",
+        "Support user research activities.",
+        "Prepare polished interface designs.",
+      ],
+      requirements: [
+        "Portfolio demonstrating UI/UX work.",
+        "Experience with Figma.",
+        "Strong visual communication.",
+      ],
+      skills: ["Figma", "UI/UX", "Wireframing"],
+      languages: [],
+      duration: "2 months",
+      deadline: "2026-06-16",
+      startDate: "2026-07-07",
+      postedAt: "Posted 7 days ago",
+      location: "Cairo, Egypt",
+      workMode: "Hybrid",
+      stipend: "EGP 4,500 / month",
+      rating: 4.7,
+      reviews: 102,
+      featured: true,
+      department: "Design",
+      status: "Open",
+      isFilled: false,
+      isArchived: false,
+      archived: false,
+      companyAbout:
+        "DesignLab works on digital products, branding systems, and user-centered experiences.",
+      benefits: [
+        "Design mentorship",
+        "Certificate",
+        "Portfolio review",
+        "Flexible schedule",
+      ],
+      eligibility: [
+        "Undergraduate Students",
+        "Design portfolio required",
+        "GUC students welcome",
+      ],
+    },
+    [
+      ["student-malak-fouad", "accepted", 96],
+      ["student-jana-hussein", "shortlisted", 94],
+      ["student-farah-mohsen", "nominated", 92],
+      ["student-mariam-saleh", "reviewing", 90],
+      ["student-lina-mourad", "shortlisted", 88],
+      ["student-farida", "accepted", 86],
+      ["student-salma", "reviewing", 84],
+      ["student-laila-saad", "nominated", 82],
+      ["student-sara-nagy", "shortlisted", 80],
+      ["student-demo-1", "accepted", 78],
+    ],
+    "I am interested in user-centered design and would like to contribute to research, prototyping, and polished interface work."
+  ),
+
+  buildInternship(
+    {
+      id: "internship-8",
+      isDemo: true,
+      employerId: "employer-demo-4",
+      company: "DataNest",
+      companyName: "DataNest",
+      title: "Data Analyst Intern",
+      details:
+        "Analyze datasets, build dashboards, and communicate insights to technical and business teams.",
+      overview:
+        "A data-focused internship designed for students who enjoy analysis, visualization, and practical business problems.",
+      responsibilities: [
+        "Clean and analyze datasets.",
+        "Build dashboards and reports.",
+        "Communicate insights clearly.",
+      ],
+      requirements: [
+        "Strong analytical skills.",
+        "Experience with Python or SQL.",
+        "Interest in data visualization.",
+      ],
+      skills: ["Python", "SQL", "Data Analysis"],
+      languages: ["Python", "SQL"],
+      duration: "3 months",
+      deadline: "2026-06-17",
+      startDate: "2026-07-08",
+      postedAt: "Posted 8 days ago",
+      location: "Cairo, Egypt",
+      workMode: "Remote",
+      stipend: "EGP 4,750 / month",
+      rating: 4.5,
+      reviews: 109,
+      featured: false,
+      department: "Data",
+      status: "Open",
+      isFilled: false,
+      isArchived: false,
+      archived: false,
+      companyAbout:
+        "DataNest helps organizations turn operational data into actionable business insights.",
+      benefits: [
+        "Mentorship",
+        "Certificate",
+        "Dashboard project",
+        "Flexible schedule",
+      ],
+      eligibility: [
+        "Undergraduate Students",
+        "Analytical portfolio recommended",
+        "GUC students welcome",
+      ],
+    },
+    [
+      ["student-dina-ashraf", "accepted", 95],
+      ["student-salma", "shortlisted", 93],
+      ["student-ali-maher", "nominated", 91],
+      ["student-ahmed-tarek", "reviewing", 89],
+      ["student-noor", "shortlisted", 87],
+      ["student-nour-el-din", "reviewing", 85],
+      ["student-seif-kamal", "accepted", 83],
+      ["student-hana-gamal", "nominated", 81],
+      ["student-youssef-nabil", "reviewing", 79],
+      ["student-demo-1", "accepted", 77],
+    ],
+    "I am interested in data analysis, finding useful patterns in datasets, and communicating insights through clear visualizations."
+  ),
+
+  buildInternship(
+    {
+      id: "internship-9",
+      isDemo: true,
+      employerId: "employer-demo-5",
+      company: "RoboCore",
+      companyName: "RoboCore",
+      title: "Robotics Software Intern",
+      details:
+        "Develop and test software for robotics systems, perception pipelines, and autonomous behavior.",
+      overview:
+        "A robotics internship combining software engineering, perception, and practical system integration.",
+      responsibilities: [
+        "Develop robotics software modules.",
+        "Integrate perception and control components.",
+        "Test systems and document results.",
+      ],
+      requirements: [
+        "Experience with Python or C++.",
+        "Interest in robotics.",
+        "Strong debugging skills.",
+      ],
+      skills: ["Python", "OpenCV", "Robotics"],
+      languages: ["Python", "C++"],
+      duration: "3 months",
+      deadline: "2026-06-18",
+      startDate: "2026-07-09",
+      postedAt: "Posted 9 days ago",
+      location: "New Cairo, Egypt",
+      workMode: "On-site",
+      stipend: "EGP 5,000 / month",
+      rating: 4.6,
+      reviews: 116,
+      featured: true,
+      department: "Robotics",
+      status: "Open",
+      isFilled: false,
+      isArchived: false,
+      archived: false,
+      companyAbout:
+        "RoboCore develops autonomous robotics systems and intelligent perception solutions.",
+      benefits: [
+        "Robotics mentorship",
+        "Certificate",
+        "Hardware access",
+        "Portfolio project",
+      ],
+      eligibility: [
+        "Undergraduate Students",
+        "Engineering students preferred",
+        "Robotics portfolio recommended",
+      ],
+    },
+    [
+      ["student-nour-el-din", "accepted", 97],
+      ["student-demo-1", "accepted", 95],
+      ["student-seif-kamal", "shortlisted", 93],
+      ["student-ali-maher", "nominated", 91],
+      ["student-dina-ashraf", "reviewing", 89],
+      ["student-ahmed-tarek", "shortlisted", 87],
+      ["student-noor", "reviewing", 85],
+      ["student-youssef-nabil", "accepted", 83],
+      ["student-ziad-hatem", "reviewing", 81],
+      ["student-karim-adel", "rejected", 79],
+    ],
+    "I am interested in robotics software, perception systems, and building reliable autonomous-system components."
+  ),
+
+  buildInternship(
+    {
+      id: "internship-10",
+      isDemo: true,
+      employerId: "employer-demo-6",
+      company: "FinEdge",
+      companyName: "FinEdge",
+      title: "Fintech Backend Intern",
+      details:
+        "Build reliable backend services and APIs for financial technology products.",
+      overview:
+        "A backend engineering internship focused on APIs, databases, reliability, and fintech product development.",
+      responsibilities: [
+        "Build backend services.",
+        "Design and integrate APIs.",
+        "Work with databases and testing.",
+      ],
+      requirements: [
+        "Strong backend fundamentals.",
+        "Experience with APIs and databases.",
+        "Good understanding of software engineering.",
+      ],
+      skills: ["Node.js", "SQL", "REST APIs"],
+      languages: ["JavaScript", "SQL"],
+      duration: "3 months",
+      deadline: "2026-06-19",
+      startDate: "2026-07-10",
+      postedAt: "Posted 10 days ago",
+      location: "Cairo, Egypt",
+      workMode: "Hybrid",
+      stipend: "EGP 5,250 / month",
+      rating: 4.4,
+      reviews: 123,
+      featured: false,
+      department: "Engineering",
+      status: "Open",
+      isFilled: false,
+      isArchived: false,
+      archived: false,
+      companyAbout:
+        "FinEdge builds financial technology products focused on reliable digital payments and financial services.",
+      benefits: [
+        "Mentorship",
+        "Certificate",
+        "Fintech exposure",
+        "Flexible schedule",
+      ],
+      eligibility: [
+        "Undergraduate Students",
+        "Strong backend portfolio preferred",
+        "GUC students welcome",
+      ],
+    },
+    [
+      ["student-omar-sherif", "accepted", 97],
+      ["student-karim-adel", "shortlisted", 95],
+      ["student-youssef-nabil", "nominated", 93],
+      ["student-demo-1", "accepted", 91],
+      ["student-ahmed-tarek", "reviewing", 89],
+      ["student-mostafa-ezz", "shortlisted", 87],
+      ["student-ali-maher", "reviewing", 85],
+      ["student-mai", "accepted", 83],
+      ["student-ziad-hatem", "nominated", 81],
+      ["student-seif-kamal", "reviewing", 79],
+    ],
+    "I am interested in backend and fintech systems and would like to contribute to reliable APIs and database-driven services."
+  ),
+
+  buildInternship(
+    {
+      id: "internship-11",
+      isDemo: true,
+      employerId: "employer-demo-7",
+      company: "PortfolioWorks",
+      companyName: "PortfolioWorks",
+      title: "Portfolio Product Intern",
+      details:
+        "Help build portfolio and career products for university students using modern web technologies.",
+      overview:
+        "A product engineering internship focused on student portfolios, career tools, and polished user experiences.",
+      responsibilities: [
+        "Build portfolio product features.",
+        "Collaborate across design and engineering.",
+        "Test and refine user-facing workflows.",
+      ],
+      requirements: [
+        "Strong project portfolio.",
+        "Experience with frontend or full-stack development.",
+        "Interest in product development.",
+      ],
+      skills: ["React", "JavaScript", "UI/UX"],
+      languages: ["JavaScript"],
+      duration: "3 months",
+      deadline: "2026-06-20",
+      startDate: "2026-07-11",
+      postedAt: "Posted 11 days ago",
+      location: "Cairo, Egypt",
+      workMode: "Remote",
+      stipend: "EGP 5,500 / month",
+      rating: 4.5,
+      reviews: 130,
+      featured: true,
+      department: "Product",
+      status: "Open",
+      isFilled: false,
+      isArchived: false,
+      archived: false,
+      companyAbout:
+        "PortfolioWorks builds student career and portfolio products for universities and early-career talent.",
+      benefits: [
+        "Product mentorship",
+        "Certificate",
+        "Portfolio project",
+        "Flexible schedule",
+      ],
+      eligibility: [
+        "Undergraduate Students",
+        "Active portfolio required",
+        "GUC students preferred",
+      ],
+    },
+    [
+      ["student-demo-1", "accepted", 97],
+      ["student-farida", "accepted", 95],
+      ["student-lina-mourad", "shortlisted", 93],
+      ["student-malak-fouad", "nominated", 91],
+      ["student-mariam-saleh", "reviewing", 89],
+      ["student-farah-mohsen", "shortlisted", 87],
+      ["student-jana-hussein", "reviewing", 85],
+      ["student-laila-saad", "accepted", 83],
+      ["student-sara-nagy", "nominated", 81],
+      ["student-noor", "shortlisted", 79],
+      ["student-hana-gamal", "reviewing", 77],
+      ["student-salma", "rejected", 75],
+    ],
+    "I am interested in building portfolio and career products and contributing across frontend, product, and user experience work."
+  ),
+
+  buildInternship(
+    {
+      id: "internship-12",
+      isDemo: true,
+      employerId: "employer-demo-8",
+      company: "VisionAI",
+      companyName: "VisionAI",
+      title: "Machine Learning Intern",
+      details:
+        "Work on practical machine learning experiments, model evaluation, and data-driven product features.",
+      overview:
+        "An applied machine learning internship focused on experimentation, evaluation, and real product use cases.",
+      responsibilities: [
+        "Train and evaluate machine learning models.",
+        "Prepare and analyze datasets.",
+        "Document experiments and results.",
+      ],
+      requirements: [
+        "Strong Python fundamentals.",
+        "Basic machine learning knowledge.",
+        "Experience with technical projects.",
+      ],
+      skills: ["Python", "PyTorch", "Machine Learning"],
+      languages: ["Python"],
+      duration: "3 months",
+      deadline: "2026-06-21",
+      startDate: "2026-07-05",
+      postedAt: "Posted 12 days ago",
+      location: "Cairo, Egypt",
+      workMode: "Remote",
+      stipend: "EGP 5,750 / month",
+      rating: 4.3,
+      reviews: 137,
+      featured: false,
+      department: "AI",
+      status: "Open",
+      isFilled: false,
+      isArchived: false,
+      archived: false,
+      companyAbout:
+        "AI company hiring interns for applied ML and data products.",
+      benefits: [
+        "Mentorship",
+        "Certificate",
+        "Portfolio project",
+        "Flexible schedule",
+      ],
+      eligibility: [
+        "Undergraduate Students",
+        "GUC students preferred",
+        "Portfolio recommended",
+      ],
+    },
+    [
+      ["student-nour-el-din", "accepted", 98],
+      ["student-demo-1", "rejected", 96],
+      ["student-dina-ashraf", "shortlisted", 94],
+      ["student-seif-kamal", "nominated", 92],
+      ["student-ali-maher", "reviewing", 90],
+      ["student-ahmed-tarek", "shortlisted", 88],
+      ["student-noor", "reviewing", 86],
+      ["student-youssef-nabil", "accepted", 84],
+      ["student-hana-gamal", "nominated", 82],
+      ["student-salma", "reviewing", 80],
+      ["student-ziad-hatem", "shortlisted", 78],
+    ],
+    "I am interested in machine learning experimentation, evaluation, and building practical AI features."
+  ),
 ];
-
 export const notificationsSeed = [
   {
     "id": "notif-invite-1",
