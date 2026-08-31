@@ -23,12 +23,19 @@ export default function EditProfile() {
 
   return (
     <DashboardLayout >
-      <div className="space-y-6">
-        <SectionHeader
-          title="Profile Information"
-          subtitle="Manage your personal information, skills, and portfolio links."
-        />
+        <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          
+          <div>
+            <h1 className="text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
+              Profile Information
+            </h1>
 
+            <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
+              Manage your personal information, skills, and portfolio links.
+            </p>
+          </div>
+        
         <div className="grid gap-6 xl:grid-cols-[0.75fr_1.25fr]">
           <div className="space-y-6">
             <AppCard className="p-8">
@@ -147,6 +154,7 @@ export default function EditProfile() {
           </div>
         </div>
       </div>
+      </main>
     </DashboardLayout>
   );
 }
