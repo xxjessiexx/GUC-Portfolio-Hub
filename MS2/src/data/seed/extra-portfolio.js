@@ -4,7 +4,7 @@ const extraPortfolios = [
     name: "Omar Khaled",
     email: "omar.khaled@guc.edu.eg",
     image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1200&auto=format&fit=crop",
+      "https://randomuser.me/api/portraits/men/83.jpg",
     major: "Computer Science",
     level: "Semester 8",
     projects: 9,
@@ -116,7 +116,7 @@ const extraPortfolios = [
     name: "Hassan Ali",
     email: "hassan.ali@guc.edu.eg",
     image:
-      "https://images.unsplash.com/photo-1504257432389-52343af06ae3?q=80&w=1200&auto=format&fit=crop",
+      "https://randomuser.me/api/portraits/men/47.jpg",
     major: "Computer Science",
     level: "Semester 9",
     projects: 10,

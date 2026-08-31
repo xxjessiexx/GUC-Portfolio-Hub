@@ -2,6 +2,8 @@
 // Append-only seed pack: extra portfolio users + 50 fully detailed public projects.
 // Does not replace any existing seed records. Merge it in demoStore.js.
 
+
+
 export const extraPortfolioProjectUsers = [
   {
     "id": "student-lina-mourad",
@@ -525,8 +527,8 @@ export const extraPortfolioProjectUsers = [
     "email": "ziad.hatem@student.guc.edu.eg",
     "password": "123456",
     "avatar": "",
-    "image": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=800&auto=format&fit=crop",
-    "profileImage": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=800&auto=format&fit=crop",
+    "image": "https://randomuser.me/api/portraits/men/72.jpg",
+"profileImage": "https://randomuser.me/api/portraits/men/72.jpg",
     "status": "active",
     "favoriteProjectIds": [],
     "favoritePortfolioIds": [],
@@ -1511,7 +1513,7 @@ export const extraPortfolioProjects50 = [
     "github": "https://github.com/guc-demo/smart-parking-occupancy-map",
     "githubUrl": "https://github.com/guc-demo/smart-parking-occupancy-map",
     "demoUrl": "https://demo.guc-portfolio.dev/smart-parking-occupancy-map",
-    "image": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop",
+    "image": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop",
     "thumbnail": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop",
     "description": "A real-time parking availability dashboard using simulated sensor feeds and campus map overlays.",
     "overview": "A real-time parking availability dashboard using simulated sensor feeds and campus map overlays.",
