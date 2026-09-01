@@ -857,20 +857,22 @@ export default function CreateNewProject() {
     setSaveMessage({ type: "", message: "" });
   };
 
-  const openInviteDialog = (kind) => {
-    setDialogs((current) => ({
-      ...current,
-      [kind]: {
-          value: "",
-        error: "",
-      },
-    }));
+const openInviteDialog = (kind) => {
+  setDialogs((current) => ({
+    ...current,
+    [kind]: {
+      ...current[kind],
+      open: true,
+      value: "",
+      error: "",
+    },
+  }));
 
-    setInviteFeedback((current) => ({
-      ...current,
-      [kind]: { type: "", message: "" },
-    }));
-  };
+  setInviteFeedback((current) => ({
+    ...current,
+    [kind]: { type: "", message: "" },
+  }));
+};
 
   const setInviteDialogOpen = (kind, open) => {
     setDialogs((current) => ({
