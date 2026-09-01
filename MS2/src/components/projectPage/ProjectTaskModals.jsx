@@ -1,5 +1,4 @@
 import AppModal from "@/components/common/AppModal";
-import AppSelect from "@/components/common/AppSelect";
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "Pending" },
@@ -7,19 +6,41 @@ const STATUS_OPTIONS = [
   { value: "completed", label: "Completed" },
 ];
 
-function FieldLabel({ children }) {
+function FieldLabel({ children, required = false }) {
   return (
-    <label className="mb-1.5 block text-xs font-black uppercase tracking-[0.16em] text-[var(--muted)]">
-      {children}
+    <label className="mb-1.5 flex items-center gap-1 text-xs font-black uppercase tracking-[0.16em] text-[var(--muted)]">
+      <span>{children}</span>
+      {required ? (
+        <span
+          className="text-[color:var(--gold)]"
+          aria-hidden="true"
+        >
+          *
+        </span>
+      ) : null}
     </label>
   );
 }
 
-function FormInput(props) {
+function FieldError({ message }) {
+  if (!message) return null;
+
+  return (
+    <p className="mt-1.5 text-xs font-semibold leading-5 text-red-500">
+      {message}
+    </p>
+  );
+}
+
+function FormInput({ hasError = false, className = "", ...props }) {
   return (
     <input
       {...props}
-      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--ink)] outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[color:var(--primary)]/10"
+      className={`w-full rounded-2xl border bg-white px-4 py-3 text-sm font-bold text-[var(--ink)] outline-none transition focus:ring-4 ${
+        hasError
+          ? "border-red-300 focus:border-red-400 focus:ring-red-500/10"
+          : "border-slate-200 focus:border-[var(--primary)] focus:ring-[color:var(--primary)]/10"
+      } ${className}`}
     />
   );
 }
@@ -29,6 +50,15 @@ function FormTextarea(props) {
     <textarea
       {...props}
       className="min-h-28 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--ink)] outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[color:var(--primary)]/10"
+    />
+  );
+}
+
+function FormSelect(props) {
+  return (
+    <select
+      {...props}
+      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--ink)] outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[color:var(--primary)]/10"
     />
   );
 }
@@ -61,8 +91,11 @@ export default function ProjectTaskModals({
 
   showTaskPopup,
   setShowTaskPopup,
+  onCloseTaskPopup,
   newTask,
   setNewTask,
+  updateNewTask,
+  taskErrors,
   onAddTask,
 
   showEditPopup,
@@ -73,25 +106,53 @@ export default function ProjectTaskModals({
 }) {
   const team = project?.team || [];
 
+  const updateTaskDraft = (updates) => {
+    if (typeof updateNewTask === "function") {
+      updateNewTask(updates);
+      return;
+    }
+
+    setNewTask((current) => ({
+      ...current,
+      ...updates,
+    }));
+  };
+
   return (
     <>
       {showTaskPopup && (
         <AppModal
           title="Add task"
-          onClose={() => setShowTaskPopup(false)}
+          onClose={() => {
+            if (typeof onCloseTaskPopup === "function") {
+              onCloseTaskPopup();
+            } else {
+              setShowTaskPopup(false);
+            }
+          }}
           maxWidth="max-w-xl"
         >
           <div className="space-y-4">
             <div>
-              <FieldLabel>Task title</FieldLabel>
+              <FieldLabel required>Task title</FieldLabel>
               <FormInput
                 type="text"
                 value={newTask.title}
+                hasError={Boolean(taskErrors?.title)}
+                aria-invalid={Boolean(taskErrors?.title)}
+                aria-describedby={
+                  taskErrors?.title ? "new-task-title-error" : undefined
+                }
                 onChange={(event) =>
-                  setNewTask({ ...newTask, title: event.target.value })
+                  updateTaskDraft({
+                    title: event.target.value,
+                  })
                 }
                 placeholder="Example: Build login validation"
               />
+              <div id="new-task-title-error">
+                <FieldError message={taskErrors?.title} />
+              </div>
             </div>
 
             <div>
@@ -99,7 +160,7 @@ export default function ProjectTaskModals({
               <FormTextarea
                 value={newTask.description}
                 onChange={(event) =>
-                  setNewTask({ ...newTask, description: event.target.value })
+                  updateTaskDraft({ description: event.target.value })
                 }
                 placeholder="Add a clear task description for the assignee."
               />
@@ -112,52 +173,67 @@ export default function ProjectTaskModals({
                   type="date"
                   value={newTask.deadline}
                   onChange={(event) =>
-                    setNewTask({ ...newTask, deadline: event.target.value })
+                    updateTaskDraft({ deadline: event.target.value })
                   }
                 />
               </div>
 
               <div>
                 <FieldLabel>Status</FieldLabel>
-                <AppSelect
+                <FormSelect
                   value={newTask.status}
-                  onChange={(value) =>
-                    setNewTask({ ...newTask, status: value })
+                  onChange={(event) =>
+                    updateTaskDraft({ status: event.target.value })
                   }
-                  options={STATUS_OPTIONS}
-                  placeholder="Select status"
-                />
+                >
+                  {STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </FormSelect>
               </div>
             </div>
 
             {!isBachelorProject && (
               <div>
                 <FieldLabel>Collaborator</FieldLabel>
-                <AppSelect
+                <FormSelect
                   value={newTask.assigneeId}
-                  onChange={(value) => {
+                  onChange={(event) => {
                     const member = team.find(
-                      (item) => String(item.id) === String(value)
+                      (item) => String(item.id) === String(event.target.value)
                     );
 
-                    setNewTask({
-                      ...newTask,
-                      assigneeId: value,
+                    updateTaskDraft({
+                      assigneeId: event.target.value,
                       assignee: member?.name || "",
                     });
                   }}
-                  options={team.map((member) => ({
-                    value: member.id || member.name,
-                    label: member.name,
-                  }))}
-                  placeholder="Choose collaborator"
-                />
+                >
+                  <option value="">Choose collaborator</option>
+
+                  {team.map((member) => (
+                    <option
+                      key={member.id || member.name}
+                      value={member.id || member.name}
+                    >
+                      {member.name}
+                    </option>
+                  ))}
+                </FormSelect>
               </div>
             )}
           </div>
 
           <ModalFooter
-            onCancel={() => setShowTaskPopup(false)}
+            onCancel={() => {
+              if (typeof onCloseTaskPopup === "function") {
+                onCloseTaskPopup();
+              } else {
+                setShowTaskPopup(false);
+              }
+            }}
             onConfirm={onAddTask}
             confirmText="Create task"
           />
@@ -215,39 +291,49 @@ export default function ProjectTaskModals({
 
               <div>
                 <FieldLabel>Status</FieldLabel>
-                <AppSelect
+                <FormSelect
                   value={editingTask.status}
-                  onChange={(value) =>
-                    setEditingTask({ ...editingTask, status: value })
+                  onChange={(event) =>
+                    setEditingTask({ ...editingTask, status: event.target.value })
                   }
-                  options={STATUS_OPTIONS}
-                  placeholder="Select status"
-                />
+                >
+                  {STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </FormSelect>
               </div>
             </div>
 
             {!isBachelorProject && (
               <div>
                 <FieldLabel>Assignee</FieldLabel>
-                <AppSelect
+                <FormSelect
                   value={editingTask.assigneeId || ""}
-                  onChange={(value) => {
+                  onChange={(event) => {
                     const member = team.find(
-                      (item) => String(item.id) === String(value)
+                      (item) => String(item.id) === String(event.target.value)
                     );
 
                     setEditingTask({
                       ...editingTask,
-                      assigneeId: value,
+                      assigneeId: event.target.value,
                       assignee: member?.name || editingTask.assignee,
                     });
                   }}
-                  options={team.map((member) => ({
-                    value: member.id || member.name,
-                    label: member.name,
-                  }))}
-                  placeholder="Choose collaborator"
-                />
+                >
+                  <option value="">Choose collaborator</option>
+
+                  {team.map((member) => (
+                    <option
+                      key={member.id || member.name}
+                      value={member.id || member.name}
+                    >
+                      {member.name}
+                    </option>
+                  ))}
+                </FormSelect>
               </div>
             )}
           </div>

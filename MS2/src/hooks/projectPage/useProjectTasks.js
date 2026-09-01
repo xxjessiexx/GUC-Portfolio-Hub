@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useToast } from "@/context/ToastContext";
 import { updateProject } from "@/data/demoStore";
 import {
   getDisplayName,
@@ -22,9 +23,15 @@ export function useProjectTasks({
   currentUser,
   makeNotification,
 }) {
+  const { showToast } = useToast();
+
   const [showTaskPopup, setShowTaskPopup] = useState(false);
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+
+  const [taskErrors, setTaskErrors] = useState({
+    title: "",
+  });
 
   const [newTask, setNewTask] = useState({
     title: "",
@@ -111,7 +118,34 @@ export function useProjectTasks({
   };
 
   const addTask = () => {
-    if (!project || !canManageTasks || !newTask.title.trim()) return;
+    if (!project || !canManageTasks) {
+      showToast({
+        title: "Task could not be created",
+        description: "You do not have permission to add tasks to this project.",
+        type: "error",
+      });
+      return false;
+    }
+
+    const title = newTask.title.trim();
+
+    if (!title) {
+      setTaskErrors({
+        title: "Task title is required.",
+      });
+
+      showToast({
+        title: "Unable to create task",
+        description: "Please enter a task title.",
+        type: "error",
+      });
+
+      return false;
+    }
+
+    setTaskErrors({
+      title: "",
+    });
 
     const selectedMember = (project.team || []).find(
       (member) => sameId(member.id, newTask.assigneeId)
@@ -119,7 +153,7 @@ export function useProjectTasks({
 
     const nextTask = {
       id: makeId("task"),
-      title: newTask.title.trim(),
+      title,
       description: newTask.description.trim(),
       assigneeId: isBachelorProject ? project.ownerId : newTask.assigneeId,
       assignee: isBachelorProject
@@ -143,6 +177,45 @@ export function useProjectTasks({
     });
 
     setShowTaskPopup(false);
+
+    showToast({
+      title: "Task created successfully",
+      description: `${title} was added to the project.`,
+      type: "success",
+    });
+
+    return true;
+  };
+
+  const openTaskPopup = () => {
+    setTaskErrors({
+      title: "",
+    });
+    setShowTaskPopup(true);
+  };
+
+  const closeTaskPopup = () => {
+    setTaskErrors({
+      title: "",
+    });
+    setShowTaskPopup(false);
+  };
+
+  const updateNewTask = (updates) => {
+    setNewTask((current) => ({
+      ...current,
+      ...updates,
+    }));
+
+    if (
+      Object.prototype.hasOwnProperty.call(updates, "title") &&
+      String(updates.title || "").trim()
+    ) {
+      setTaskErrors((current) => ({
+        ...current,
+        title: "",
+      }));
+    }
   };
 
   const openEditPopup = (task) => {
@@ -279,12 +352,16 @@ export function useProjectTasks({
   return {
     showTaskPopup,
     setShowTaskPopup,
+    openTaskPopup,
+    closeTaskPopup,
     showEditPopup,
     setShowEditPopup,
     editingTask,
     setEditingTask,
     newTask,
     setNewTask,
+    updateNewTask,
+    taskErrors,
     taskFeedbackDrafts,
     setTaskFeedbackDrafts,
     storeTasks,
