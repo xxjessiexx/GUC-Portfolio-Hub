@@ -4,6 +4,7 @@ import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import DragDropList from "@/components/ui/DragDropList";
 import SortableCard from "@/components/ui/SortableCard";
 import { EmptyState } from "@/components/projectPage/ProjectPageShared";
+import AppSelect from "@/components/common/AppSelect";
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "Pending" },
@@ -12,12 +13,6 @@ const STATUS_OPTIONS = [
   { value: "completed", label: "Completed" },
 ];
 
-const statusStyles = {
-  completed: "bg-green-100 text-green-700",
-  "in-progress": "bg-blue-100 text-blue-700",
-  pending: "bg-gray-200 text-gray-600",
-  "post-poned": "bg-yellow-100 text-yellow-700",
-};
 
 function sameId(a, b) {
   return String(a || "") === String(b || "");
@@ -89,31 +84,19 @@ export default function ProjectTasksTab({
           }
           middle={
             <div className="flex justify-center">
-              <div className="relative">
-                <select
-                  value={task.status || "pending"}
-                  disabled={!canEditStatus}
-                  onChange={(event) =>
-                    onUpdateTaskStatus(task.id, event.target.value)
-                  }
-                  title={
-                    canEditStatus
-                      ? "Update task status"
-                      : "Only the owner or assigned collaborator can update this task status"
-                  }
-                  className={`appearance-none rounded-xl border px-4 py-2 text-xs font-bold ${
-                    canEditStatus
-                      ? "cursor-pointer"
-                      : "cursor-not-allowed opacity-60"
-                  } ${statusStyles[task.status] || statusStyles.pending}`}
-                >
-                  {STATUS_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <AppSelect
+                value={task.status || "pending"}
+                disabled={!canEditStatus}
+                onChange={(value) => onUpdateTaskStatus(task.id, value)}
+                options={STATUS_OPTIONS}
+                placeholder="Select status"
+                className="h-10 min-w-[150px] text-xs font-bold"
+                triggerProps={{
+                  title: canEditStatus
+                    ? "Update task status"
+                    : "Only the owner or assigned collaborator can update this task status",
+                }}
+              />
             </div>
           }
           right={

@@ -1,4 +1,5 @@
 import AppModal from "@/components/common/AppModal";
+import AppSelect from "@/components/common/AppSelect";
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "Pending" },
@@ -28,15 +29,6 @@ function FormTextarea(props) {
     <textarea
       {...props}
       className="min-h-28 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--ink)] outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[color:var(--primary)]/10"
-    />
-  );
-}
-
-function FormSelect(props) {
-  return (
-    <select
-      {...props}
-      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--ink)] outline-none transition focus:border-[var(--primary)] focus:ring-4 focus:ring-[color:var(--primary)]/10"
     />
   );
 }
@@ -127,49 +119,39 @@ export default function ProjectTaskModals({
 
               <div>
                 <FieldLabel>Status</FieldLabel>
-                <FormSelect
+                <AppSelect
                   value={newTask.status}
-                  onChange={(event) =>
-                    setNewTask({ ...newTask, status: event.target.value })
+                  onChange={(value) =>
+                    setNewTask({ ...newTask, status: value })
                   }
-                >
-                  {STATUS_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </FormSelect>
+                  options={STATUS_OPTIONS}
+                  placeholder="Select status"
+                />
               </div>
             </div>
 
             {!isBachelorProject && (
               <div>
                 <FieldLabel>Collaborator</FieldLabel>
-                <FormSelect
+                <AppSelect
                   value={newTask.assigneeId}
-                  onChange={(event) => {
+                  onChange={(value) => {
                     const member = team.find(
-                      (item) => String(item.id) === String(event.target.value)
+                      (item) => String(item.id) === String(value)
                     );
 
                     setNewTask({
                       ...newTask,
-                      assigneeId: event.target.value,
+                      assigneeId: value,
                       assignee: member?.name || "",
                     });
                   }}
-                >
-                  <option value="">Choose collaborator</option>
-
-                  {team.map((member) => (
-                    <option
-                      key={member.id || member.name}
-                      value={member.id || member.name}
-                    >
-                      {member.name}
-                    </option>
-                  ))}
-                </FormSelect>
+                  options={team.map((member) => ({
+                    value: member.id || member.name,
+                    label: member.name,
+                  }))}
+                  placeholder="Choose collaborator"
+                />
               </div>
             )}
           </div>
@@ -233,49 +215,39 @@ export default function ProjectTaskModals({
 
               <div>
                 <FieldLabel>Status</FieldLabel>
-                <FormSelect
+                <AppSelect
                   value={editingTask.status}
-                  onChange={(event) =>
-                    setEditingTask({ ...editingTask, status: event.target.value })
+                  onChange={(value) =>
+                    setEditingTask({ ...editingTask, status: value })
                   }
-                >
-                  {STATUS_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </FormSelect>
+                  options={STATUS_OPTIONS}
+                  placeholder="Select status"
+                />
               </div>
             </div>
 
             {!isBachelorProject && (
               <div>
                 <FieldLabel>Assignee</FieldLabel>
-                <FormSelect
+                <AppSelect
                   value={editingTask.assigneeId || ""}
-                  onChange={(event) => {
+                  onChange={(value) => {
                     const member = team.find(
-                      (item) => String(item.id) === String(event.target.value)
+                      (item) => String(item.id) === String(value)
                     );
 
                     setEditingTask({
                       ...editingTask,
-                      assigneeId: event.target.value,
+                      assigneeId: value,
                       assignee: member?.name || editingTask.assignee,
                     });
                   }}
-                >
-                  <option value="">Choose collaborator</option>
-
-                  {team.map((member) => (
-                    <option
-                      key={member.id || member.name}
-                      value={member.id || member.name}
-                    >
-                      {member.name}
-                    </option>
-                  ))}
-                </FormSelect>
+                  options={team.map((member) => ({
+                    value: member.id || member.name,
+                    label: member.name,
+                  }))}
+                  placeholder="Choose collaborator"
+                />
               </div>
             )}
           </div>

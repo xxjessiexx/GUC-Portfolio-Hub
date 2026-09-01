@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import AppSelect from "@/components/common/AppSelect";
 import { useTheme } from "@/hooks/useTheme";
 import { useUserProfile } from "@/context/UserProfileContext";
 import { getCurrentUser, setCurrentUser, updateUser } from "@/data/demoStore";
@@ -178,18 +179,16 @@ function TextField({ label, value, onChange, placeholder }) {
 
 function SelectField({ label, value, onChange, options }) {
   return (
-    <label className="block">
+    <div className="block">
       <span className="text-xs font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</span>
-      <select
+      <AppSelect
         value={value || ""}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border-soft)] bg-white/75 px-4 text-sm font-black text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent)]/20 dark:bg-[color:var(--surface)]"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>{option.label}</option>
-        ))}
-      </select>
-    </label>
+        onChange={onChange}
+        options={options}
+        placeholder={`Select ${label}`}
+        className="mt-2"
+      />
+    </div>
   );
 }
 

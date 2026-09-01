@@ -33,13 +33,7 @@ import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
 import { Input } from "@/components/ui/input";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import AppSelect from "@/components/common/AppSelect";
 
 import { useAdminModuleData } from "@/hooks/useAdminModuleData";
 import { useToast } from "@/context/ToastContext";
@@ -306,29 +300,12 @@ export default function AdminCreateCourse() {
                     icon={Layers3}
                     feedback="Bachelor Project is supported by the requirements."
                   >
-                    <Select
+                    <AppSelect
                       value={form.type}
-                      onValueChange={(value) =>
-                        update("type", value)
-                      }
-                    >
-                      <SelectTrigger
-                        className={adminInputStyles}
-                      >
-                        <SelectValue />
-                      </SelectTrigger>
-
-                      <SelectContent>
-                        {COURSE_TYPES.map((type) => (
-                          <SelectItem
-                            key={type}
-                            value={type}
-                          >
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onChange={(value) => update("type", value)}
+                      options={COURSE_TYPES}
+                      placeholder="Choose course type"
+                    />
                   </AdminField>
 
                   <AdminField

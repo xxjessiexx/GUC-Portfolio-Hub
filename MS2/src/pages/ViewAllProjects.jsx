@@ -4,6 +4,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import FilterSelect from "@/components/common/FilterSelect";
+import AppSelect from "@/components/common/AppSelect";
 import DeleteConfirmationModal
 from "@/components/ui/DeleteConfirmationModal";
 import { AdminActionDialog }
@@ -20,7 +21,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 
-import { Pencil, Trash2, ChevronDown, Globe, Lock } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import CourseBadge from "@/components/ui/CourseBadge";
 import DragDropList from "@/components/ui/DragDropList";
 import SortableCard from "@/components/ui/SortableCard";
@@ -872,49 +873,18 @@ border border-[var(--project-badge-border)]
                         middle={
   <>
     {/* Visibility column */}
-    <div className="flex justify-center">
-      <div className="relative w-fit">
-        <select
+    <div className="flex justify-center" onClick={(event) => event.stopPropagation()}>
+      <div className="w-[150px]">
+        <AppSelect
           value={visibility}
-          onClick={(event) => event.stopPropagation()}
-          onChange={(e) =>
-            toggleVisibility(p.id, e.target.value)
-          }
-         className={`appearance-none pl-10 pr-8 py-2 rounded-xl border text-sm font-medium cursor-pointer ${
-  visibility === "Public"
-    ? `
-        bg-green-100
-        text-green-700
-        border-green-200
-        dark:bg-emerald-500/10
-        dark:text-emerald-400
-        dark:border-emerald-500/20
-      `
-    : `
-    bg-[var(--private-bg)]
-    text-[var(--private-text)]
-    border-[var(--private-border)]
-  `
-}`}
-        >
-          <option value="Public">Public</option>
-          <option value="Private">Private</option>
-        </select>
-
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-          {visibility === "Public" ? (
-            <Globe size={16} className="text-green-600" />
-          ) : (
-            <Lock size={16} className="text-[var(--muted)]" />
-          )}
-        </span>
-
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-          <ChevronDown
-            size={14}
-            className="text-gray-400"
-          />
-        </span>
+          onChange={(value) => toggleVisibility(p.id, value)}
+          options={[
+            { value: "Public", label: "Public" },
+            { value: "Private", label: "Private" },
+          ]}
+          placeholder="Visibility"
+          className="h-10 text-xs font-bold"
+        />
       </div>
     </div>
 
