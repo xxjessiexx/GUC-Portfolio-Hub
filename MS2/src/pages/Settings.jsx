@@ -396,9 +396,6 @@ export default function Settings() {
   };
 
   const requestPasswordReset = () => {
-    const confirmed = window.confirm("You will be redirected to the password reset page. Continue?");
-    if (!confirmed) return;
-    toast.success("Opening password reset");
     navigate("/forgot-password");
   };
 
