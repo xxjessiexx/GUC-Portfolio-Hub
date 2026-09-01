@@ -452,19 +452,68 @@ export default function Register({ addUser }) {
               />
             </div>
 
-            <AuthInput
-              label="Company Verification Document"
-              icon={Briefcase}
-              type="file"
-              error={errors.verificationDocument}
-              onChange={(e) =>
-                updateField(
-                  "verificationDocument",
-                  e.target.files?.[0]?.name || ""
-                )
-              }
-              className="file:mr-4 file:rounded-xl file:border-0 file:bg-[color:var(--accent)]/30 file:px-4 file:py-2 file:font-bold file:text-[color:var(--primary)]"
-            />
+<div>
+  <label className="mb-2 block text-sm font-black text-[color:var(--dark)]">
+    Company Verification Document
+  </label>
+
+  <label
+  htmlFor="verificationDocument"
+  className="
+    group
+    flex h-[60px] w-full cursor-pointer items-center
+    rounded-2xl border border-[color:var(--border-blue)]
+    bg-white/70 px-5
+    transition
+    hover:border-[color:var(--secondary)]/60
+  "
+>
+    <Briefcase className="mr-5 h-5 w-5 shrink-0 text-[color:var(--primary)]" />
+
+    <span
+  className="
+    flex h-9 shrink-0 items-center justify-center
+    rounded-full
+    bg-gray-100
+    px-5
+    font-bold
+    text-[color:var(--primary)]
+    transition-colors
+    group-hover:bg-gray-200
+  "
+>
+  Choose File
+</span>
+
+    <span
+      className="
+        ml-4 truncate
+        text-sm font-medium
+        text-[color:var(--muted)]
+      "
+    >
+      {form.verificationDocument || "No file chosen"}
+    </span>
+
+    <input
+      id="verificationDocument"
+      type="file"
+      className="hidden"
+      onChange={(e) =>
+        updateField(
+          "verificationDocument",
+          e.target.files?.[0]?.name || ""
+        )
+      }
+    />
+  </label>
+
+  {errors.verificationDocument && (
+    <p className="mt-2 text-sm font-semibold text-red-500">
+      {errors.verificationDocument}
+    </p>
+  )}
+</div>
           </>
         )}
 
