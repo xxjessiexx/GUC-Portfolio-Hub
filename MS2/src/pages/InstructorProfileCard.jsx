@@ -8,7 +8,7 @@ import { FaGithub, FaLinkedin } from "react-icons/fa";
 
 import { AppButton } from "@/components/ui/AppButton";
 import { useNavigate } from "react-router-dom";
-import { getExistingDirectChat } from "@/data/demoStore";
+import { getCurrentUser, getExistingDirectChat, normalizeRole } from "@/data/demoStore";
 
 function getInstructorValue(instructor, keys, fallback = "—") {
   for (const key of keys) {
@@ -43,6 +43,15 @@ export default function InstructorProfileCard({
 }) {
   const navigate = useNavigate();
   const officeHours = getOfficeHours(instructor);
+
+  const currentUser = getCurrentUser();
+  const currentRole = normalizeRole(
+    currentUser?.role ||
+      currentUser?.accountRole ||
+      currentUser?.systemRole ||
+      ""
+  );
+  const canContactInstructor = currentRole !== "admin";
 
   const image = getInstructorValue(
     instructor,
@@ -156,20 +165,22 @@ export default function InstructorProfileCard({
 
         {/* ACTIONS */}
         <div className="mt-8 space-y-5">
-          <AppButton
-            onClick={handleGetInTouch}
-            className="
-              rounded-2xl
-              bg-[color:var(--primary)]
-              px-5
-              font-black
-              text-white
-              hover:bg-[color:var(--dark)]
-            "
-          >
-            <Mail size={22} />
-            Get in Touch
-          </AppButton>
+          {canContactInstructor ? (
+            <AppButton
+              onClick={handleGetInTouch}
+              className="
+                rounded-2xl
+                bg-[color:var(--primary)]
+                px-5
+                font-black
+                text-white
+                hover:bg-[color:var(--dark)]
+              "
+            >
+              <Mail size={22} />
+              Get in Touch
+            </AppButton>
+          ) : null}
 
           {/* SOCIALS */}
           <div
