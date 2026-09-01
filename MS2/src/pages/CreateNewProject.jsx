@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   FileText,
@@ -13,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { FaGithub as Github } from "react-icons/fa";
-import SideToast from "@/components/ui/SideToast";
+import { useToast } from "@/context/ToastContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ProjectInvitePickerModal from "@/components/project/ProjectInvitePickerModal";
 import { AppButton } from "@/components/ui/AppButton";
@@ -573,14 +574,10 @@ function validateProjectField(field, data) {
 }
 
 export default function CreateNewProject() {
-  const [availableCourses, setAvailableCourses] = useState(FALLBACK_COURSES);
+  const navigate = useNavigate();
+  const { showToast } = useToast();
 
-  const [toast, setToast] = useState({
-  open: false,
-  title: "",
-  description: "",
-  type: "success",
-});
+  const [availableCourses, setAvailableCourses] = useState(FALLBACK_COURSES);
 
   useEffect(() => {
     const courses = getCollection("courses") || [];
@@ -864,8 +861,7 @@ export default function CreateNewProject() {
     setDialogs((current) => ({
       ...current,
       [kind]: {
-        open: true,
-        value: "",
+          value: "",
         error: "",
       },
     }));
@@ -1022,8 +1018,7 @@ export default function CreateNewProject() {
 const isValid = validateAllFields();
 
 if (!isValid) {
-  setToast({
-    open: true,
+  showToast({
     title: "Unable to create project",
     description: "Please check the highlighted fields and try again.",
     type: "error",
@@ -1196,13 +1191,13 @@ setSaveMessage({ type: "", message: "" });
 
       
 
-      setToast({
-  open: true,
-  title: "Project created successfully",
-  description: "Your project has been created successfully.",
-  type: "success",
+      showToast({
+        title: "Project created successfully",
+        description: "Your project has been created successfully.",
+        type: "success",
+      });
 
-});
+      navigate("/view-all-projects");
     } catch (error) {
       console.error("Failed to save project:", error);
       setSaveMessage({
@@ -1210,14 +1205,11 @@ setSaveMessage({ type: "", message: "" });
         message: "Please check the highlighted fields.",
       });
 
-      setToast({
-    open: true,
-    title: "Project could not be created",
-    description:
-       "Please check the highlighted fields and try again.",
-    type: "error",
-  });
-
+      showToast({
+        title: "Project could not be created",
+        description: "Please check the highlighted fields and try again.",
+        type: "error",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -1225,19 +1217,6 @@ setSaveMessage({ type: "", message: "" });
 
   return (
     <DashboardLayout>
-      <SideToast
-      open={toast.open}
-      title={toast.title}
-      description={toast.description}
-      type={toast.type}
-      onClose={() =>
-        setToast((current) => ({
-          ...current,
-          open: false,
-        }))
-      }
-    />
-
       <ProjectInvitePickerModal
         open={dialogs.collab.open || dialogs.instructor.open}
         mode={inviteMode}
@@ -1575,12 +1554,11 @@ setSaveMessage({ type: "", message: "" });
                       instructor: { open: false, value: "", error: "" },
                     });
                     setSaveMessage({ type: "", message: "" });
-                    setToast({
-                    open: true,
-                    title: "Draft reset successfully",
-                    description: "Your project draft has been reset.",
-                    type: "success",
-                  });
+                    showToast({
+                      title: "Draft reset successfully",
+                      description: "Your project draft has been reset.",
+                      type: "success",
+                    });
                   }}
                   
                   disabled={isSaving}
