@@ -23,9 +23,13 @@ export default function EditStudentProfile() {
   const facultyOptions = [
     "Engineering and Technology",
     "Management Technology",
+    "Pharmacy and Biotechnology",
+    "Applied Sciences and Arts",
+    "Law and Legal Studies",
+    "Dentistry",
   ];
 
-  const majorOptions = ["MET", "DMET", "CSEN", "BI", "Mechatronics"];
+  const majorOptions = ["MET", "DMET", "CSEN","IET", "EMS", "BI", "Applied Sciences and Arts","Architecture","Pharmacy and Biotechnology", "Civil","Dentistry", "Law and Legal Studies","Management","Mechatronics"];
 
   const [editingLinks, setEditingLinks] = useState(false);
 
