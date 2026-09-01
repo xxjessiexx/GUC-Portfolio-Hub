@@ -252,10 +252,19 @@ export function useProjectTasks({
   };
 
   const addTaskFeedback = (taskId) => {
-    if (!project || !canAddInstructorFeedback) return;
+    if (!project || !canAddInstructorFeedback) return false;
 
     const message = taskFeedbackDrafts[taskId]?.trim();
-    if (!message) return;
+
+    if (!message) {
+      showToast({
+        title: "Feedback could not be added",
+        description: "Please enter feedback before adding it.",
+        type: "error",
+      });
+
+      return false;
+    }
 
     const nextTasks = tasks.map((task) =>
       sameId(task.id, taskId)
@@ -288,15 +297,33 @@ export function useProjectTasks({
       `${getDisplayName(loggedInUser)} commented on a task in ${project.title}.`,
       project.id
     );
+
+    showToast({
+      title: "Feedback added",
+      description: "Your task feedback was added successfully.",
+      type: "success",
+    });
+
+    return true;
   };
 
   const deleteTaskFeedback = (taskId, feedbackId) => {
-    if (!canAddInstructorFeedback) return;
+    if (!canAddInstructorFeedback) return false;
 
     const task = tasks.find((item) => sameId(item.id, taskId));
-    const feedback = task?.feedback?.find((item) => sameId(item.id, feedbackId));
+    const feedback = task?.feedback?.find((item) =>
+      sameId(item.id, feedbackId)
+    );
 
-    if (!feedback || !sameId(feedback.authorId, loggedInUser?.id)) return;
+    if (!feedback || !sameId(feedback.authorId, loggedInUser?.id)) {
+      showToast({
+        title: "Feedback could not be deleted",
+        description: "You can only delete feedback that you added.",
+        type: "error",
+      });
+
+      return false;
+    }
 
     persistTasksWithoutOwnerOnlyCheck(
       tasks.map((taskItem) =>
@@ -310,24 +337,45 @@ export function useProjectTasks({
           : taskItem
       )
     );
+
+    showToast({
+      title: "Feedback deleted",
+      description: "Your task feedback was removed successfully.",
+      type: "success",
+    });
+
+    return true;
   };
 
-  const editTaskFeedback = (taskId, feedbackId) => {
-    if (!canAddInstructorFeedback) return;
+  const editTaskFeedback = (taskId, feedbackId, nextMessage) => {
+    if (!canAddInstructorFeedback) return false;
 
     const task = tasks.find((item) => sameId(item.id, taskId));
-    const feedback = task?.feedback?.find((item) => sameId(item.id, feedbackId));
-
-    if (!feedback || !sameId(feedback.authorId, loggedInUser?.id)) {
-      return;
-    }
-
-    const nextMessage = window.prompt(
-      "Edit task feedback",
-      feedback.message || ""
+    const feedback = task?.feedback?.find((item) =>
+      sameId(item.id, feedbackId)
     );
 
-    if (nextMessage === null || !nextMessage.trim()) return;
+    if (!feedback || !sameId(feedback.authorId, loggedInUser?.id)) {
+      showToast({
+        title: "Feedback could not be updated",
+        description: "You can only edit feedback that you added.",
+        type: "error",
+      });
+
+      return false;
+    }
+
+    const cleanMessage = String(nextMessage || "").trim();
+
+    if (!cleanMessage) {
+      showToast({
+        title: "Feedback could not be updated",
+        description: "Feedback cannot be empty.",
+        type: "error",
+      });
+
+      return false;
+    }
 
     persistTasksWithoutOwnerOnlyCheck(
       tasks.map((item) =>
@@ -338,7 +386,7 @@ export function useProjectTasks({
                 sameId(entry.id, feedbackId)
                   ? {
                       ...entry,
-                      message: nextMessage.trim(),
+                      message: cleanMessage,
                       updatedAt: new Date().toISOString(),
                     }
                   : entry
@@ -347,6 +395,14 @@ export function useProjectTasks({
           : item
       )
     );
+
+    showToast({
+      title: "Feedback updated",
+      description: "Your task feedback was updated successfully.",
+      type: "success",
+    });
+
+    return true;
   };
 
   return {
