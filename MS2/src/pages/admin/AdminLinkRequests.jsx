@@ -512,7 +512,7 @@ export default function AdminLinkRequests() {
             items-start
             justify-center
             overflow-y-auto
-            bg-[color:var(--ink)]/35
+            bg-[#0b1721]/45
             px-4
             pt-32
             pb-8
@@ -525,10 +525,10 @@ export default function AdminLinkRequests() {
               max-w-4xl
               rounded-[32px]
               border
-              border-white/40
-              bg-[var(--surface)]
+              border-[#D7E1E8]
+              bg-[var(--card-bg-strong)]
               p-6
-              shadow-2xl
+              shadow-[0_28px_90px_rgba(16,32,45,0.24)]
             "
           >
             <div className="flex items-start justify-between gap-4">
@@ -567,7 +567,7 @@ export default function AdminLinkRequests() {
             </div>
 
             <div className="mt-6 space-y-5">
-              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-[var(--surface-soft)] p-5">
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
                   Request Summary
                 </p>
@@ -587,7 +587,7 @@ export default function AdminLinkRequests() {
                 </p>
               </div>
 
-              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-[var(--surface-soft)] p-5">
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
                   Request Type
                 </p>
@@ -599,7 +599,7 @@ export default function AdminLinkRequests() {
                 </p>
               </div>
 
-              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-[var(--surface-soft)] p-5">
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
                   Instructor Message
                 </p>
@@ -610,7 +610,7 @@ export default function AdminLinkRequests() {
                 </p>
               </div>
 
-              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-white/60 p-5">
+              <div className="rounded-3xl border border-[color:var(--border-blue)] bg-[var(--surface-soft)] p-5">
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--muted)]">
                   Decision Note
                 </p>
@@ -638,13 +638,18 @@ export default function AdminLinkRequests() {
                   <>
                     <AppButton
                       variant="brand"
-                      className="text-white"
-                      onClick={() =>
+                      className="bg-gradient-to-r from-[#355872] via-[#4f7fa3] to-[#7AAACE] text-white shadow-[0_14px_32px_rgba(53,88,114,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(53,88,114,0.28)]"
+                      onClick={() => {
+                        const request =
+                          selectedRequest;
+                        setSelectedRequest(
+                          null
+                        );
                         openDecision(
-                          selectedRequest,
+                          request,
                           "approved"
-                        )
-                      }
+                        );
+                      }}
                     >
                       <Check className="size-4" />
                       Approve request
@@ -652,12 +657,17 @@ export default function AdminLinkRequests() {
 
                     <AppButton
                       variant="danger"
-                      onClick={() =>
+                      onClick={() => {
+                        const request =
+                          selectedRequest;
+                        setSelectedRequest(
+                          null
+                        );
                         openDecision(
-                          selectedRequest,
+                          request,
                           "rejected"
-                        )
-                      }
+                        );
+                      }}
                     >
                       <X className="size-4" />
                       Reject request

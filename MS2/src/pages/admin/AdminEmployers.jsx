@@ -327,26 +327,35 @@ export default function AdminEmployers() {
                 setSelectedEmployer(employer),
             },
 
-            {
-              label: "Approve employer",
-              icon: FileCheck2,
-              onClick: () =>
-                openDecision(
-                  employer,
-                  "approved"
-                ),
-            },
+            ...(employer.status !== "approved"
+              ? [
+                  {
+                    label: "Approve employer",
+                    icon: FileCheck2,
+                    success: true,
+                    onClick: () =>
+                      openDecision(
+                        employer,
+                        "approved"
+                      ),
+                  },
+                ]
+              : []),
 
-            {
-              label: "Reject employer",
-              icon: XCircle,
-              danger: true,
-              onClick: () =>
-                openDecision(
-                  employer,
-                  "rejected"
-                ),
-            },
+            ...(employer.status !== "rejected"
+              ? [
+                  {
+                    label: "Reject employer",
+                    icon: XCircle,
+                    danger: true,
+                    onClick: () =>
+                      openDecision(
+                        employer,
+                        "rejected"
+                      ),
+                  },
+                ]
+              : []),
           ]}
         />
       ),
@@ -427,7 +436,7 @@ export default function AdminEmployers() {
             items-start
             justify-center
             overflow-y-auto
-            bg-[color:var(--ink)]/35
+            bg-[#0b1721]/45
             px-4
             pt-32
             pb-8
@@ -440,10 +449,10 @@ export default function AdminEmployers() {
               max-w-4xl
               rounded-[32px]
               border
-              border-white/40
-              bg-[var(--surface)]
+              border-[#D7E1E8]
+              bg-[var(--card-bg-strong)]
               p-6
-              shadow-2xl
+              shadow-[0_28px_90px_rgba(16,32,45,0.24)]
             "
           >
             <div className="flex items-start justify-between gap-4">
@@ -499,7 +508,7 @@ export default function AdminEmployers() {
                   rounded-3xl
                   border
                   border-[color:var(--border-blue)]
-                  bg-white/60
+                  bg-[var(--surface-soft)]
                   p-5
                 "
               >
@@ -574,7 +583,7 @@ export default function AdminEmployers() {
                   rounded-3xl
                   border
                   border-[color:var(--border-blue)]
-                  bg-white/60
+                  bg-[var(--surface-soft)]
                   p-5
                 "
               >
@@ -608,7 +617,7 @@ export default function AdminEmployers() {
                             rounded-2xl
                             border
                             border-[color:var(--border-blue)]
-                            bg-white/80
+                            bg-[var(--card-bg-strong)]
                             p-4
                           "
                         >
@@ -684,28 +693,38 @@ export default function AdminEmployers() {
                   Close
                 </AppButton>
 
-                <AppButton
-                  variant="danger"
-                  onClick={() =>
-                    openDecision(
-                      selectedEmployer,
-                      "rejected"
-                    )
-                  }
-                >
-                  Reject company
-                </AppButton>
+                {selectedEmployer.status !== "rejected" ? (
+                  <AppButton
+                    variant="danger"
+                    onClick={() => {
+                      const employer = selectedEmployer;
+                      setSelectedEmployer(null);
+                      openDecision(
+                        employer,
+                        "rejected"
+                      );
+                    }}
+                  >
+                    Reject company
+                  </AppButton>
+                ) : null}
 
-                <AppButton
-                  onClick={() =>
-                    openDecision(
-                      selectedEmployer,
-                      "approved"
-                    )
-                  }
-                >
-                  Approve company
-                </AppButton>
+                {selectedEmployer.status !== "approved" ? (
+                  <AppButton
+                    variant="brand"
+                    className="bg-gradient-to-r from-[#355872] via-[#4f7fa3] to-[#7AAACE] text-white shadow-[0_14px_32px_rgba(53,88,114,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(53,88,114,0.28)]"
+                    onClick={() => {
+                      const employer = selectedEmployer;
+                      setSelectedEmployer(null);
+                      openDecision(
+                        employer,
+                        "approved"
+                      );
+                    }}
+                  >
+                    Approve company
+                  </AppButton>
+                ) : null}
               </div>
             </div>
           </div>
@@ -723,7 +742,7 @@ export default function AdminEmployers() {
             items-start
             justify-center
             overflow-y-auto
-            bg-[color:var(--ink)]/40
+            bg-[#0b1721]/45
             px-4
             pt-28
             pb-8
@@ -737,9 +756,9 @@ export default function AdminEmployers() {
               overflow-hidden
               rounded-[32px]
               border
-              border-white/40
-              bg-[var(--surface)]
-              shadow-2xl
+              border-[#D7E1E8]
+              bg-[var(--card-bg-strong)]
+              shadow-[0_28px_90px_rgba(16,32,45,0.24)]
             "
           >
             <div
@@ -750,6 +769,7 @@ export default function AdminEmployers() {
                 gap-4
                 border-b
                 border-[color:var(--border-blue)]
+                bg-[var(--surface-soft)]
                 p-5
               "
             >
@@ -803,7 +823,7 @@ export default function AdminEmployers() {
               </AppButton>
             </div>
 
-            <div className="bg-white p-6">
+            <div className="bg-[var(--surface-soft)] p-6">
               <div
                 className="
                   mx-auto

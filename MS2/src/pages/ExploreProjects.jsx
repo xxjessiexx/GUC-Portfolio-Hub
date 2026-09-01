@@ -461,6 +461,7 @@ const instructorOptions = [
 
       <AdminActionDialog
   open={reportOpen}
+  dialogClassName="[&>div]:!bg-[#F8FAFC] [&>div]:!backdrop-blur-none dark:[&>div]:!bg-[#0A1926]"
   title="Report Project"
   description="
     Please provide a reason for reporting
