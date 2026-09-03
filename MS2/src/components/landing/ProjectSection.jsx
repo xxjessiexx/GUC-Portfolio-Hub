@@ -1,54 +1,82 @@
-import { Link } from "react-router-dom";
-
-
-import {
-ArrowRight,
-} from "lucide-react";
-
-import { Button } from "@/components/ui/button";
 import ProjectCard from "@/components/landing/ProjectCard";
 
-export default function ProjectSection({projects}) {
-return (
-    <section className="relative z-10 px-6 py-20">
-        <div className="mx-auto max-w-7xl">
-        <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div>
-            <p className="mb-3 text-sm font-black uppercase tracking-widest text-[#355872]">
-                Explore
-            </p>
+export default function ProjectSection({ projects }) {
+  return (
+    <section
+      id="student-work"
+      className="
+        relative z-10
+        scroll-mt-4
+        overflow-hidden
+        bg-[#071C2C]
+        px-6
+        py-16
+        text-white
+      "
+    >
+      <div className="
+        pointer-events-none
+        absolute -left-28 top-10
+        h-[380px] w-[380px]
+        rounded-full
+        bg-[radial-gradient(circle,rgba(122,170,206,0.14),transparent_68%)]
+        blur-2xl
+      " />
 
-            <h2 className="text-4xl font-black tracking-tight text-[#102630]">
-                Discover amazing student work
-            </h2>
+      <div className="
+        pointer-events-none
+        absolute -bottom-32 right-0
+        h-[440px] w-[440px]
+        rounded-full
+        bg-[radial-gradient(circle,rgba(230,199,123,0.05),transparent_70%)]
+        blur-3xl
+      " />
 
-            <p className="mt-3 max-w-xl text-[#7B8794]">
-                Browse public projects without signing in. Save, message, or
-                apply after logging in.
-            </p>
-            </div>
+      <div className="relative mx-auto max-w-7xl">
+        <div className="mb-8 max-w-3xl">
+          <p className="
+            mb-2
+            text-xs font-black uppercase
+            tracking-[0.18em]
+            text-[#9CD5FF]
+          ">
+            Student Work
+          </p>
 
-            <Link to="/projects">
-            <Button
-                variant="outline"
-                className="h-12 rounded-2xl border-[#355872]/20 bg-white/60 font-bold text-[#355872]"
-            >
-                View All Projects
-                <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            </Link>
+          <h2 className="
+            max-w-3xl
+            text-4xl font-black
+            leading-[1.05]
+            tracking-tight
+            text-white
+            sm:text-[2.7rem]
+          ">
+            A glimpse of what GUC students are building
+          </h2>
+
+          <p className="
+            mt-3
+            max-w-2xl
+            text-sm leading-6
+            text-white/58
+            sm:text-base
+          ">
+            Selected work from across GUC — course projects, bachelor work,
+            technical builds, and portfolio pieces. Full project details live
+            inside the platform.
+          </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-            {projects.map((project, index) => (
+        <div className="space-y-3">
+          {projects.map((project, index) => (
             <ProjectCard
-            key={project.title}
-            project={project}
-            index={index}
+              key={project.title}
+              project={project}
+              index={index}
             />
-            ))}
+          ))}
         </div>
-        </div>
+      </div>
     </section>
-);
+  );
 }

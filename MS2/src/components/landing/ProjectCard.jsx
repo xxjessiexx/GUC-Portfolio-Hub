@@ -1,56 +1,182 @@
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-BookOpen,
-Eye,
-PlayCircle,
-} from "lucide-react";
+import { Code2, LockKeyhole } from "lucide-react";
 
-export default function ProjectCard({ project , index }) {
-return (
-                <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -10, rotateX: 3, rotateY: -3 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.12 }}
+export default function ProjectCard({ project, index }) {
+  return (
+    <motion.article
+      initial={{
+        opacity: 0,
+        y: 18,
+      }}
+      whileInView={{
+        opacity: 1,
+        y: 0,
+      }}
+      whileHover={{
+        y: -2,
+      }}
+      viewport={{
+        once: true,
+        amount: 0.2,
+      }}
+      transition={{
+        duration: 0.38,
+        delay: index * 0.04,
+      }}
+      className="
+        group
+        overflow-hidden
+        rounded-[24px]
+        border border-white/10
+        bg-white/[0.055]
+        shadow-[0_16px_42px_rgba(0,0,0,0.14)]
+        backdrop-blur-xl
+      "
+    >
+      <div className="grid min-h-[156px] lg:grid-cols-[29%_71%]">
+        <div className="relative min-h-[156px] overflow-hidden">
+          <img
+            src={project.image}
+            alt={project.title}
+            className="
+              absolute inset-0
+              h-full w-full
+              object-cover
+              transition duration-500
+              group-hover:scale-[1.03]
+            "
+          />
+
+          <div
+            className="
+              absolute inset-0
+              bg-[linear-gradient(155deg,rgba(7,28,44,0.04),rgba(7,28,44,0.70))]
+            "
+          />
+
+          <div
+            className="
+              absolute left-4 top-4
+              rounded-full
+              border border-white/15
+              bg-[#071C2C]/72
+              px-2.5 py-1
+              text-[9px] font-black
+              text-white
+              backdrop-blur-xl
+            "
+          >
+            {project.type}
+          </div>
+
+          <div className="absolute bottom-4 left-4 right-4">
+            <p
+              className="
+                text-[8px] font-black
+                uppercase
+                tracking-[0.14em]
+                text-white/58
+              "
             >
-                <Card className="overflow-hidden rounded-[30px] border-white/80 bg-white/70 shadow-[0_24px_70px_rgba(53,88,114,0.13)] backdrop-blur-2xl">
-                <div className="h-44 bg-[linear-gradient(135deg,#2C3947,#355872_45%,#7AAACE)] p-5">
-                    <div className="flex h-full flex-col justify-between rounded-3xl border border-white/20 bg-white/10 p-4">
-                    <div>
-                        <div className="mb-3 h-3 w-24 rounded-full bg-white/45" />
-                        <div className="mb-2 h-3 w-36 rounded-full bg-white/30" />
-                        <div className="mb-2 h-3 w-28 rounded-full bg-white/25" />
-                    </div>
+              {project.course}
+            </p>
 
-                    <div className="flex items-center gap-2 text-white/80">
-                        <PlayCircle className="h-5 w-5" />
-                        <BookOpen className="h-5 w-5" />
-                        <Eye className="h-5 w-5" />
-                    </div>
-                    </div>
-                </div>
+            <h3
+              className="
+                mt-1
+                max-w-sm
+                text-lg font-black
+                leading-tight
+                text-white
+                sm:text-xl
+              "
+            >
+              {project.title}
+            </h3>
+          </div>
+        </div>
 
-                <CardContent className="p-6">
-                    <div className="mb-4 flex items-center justify-between">
-                    <span className="rounded-full bg-[#9CD5FF]/25 px-3 py-1 text-xs font-black text-[#355872]">
-                        {project.type}
-                    </span>
-                    <span className="text-xs font-black text-[#7B8794]">
-                        {project.tag}
-                    </span>
-                    </div>
+        <div
+          className="
+            flex flex-col
+            justify-center
+            px-5 py-4
+            sm:px-6
+          "
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className="
+                rounded-full
+                bg-[#9CD5FF]/12
+                px-2.5 py-1
+                text-[10px] font-black
+                text-[#9CD5FF]
+              "
+            >
+              {project.tag}
+            </span>
 
-                    <h3 className="text-xl font-black text-[#102630]">
-                    {project.title}
-                    </h3>
+            <span
+              className="
+                inline-flex items-center gap-1.5
+                rounded-full
+                bg-white/[0.06]
+                px-2.5 py-1
+                text-[10px] font-black
+                text-white/62
+              "
+            >
+              <LockKeyhole className="h-3 w-3" />
+              Full details inside
+            </span>
+          </div>
 
-                <p className="mt-2 text-sm leading-6 text-[#7B8794]">
-                    {project.desc}
-                </p>
-                </CardContent>
-                </Card>
-            </motion.div>
-);
+          <p
+            className="
+              mt-3
+              max-w-3xl
+              text-[13px]
+              leading-6
+              text-white/64
+            "
+          >
+            {project.desc}
+          </p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span
+              className="
+                mr-1 inline-flex
+                items-center gap-1
+                text-[8px] font-black
+                uppercase
+                tracking-[0.14em]
+                text-[#9CD5FF]
+              "
+            >
+              <Code2 className="h-3 w-3" />
+              Tech
+            </span>
+
+            {project.technologies.map((technology) => (
+              <span
+                key={technology}
+                className="
+                  rounded-full
+                  border border-white/10
+                  bg-white/[0.07]
+                  px-2.5 py-1
+                  text-[10px] font-black
+                  text-white/78
+                "
+              >
+                {technology}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </motion.article>
+  );
 }
