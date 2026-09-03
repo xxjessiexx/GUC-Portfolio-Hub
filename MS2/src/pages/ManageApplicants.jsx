@@ -418,7 +418,7 @@ export default function ManageApplicants() {
                       <div>
                         <p className="font-black text-[color:var(--ink)] hover:text-[color:var(--primary)]">
                           {applicant.name}
-                          <Star className="ml-1 inline h-3.5 w-3.5 fill-[color:var(--gold)] text-[color:var(--gold)]" />
+                         
                         </p>
                         <p className="text-sm font-semibold text-[color:var(--muted)]">
                           {applicant.university}

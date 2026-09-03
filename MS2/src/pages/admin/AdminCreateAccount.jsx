@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -186,20 +187,52 @@ export default function AdminCreateAccount() {
         variants={pageMotion}
         className="space-y-5"
       >
-        <motion.div variants={cardMotion}>
-          
-        </motion.div>
+        
 
-        <motion.div variants={cardMotion}>
-          <AdminPageHeader
-            eyebrow="Admin Access"
-            title="Create Admin Account"
-            description="Create a new administrator account and set up the credentials they will use to sign in."
-            actionLabel="Back to Users"
-            actionTo="/admin/users"
-            icon={ArrowLeft}
-          />
-        </motion.div>
+      
+
+         <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-7xl space-y-6">
+                  <SectionHeader
+            className="
+              [&_h2]:mt-3
+              [&_h2]:text-4xl
+              [&_h2]:font-black
+              [&_h2]:tracking-tight
+              [&_h2]:text-[color:var(--ink)]
+              sm:[&_h2]:text-5xl
+          
+              [&_p]:mt-3
+              [&_p]:text-base
+              [&_p]:font-semibold
+              [&_p]:text-[color:var(--muted)]
+            "
+           
+            title="Admin Access"
+            subtitle="Create a new administrator account and set up the credentials they will use to sign in."
+            action={
+                      <div className="-m-2">
+                        <span
+                          onClick={() => navigate("/admin/users")}
+                          className="inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
+                          bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+          hover:bg-[linear-gradient(135deg,#355872_0%,#46739A_55%,#8CC3EA_100%)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer  hover:-translate-y-1
+                hover:scale-[1.02]
+                hover:brightness-110
+                hover:shadow-[0_24px_50px_rgba(53,88,114,.35)]  shadow-[0_12px_30px_rgba(53,88,114,.22)]
+          
+                transition-all
+                duration-300
+                ease-out
+                hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)]"
+                        >
+                          <ArrowLeft className="mr-2 size-4" />
+                            Back To Users 
+                        </span>
+                      </div>
+                    }
+                  />
+          
 
         <form
           onSubmit={submit}
@@ -430,7 +463,11 @@ export default function AdminCreateAccount() {
             </AppCard>
           </motion.aside>
         </form>
+         </div>
+      </main>
       </motion.div>
+    
+     
     </AdminPageShell>
   );
 }

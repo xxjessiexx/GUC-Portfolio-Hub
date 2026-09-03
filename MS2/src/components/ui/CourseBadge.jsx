@@ -15,7 +15,7 @@ border-[var(--border-blue)]
   text-xs font-black
   text-[#EBEDE3]
   shadow-[0_8px_18px_rgba(53,88,114,0.14)]
-  dark:bg-[image:var(--nav-gradient)]
+  bg-[image:var(--nav-gradient)]
   
 
         ${className}
