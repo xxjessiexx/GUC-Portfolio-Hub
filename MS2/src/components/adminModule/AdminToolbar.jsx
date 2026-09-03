@@ -1,5 +1,6 @@
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
+import AppSelect from "@/components/common/AppSelect";
 
 export function AdminToolbar({ search, onSearchChange, status, onStatusChange, statusOptions = [], actionLabel, onAction }) {
   return (
@@ -16,13 +17,21 @@ export function AdminToolbar({ search, onSearchChange, status, onStatusChange, s
 
       <div className="flex flex-wrap gap-2">
         {statusOptions.length > 0 && (
-          <label className="flex h-11 items-center gap-2 rounded-2xl border border-[color:var(--border-blue)] bg-[var(--surface-elevated)] px-3 text-sm font-bold text-[color:var(--primary)]">
-            <SlidersHorizontal className="h-4 w-4" />
-            <select value={status} onChange={(event) => onStatusChange?.(event.target.value)} className="bg-transparent outline-none">
-              <option value="all">All statuses</option>
-              {statusOptions.map((option) => <option key={option} value={option}>{option.replaceAll("-", " ")}</option>)}
-            </select>
-          </label>
+          <div className="min-w-[190px]">
+            <AppSelect
+              value={status}
+              onChange={onStatusChange}
+              options={[
+                { value: "all", label: "All statuses" },
+                ...statusOptions.map((option) => ({
+                  value: option,
+                  label: option.replaceAll("-", " "),
+                })),
+              ]}
+              placeholder="All statuses"
+              className="h-11"
+            />
+          </div>
         )}
 
         {actionLabel && <AppButton variant="brand" size="sm" onClick={onAction}>{actionLabel}</AppButton>}

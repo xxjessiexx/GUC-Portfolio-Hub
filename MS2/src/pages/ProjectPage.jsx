@@ -499,7 +499,7 @@ export default function ProjectPage() {
               isAdmin={isAdmin}
               taskFeedbackDrafts={projectTasks.taskFeedbackDrafts}
               setTaskFeedbackDrafts={projectTasks.setTaskFeedbackDrafts}
-              onAddTaskClick={() => projectTasks.setShowTaskPopup(true)}
+              onAddTaskClick={projectTasks.openTaskPopup}
               onStoreTasks={projectTasks.storeTasks}
               onUpdateTaskStatus={projectTasks.updateTaskStatus}
               onOpenEditTask={projectTasks.openEditPopup}
@@ -571,8 +571,11 @@ export default function ProjectPage() {
             isBachelorProject={isBachelorProject}
             showTaskPopup={projectTasks.showTaskPopup}
             setShowTaskPopup={projectTasks.setShowTaskPopup}
+            onCloseTaskPopup={projectTasks.closeTaskPopup}
             newTask={projectTasks.newTask}
             setNewTask={projectTasks.setNewTask}
+            updateNewTask={projectTasks.updateNewTask}
+            taskErrors={projectTasks.taskErrors}
             onAddTask={projectTasks.addTask}
             showEditPopup={projectTasks.showEditPopup}
             setShowEditPopup={projectTasks.setShowEditPopup}

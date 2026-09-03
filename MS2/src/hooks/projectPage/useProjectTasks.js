@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { useToast } from "@/context/ToastContext";
 import { updateProject } from "@/data/demoStore";
 import {
   getDisplayName,
@@ -22,9 +23,15 @@ export function useProjectTasks({
   currentUser,
   makeNotification,
 }) {
+  const { showToast } = useToast();
+
   const [showTaskPopup, setShowTaskPopup] = useState(false);
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+
+  const [taskErrors, setTaskErrors] = useState({
+    title: "",
+  });
 
   const [newTask, setNewTask] = useState({
     title: "",
@@ -111,7 +118,34 @@ export function useProjectTasks({
   };
 
   const addTask = () => {
-    if (!project || !canManageTasks || !newTask.title.trim()) return;
+    if (!project || !canManageTasks) {
+      showToast({
+        title: "Task could not be created",
+        description: "You do not have permission to add tasks to this project.",
+        type: "error",
+      });
+      return false;
+    }
+
+    const title = newTask.title.trim();
+
+    if (!title) {
+      setTaskErrors({
+        title: "Task title is required.",
+      });
+
+      showToast({
+        title: "Unable to create task",
+        description: "Please enter a task title.",
+        type: "error",
+      });
+
+      return false;
+    }
+
+    setTaskErrors({
+      title: "",
+    });
 
     const selectedMember = (project.team || []).find(
       (member) => sameId(member.id, newTask.assigneeId)
@@ -119,7 +153,7 @@ export function useProjectTasks({
 
     const nextTask = {
       id: makeId("task"),
-      title: newTask.title.trim(),
+      title,
       description: newTask.description.trim(),
       assigneeId: isBachelorProject ? project.ownerId : newTask.assigneeId,
       assignee: isBachelorProject
@@ -143,6 +177,45 @@ export function useProjectTasks({
     });
 
     setShowTaskPopup(false);
+
+    showToast({
+      title: "Task created successfully",
+      description: `${title} was added to the project.`,
+      type: "success",
+    });
+
+    return true;
+  };
+
+  const openTaskPopup = () => {
+    setTaskErrors({
+      title: "",
+    });
+    setShowTaskPopup(true);
+  };
+
+  const closeTaskPopup = () => {
+    setTaskErrors({
+      title: "",
+    });
+    setShowTaskPopup(false);
+  };
+
+  const updateNewTask = (updates) => {
+    setNewTask((current) => ({
+      ...current,
+      ...updates,
+    }));
+
+    if (
+      Object.prototype.hasOwnProperty.call(updates, "title") &&
+      String(updates.title || "").trim()
+    ) {
+      setTaskErrors((current) => ({
+        ...current,
+        title: "",
+      }));
+    }
   };
 
   const openEditPopup = (task) => {
@@ -179,10 +252,19 @@ export function useProjectTasks({
   };
 
   const addTaskFeedback = (taskId) => {
-    if (!project || !canAddInstructorFeedback) return;
+    if (!project || !canAddInstructorFeedback) return false;
 
     const message = taskFeedbackDrafts[taskId]?.trim();
-    if (!message) return;
+
+    if (!message) {
+      showToast({
+        title: "Feedback could not be added",
+        description: "Please enter feedback before adding it.",
+        type: "error",
+      });
+
+      return false;
+    }
 
     const nextTasks = tasks.map((task) =>
       sameId(task.id, taskId)
@@ -215,15 +297,33 @@ export function useProjectTasks({
       `${getDisplayName(loggedInUser)} commented on a task in ${project.title}.`,
       project.id
     );
+
+    showToast({
+      title: "Feedback added",
+      description: "Your task feedback was added successfully.",
+      type: "success",
+    });
+
+    return true;
   };
 
   const deleteTaskFeedback = (taskId, feedbackId) => {
-    if (!canAddInstructorFeedback) return;
+    if (!canAddInstructorFeedback) return false;
 
     const task = tasks.find((item) => sameId(item.id, taskId));
-    const feedback = task?.feedback?.find((item) => sameId(item.id, feedbackId));
+    const feedback = task?.feedback?.find((item) =>
+      sameId(item.id, feedbackId)
+    );
 
-    if (!feedback || !sameId(feedback.authorId, loggedInUser?.id)) return;
+    if (!feedback || !sameId(feedback.authorId, loggedInUser?.id)) {
+      showToast({
+        title: "Feedback could not be deleted",
+        description: "You can only delete feedback that you added.",
+        type: "error",
+      });
+
+      return false;
+    }
 
     persistTasksWithoutOwnerOnlyCheck(
       tasks.map((taskItem) =>
@@ -237,24 +337,45 @@ export function useProjectTasks({
           : taskItem
       )
     );
+
+    showToast({
+      title: "Feedback deleted",
+      description: "Your task feedback was removed successfully.",
+      type: "success",
+    });
+
+    return true;
   };
 
-  const editTaskFeedback = (taskId, feedbackId) => {
-    if (!canAddInstructorFeedback) return;
+  const editTaskFeedback = (taskId, feedbackId, nextMessage) => {
+    if (!canAddInstructorFeedback) return false;
 
     const task = tasks.find((item) => sameId(item.id, taskId));
-    const feedback = task?.feedback?.find((item) => sameId(item.id, feedbackId));
-
-    if (!feedback || !sameId(feedback.authorId, loggedInUser?.id)) {
-      return;
-    }
-
-    const nextMessage = window.prompt(
-      "Edit task feedback",
-      feedback.message || ""
+    const feedback = task?.feedback?.find((item) =>
+      sameId(item.id, feedbackId)
     );
 
-    if (nextMessage === null || !nextMessage.trim()) return;
+    if (!feedback || !sameId(feedback.authorId, loggedInUser?.id)) {
+      showToast({
+        title: "Feedback could not be updated",
+        description: "You can only edit feedback that you added.",
+        type: "error",
+      });
+
+      return false;
+    }
+
+    const cleanMessage = String(nextMessage || "").trim();
+
+    if (!cleanMessage) {
+      showToast({
+        title: "Feedback could not be updated",
+        description: "Feedback cannot be empty.",
+        type: "error",
+      });
+
+      return false;
+    }
 
     persistTasksWithoutOwnerOnlyCheck(
       tasks.map((item) =>
@@ -265,7 +386,7 @@ export function useProjectTasks({
                 sameId(entry.id, feedbackId)
                   ? {
                       ...entry,
-                      message: nextMessage.trim(),
+                      message: cleanMessage,
                       updatedAt: new Date().toISOString(),
                     }
                   : entry
@@ -274,17 +395,29 @@ export function useProjectTasks({
           : item
       )
     );
+
+    showToast({
+      title: "Feedback updated",
+      description: "Your task feedback was updated successfully.",
+      type: "success",
+    });
+
+    return true;
   };
 
   return {
     showTaskPopup,
     setShowTaskPopup,
+    openTaskPopup,
+    closeTaskPopup,
     showEditPopup,
     setShowEditPopup,
     editingTask,
     setEditingTask,
     newTask,
     setNewTask,
+    updateNewTask,
+    taskErrors,
     taskFeedbackDrafts,
     setTaskFeedbackDrafts,
     storeTasks,

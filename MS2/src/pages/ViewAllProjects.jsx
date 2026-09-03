@@ -27,6 +27,20 @@ import {
   deleteProject as deleteProjectFromStore,
 } from "@/data/demoStore";
 
+import { useNavigate } from "react-router-dom";
+import { Label } from "@/components/ui/label";
+
+import { Pencil, Trash2, ChevronDown, Globe, Lock } from "lucide-react";
+import CourseBadge from "@/components/ui/CourseBadge";
+import DragDropList from "@/components/ui/DragDropList";
+import SortableCard from "@/components/ui/SortableCard";
+
+import SearchInput from "@/components/Filters/SearchInput";
+import CourseFilter from "@/components/Filters/CourseFilter";
+import VisibilityFilter from "@/components/Filters/VisibilityFilter";
+import PinnedFilter from "@/components/Filters/PinnedFilter";
+import SortFilter from "@/components/Filters/SortFilter";
+
 const normalizeVisibility = (value) => {
   if (!value) return "Public";
   return String(value).toLowerCase() === "private" ? "Private" : "Public";
@@ -849,45 +863,209 @@ export default function ViewAllProjects() {
               </p>
             </div>
 
-            {filteredProjects.length === 0 ? (
-              <div className="rounded-[1.75rem] border border-dashed border-[#355872]/20 bg-white/45 p-8 text-center dark:border-white/10 dark:bg-white/[0.035]">
-                <p className="text-base font-black text-[color:var(--ink)]">
-                  No projects found
-                </p>
+          {filteredProjects.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-white/60 p-10 text-center">
+              <h3 className="text-lg font-bold text-[var(--ink)]">
+                No projects found
+              </h3>
+              <p className="mt-2 text-sm text-slate-500">
+                Create a project or adjust your filters.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-[3.7fr_1.3fr_1.3fr_1.7fr_1.6fr_1fr] px-10 py-3 text-xs font-semibold text-[var(--muted)] uppercase">
+                <span className="pl-12">Project</span>
 
-                <p className="mx-auto mt-2 max-w-md text-sm font-semibold text-[color:var(--muted)]">
-                  Create a project or adjust your active filters.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-5">
-                {filteredProjects.map((project) => (
-                  <ProjectRow
-                    key={project.id}
-                    project={project}
-                    courses={courses}
-                    onOpen={openProject}
-                    onEdit={editProject}
-                    onDelete={setProjectToDelete}
-                    onVisibilityChange={toggleVisibility}
-                  />
-                ))}
-              </div>
-            )}
-          </AppCard>
-        </div>
+                <span className="-ml-14">Updated</span>
 
-        <DeleteConfirmationModal
-          open={!!projectToDelete}
-          title="Delete project?"
-          description="This action cannot be undone. The project will be permanently removed."
-          onCancel={() => setProjectToDelete(null)}
-          onConfirm={() => {
-            deleteProject(projectToDelete);
-            setProjectToDelete(null);
-          }}
-          confirmText="Delete project"
-        />
+                <span className="-ml-6">Portfolio Visibility</span>
+
+                
+
+                <div className="flex justify-center">
+  <span>Rating / Comments</span>
+</div>
+
+                <span className="pl-16">Actions</span>
+              </div>
+
+              <DragDropList items={filteredProjects} setItems={setProjects}>
+                <div className="space-y-4">
+                  {filteredProjects.map((p) => {
+                    const visibility = normalizeVisibility(p.visibility);
+                    
+
+                    return (
+                      <SortableCard
+                        key={p.id}
+                        id={p.id}
+                        updated={getProjectUpdated(p)}
+                        onClick={() => openProject(p.id)}
+                        left={
+                          <div className="min-w-0 pr-10">
+                            <h3
+  onClick={(event) => {
+    event.stopPropagation();
+    openProject(p.id);
+  }}
+  className="
+    font-bold
+    text-[16px]
+    text-[var(--project-blue-title)]
+    max-w-md
+    truncate
+    leading-none
+    cursor-pointer
+    transition-colors
+    duration-200
+    hover:text-[#90CAF9]
+  "
+>
+  {getProjectName(p)}
+</h3>
+
+                            <p className="mt-1
+    text-sm
+    font-semibold
+    text-[var(--project-blue)]">
+                              {getProjectCourse(p, courses)}
+                            </p>
+
+                            <p className="max-w-sm text-sm text-[var(--muted)] line-clamp-2">
+                              {getProjectDescription(p)}
+                            </p>
+                          </div>
+                        }
+                        middle={
+  <>
+    {/* Visibility column */}
+    <div className="flex justify-center">
+      <div className="relative w-fit">
+        <select
+          value={visibility}
+          onClick={(event) => event.stopPropagation()}
+          onChange={(e) =>
+            toggleVisibility(p.id, e.target.value)
+          }
+         className={`appearance-none pl-10 pr-8 py-2 rounded-xl border text-sm font-medium cursor-pointer ${
+  visibility === "Public"
+    ? `
+        bg-green-100
+        text-green-700
+        border-green-200
+        dark:bg-emerald-500/10
+        dark:text-emerald-400
+        dark:border-emerald-500/20
+      `
+    : `
+    bg-[var(--private-bg)]
+    text-[var(--private-text)]
+    border-[var(--private-border)]
+  `
+}`}
+        >
+          <option value="Public">Public</option>
+          <option value="Private">Private</option>
+        </select>
+
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          {visibility === "Public" ? (
+            <Globe size={16} className="text-green-600" />
+          ) : (
+            <Lock size={16} className="text-[var(--muted)]" />
+          )}
+        </span>
+
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <ChevronDown
+            size={14}
+            className="text-gray-400"
+          />
+        </span>
+      </div>
+    </div>
+
+    {/* Rating column */}
+    <div className="w-full flex flex-col items-center justify-center text-sm text-[var(--muted)]">
+  <div className="flex items-center gap-1">
+    <span className="font-medium">
+      {getProjectRating(p)}
+    </span>
+
+    <span className="text-yellow-400">★</span>
+  </div>
+
+  <span className="mt-1">
+    {getProjectComments(p)} comments
+  </span>
+</div>
+  </>
+
+  
+}
+                       right={
+  <div className="flex justify-center gap-2 ml-4
+  ">
+                            <button
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                editProject(p.id);
+                              }}
+                              className="p-2 rounded border border-[var(--card-border)]
+text-[var(--muted)]
+hover:bg-[var(--surface-soft)]"
+                            >
+                              <Pencil size={16} />
+                            </button>
+
+                            <button
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setProjectToDelete(p.id);
+                                }}
+                                className="
+                                  p-2
+                                  rounded
+                                  border
+                                 border border-red-500/20
+bg-red-500/10
+text-red-400
+hover:bg-red-500/20
+dark:bg-[rgba(239,68,68,0.18)]
+                                "
+                              >
+                                <Trash2 size={16} />
+                              </button>
+
+                            
+                          </div>
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              </DragDropList>
+            </>
+          )}
+        </AppCard>
+      </div>
+      <DeleteConfirmationModal
+  open={!!projectToDelete}
+  title="Delete project?"
+  description="
+    This action cannot be undone.
+    The project will be permanently removed.
+  "
+  onCancel={() =>
+    setProjectToDelete(null)
+  }
+  onConfirm={() => {
+    deleteProject(projectToDelete);
+    setProjectToDelete(null);
+  }}
+  confirmText="Delete project"
+/>
 
         <AdminActionDialog
           open={appealOpen}

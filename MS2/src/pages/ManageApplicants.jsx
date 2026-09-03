@@ -14,13 +14,7 @@ import {
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import AppSelect from "@/components/common/AppSelect";
 
 import InitialsAvatar from "@/components/common/InitialsAvatar";
 import MetricCard from "@/components/common/MetricCard";
@@ -467,31 +461,21 @@ export default function ManageApplicants() {
                       {applicant.score}
                     </span>
 
-                    <Select
+                    <AppSelect
                       value={applicant.status}
-                      onValueChange={(value) =>
+                      onChange={(value) =>
                         updateApplicantStatus(applicant.id, value)
                       }
-                    >
-                      <SelectTrigger
-                        className={`h-10 rounded-2xl border-0 px-3 text-xs font-black shadow-sm ${statusStyles(
-                          applicant.status
-                        )}`}
-                      >
-                        <SelectValue />
-                      </SelectTrigger>
-
-                      <SelectContent
-                        position="popper"
-                        className="z-[9999] rounded-2xl"
-                      >
-                        <SelectItem value="Shortlisted">Shortlisted</SelectItem>
-                        <SelectItem value="Nominated">Nominated</SelectItem>
-                        <SelectItem value="Accepted">Accepted</SelectItem>
-                        <SelectItem value="Rejected">Rejected</SelectItem>
-                        <SelectItem value="Reviewing">Reviewing</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      options={[
+                        "Shortlisted",
+                        "Nominated",
+                        "Accepted",
+                        "Rejected",
+                        "Reviewing",
+                      ]}
+                      placeholder="Select status"
+                      className="h-10 min-w-[145px] text-xs font-black"
+                    />
 
                     <div className="flex gap-2">
                       <button

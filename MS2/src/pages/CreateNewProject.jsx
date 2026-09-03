@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   FileText,
@@ -13,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { FaGithub as Github } from "react-icons/fa";
-import SideToast from "@/components/ui/SideToast";
+import { useToast } from "@/context/ToastContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ProjectInvitePickerModal from "@/components/project/ProjectInvitePickerModal";
 import { AppButton } from "@/components/ui/AppButton";
@@ -22,13 +23,7 @@ import AppIconFrame from "@/components/ui/AppIconFrame";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import AppSelect from "@/components/common/AppSelect";
 import { cn } from "@/lib/utils";
 import {
   addNotification,
@@ -65,12 +60,6 @@ const initialProjectData = {
 
 const inputStyles =
   "min-h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-semibold text-[color:var(--ink)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] placeholder:text-[color:var(--muted)]/65 transition focus-visible:border-[color:var(--accent)] focus-visible:ring-2 focus-visible:ring-[color:var(--ring-soft)]";
-
-const selectTriggerStyles = cn(
-  inputStyles,
-  "h-12 w-full justify-between py-0 text-left"
-);
-
 
 
 function makeInviteNotificationId() {
@@ -585,14 +574,10 @@ function validateProjectField(field, data) {
 }
 
 export default function CreateNewProject() {
-  const [availableCourses, setAvailableCourses] = useState(FALLBACK_COURSES);
+  const navigate = useNavigate();
+  const { showToast } = useToast();
 
-  const [toast, setToast] = useState({
-  open: false,
-  title: "",
-  description: "",
-  type: "success",
-});
+  const [availableCourses, setAvailableCourses] = useState(FALLBACK_COURSES);
 
   useEffect(() => {
     const courses = getCollection("courses") || [];
@@ -872,21 +857,22 @@ export default function CreateNewProject() {
     setSaveMessage({ type: "", message: "" });
   };
 
-  const openInviteDialog = (kind) => {
-    setDialogs((current) => ({
-      ...current,
-      [kind]: {
-        open: true,
-        value: "",
-        error: "",
-      },
-    }));
+const openInviteDialog = (kind) => {
+  setDialogs((current) => ({
+    ...current,
+    [kind]: {
+      ...current[kind],
+      open: true,
+      value: "",
+      error: "",
+    },
+  }));
 
-    setInviteFeedback((current) => ({
-      ...current,
-      [kind]: { type: "", message: "" },
-    }));
-  };
+  setInviteFeedback((current) => ({
+    ...current,
+    [kind]: { type: "", message: "" },
+  }));
+};
 
   const setInviteDialogOpen = (kind, open) => {
     setDialogs((current) => ({
@@ -1034,8 +1020,7 @@ export default function CreateNewProject() {
 const isValid = validateAllFields();
 
 if (!isValid) {
-  setToast({
-    open: true,
+  showToast({
     title: "Unable to create project",
     description: "Please check the highlighted fields and try again.",
     type: "error",
@@ -1208,13 +1193,13 @@ setSaveMessage({ type: "", message: "" });
 
       
 
-      setToast({
-  open: true,
-  title: "Project created successfully",
-  description: "Your project has been created successfully.",
-  type: "success",
+      showToast({
+        title: "Project created successfully",
+        description: "Your project has been created successfully.",
+        type: "success",
+      });
 
-});
+      navigate("/view-all-projects");
     } catch (error) {
       console.error("Failed to save project:", error);
       setSaveMessage({
@@ -1222,14 +1207,11 @@ setSaveMessage({ type: "", message: "" });
         message: "Please check the highlighted fields.",
       });
 
-      setToast({
-    open: true,
-    title: "Project could not be created",
-    description:
-       "Please check the highlighted fields and try again.",
-    type: "error",
-  });
-
+      showToast({
+        title: "Project could not be created",
+        description: "Please check the highlighted fields and try again.",
+        type: "error",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -1237,19 +1219,6 @@ setSaveMessage({ type: "", message: "" });
 
   return (
     <DashboardLayout>
-      <SideToast
-      open={toast.open}
-      title={toast.title}
-      description={toast.description}
-      type={toast.type}
-      onClose={() =>
-        setToast((current) => ({
-          ...current,
-          open: false,
-        }))
-      }
-    />
-
       <ProjectInvitePickerModal
         open={dialogs.collab.open || dialogs.instructor.open}
         mode={inviteMode}
@@ -1344,41 +1313,27 @@ setSaveMessage({ type: "", message: "" });
               </FieldShell>
 
               <FieldShell label="Project Type" required icon={FileText}>
-                <Select
+                <AppSelect
                   value={formData.type}
-                  onValueChange={(value) => updateField("type", value)}
-                >
-                  <SelectTrigger className={selectTriggerStyles}>
-                    <SelectValue placeholder="Choose project type" />
-                  </SelectTrigger>
-
-                  <SelectContent className="rounded-2xl border-white/70 bg-[var(--surface-elevated)] text-[color:var(--ink)] shadow-[var(--shadow-card)] backdrop-blur-2xl">
-                    <SelectItem value="course">Course Project</SelectItem>
-                    <SelectItem value="thesis">Thesis</SelectItem>
-                  </SelectContent>
-                </Select>
+                  onChange={(value) => updateField("type", value)}
+                  options={[
+                    { value: "course", label: "Course Project" },
+                    { value: "thesis", label: "Thesis" },
+                  ]}
+                  placeholder="Choose project type"
+                />
                 <FieldFeedback helper="Choose whether this is a course project or a thesis." />
               </FieldShell>
             </div>
 
             {formData.type === "course" ? (
               <FieldShell label="Course Name" required icon={FileText}>
-                <Select
+                <AppSelect
                   value={formData.courseName}
-                  onValueChange={(value) => updateField("courseName", value)}
-                >
-                  <SelectTrigger className={selectTriggerStyles}>
-                    <SelectValue placeholder="Choose course" />
-                  </SelectTrigger>
-
-                  <SelectContent className="rounded-2xl border-white/70 bg-[var(--surface-elevated)] text-[color:var(--ink)] shadow-[var(--shadow-card)] backdrop-blur-2xl">
-                    {availableCourses.map((course) => (
-                      <SelectItem key={course} value={course}>
-                        {course}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(value) => updateField("courseName", value)}
+                  options={availableCourses}
+                  placeholder="Choose course"
+                />
 
                 <FieldFeedback
                   error={errors.courseName}
@@ -1601,12 +1556,11 @@ setSaveMessage({ type: "", message: "" });
                       instructor: { open: false, value: "", error: "" },
                     });
                     setSaveMessage({ type: "", message: "" });
-                    setToast({
-                    open: true,
-                    title: "Draft reset successfully",
-                    description: "Your project draft has been reset.",
-                    type: "success",
-                  });
+                    showToast({
+                      title: "Draft reset successfully",
+                      description: "Your project draft has been reset.",
+                      type: "success",
+                    });
                   }}
                   
                   disabled={isSaving}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
+import AppModal from "@/components/common/AppModal";
 import DragDropList from "@/components/ui/DragDropList";
 import SortableCard from "@/components/ui/SortableCard";
 import { EmptyState } from "@/components/projectPage/ProjectPageShared";
@@ -50,7 +51,20 @@ export default function ProjectTasksTab({
 }) {
   const [taskToDelete, setTaskToDelete] = useState(null);
 
+  const [feedbackToDelete, setFeedbackToDelete] = useState(null);
+  const [feedbackToEdit, setFeedbackToEdit] = useState(null);
+  const [feedbackEditValue, setFeedbackEditValue] = useState("");
+  const [feedbackEditError, setFeedbackEditError] = useState("");
+
   const selectedTaskToDelete = tasks.find((task) => sameId(task.id, taskToDelete));
+
+  const selectedFeedbackToDelete = feedbackToDelete
+    ? tasks
+        .find((task) => sameId(task.id, feedbackToDelete.taskId))
+        ?.feedback?.find((item) =>
+          sameId(item.id, feedbackToDelete.feedbackId)
+        )
+    : null;
 
   const canEditTaskStatus = (task) => {
     if (canManageTasks) return true;
@@ -162,7 +176,14 @@ export default function ProjectTasksTab({
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => onEditTaskFeedback(task.id, item.id)}
+                        onClick={() => {
+                          setFeedbackToEdit({
+                            taskId: task.id,
+                            feedbackId: item.id,
+                          });
+                          setFeedbackEditValue(item.message || "");
+                          setFeedbackEditError("");
+                        }}
                         className="text-xs font-black text-[var(--primary)]"
                       >
                         Edit
@@ -170,7 +191,12 @@ export default function ProjectTasksTab({
 
                       <button
                         type="button"
-                        onClick={() => onDeleteTaskFeedback(task.id, item.id)}
+                        onClick={() =>
+                          setFeedbackToDelete({
+                            taskId: task.id,
+                            feedbackId: item.id,
+                          })
+                        }
                         className="text-xs font-black text-red-500"
                       >
                         Remove
@@ -251,6 +277,112 @@ export default function ProjectTasksTab({
       ) : (
         taskList
       )}
+
+      {feedbackToEdit ? (
+        <AppModal
+          open
+          title="Edit task feedback"
+          description="Update your instructor comment for this task."
+          onClose={() => {
+            setFeedbackToEdit(null);
+            setFeedbackEditValue("");
+            setFeedbackEditError("");
+          }}
+          maxWidth="max-w-xl"
+        >
+          <div className="space-y-2">
+            <label className="block text-xs font-black uppercase tracking-[0.16em] text-[var(--muted)]">
+              Feedback
+              <span className="ml-1 text-[color:var(--gold)]">*</span>
+            </label>
+
+            <textarea
+              value={feedbackEditValue}
+              onChange={(event) => {
+                setFeedbackEditValue(event.target.value);
+
+                if (event.target.value.trim()) {
+                  setFeedbackEditError("");
+                }
+              }}
+              rows={4}
+              placeholder="Edit your task feedback..."
+              className={`w-full resize-none rounded-2xl border bg-white px-4 py-3 text-sm font-semibold text-[var(--ink)] outline-none transition focus:ring-4 ${
+                feedbackEditError
+                  ? "border-red-300 focus:border-red-400 focus:ring-red-500/10"
+                  : "border-slate-200 focus:border-[var(--primary)] focus:ring-[color:var(--primary)]/10"
+              }`}
+            />
+
+            {feedbackEditError ? (
+              <p className="text-xs font-semibold text-red-500">
+                {feedbackEditError}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setFeedbackToEdit(null);
+                setFeedbackEditValue("");
+                setFeedbackEditError("");
+              }}
+              className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-500 transition hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const nextMessage = feedbackEditValue.trim();
+
+                if (!nextMessage) {
+                  setFeedbackEditError("Feedback cannot be empty.");
+                  return;
+                }
+
+                onEditTaskFeedback(
+                  feedbackToEdit.taskId,
+                  feedbackToEdit.feedbackId,
+                  nextMessage
+                );
+
+                setFeedbackToEdit(null);
+                setFeedbackEditValue("");
+                setFeedbackEditError("");
+              }}
+              className="rounded-2xl bg-[var(--primary)] px-5 py-3 text-sm font-black text-white transition hover:bg-[var(--dark)]"
+            >
+              Save changes
+            </button>
+          </div>
+        </AppModal>
+      ) : null}
+
+      <DeleteConfirmationModal
+        open={Boolean(feedbackToDelete)}
+        title="Delete feedback?"
+        description={
+          selectedFeedbackToDelete
+            ? `This will permanently remove “${selectedFeedbackToDelete.message}”.`
+            : "This instructor feedback will be permanently removed."
+        }
+        confirmText="Delete feedback"
+        onCancel={() => setFeedbackToDelete(null)}
+        onConfirm={() => {
+          if (feedbackToDelete) {
+            onDeleteTaskFeedback(
+              feedbackToDelete.taskId,
+              feedbackToDelete.feedbackId
+            );
+          }
+
+          setFeedbackToDelete(null);
+        }}
+      />
 
       <DeleteConfirmationModal
         open={Boolean(taskToDelete)}

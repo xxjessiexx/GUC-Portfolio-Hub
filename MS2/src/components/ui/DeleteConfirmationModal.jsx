@@ -15,20 +15,21 @@ export default function DeleteConfirmationModal({
       className="
         fixed inset-0 z-[99999]
         flex items-center justify-center
-        bg-[#102B3C]/18
+        bg-[#0b1721]/45
         px-6
-        backdrop-blur-[1.5px]
+        backdrop-blur-sm
       "
+      onMouseDown={onCancel}
     >
       <div
+        onMouseDown={(event) => event.stopPropagation()}
         className="
           w-full max-w-md
           rounded-[32px]
-          border bg-[var(--card-bg)]
-border-[var(--card-border)]
-backdrop-blur-xl
+          border border-white/80
+          bg-[var(--card-bg-strong)]
           p-8
-         shadow-[var(--shadow-card)]
+          shadow-[0_28px_90px_rgba(16,32,45,0.24)]
         "
       >
         <div className="flex flex-col gap-6">
@@ -48,13 +49,14 @@ backdrop-blur-xl
               onClick={onCancel}
               className="
                 rounded-2xl
-                border border-slate-200
-                bg-white
+                border border-[#D5DEE8]
+                bg-[#F3F6FA]
                 px-5 py-3
                 font-black
-                text-slate-500
+                text-[#355872]
                 transition
-                hover:bg-slate-100
+                hover:border-[#C3D2E3]
+                hover:bg-[#E9F0F7]
               "
             >
               Cancel

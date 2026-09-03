@@ -750,11 +750,10 @@ export default function AdminFlaggedProjects() {
               max-w-4xl
               rounded-[32px]
               border
-              border-[var(--card-border)]
-              bg-[var(--card-bg)]
-              backdrop-blur-md
+              border-[#D7E1E8]
+              bg-[var(--card-bg-strong)]
               p-6
-              shadow-2xl
+              shadow-[0_28px_90px_rgba(16,32,45,0.24)]
             "
           >
             <div className="flex items-start justify-between gap-4">
@@ -888,8 +887,7 @@ export default function AdminFlaggedProjects() {
                 <AppButton
                   variant="glass"
                   className="
-                    bg-[var(--card-bg)]
-                    backdrop-blur-md
+                    bg-[var(--surface-soft)]
                     border
                     border-[var(--card-border)]
                     text-[var(--ink)]

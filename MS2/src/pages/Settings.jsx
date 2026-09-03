@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -15,13 +15,13 @@ import {
   Moon,
   Palette,
   RotateCcw,
-  Save,
   Shield,
   Sun,
   User,
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import AppSelect from "@/components/common/AppSelect";
 import { useTheme } from "@/hooks/useTheme";
 import { useUserProfile } from "@/context/UserProfileContext";
 import { getCurrentUser, setCurrentUser, updateUser } from "@/data/demoStore";
@@ -151,7 +151,7 @@ function ToggleControl({ checked, onChange, disabled = false }) {
       className={`relative h-8 w-[58px] rounded-full border p-1 transition ${
         checked
           ? "border-[color:var(--primary)] bg-[image:var(--gradient-brand)] shadow-[0_10px_25px_rgba(53,88,114,0.22)]"
-          : "border-[color:var(--border-soft)] bg-white/70 dark:bg-white/10"
+          : "border-[#AFC0CC] bg-[#D8E1E7] shadow-inner dark:border-white/15 dark:bg-white/15"
       } ${disabled ? "cursor-not-allowed opacity-45" : "hover:-translate-y-0.5"}`}
       aria-pressed={checked}
     >
@@ -178,18 +178,16 @@ function TextField({ label, value, onChange, placeholder }) {
 
 function SelectField({ label, value, onChange, options }) {
   return (
-    <label className="block">
+    <div className="block">
       <span className="text-xs font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</span>
-      <select
+      <AppSelect
         value={value || ""}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border-soft)] bg-white/75 px-4 text-sm font-black text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent)]/20 dark:bg-[color:var(--surface)]"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>{option.label}</option>
-        ))}
-      </select>
-    </label>
+        onChange={onChange}
+        options={options}
+        placeholder={`Select ${label}`}
+        className="mt-2"
+      />
+    </div>
   );
 }
 
@@ -254,34 +252,6 @@ function PrimaryButton({ children, onClick, icon: Icon, variant = "primary" }) {
   );
 }
 
-function SaveBar({ dirty, saving, onSave, onCancel }) {
-  if (!dirty) return null;
-
-  return (
-    <div className="sticky bottom-4 z-30 mt-8 flex justify-end">
-      <div className="flex items-center gap-3 rounded-3xl border border-[color:var(--border-blue)] bg-[color:var(--card-bg-strong)] p-2 shadow-[0_22px_60px_rgba(44,57,71,0.22)] backdrop-blur-xl">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={saving}
-          className="rounded-2xl px-4 py-3 text-sm font-black text-[color:var(--muted)] transition hover:bg-[color:var(--surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving}
-          className="inline-flex items-center gap-2 rounded-2xl bg-[image:var(--gradient-brand)] px-5 py-3 text-sm font-black text-white shadow-[var(--shadow-brand)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <Save className="h-4 w-4" />
-          {saving ? "Saving" : "Save changes"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function Settings() {
   const navigate = useNavigate();
   const { profile, updateProfile } = useUserProfile();
@@ -301,8 +271,6 @@ export default function Settings() {
       gender,
     };
   });
-  const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
 
   const resetFormFromStore = () => {
     const nextUser = getCurrentUser() || profile || {};
@@ -315,12 +283,11 @@ export default function Settings() {
       name: readLocalText(AI_KEYS.name, getDefaultAssistantName(gender)),
       gender,
     });
-    setDirty(false);
   };
 
   useEffect(() => {
     applySavedAppearance(preferences);
-  }, [preferences.appearance]);
+  }, [preferences]);
 
   useEffect(() => {
     const refresh = () => resetFormFromStore();
@@ -333,15 +300,60 @@ export default function Settings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
+  const persistPreferences = (nextPreferences) => {
+    const payload = {
+      preferences: nextPreferences,
+      notificationMuted: nextPreferences.notifications.muteAll,
+    };
+
+    let saved = null;
+
+    if (user?.id) {
+      saved = updateUser(user.id, payload);
+    }
+
+    const nextUser = saved || {
+      ...user,
+      ...payload,
+    };
+
+    setCurrentUser(nextUser);
+    updateProfile(nextUser);
+    setUserState(nextUser);
+
+    localStorage.setItem(
+      "guc-portfolio-notification-preferences",
+      JSON.stringify(nextPreferences.notifications)
+    );
+
+    localStorage.setItem(
+      "guc-portfolio-visibility-preferences",
+      JSON.stringify(nextPreferences.visibility)
+    );
+
+    applySavedAppearance(nextPreferences);
+
+    window.dispatchEvent(
+      new CustomEvent("guc-settings-updated", {
+        detail: {
+          preferences: nextPreferences,
+          user: nextUser,
+        },
+      })
+    );
+  };
+
   const updatePreference = (group, key, value) => {
-    setPreferences((current) => ({
-      ...current,
+    const nextPreferences = {
+      ...preferences,
       [group]: {
-        ...current[group],
+        ...preferences[group],
         [key]: value,
       },
-    }));
-    setDirty(true);
+    };
+
+    setPreferences(nextPreferences);
+    persistPreferences(nextPreferences);
   };
 
   const persistAssistant = (nextAssistant) => {
@@ -362,44 +374,9 @@ export default function Settings() {
       persistAssistant(next);
       return next;
     });
-    setDirty(true);
-  };
-
-  const savedPayload = useMemo(() => ({
-    preferences,
-    notificationMuted: preferences.notifications.muteAll,
-  }), [preferences]);
-
-  const saveSettings = () => {
-    setSaving(true);
-    try {
-      let saved = null;
-      if (user?.id) saved = updateUser(user.id, savedPayload);
-
-      const nextUser = saved || { ...user, ...savedPayload };
-      setCurrentUser(nextUser);
-      updateProfile(nextUser);
-      setUserState(nextUser);
-
-      persistAssistant(assistant);
-      localStorage.setItem("guc-portfolio-notification-preferences", JSON.stringify(preferences.notifications));
-      localStorage.setItem("guc-portfolio-visibility-preferences", JSON.stringify(preferences.visibility));
-      applySavedAppearance(preferences);
-      window.dispatchEvent(new CustomEvent("guc-settings-updated", { detail: { preferences, user: nextUser } }));
-
-      setDirty(false);
-      toast.success("Settings saved", { description: "Your preferences were saved to demoStore and applied." });
-    } catch (error) {
-      toast.error("Could not save settings", { description: error?.message || "Please try again." });
-    } finally {
-      setSaving(false);
-    }
   };
 
   const requestPasswordReset = () => {
-    const confirmed = window.confirm("You will be redirected to the password reset page. Continue?");
-    if (!confirmed) return;
-    toast.success("Opening password reset");
     navigate("/forgot-password");
   };
 
@@ -486,7 +463,7 @@ export default function Settings() {
     ),
     appearance: (
       <SettingsCard title="Appearance" description="Display preferences are applied immediately where the app supports them." icon={Palette}>
-        <ToggleRow icon={theme === "dark" ? Moon : Sun} title="Dark mode" description="Changes the global app theme immediately." checked={theme === "dark"} onChange={(value) => { setTheme(value ? "dark" : "light"); setDirty(true); }} />
+        <ToggleRow icon={theme === "dark" ? Moon : Sun} title="Dark mode" description="Changes the global app theme immediately." checked={theme === "dark"} onChange={(value) => setTheme(value ? "dark" : "light")} />
         <ToggleRow icon={Palette} title="Compact mode" description="Saved as a global appearance preference for dense pages." checked={preferences.appearance.compactMode} onChange={(value) => updatePreference("appearance", "compactMode", value)} />
         <ToggleRow icon={Palette} title="Reduce motion" description="Saved and applied as a global reduced-motion class." checked={preferences.appearance.reduceMotion} onChange={(value) => updatePreference("appearance", "reduceMotion", value)} />
         <ToggleRow icon={Palette} title="High contrast" description="Saved and applied as a global high-contrast class." checked={preferences.appearance.highContrast} onChange={(value) => updatePreference("appearance", "highContrast", value)} />
@@ -536,10 +513,22 @@ export default function Settings() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-black transition ${active ? "bg-[color:var(--surface-soft)] text-[color:var(--primary)]" : "text-[color:var(--muted)] hover:bg-[color:var(--surface-soft)] hover:text-[color:var(--ink)]"}`}
+                    className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-black transition ${
+                      active
+                        ? "bg-white text-[color:var(--primary)] shadow-[0_8px_20px_rgba(53,88,114,0.08)]"
+                        : "text-[color:var(--muted)] hover:bg-white/60 hover:text-[color:var(--ink)]"
+                    }`}
                   >
-                    <span className="flex items-center gap-3"><Icon className="h-4 w-4" />{tab.label}</span>
-                    <ChevronRight className={`h-4 w-4 transition ${active ? "opacity-100" : "opacity-30"}`} />
+                    <span className="flex items-center gap-3">
+                      <Icon className="h-4 w-4" />
+                      {tab.label}
+                    </span>
+
+                    {active ? (
+                      <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--gold)]" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-[color:var(--muted)]/50" />
+                    )}
                   </button>
                 );
               })}
@@ -548,7 +537,6 @@ export default function Settings() {
 
           <main>
             {content[activeTab]}
-            <SaveBar dirty={dirty} saving={saving} onSave={saveSettings} onCancel={resetFormFromStore} />
           </main>
         </div>
       </div>

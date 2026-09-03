@@ -7,10 +7,11 @@ import EditableProfileField from "@/components/profile/EditableProfileField";
 import ProfileSelectField from "@/components/profile/ProfileSelectField";
 import SkillsEditor from "@/components/profile/SkillsEditor";
 import DangerActions from "@/components/profile/DangerActions";
-
+import CourseBadge from "@/components/ui/CourseBadge";
 import { useUserProfile } from "@/context/UserProfileContext";
 
-import { Link2 } from "lucide-react";
+import { Link2, Pencil, Check, X } from "lucide-react";
+import { useState } from "react";
 
 export default function EditStudentProfile() {
   const { profile, updateProfile } = useUserProfile();
@@ -22,17 +23,60 @@ export default function EditStudentProfile() {
   const facultyOptions = [
     "Engineering and Technology",
     "Management Technology",
+    "Pharmacy and Biotechnology",
+    "Applied Sciences and Arts",
+    "Law and Legal Studies",
+    "Dentistry",
   ];
 
-  const majorOptions = ["MET", "DMET", "CSEN", "BI", "Mechatronics"];
+  const majorOptions = ["MET", "DMET", "CSEN","IET", "EMS", "BI", "Applied Sciences and Arts","Architecture","Pharmacy and Biotechnology", "Civil","Dentistry", "Law and Legal Studies","Management","Mechatronics"];
+
+  const [editingLinks, setEditingLinks] = useState(false);
+
+const [linksDraft, setLinksDraft] = useState({
+  linkedin: profile.links?.linkedin || "",
+  github: profile.links?.github || "",
+  behance: profile.links?.behance || "",
+});
+
+const startEditingLinks = () => {
+  setLinksDraft({
+    linkedin: profile.links?.linkedin || "",
+    github: profile.links?.github || "",
+    behance: profile.links?.behance || "",
+  });
+
+  setEditingLinks(true);
+};
+
+const cancelEditingLinks = () => {
+  setEditingLinks(false);
+};
+
+const saveLinks = () => {
+  updateProfile({
+    links: linksDraft,
+  });
+
+  setEditingLinks(false);
+};
+
 
   return (
     <DashboardLayout >
-      <div className="space-y-6">
-        <SectionHeader
-          title="Profile Information"
-          subtitle="Manage your personal information, skills, and portfolio links."
-        />
+       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          
+          <div>
+            <h1 className="text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
+              Profile Information
+            </h1>
+
+            <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
+              Manage your personal information, skills, and portfolio links.
+            </p>
+          </div>
+        
 
         <div className="grid items-start gap-6 lg:grid-cols-[0.75fr_1.25fr]">
           
@@ -46,28 +90,20 @@ export default function EditStudentProfile() {
             <div className="my-6 h-px bg-[color:var(--primary)]/10" />
 
             {/* ===== SKILLS DISPLAY ===== */}
-            <div>
-              <h3 className="mb-4 text-lg font-black text-[color:var(--ink)]">
-                Skills
-              </h3>
-
-              <div className="flex flex-wrap gap-2">
-                {profile.skills?.length > 0 ? (
-                  profile.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="rounded-xl border border-[color:var(--primary)]/20 bg-[color:var(--primary)]/10 px-3 py-1.5 text-sm font-bold text-[color:var(--primary)]"
-                    >
-                      {skill}
-                    </span>
-                  ))
-                ) : (
-                  <p className="text-sm font-semibold text-[color:var(--muted)]">
-                    No skills added yet.
-                  </p>
-                )}
-              </div>
-            </div>
+           <div className="flex flex-wrap gap-2">
+  {profile.skills?.length > 0 ? (
+    profile.skills.map((skill) => (
+      <CourseBadge
+        key={skill}
+        course={skill}
+      />
+    ))
+  ) : (
+    <p className="text-sm font-semibold text-[color:var(--muted)]">
+      No skills added yet.
+    </p>
+  )}
+</div>
 
             <div className="my-6 h-px bg-[color:var(--primary)]/10" />
 
@@ -174,41 +210,122 @@ export default function EditStudentProfile() {
             </AppCard>
 
             {/* ===== LINKS EDITOR ===== */}
-            <AppCard className="p-6">
-              <h3 className="mb-4 text-xl font-black text-[color:var(--ink)]">
-                Edit Portfolio Links
-              </h3>
+<AppCard className="p-6">
+  <div className="mb-5 flex items-center justify-between">
+    <h3 className="text-xl font-black text-[color:var(--ink)]">
+      Portfolio Links
+    </h3>
 
-              <EditableProfileField
-                label="LinkedIn URL"
-                value={profile.links.linkedin}
-                onSave={(value) =>
-                  updateProfile({
-                    links: { ...profile.links, linkedin: value },
-                  })
-                }
-              />
+    {!editingLinks ? (
+      <button
+        type="button"
+        onClick={startEditingLinks}
+        className="
+          flex h-10 w-10 items-center justify-center
+          rounded-xl
+          text-[color:var(--primary)]
+          transition
+          hover:bg-[color:var(--primary)]/10
+        "
+        aria-label="Edit portfolio links"
+        title="Edit portfolio links"
+      >
+        <Pencil className="h-4 w-4" />
+      </button>
+    ) : (
+      <div className="flex items-center gap-2">
+        {/* CANCEL */}
+        <button
+          type="button"
+          onClick={cancelEditingLinks}
+          className="
+            flex h-10 w-10 items-center justify-center
+            rounded-xl
+            border border-[color:var(--primary)]/10
+            bg-[color:var(--primary)]/5
+            text-[color:var(--muted)]
+            transition
+            hover:bg-[color:var(--primary)]/10
+            hover:text-[color:var(--ink)]
+          "
+          aria-label="Cancel changes"
+          title="Cancel"
+        >
+          <X className="h-4 w-4" />
+        </button>
 
-              <EditableProfileField
-                label="GitHub URL"
-                value={profile.links.github}
-                onSave={(value) =>
-                  updateProfile({
-                    links: { ...profile.links, github: value },
-                  })
-                }
-              />
+        {/* SAVE */}
+        <button
+          type="button"
+          onClick={saveLinks}
+          className="
+            flex h-10 w-10 items-center justify-center
+            rounded-xl
+            bg-[color:var(--primary)]
+            text-white
+            shadow-sm
+            transition
+            hover:opacity-90
+          "
+          aria-label="Save portfolio links"
+          title="Save"
+        >
+          <Check className="h-4 w-4" />
+        </button>
+      </div>
+    )}
+  </div>
 
-              <EditableProfileField
-                label="Behance URL"
-                value={profile.links.behance}
-                onSave={(value) =>
-                  updateProfile({
-                    links: { ...profile.links, behance: value },
-                  })
-                }
-              />
-            </AppCard>
+  <div className="space-y-4">
+    {[
+      ["linkedin", "LinkedIn URL"],
+      ["github", "GitHub URL"],
+      ["behance", "Behance URL"],
+    ].map(([field, label]) => (
+      <div key={field}>
+        <div className="grid gap-3 md:grid-cols-[180px_1fr] md:items-center">
+          <p className="text-sm font-black text-[color:var(--dark)]">
+            {label}
+          </p>
+
+          {editingLinks ? (
+            <input
+              type="text"
+              value={linksDraft[field]}
+              onChange={(e) =>
+                setLinksDraft((prev) => ({
+                  ...prev,
+                  [field]: e.target.value,
+                }))
+              }
+              className="
+                w-full
+                rounded-xl
+                border border-[color:var(--primary)]/20
+                bg-transparent
+                px-4 py-3
+                text-sm font-semibold
+                text-[color:var(--ink)]
+                outline-none
+                transition
+                focus:border-[color:var(--primary)]
+              "
+              placeholder={`Enter ${label}`}
+            />
+          ) : (
+            <p className="truncate text-sm font-semibold text-[color:var(--muted)]">
+              {profile.links?.[field] || "Not added"}
+            </p>
+          )}
+        </div>
+
+        {field !== "behance" && (
+          <div className="mt-4 h-px bg-[color:var(--primary)]/10" />
+        )}
+      </div>
+    ))}
+  </div>
+</AppCard>
 
             {/* ===== ACCOUNT ACTIONS ===== */}
             <AppCard className="p-6">
@@ -218,6 +335,7 @@ export default function EditStudentProfile() {
           </div>
         </div>
       </div>
+      </main>
     </DashboardLayout>
   );
 }

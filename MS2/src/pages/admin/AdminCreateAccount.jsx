@@ -1,9 +1,18 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Eye, EyeOff, KeyRound, Mail, RotateCcw, ShieldCheck, UserPlus, UserRound } from "lucide-react";
-import { toast } from "sonner";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Mail,
+  RotateCcw,
+  ShieldCheck,
+  UserPlus,
+  UserRound,
+} from "lucide-react";
+
 import { AdminPageShell } from "@/components/adminModule/AdminPageShell";
 import {
   AdminField,
@@ -11,21 +20,12 @@ import {
   AdminMotionCard,
   RequirementLine,
 } from "@/components/adminModule/AdminFormPrimitives";
-
-import {
-  adminInputStyles,
-  cardMotion,
-  pageMotion,
-} from "@/lib/adminFormTokens";
-
+import { AdminPageHeader } from "@/components/adminModule/AdminPageHeader";
+import { adminInputStyles, cardMotion, pageMotion } from "@/lib/adminFormTokens";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
 import { Input } from "@/components/ui/input";
-
 import { useAdminModuleData } from "@/hooks/useAdminModuleData";
-import SideToast from "@/components/ui/SideToast";
-import { AdminPageHeader } from "@/components/adminModule/AdminPageHeader";
-
 import { useToast } from "@/context/ToastContext";
 
 const emptyAdmin = {
@@ -36,169 +36,137 @@ const emptyAdmin = {
   note: "",
 };
 
-const EMAIL_REGEX =
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
 
 export default function AdminCreateAccount() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { users, actions } = useAdminModuleData();
+
   const [form, setForm] = useState(emptyAdmin);
   const [submitted, setSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
-    
+
+  const update = (key, value) => {
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
   const normalizedEmail = form.email.trim().toLowerCase();
   const normalizedUsername = form.username.trim().toLowerCase();
+
   const emailValid = EMAIL_REGEX.test(normalizedEmail);
   const passwordStrongEnough = form.password.length >= 6;
-  const duplicateEmail = useMemo(() => users.some((user) => user.email.toLowerCase() === normalizedEmail), [users, normalizedEmail]);
-  const duplicateUsername = useMemo(() => users.some((user) => user.username?.toLowerCase() === normalizedUsername), [users, normalizedUsername]);
+
+  const duplicateEmail = useMemo(
+    () =>
+      Boolean(normalizedEmail) &&
+      users.some(
+        (user) =>
+          String(user.email || "").trim().toLowerCase() === normalizedEmail
+      ),
+    [users, normalizedEmail]
+  );
+
+  const duplicateUsername = useMemo(
+    () =>
+      Boolean(normalizedUsername) &&
+      users.some(
+        (user) =>
+          String(user.username || "").trim().toLowerCase() ===
+          normalizedUsername
+      ),
+    [users, normalizedUsername]
+  );
 
   const errors = {
     name:
-      submitted &&
-      !form.name.trim()
+      submitted && !form.name.trim()
         ? "Full name is required."
         : "",
 
     email:
-      submitted &&
-      !normalizedEmail
+      submitted && !normalizedEmail
         ? "GUC email is required."
-        : normalizedEmail &&
-          !emailValid
-        ? "Enter a valid email address."
-        : duplicateEmail
-        ? "This email already exists."
-        : "",
+        : normalizedEmail && !emailValid
+          ? "Enter a valid email address."
+          : duplicateEmail
+            ? "This email already exists."
+            : "",
 
     username:
-      submitted &&
-      !normalizedUsername
+      submitted && !normalizedUsername
         ? "Username is required."
         : duplicateUsername
-        ? "This username already exists."
-        : "",
+          ? "This username already exists."
+          : "",
 
     password:
-      submitted &&
-      !form.password
+      submitted && !form.password
         ? "Password is required."
-        : form.password &&
-          !passwordStrongEnough
-        ? "Password must be at least 6 characters."
-        : "",
+        : form.password && !passwordStrongEnough
+          ? "Password must be at least 6 characters."
+          : "",
   };
-  const completion = [form.name.trim(), emailValid && !duplicateEmail, normalizedUsername && !duplicateUsername, passwordStrongEnough].filter(Boolean).length;
-  const canSubmit = form.name.trim() && emailValid && normalizedUsername && passwordStrongEnough && !duplicateEmail && !duplicateUsername;
-const [toast, setToast] = useState({
-  open: false,
-  title: "",
-  description: "",
-  type: "success",
-});
- 
-          const submit = (event) => {
-  event.preventDefault();
 
-  setSubmitted(true);
+  const completion = [
+    form.name.trim(),
+    emailValid && !duplicateEmail,
+    normalizedUsername && !duplicateUsername,
+    passwordStrongEnough,
+  ].filter(Boolean).length;
 
-  if (!form.name.trim()) {
-    setToast({
-      open: true,
-      title: "Unable to create admin",
-      description: "Please check the highlighted fields and try again.",
-      type: "error",
+  const canSubmit =
+    Boolean(form.name.trim()) &&
+    emailValid &&
+    Boolean(normalizedUsername) &&
+    passwordStrongEnough &&
+    !duplicateEmail &&
+    !duplicateUsername;
+
+  const submit = (event) => {
+    event.preventDefault();
+    setSubmitted(true);
+
+    if (!canSubmit) return;
+
+    const adminName = form.name.trim();
+
+    actions.createAdminUser({
+      name: adminName,
+      email: normalizedEmail,
+      username: normalizedUsername,
+      password: form.password,
+      note: form.note.trim(),
     });
 
-    return;
-  }
+    /*
+      Clear the submitted form immediately after creation.
 
-  if (!normalizedEmail) {
-    setToast({
-      open: true,
-      title: "Unable to create admin",
-      description: "Please check the highlighted fields and try again.",
-      type: "error",
-    });
+      createAdminUser updates the users collection synchronously. If the
+      newly-created email remains in this form for the next render,
+      duplicateEmail becomes true and the page briefly shows
+      "This email already exists" even though creation succeeded.
+    */
+    setForm(emptyAdmin);
+    setSubmitted(false);
+    setShowPassword(false);
 
-    return;
-  }
-
-  if (!emailValid) {
-    setToast({
-      open: true,
-      title: "Unable to create admin",
-      description: "Please check the highlighted fields and try again.",
-      type: "error",
-    });
-
-    return;
-  }
-
-  if (duplicateEmail) {
-    setToast({
-      open: true,
-      title: "Unable to create admin",
-      description: "Please check the highlighted fields and try again.",
-      type: "error",
-    });
-
-    return;
-  }
-
-  if (!normalizedUsername) {
-    setToast({
-      open: true,
-      title: "Unable to create admin",
-      description: "Please check the highlighted fields and try again.",
-      type: "error",
-    });
-
-    return;
-  }
-
-  if (duplicateUsername) {
-    setToast({
-      open: true,
-      title: "Unable to create admin",
-      description: "Please check the highlighted fields and try again.",
-      type: "error",
-    });
-
-    return;
-  }
-
-  if (!form.password || !passwordStrongEnough) {
-    setToast({
-      open: true,
-      title: "Unable to create admin",
-      description: "Please check the highlighted fields and try again.",
-      type: "error",
-    });
-
-    return;
-  }
-
-  actions.createAdminUser({
-    name: form.name.trim(),
-    email: normalizedEmail,
-    username: normalizedUsername,
-    password: form.password,
-    note: form.note.trim(),
-  });
-
-  sessionStorage.setItem(
-    "adminToast",
-    JSON.stringify({
+    /*
+      The global toast provider stays mounted during navigation, so the
+      success message remains visible after redirecting to All Users.
+    */
+    showToast({
       title: "Admin account created",
-      description: `${form.name.trim()} can now sign in as an administrator.`,
+      description: `${adminName} can now sign in as an administrator.`,
       type: "success",
-    })
-  );
+    });
 
-  
-};
+    navigate("/admin/users", { replace: true });
+  };
+
   const resetForm = () => {
     setForm(emptyAdmin);
     setSubmitted(false);
@@ -206,65 +174,41 @@ const [toast, setToast] = useState({
   };
 
   return (
-    <AdminPageShell sidebarProgress={{ label: "Account readiness", value: Math.round((completion / 4) * 100) }}>
-      
-    <SideToast
-  open={toast.open}
-  title={toast.title}
-  description={toast.description}
-  type={toast.type}
-  onClose={() =>
-    setToast((current) => ({
-      ...current,
-      open: false,
-    }))
-  }
-/>
+    <AdminPageShell
+      sidebarProgress={{
+        label: "Account readiness",
+        value: Math.round((completion / 4) * 100),
+      }}
+    >
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={pageMotion}
+        className="space-y-5"
+      >
+        <motion.div variants={cardMotion}>
+          <AppButton
+            as={Link}
+            to="/admin/users"
+            variant="glass"
+            size="sm"
+            className="w-fit"
+          >
+            <ArrowLeft className="size-4" />
+            Back to users
+          </AppButton>
+        </motion.div>
 
-          <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-                      <div className="mx-auto max-w-7xl space-y-6">
-                        <SectionHeader
-                  className="
-                    [&_h2]:mt-3
-                    [&_h2]:text-4xl
-                    [&_h2]:font-black
-                    [&_h2]:tracking-tight
-                    [&_h2]:text-[color:var(--ink)]
-                    sm:[&_h2]:text-5xl
-                
-                    [&_p]:mt-3
-                    [&_p]:text-base
-                    [&_p]:font-semibold
-                    [&_p]:text-[color:var(--muted)]
-                  "
-                  title="Create Admin Account"
-                  subtitle="Provision another administrator using the required username and password flow."
-                  action={
-                            <div className="-m-2">
-                              <span
-                                onClick={() => navigate("/admin/users")}
-                                className="inline-flex gap-2 items-center rounded-2xl px-9 py-3 text-white font-semibold 
-                                bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
-                hover:bg-[linear-gradient(135deg,#355872_0%,#46739A_55%,#8CC3EA_100%)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer  hover:-translate-y-1
-                      hover:scale-[1.02]
-                      hover:brightness-110
-                      hover:shadow-[0_24px_50px_rgba(53,88,114,.35)]  shadow-[0_12px_30px_rgba(53,88,114,.22)]
-                
-                      transition-all
-                      duration-300
-                      ease-out
-                      hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)]"
-                              >
-                                <ArrowLeft className="h-5 w-5" />
-                                
-                                Back to Users
-                              </span>
-                            </div>
-                          }
-                        />
-          
-          
-      
+        <motion.div variants={cardMotion}>
+          <AdminPageHeader
+            eyebrow="Admin Access"
+            title="Create Admin Account"
+            description="Create a new administrator account and set up the credentials they will use to sign in."
+            actionLabel="Back to Users"
+            actionTo="/admin/users"
+            icon={ArrowLeft}
+          />
+        </motion.div>
 
         <form
           onSubmit={submit}
@@ -276,7 +220,7 @@ const [toast, setToast] = useState({
                 <AdminFormSectionHeader
                   icon={UserPlus}
                   title="Admin identity"
-                  description="Use clean details so the account is easy to audit later."
+                  description="Enter the administrator's basic account details."
                 />
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -284,29 +228,16 @@ const [toast, setToast] = useState({
                     label="Full name"
                     required
                     icon={UserRound}
-                    error={
-                      errors.name
-                    }
-                    feedback="Shown in the users table."
+                    error={errors.name}
+                    feedback="This name will appear across the admin workspace."
                   >
                     <Input
-                      value={
-                        form.name
-                      }
-                      onChange={(
-                        event
-                      ) =>
-                        update(
-                          "name",
-                          event
-                            .target
-                            .value
-                        )
+                      value={form.name}
+                      onChange={(event) =>
+                        update("name", event.target.value)
                       }
                       placeholder="Nadine Admin"
-                      className={
-                        adminInputStyles
-                      }
+                      className={adminInputStyles}
                     />
                   </AdminField>
 
@@ -314,35 +245,21 @@ const [toast, setToast] = useState({
                     label="GUC email"
                     required
                     icon={Mail}
-                    error={
-                      errors.email
-                    }
+                    error={errors.email}
                     success={
-                      emailValid &&
-                      !duplicateEmail
-                        ? "Email looks good."
+                      emailValid && !duplicateEmail
+                        ? "Email is available."
                         : ""
                     }
-                    feedback="Admins should use GUC emails."
+                    feedback="Use the administrator's GUC email address."
                   >
                     <Input
-                      value={
-                        form.email
-                      }
-                      onChange={(
-                        event
-                      ) =>
-                        update(
-                          "email",
-                          event
-                            .target
-                            .value
-                        )
+                      value={form.email}
+                      onChange={(event) =>
+                        update("email", event.target.value)
                       }
                       placeholder="admin@guc.edu.eg"
-                      className={
-                        adminInputStyles
-                      }
+                      className={adminInputStyles}
                     />
                   </AdminField>
                 </div>
@@ -352,81 +269,52 @@ const [toast, setToast] = useState({
             <AdminMotionCard>
               <div className="space-y-4">
                 <AdminFormSectionHeader
-                  icon={
-                    ShieldCheck
-                  }
+                  icon={ShieldCheck}
                   title="Login credentials"
-                  description="Compatible with the current prototype login while matching the requirement wording."
+                  description="Choose the username and password the administrator will use to sign in."
                 />
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <AdminField
                     label="Username"
                     required
-                    icon={
-                      ShieldCheck
+                    icon={ShieldCheck}
+                    error={errors.username}
+                    success={
+                      normalizedUsername && !duplicateUsername
+                        ? "Username is available."
+                        : ""
                     }
-                    error={
-                      errors.username
-                    }
-                    feedback="Required by Req 53."
+                    feedback="Choose a unique username for administrator sign-in."
                   >
                     <Input
-                      value={
-                        form.username
-                      }
-                      onChange={(
-                        event
-                      ) =>
-                        update(
-                          "username",
-                          event
-                            .target
-                            .value
-                        )
+                      value={form.username}
+                      onChange={(event) =>
+                        update("username", event.target.value)
                       }
                       placeholder="nadine.admin"
-                      className={
-                        adminInputStyles
-                      }
+                      className={adminInputStyles}
                     />
                   </AdminField>
 
                   <AdminField
                     label="Password"
                     required
-                    icon={
-                      KeyRound
-                    }
-                    error={
-                      errors.password
-                    }
+                    icon={KeyRound}
+                    error={errors.password}
                     success={
                       passwordStrongEnough
-                        ? "Password length is accepted."
+                        ? "Password meets the minimum length."
                         : ""
                     }
-                    feedback="Minimum 6 characters for the demo."
+                    feedback="Use at least 6 characters."
                   >
                     <div className="relative">
                       <Input
-                        type={
-                          showPassword
-                            ? "text"
-                            : "password"
-                        }
-                        value={
-                          form.password
-                        }
-                        onChange={(
-                          event
-                        ) =>
-                          update(
-                            "password",
-                            event
-                              .target
-                              .value
-                          )
+                        type={showPassword ? "text" : "password"}
+                        value={form.password}
+                        onChange={(event) =>
+                          update("password", event.target.value)
                         }
                         placeholder="••••••••"
                         className={`${adminInputStyles} pr-12`}
@@ -435,29 +323,12 @@ const [toast, setToast] = useState({
                       <button
                         type="button"
                         onClick={() =>
-                          setShowPassword(
-                            (
-                              prev
-                            ) =>
-                              !prev
-                          )
+                          setShowPassword((prev) => !prev)
                         }
-                        className="
-                          absolute
-                          right-3
-                          top-1/2
-                          -translate-y-1/2
-                          rounded-full
-                          p-2
-                          text-[color:var(--muted)]
-                          hover:bg-black/5
-                          hover:text-[color:var(--ink)]
-                        "
                         aria-label={
-                          showPassword
-                            ? "Hide password"
-                            : "Show password"
+                          showPassword ? "Hide password" : "Show password"
                         }
+                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 text-[color:var(--muted)] transition hover:bg-black/5 hover:text-[color:var(--ink)]"
                       >
                         {showPassword ? (
                           <EyeOff className="size-4" />
@@ -471,24 +342,15 @@ const [toast, setToast] = useState({
 
                 <AdminField
                   label="Admin note"
-                  feedback="Optional reason shown in recent activity."
+                  feedback="Optional. Add a short internal note about this account."
                 >
                   <textarea
-                    value={
-                      form.note
-                    }
-                    onChange={(
-                      event
-                    ) =>
-                      update(
-                        "note",
-                        event
-                          .target
-                          .value
-                      )
+                    value={form.note}
+                    onChange={(event) =>
+                      update("note", event.target.value)
                     }
                     rows={3}
-                    placeholder="Why are we creating this admin account?"
+                    placeholder="Add an optional note about this administrator..."
                     className={`${adminInputStyles} min-h-[90px] w-full resize-none py-3`}
                   />
                 </AdminField>
@@ -497,35 +359,13 @@ const [toast, setToast] = useState({
 
             <motion.div
               variants={cardMotion}
-              className="
-                flex
-                flex-col-reverse
-                gap-3
-                rounded-[28px]
-                border
-                border-white/70
-                bg-white/45
-                p-4
-                shadow-[0_18px_45px_rgba(53,88,114,0.08)]
-                sm:flex-row
-                sm:justify-end
-              "
+              className="flex flex-col-reverse gap-3 rounded-[28px] border border-white/70 bg-white/45 p-4 shadow-[0_18px_45px_rgba(53,88,114,0.08)] sm:flex-row sm:justify-end"
             >
               <AppButton
                 type="button"
                 variant="glass"
                 className="rounded-2xl px-6 py-3 font-black"
-                onClick={() => {
-                setForm(emptyAdmin);
-                setSubmitted(false);
-
-                setToast({
-                  open: true,
-                  title: "Form reset successfully",
-                  description: "All admin account fields have been cleared.",
-                  type: "success",
-                });
-              }}
+                onClick={resetForm}
               >
                 <RotateCcw className="size-4" />
                 Reset
@@ -533,18 +373,7 @@ const [toast, setToast] = useState({
 
               <AppButton
                 type="submit"
-                className="
-                  rounded-2xl
-                  bg-[color:var(--primary)]
-                  px-6
-                  py-3
-                  font-black
-                  text-white
-                  shadow-[0_14px_30px_rgba(31,58,92,0.22)]
-                  transition
-                  hover:-translate-y-0.5
-                  hover:bg-[color:var(--primary)]/90
-                "
+                className="rounded-2xl bg-[color:var(--primary)] px-6 py-3 font-black text-white shadow-[0_14px_30px_rgba(31,58,92,0.22)] transition hover:-translate-y-0.5 hover:bg-[color:var(--primary)]/90"
               >
                 <UserPlus className="size-4" />
                 Create admin
@@ -567,84 +396,50 @@ const [toast, setToast] = useState({
               </p>
 
               <div className="mt-4 rounded-3xl border border-[color:var(--border-blue)] bg-white/70 p-4">
-                <div
-                  className="
-                    flex
-                    h-12
-                    w-12
-                    items-center
-                    justify-center
-                    rounded-2xl
-                    bg-[color:var(--primary)]
-                    text-lg
-                    font-black
-                    text-white
-                  "
-                >
-                  {form.name
-                    ?.[0]
-                    ?.toUpperCase() ||
-                    "A"}
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--primary)] text-lg font-black text-white">
+                  {form.name?.[0]?.toUpperCase() || "A"}
                 </div>
 
                 <p className="mt-3 font-black text-[color:var(--ink)]">
-                  {form.name ||
-                    "Admin name"}
+                  {form.name || "Admin name"}
                 </p>
 
                 <p className="text-sm font-semibold text-[color:var(--muted)]">
-                  {normalizedEmail ||
-                    "admin@guc.edu.eg"}
+                  {normalizedEmail || "admin@guc.edu.eg"}
                 </p>
 
                 <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--primary)]">
-                  @
-                  {normalizedUsername ||
-                    "username"}
+                  @{normalizedUsername || "username"}
                 </p>
               </div>
 
               <div className="mt-4 space-y-2">
-                <RequirementLine
-                  done={Boolean(
-                    form.name.trim()
-                  )}
-                >
+                <RequirementLine done={Boolean(form.name.trim())}>
                   Full name added
                 </RequirementLine>
 
                 <RequirementLine
-                  done={Boolean(
-                    emailValid &&
-                      !duplicateEmail
-                  )}
+                  done={Boolean(emailValid && !duplicateEmail)}
                 >
                   Valid unique email
                 </RequirementLine>
 
                 <RequirementLine
                   done={Boolean(
-                    normalizedUsername &&
-                      !duplicateUsername
+                    normalizedUsername && !duplicateUsername
                   )}
                 >
                   Unique username
                 </RequirementLine>
 
-                <RequirementLine
-                  done={
-                    passwordStrongEnough
-                  }
-                >
+                <RequirementLine done={passwordStrongEnough}>
                   Password accepted
                 </RequirementLine>
               </div>
             </AppCard>
           </motion.aside>
         </form>
-      
-      </div>
-      </main>
+      </motion.div>
     </AdminPageShell>
   );
 }
