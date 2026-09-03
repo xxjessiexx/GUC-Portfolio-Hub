@@ -187,16 +187,7 @@ export default function AdminCreateAccount() {
         className="space-y-5"
       >
         <motion.div variants={cardMotion}>
-          <AppButton
-            as={Link}
-            to="/admin/users"
-            variant="glass"
-            size="sm"
-            className="w-fit"
-          >
-            <ArrowLeft className="size-4" />
-            Back to users
-          </AppButton>
+          
         </motion.div>
 
         <motion.div variants={cardMotion}>
