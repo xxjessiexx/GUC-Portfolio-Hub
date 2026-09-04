@@ -76,15 +76,15 @@ const steps = [
 
 const developers = [
 {
-  name: "Farida",
-  role: "React Frontend Developer",
-  desc: "Collaborated on the React frontend, responsive page implementation, and shared UI components.",
-  initials: "F",
+  name: "Farida Moustafa",
+  role: "REACT FRONTEND DEVELOPER · REQUIREMENTS & UI IMPLEMENTATION",//"React Frontend Developer",
+  desc: "Translated project requirements into responsive React interfaces, building reusable components and helping deliver a consistent, polished user experience.",//"Collaborated on the React frontend, responsive page implementation, and shared UI components.",
+  initials: "FM",
   image: "/team/farida.jpg",
   links: {
-    github: "",
-    linkedin: "",
-    email: "",
+    github: "https://github.com/farida-moustafa",
+    linkedin: "https://www.linkedin.com/in/farida-moustafa-8a2b1227b",
+    email: "mailto:faridaelshenawy@gmail.com",
   },
 },
 {
