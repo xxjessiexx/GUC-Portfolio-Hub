@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  ArrowLeft,
   CheckCircle2,
+  Eye,
+  Save,
   FileText,
   Globe2,
   Link2,
@@ -14,16 +17,23 @@ import {
   X,
 } from "lucide-react";
 import { FaGithub as Github } from "react-icons/fa";
-import { useToast } from "@/context/ToastContext";
+import SideToast from "@/components/ui/SideToast";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ProjectInvitePickerModal from "@/components/project/ProjectInvitePickerModal";
+import ProjectVideoUploadField from "@/components/project/ProjectVideoUploadField";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
 import AppIconFrame from "@/components/ui/AppIconFrame";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import AppSelect from "@/components/common/AppSelect";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
   addNotification,
@@ -59,7 +69,30 @@ const initialProjectData = {
 };
 
 const inputStyles =
-  "min-h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-semibold text-[color:var(--ink)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] placeholder:text-[color:var(--muted)]/65 transition focus-visible:border-[color:var(--accent)] focus-visible:ring-2 focus-visible:ring-[color:var(--ring-soft)]";
+  "min-h-[58px] rounded-[15px] border border-[#C5D6E0] bg-[#F4F8FA] px-4 text-[15px] font-extrabold text-[#183247] shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] placeholder:text-[#8798A4] transition hover:border-[#90AFC0] focus-visible:border-[#4F7EA4] focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-[#7AAACE]/14";
+
+const selectTriggerStyles = cn(
+  inputStyles,
+  "h-[58px] w-full justify-between py-0 text-left bg-white [&>span]:text-[#183247] [&>span]:font-extrabold [&>svg]:h-5 [&>svg]:w-5 [&>svg]:text-[#294F69]"
+);
+
+const EDITOR_THEME = {
+  "--ink": "#102536",
+  "--muted": "#718391",
+  "--primary": "#355872",
+  "--dark": "#294A61",
+  "--accent": "#7AAACE",
+  "--gold": "#E6C77B",
+  "--surface-soft": "#F4F8FA",
+  "--surface-strong": "#EAF2F6",
+  "--surface-elevated": "#FFFFFF",
+  "--input-bg": "#FFFFFF",
+  "--ring-soft": "rgba(122,170,206,0.18)",
+  "--shadow-soft": "0 16px 38px rgba(53,88,114,0.10)",
+  "--shadow-brand": "0 14px 30px rgba(53,88,114,0.22)",
+  colorScheme: "light",
+};
+
 
 
 function makeInviteNotificationId() {
@@ -275,18 +308,17 @@ function FieldShell({ label, required, icon: Icon, children, className }) {
 
 function SectionHeader({ title, description, icon: Icon }) {
   return (
-    <div className="flex items-start gap-3">
-      <AppIconFrame>
-        <Icon className="size-5" />
-      </AppIconFrame>
-
+    <div className="flex items-start gap-4">
+      <div className="mt-2 h-[3px] w-8 shrink-0 rounded-full bg-[#E6C77B]" />
       <div>
-        <h2 className="text-2xl font-black tracking-tight text-[color:var(--ink)]">
-          {title}
-        </h2>
-
+        <div className="flex items-center gap-2">
+          {Icon ? <Icon className="size-4 text-[#557C97]" /> : null}
+          <h2 className="text-[24px] font-black tracking-[-0.03em] text-[#142A3A]">
+            {title}
+          </h2>
+        </div>
         {description ? (
-          <p className="mt-1 max-w-3xl text-sm font-semibold leading-6 text-[color:var(--muted)]">
+          <p className="mt-1 max-w-3xl text-[14px] font-semibold leading-6 text-[#718391]">
             {description}
           </p>
         ) : null}
@@ -297,12 +329,110 @@ function SectionHeader({ title, description, icon: Icon }) {
 
 function FormSection({ title, description, icon, children, className }) {
   return (
-    <AppCard className={cn("p-6 sm:p-7", className)}>
+    <section className={cn("border-b border-[#DCE7ED] px-6 py-7 last:border-b-0 sm:px-8", className)}>
       <div className="space-y-6">
         <SectionHeader title={title} description={description} icon={icon} />
         {children}
       </div>
-    </AppCard>
+    </section>
+  );
+}
+
+function EditorRail({ formData, onVisibilityChange, completedCount, totalCount, isSaving, onSubmit, onCancel }) {
+  const isPublic = formData.visibility === "public";
+  const percent = Math.round((completedCount / Math.max(totalCount, 1)) * 100);
+
+  return (
+    <aside className="lg:sticky lg:top-6">
+      <div className="overflow-hidden rounded-[26px] border border-[#CDDDE6] bg-white shadow-[0_18px_44px_rgba(53,88,114,0.11)]">
+        <div className="bg-[linear-gradient(145deg,#294A61_0%,#3F6884_100%)] px-6 py-6 text-white">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8E4F5]">
+            Project status
+          </p>
+          <h3 className="mt-2 text-[24px] font-black tracking-[-0.03em]">
+            {isPublic ? "Ready to publish" : "Private draft"}
+          </h3>
+          <p className="mt-2 text-[12px] font-semibold leading-5 text-white/75">
+            {isPublic
+              ? "This project can appear on your portfolio and discovery pages."
+              : "Only you and invited people can access this project."}
+          </p>
+        </div>
+
+        <div className="space-y-6 p-6">
+          <div>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#7894A6]">
+                  Visibility
+                </p>
+                <p className="mt-1 text-[14px] font-black text-[#183247]">
+                  {isPublic ? "Public" : "Private"}
+                </p>
+              </div>
+              <Switch
+                checked={isPublic}
+                onCheckedChange={(checked) => onVisibilityChange(checked ? "public" : "private")}
+              />
+            </div>
+          </div>
+
+          <div className="border-t border-[#DCE7ED] pt-5">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#7894A6]">
+                  Completion
+                </p>
+                <p className="mt-1 text-[22px] font-black tracking-[-0.03em] text-[#183247]">
+                  {completedCount} of {totalCount}
+                </p>
+              </div>
+              <span className="text-[12px] font-black text-[#557C97]">{percent}%</span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#E5EEF3]">
+              <div className="h-full rounded-full bg-[#4F7EA4]" style={{ width: `${percent}%` }} />
+            </div>
+          </div>
+
+          <div className="space-y-2 border-t border-[#DCE7ED] pt-5 text-[12px] font-semibold text-[#6F8290]">
+            <p className="flex items-center gap-2">
+              <span className={`h-2 w-2 rounded-full ${formData.title.trim() ? "bg-emerald-500" : "bg-[#CAD7DE]"}`} />
+              Project title
+            </p>
+            <p className="flex items-center gap-2">
+              <span className={`h-2 w-2 rounded-full ${formData.description.trim() ? "bg-emerald-500" : "bg-[#CAD7DE]"}`} />
+              Description
+            </p>
+            <p className="flex items-center gap-2">
+              <span className={`h-2 w-2 rounded-full ${(formData.type === "thesis" || formData.courseName.trim()) ? "bg-emerald-500" : "bg-[#CAD7DE]"}`} />
+              Project type / course
+            </p>
+            <p className="flex items-center gap-2">
+              <span className={`h-2 w-2 rounded-full ${(formData.github.trim() || formData.video) ? "bg-emerald-500" : "bg-[#CAD7DE]"}`} />
+              Media or repository
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onSubmit}
+            disabled={isSaving}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[17px] bg-[#355872] px-5 text-[13px] font-black text-white shadow-[0_12px_26px_rgba(53,88,114,0.22)] transition hover:-translate-y-[1px] hover:bg-[#294A61] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Save className="h-4 w-4" />
+            {isSaving ? "Creating..." : "Create project"}
+          </button>
+
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-full text-center text-[12px] font-black text-[#6B8799] transition hover:text-[#355872]"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </aside>
   );
 }
 
@@ -444,7 +574,7 @@ function ChipInput({
 }) {
   return (
     <div className="space-y-3">
-      <div className="flex min-h-14 flex-wrap items-center gap-2 rounded-2xl border border-white/70 bg-[var(--surface-soft)] px-3 py-3 shadow-[0_12px_30px_rgba(53,88,114,0.06)]">
+      <div className="flex min-h-14 flex-wrap items-center gap-2 rounded-[15px] border border-[#C5D6E0] bg-[#F4F8FA] px-3 py-3">
         {items.map((item) => (
           <Chip key={item} onRemove={() => onRemove(item)}>
             {item}
@@ -561,23 +691,320 @@ function validateProjectField(field, data) {
       }
       return "";
 
-    case "video":
+    case "video": {
       if (!data.video) return "";
-      if (!data.video.type.startsWith("video/")) {
+
+      const supportedVideoTypes = ["video/mp4", "video/webm"];
+
+      if (!data.video.type?.startsWith("video/")) {
         return "Uploaded file must be a video.";
       }
+
+      if (!supportedVideoTypes.includes(data.video.type)) {
+        return "Use an MP4 or WebM video so it can be previewed in the browser.";
+      }
+
       return "";
+    }
 
     default:
       return "";
   }
 }
 
+function EditorTabs({ active, onChange }) {
+  const items = [
+    { id: "details", label: "Details", icon: FileText },
+    { id: "media", label: "Media", icon: Video },
+    { id: "team", label: "Team", icon: Users },
+  ];
+
+  return (
+    <nav className="mt-6 flex items-center gap-1 border-b border-[#BFD1DC]" aria-label="Project editor sections">
+      {items.map((item) => {
+        const Icon = item.icon;
+        const selected = active === item.id;
+
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onChange(item.id)}
+            className={cn(
+              "relative inline-flex h-12 items-center gap-2.5 px-4 text-[13px] font-black transition",
+              selected
+                ? "text-[#17384E]"
+                : "text-[#7A8D99] hover:text-[#355872]"
+            )}
+          >
+            <Icon className={cn("h-4 w-4", selected ? "text-[#4F7EA4]" : "text-[#8EA0AA]")} />
+            {item.label}
+            {selected ? (
+              <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-full bg-[#4F7EA4]" />
+            ) : null}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+function TeamEditorGroup({
+  title,
+  description,
+  items,
+  emptyText,
+  buttonLabel,
+  onInvite,
+  onRemove,
+  feedback,
+}) {
+  return (
+    <section className="py-5 first:pt-0 last:pb-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-[18px] font-black tracking-[-0.02em] text-[#183247]">{title}</h3>
+          <p className="mt-1 text-[13px] font-semibold leading-5 text-[#738694]">{description}</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onInvite}
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[15px] border border-[#355872]/14 bg-white px-4 text-[12px] font-black text-[#294F69] shadow-[0_8px_20px_rgba(53,88,114,0.08)] transition hover:-translate-y-[1px] hover:border-[#7AAACE]/45 hover:bg-[#F7FBFD]"
+        >
+          <Plus className="h-4 w-4" />
+          {buttonLabel}
+        </button>
+      </div>
+
+      <div className="mt-4 border-y border-[#DCE7ED]">
+        {items.length ? (
+          <div className="divide-y divide-[#DCE7ED]">
+            {items.map((item) => {
+              const name =
+                item?.name ||
+                item?.fullName ||
+                item?.companyName ||
+                item?.email ||
+                item?.id ||
+                "Team member";
+              const key = item?.id || item?.email || name;
+
+              return (
+                <div key={key} className="flex items-center justify-between gap-4 py-3.5">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#EAF3F7] text-[12px] font-black text-[#355872]">
+                      {item?.image ? (
+                        <img src={item.image} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        String(name)
+                          .split(" ")
+                          .slice(0, 2)
+                          .map((part) => part[0])
+                          .join("")
+                          .toUpperCase()
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-[13px] font-black text-[#183247]">{name}</p>
+                      <p className="mt-0.5 text-[11px] font-semibold text-[#82939E]">Invitation pending</p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => onRemove(item.id)}
+                    className="rounded-xl px-3 py-2 text-[11px] font-black text-[#81919C] transition hover:bg-red-50 hover:text-red-500"
+                  >
+                    Remove
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="py-4 text-[13px] font-semibold text-[#708491]">{emptyText}</p>
+        )}
+      </div>
+
+      {feedback?.message ? (
+        <div className="mt-3">
+          <FieldFeedback
+            error={feedback.type === "error" ? feedback.message : ""}
+            success={feedback.type === "success" ? feedback.message : ""}
+          />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function LiveProjectPreview({ formData }) {
+  const [videoUrl, setVideoUrl] = useState("");
+
+  useEffect(() => {
+    let objectUrl = "";
+    let cancelled = false;
+
+    async function resolveVideo() {
+      setVideoUrl("");
+      const file = formData.video;
+      if (!file) return;
+
+      if (typeof file === "string") {
+        setVideoUrl(file);
+        return;
+      }
+
+      if (file instanceof File || file instanceof Blob) {
+        objectUrl = URL.createObjectURL(file);
+        setVideoUrl(objectUrl);
+        return;
+      }
+
+      if (file?.url) {
+        setVideoUrl(file.url);
+        return;
+      }
+
+      if (file?.id) {
+        try {
+          const saved = await getProjectFile(file.id);
+          if (!saved?.file || cancelled) return;
+          objectUrl = URL.createObjectURL(saved.file);
+          if (!cancelled) setVideoUrl(objectUrl);
+        } catch {
+          if (!cancelled) setVideoUrl("");
+        }
+      }
+    }
+
+    resolveVideo();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [formData.video]);
+
+  const title = formData.title.trim();
+  const courseLabel =
+    formData.type === "thesis"
+      ? "Bachelor Project"
+      : formData.courseName.trim();
+  const description = formData.description.trim();
+  const hasIdentity = Boolean(title || courseLabel || description || formData.tags.length || formData.video);
+
+  return (
+    <aside className="lg:sticky lg:top-6">
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#5C8199]">
+            Live preview
+          </p>
+          <p className="mt-1 text-[12px] font-semibold text-[#7B8E9A]">
+            A miniature of the project page — not a separate design.
+          </p>
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-[0.12em] text-[#93A2AB]">
+          updates live
+        </span>
+      </div>
+
+      <div className="overflow-hidden rounded-[22px] border border-[#B8CEDA] bg-[#EEF4F7] shadow-[0_18px_42px_rgba(53,88,114,0.13)]">
+        <div className="border-b border-[#C9D9E2] bg-[#F8FBFC] px-5 py-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5">
+                <span className="h-[2px] w-7 rounded-full bg-[#E6C77B]" />
+                <span className="truncate text-[9px] font-black uppercase tracking-[0.16em] text-[#5B8198]">
+                  {courseLabel || (formData.type === "thesis" ? "Bachelor Project" : "Course project")}
+                </span>
+              </div>
+
+              {title ? (
+                <h2 className="mt-3 text-[24px] font-black leading-[1.04] tracking-[-0.04em] text-[#122B3B]">
+                  {title}
+                </h2>
+              ) : (
+                <div className="mt-4 h-7 w-[72%] rounded-md bg-[#DCE8EE]" />
+              )}
+
+              <p className="mt-2 text-[11px] font-bold text-[#758895]">
+                {formData.type === "thesis" ? "Bachelor Project" : "Course Project"}
+              </p>
+            </div>
+
+            <span className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-[#BFD2DD] bg-white px-3 text-[10px] font-black text-[#4D748E]">
+              {formData.visibility === "public" ? <Globe2 className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+              {formData.visibility === "public" ? "Public" : "Private"}
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-4 px-5 py-5">
+          {formData.video ? (
+            <div className="overflow-hidden rounded-[16px] border border-[#355872]/12 bg-[#111820] shadow-[0_12px_26px_rgba(16,32,48,0.16)]">
+              {videoUrl ? (
+                <video src={videoUrl} controls preload="metadata" playsInline className="aspect-video w-full object-contain" />
+              ) : (
+                <div className="flex aspect-video items-center justify-center text-[11px] font-bold text-white/60">
+                  Video attached
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {description ? (
+            <p className="text-[13px] font-semibold leading-6 text-[#637987]">
+              {description}
+            </p>
+          ) : hasIdentity ? (
+            <div className="space-y-2">
+              <div className="h-2.5 w-full rounded bg-[#DCE7ED]" />
+              <div className="h-2.5 w-[78%] rounded bg-[#DCE7ED]" />
+            </div>
+          ) : (
+            <div className="border-l-2 border-[#7AAACE] pl-4 py-1">
+              <p className="text-[12px] font-bold leading-5 text-[#7A8D99]">
+                Start with the title. The preview will build only from information you actually add.
+              </p>
+            </div>
+          )}
+
+          {formData.tags.length ? (
+            <div className="flex flex-wrap gap-2 border-t border-[#D3E0E7] pt-4">
+              {formData.tags.slice(0, 6).map((tag) => (
+                <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-[9px] font-black text-[#355872] ring-1 ring-[#C7D8E2]">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          {formData.github.trim() ? (
+            <div className="flex items-center gap-2 border-t border-[#D3E0E7] pt-4 text-[10px] font-black text-[#4D748E]">
+              <Github className="h-3.5 w-3.5" />
+              Repository linked
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+
 export default function CreateNewProject() {
   const navigate = useNavigate();
-  const { showToast } = useToast();
-
   const [availableCourses, setAvailableCourses] = useState(FALLBACK_COURSES);
+
+  const [toast, setToast] = useState({
+  open: false,
+  title: "",
+  description: "",
+  type: "success",
+});
 
   useEffect(() => {
     const courses = getCollection("courses") || [];
@@ -596,6 +1023,7 @@ export default function CreateNewProject() {
   const [touched, setTouched] = useState({});
   const [saveMessage, setSaveMessage] = useState({ type: "", message: "" });
   const [isSaving, setIsSaving] = useState(false);
+  const [activeSection, setActiveSection] = useState("details");
 
   const [tagFeedback, setTagFeedback] = useState({
     type: "",
@@ -857,22 +1285,21 @@ export default function CreateNewProject() {
     setSaveMessage({ type: "", message: "" });
   };
 
-const openInviteDialog = (kind) => {
-  setDialogs((current) => ({
-    ...current,
-    [kind]: {
-      ...current[kind],
-      open: true,
-      value: "",
-      error: "",
-    },
-  }));
+  const openInviteDialog = (kind) => {
+    setDialogs((current) => ({
+      ...current,
+      [kind]: {
+        open: true,
+        value: "",
+        error: "",
+      },
+    }));
 
-  setInviteFeedback((current) => ({
-    ...current,
-    [kind]: { type: "", message: "" },
-  }));
-};
+    setInviteFeedback((current) => ({
+      ...current,
+      [kind]: { type: "", message: "" },
+    }));
+  };
 
   const setInviteDialogOpen = (kind, open) => {
     setDialogs((current) => ({
@@ -1020,7 +1447,15 @@ const openInviteDialog = (kind) => {
 const isValid = validateAllFields();
 
 if (!isValid) {
-  showToast({
+  const detailsHaveError =
+    validateProjectField("title", formData) ||
+    validateProjectField("courseName", formData) ||
+    validateProjectField("description", formData);
+
+  setActiveSection(detailsHaveError ? "details" : "media");
+
+  setToast({
+    open: true,
     title: "Unable to create project",
     description: "Please check the highlighted fields and try again.",
     type: "error",
@@ -1136,6 +1571,7 @@ setSaveMessage({ type: "", message: "" });
         githubUrl: formData.github.trim(),
 
         video: createStoredFileReference(savedVideo),
+        videoFileId: savedVideo?.id || null,
 
         technologies: formData.tags,
         tags: formData.tags,
@@ -1193,13 +1629,25 @@ setSaveMessage({ type: "", message: "" });
 
       
 
-      showToast({
+      setToast({
+        open: true,
         title: "Project created successfully",
-        description: "Your project has been created successfully.",
+        description: "Opening your new project...",
         type: "success",
       });
 
-      navigate("/view-all-projects");
+      window.setTimeout(() => {
+        navigate(`/project?projectId=${encodeURIComponent(storedProject.id)}`, {
+          replace: true,
+          state: {
+            projectFlow: {
+              originPath: "/my-projects",
+              originLabel: "My Projects",
+              projectIds: [storedProject.id],
+            },
+          },
+        });
+      }, 250);
     } catch (error) {
       console.error("Failed to save project:", error);
       setSaveMessage({
@@ -1207,11 +1655,14 @@ setSaveMessage({ type: "", message: "" });
         message: "Please check the highlighted fields.",
       });
 
-      showToast({
-        title: "Project could not be created",
-        description: "Please check the highlighted fields and try again.",
-        type: "error",
-      });
+      setToast({
+    open: true,
+    title: "Project could not be created",
+    description:
+       "Please check the highlighted fields and try again.",
+    type: "error",
+  });
+
     } finally {
       setIsSaving(false);
     }
@@ -1219,6 +1670,14 @@ setSaveMessage({ type: "", message: "" });
 
   return (
     <DashboardLayout>
+      <SideToast
+        open={toast.open}
+        title={toast.title}
+        description={toast.description}
+        type={toast.type}
+        onClose={() => setToast((current) => ({ ...current, open: false }))}
+      />
+
       <ProjectInvitePickerModal
         open={dialogs.collab.open || dialogs.instructor.open}
         mode={inviteMode}
@@ -1251,335 +1710,273 @@ setSaveMessage({ type: "", message: "" });
         onSelectUser={selectInviteUser}
       />
 
-      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <form onSubmit={handleSubmit} className="mx-auto max-w-7xl space-y-6">
-          <AppCard className="p-6 sm:p-8">
-            <div className="grid gap-6 lg:grid-cols-[1fr_24rem] lg:items-stretch">
-              <div className="flex min-h-[14rem] flex-col justify-between rounded-[1.75rem] bg-[var(--surface-soft)] p-6 shadow-[0_18px_44px_rgba(53,88,114,0.06)] sm:p-7">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--primary)]">
-                    Project Workspace
-                  </p>
-
-                  <h1 className="mt-4 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
-                    Create New Project
-                  </h1>
-
-                  <p className="mt-4 max-w-3xl text-base font-semibold leading-7 text-[color:var(--muted)]">
-                    Add your project details, files, technologies, teammates,
-                    and course instructors.
+      <main className="px-4 py-6 pb-16 sm:px-6 lg:px-8">
+        <form
+          id="project-editor-form"
+          onSubmit={handleSubmit}
+          style={EDITOR_THEME}
+          className="mx-auto w-full max-w-[1180px]"
+        >
+          {/* EDITOR HEADER */}
+          <div className="border-b border-[#BFD1DC] pb-6">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <span className="h-[3px] w-9 rounded-full bg-[#E6C77B]" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#5C8199]">
+                    Project editor
                   </p>
                 </div>
 
-                <div className="mt-8 flex flex-wrap gap-2">
-                  {["Course / Thesis", "GitHub", "Demo Video", "Reviewers"].map(
-                    (item) => (
-                      <span
-                        key={item}
-                        className="rounded-full bg-[color:var(--accent)]/22 px-4 py-2 text-sm font-black text-[color:var(--primary)]"
-                      >
-                        {item}
-                      </span>
-                    )
-                  )}
-                </div>
-              </div>
+                <h1 className="mt-3 text-[40px] font-black leading-none tracking-[-0.045em] text-[#112A3B] sm:text-[46px]">
+                  Create Project
+                </h1>
 
-              <VisibilityPanel
-                value={formData.visibility}
-                onChange={(value) => updateField("visibility", value)}
-              />
-            </div>
-          </AppCard>
-
-          <FormSection
-            title="Project Details"
-            description="Enter the main information about the project."
-            icon={FileText}
-          >
-            <div className="grid gap-5 lg:grid-cols-2">
-              <FieldShell label="Project Title" required icon={Sparkles}>
-                <Input
-                  className={inputStyles}
-                  placeholder="E-Commerce Platform"
-                  value={formData.title}
-                  onChange={(event) => updateField("title", event.target.value)}
-                  onBlur={() => handleBlur("title")}
-                />
-                <FieldFeedback
-                  error={errors.title}
-                  helper="This is the name that will appear in your portfolio."
-                />
-              </FieldShell>
-
-              <FieldShell label="Project Type" required icon={FileText}>
-                <AppSelect
-                  value={formData.type}
-                  onChange={(value) => updateField("type", value)}
-                  options={[
-                    { value: "course", label: "Course Project" },
-                    { value: "thesis", label: "Thesis" },
-                  ]}
-                  placeholder="Choose project type"
-                />
-                <FieldFeedback helper="Choose whether this is a course project or a thesis." />
-              </FieldShell>
-            </div>
-
-            {formData.type === "course" ? (
-              <FieldShell label="Course Name" required icon={FileText}>
-                <AppSelect
-                  value={formData.courseName}
-                  onChange={(value) => updateField("courseName", value)}
-                  options={availableCourses}
-                  placeholder="Choose course"
-                />
-
-                <FieldFeedback
-                  error={errors.courseName}
-                  helper="Select the course related to this project."
-                />
-              </FieldShell>
-            ) : (
-              <div className="space-y-4">
-                <FileDropField
-                  label="Upload Thesis Draft"
-                  required
-                  accept="application/pdf"
-                  icon={FileText}
-                  onChange={handleThesisUpload}
-                  error={errors.thesisDrafts}
-                  helper="Upload one or more thesis drafts."
-                />
-
-                <div className="space-y-3">
-                  {formData.thesisDrafts.map((draft) => (
-                    <div
-                      key={draft.id}
-                      className="flex items-center justify-between rounded-2xl border border-white/60 bg-[var(--surface-soft)] p-4"
-                    >
-                      <div>
-                        <p className="font-black text-[color:var(--ink)]">
-                          {draft.file.name}
-                        </p>
-
-                        <p className="text-xs font-semibold text-[color:var(--muted)]">
-                          {draft.isFinal
-                            ? "Final Draft (Public)"
-                            : "Private Draft"}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        {!draft.isFinal && (
-                          <AppButton
-                            type="button"
-                            onClick={() => setFinalDraft(draft.id)}
-                            className="min-h-12 rounded-2xl bg-[var(--primary)] px-4 font-black text-white shadow-[var(--shadow-brand)] transition hover:-translate-y-0.5 hover:bg-[var(--dark)] disabled:cursor-not-allowed disabled:opacity-70"
-                          >
-                            Set Final
-                          </AppButton>
-                        )}
-
-                        <AppButton
-                          type="button"
-                          onClick={() => removeDraft(draft.id)}
-                          className="min-h-12 rounded-2xl bg-red-500 px-4 text-white transition hover:-translate-y-0.5 hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70"
-                        >
-                          Remove
-                        </AppButton>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between gap-3">
-                <Label className="flex items-center gap-2 text-sm font-black text-[color:var(--ink)]">
-                  <FileText className="size-4 text-[color:var(--primary)]" />
-                  Description
-                  <span className="text-[color:var(--gold)]">*</span>
-                </Label>
-
-                <span className="text-xs font-bold text-[color:var(--muted)]">
-                  {formData.description.length}/600
-                </span>
-              </div>
-
-              <textarea
-                className="min-h-44 w-full resize-none rounded-[1.5rem] border border-white/70 bg-[var(--input-bg)] px-4 py-4 text-sm font-semibold leading-7 text-[color:var(--ink)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] outline-none placeholder:text-[color:var(--muted)]/65 transition focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--ring-soft)]"
-                maxLength={600}
-                placeholder="Briefly describe what the project does, the problem it solves, and your main contribution."
-                value={formData.description}
-                onChange={(event) =>
-                  updateField("description", event.target.value)
-                }
-                onBlur={() => handleBlur("description")}
-              />
-
-              <FieldFeedback
-                error={errors.description}
-                helper="A good summary makes the project easier to understand later."
-              />
-            </div>
-          </FormSection>
-
-          <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-            <FormSection
-              title="Project Files"
-              description="Attach the repository and demo material."
-              icon={Link2}
-            >
-              <FieldShell label="GitHub Repository" icon={Github}>
-                <Input
-                  className={inputStyles}
-                  placeholder="https://github.com/your-project"
-                  value={formData.github}
-                  onChange={(event) => updateField("github", event.target.value)}
-                  onBlur={() => handleBlur("github")}
-                />
-                <FieldFeedback
-                  error={errors.github}
-                  helper="Optional, but recommended if you have a repository."
-                />
-              </FieldShell>
-
-              <FileDropField
-                label="Project Demo Video"
-                accept="video/*"
-                file={formData.video}
-                icon={Video}
-                onChange={handleVideoChange}
-                error={errors.video}
-                success={
-                  formData.video ? "Video uploaded and ready to be saved." : ""
-                }
-                helper="Optional. This video will be saved for later preview."
-              />
-            </FormSection>
-
-            <FormSection
-              title="Technologies"
-              description="List the languages, frameworks, and tools used in this project."
-              icon={Sparkles}
-            >
-              <ChipInput
-                value={formData.tagInput}
-                items={formData.tags}
-                placeholder="React, Node.js, MongoDB"
-                emptyText="React, Node.js, MongoDB"
-                onValueChange={(value) => {
-                  setFormData((current) => ({
-                    ...current,
-                    tagInput: value,
-                  }));
-                  if (tagFeedback.message) {
-                    setTagFeedback({ type: "", message: "" });
-                  }
-                }}
-                onAdd={addTag}
-                onRemove={removeTag}
-                feedback={tagFeedback}
-              />
-            </FormSection>
-          </div>
-
-          <FormSection
-            title="People"
-            description="Invite student collaborators separately from course instructors."
-            icon={Users}
-          >
-            <div className="grid gap-5 lg:grid-cols-2">
-              <InviteBox
-                title="Student Collaborators"
-                description="Add teammates who worked on this project."
-                emptyText="No student collaborators added yet."
-                items={selectedCollaborators}
-                onRemove={removeCollaborator}
-                onOpenDialog={() => openInviteDialog("collab")}
-                buttonLabel="Invite collaborator"
-                feedback={inviteFeedback.collab}
-              />
-
-              <InviteBox
-                title="Course Instructors"
-                description="Invite instructors who should review or supervise this project."
-                emptyText="No course instructors added yet."
-                items={selectedInstructors}
-                onRemove={removeInstructor}
-                onOpenDialog={() => openInviteDialog("instructor")}
-                buttonLabel="Invite instructor"
-                feedback={inviteFeedback.instructor}
-              />
-            </div>
-          </FormSection>
-
-          <AppCard className="sticky bottom-4 z-20 p-4 sm:p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs font-bold leading-5 text-[color:var(--muted)]">
-                  {formData.visibility === "public"
-                    ? "This project will be visible on your portfolio."
-                    : "This project will be saved as a private draft."}
+                <p className="mt-3 max-w-2xl text-[14px] font-semibold leading-6 text-[#718391]">
+                  Shape the project page people will actually see.
                 </p>
-
-                {saveMessage.message ? (
-                  <p
-                    className={cn(
-                      "mt-1 text-xs font-black",
-                      saveMessage.type === "error"
-                        ? "text-red-500"
-                        : "text-[color:var(--primary)]"
-                    )}
-                  >
-                    {saveMessage.message}
-                  </p>
-                ) : null}
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <AppButton
-                  type="button"
-                  onClick={() => {
-                    setFormData(initialProjectData);
-                    setErrors({});
-                    setTouched({});
-                    setTagFeedback({ type: "", message: "" });
-                    setInviteFeedback({
-                      collab: { type: "", message: "" },
-                      instructor: { type: "", message: "" },
-                    });
-                    setDialogs({
-                      collab: { open: false, value: "", error: "" },
-                      instructor: { open: false, value: "", error: "" },
-                    });
-                    setSaveMessage({ type: "", message: "" });
-                    showToast({
-                      title: "Draft reset successfully",
-                      description: "Your project draft has been reset.",
-                      type: "success",
-                    });
-                  }}
-                  
-                  disabled={isSaving}
-                  className="min-h-12 rounded-2xl border border-white/70 bg-[var(--surface-strong)] px-6 font-black text-[color:var(--primary)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] transition hover:-translate-y-0.5 hover:bg-[var(--surface-elevated)] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Reset draft
-                </AppButton>
+              <div className="flex shrink-0 flex-wrap items-center gap-2.5">
+                <div className="inline-flex h-11 items-center gap-2.5 rounded-[14px] border border-[#C4D6E0] bg-[#F7FAFC] px-4 shadow-[0_6px_16px_rgba(53,88,114,0.06)]">
+                  {formData.visibility === "public" ? (
+                    <Globe2 className="h-4 w-4 text-[#557C97]" />
+                  ) : (
+                    <Lock className="h-4 w-4 text-[#557C97]" />
+                  )}
+                  <span className="text-[12px] font-black text-[#355872]">
+                    {formData.visibility === "public" ? "Public" : "Private"}
+                  </span>
+                  <Switch
+                    checked={formData.visibility === "public"}
+                    onCheckedChange={(checked) =>
+                      updateField("visibility", checked ? "public" : "private")
+                    }
+                  />
+                </div>
 
-                <AppButton
+                <button
+  type="button"
+  onClick={() => navigate(-1)}
+  className="h-11 rounded-[14px] px-4 text-[12px] font-black text-[#718391] transition hover:bg-[#EAF2F6] hover:text-[#355872]"
+>
+  Cancel
+</button>
+
+                <button
                   type="submit"
                   disabled={isSaving}
-                  className="min-h-12 rounded-2xl bg-[var(--primary)] px-8 font-black text-white shadow-[var(--shadow-brand)] transition hover:-translate-y-0.5 hover:bg-[var(--dark)] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-[14px] bg-[#355872] px-6 text-[12px] font-black text-white shadow-[0_10px_24px_rgba(53,88,114,0.18)] transition-all duration-200 hover:-translate-y-[1px] hover:bg-[#294A61] hover:shadow-[0_14px_30px_rgba(53,88,114,0.23)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <CheckCircle2 className="mr-2 size-4" />
-                  {isSaving ? "Saving..." : "Create Project"}
-                </AppButton>
+                  <Save className="h-4 w-4" />
+                  {isSaving ? "Creating…" : "Create project"}
+                </button>
               </div>
             </div>
-          </AppCard>
+          </div>
+
+          <EditorTabs active={activeSection} onChange={setActiveSection} />
+
+          <div className="mt-6 w-full">
+            {/* EDITOR */}
+            <section className="relative w-full overflow-hidden rounded-[24px] border border-[#C9DBE4] border-l-[4px] border-l-[#355872] bg-[#FBFCFA] shadow-[0_18px_42px_rgba(53,88,114,0.10)]">
+              {activeSection === "details" ? (
+                <div className="px-6 py-7 sm:px-9">
+                  <SectionHeader
+                    title="Project details"
+                    description="Give the project a clear identity and enough context to understand it quickly."
+                    icon={FileText}
+                  />
+
+                  <div className="mt-7 space-y-6">
+                    <FieldShell label="Project Title" required icon={Sparkles}>
+                      <Input
+                        className={inputStyles}
+                        placeholder="Project Portfolio Web Platform"
+                        value={formData.title}
+                        onChange={(event) => updateField("title", event.target.value)}
+                        onBlur={() => handleBlur("title")}
+                      />
+                      <FieldFeedback error={errors.title} helper="Use the name you want people to remember." />
+                    </FieldShell>
+
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      <FieldShell label="Project Type" required icon={FileText}>
+                        <Select value={formData.type} onValueChange={(value) => updateField("type", value)}>
+                          <SelectTrigger className={selectTriggerStyles}>
+                            <SelectValue placeholder="Choose project type" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-[16px] border-[#C6D8E2] bg-white text-[#183247] shadow-[0_18px_40px_rgba(53,88,114,0.16)]">
+                            <SelectItem value="course">Course Project</SelectItem>
+                            <SelectItem value="thesis">Bachelor Thesis</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FieldShell>
+
+                      {formData.type === "course" ? (
+                        <FieldShell label="Course" required icon={FileText}>
+                          <Select value={formData.courseName} onValueChange={(value) => updateField("courseName", value)}>
+                            <SelectTrigger className={selectTriggerStyles}>
+                              <SelectValue placeholder="Choose course" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-[16px] border-[#C6D8E2] bg-white text-[#183247] shadow-[0_18px_40px_rgba(53,88,114,0.16)]">
+                              {availableCourses.map((course) => (
+                                <SelectItem key={course} value={course}>{course}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FieldFeedback error={errors.courseName} />
+                        </FieldShell>
+                      ) : (
+                        <div className="rounded-[15px] border border-[#C5D6E0] bg-[#F4F8FA] px-4 py-3">
+                          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#7894A6]">Project type</p>
+                          <p className="mt-1 text-[13px] font-black text-[#183247]">Bachelor Project</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <Label className="flex items-center gap-2 text-sm font-black text-[#183247]">
+                          <FileText className="size-4 text-[#557C97]" />
+                          Description <span className="text-[#C6A64D]">*</span>
+                        </Label>
+                        <span className="text-xs font-bold text-[#81919C]">{formData.description.length}/600</span>
+                      </div>
+                      <textarea
+                        className="min-h-[190px] w-full resize-none rounded-[15px] border border-[#C5D6E0] bg-[#F4F8FA] px-4 py-4 text-[15px] font-semibold leading-7 text-[#183247] outline-none placeholder:text-[#8798A4] transition hover:border-[#90AFC0] focus:border-[#4F7EA4] focus:bg-white focus:ring-4 focus:ring-[#7AAACE]/14"
+                        maxLength={600}
+                        placeholder="What did you build, why does it matter, and what was your contribution?"
+                        value={formData.description}
+                        onChange={(event) => updateField("description", event.target.value)}
+                        onBlur={() => handleBlur("description")}
+                      />
+                      <FieldFeedback error={errors.description} helper="Write for someone seeing the project for the first time." />
+                    </div>
+
+                    <div className="border-t border-[#DCE7ED] pt-6">
+                      <div className="mb-4">
+                        <h3 className="text-[17px] font-black text-[#183247]">Technologies</h3>
+                        <p className="mt-1 text-[12px] font-semibold text-[#7C8E99]">Keep the stack focused on what actually defines the project.</p>
+                      </div>
+                      <ChipInput
+                        value={formData.tagInput}
+                        items={formData.tags}
+                        placeholder="React, Node.js, MongoDB"
+                        emptyText="Type a technology and press Enter"
+                        onValueChange={(value) => {
+                          setFormData((current) => ({ ...current, tagInput: value }));
+                          if (tagFeedback.message) setTagFeedback({ type: "", message: "" });
+                        }}
+                        onAdd={addTag}
+                        onRemove={removeTag}
+                        feedback={tagFeedback}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {activeSection === "media" ? (
+                <div className="px-6 py-7 sm:px-9">
+                  <SectionHeader
+                    title="Media & links"
+                    description="Give visitors something concrete to inspect — your repository, demo, or thesis files."
+                    icon={Video}
+                  />
+
+                  <div className="mt-7 space-y-7">
+                    <FieldShell label="GitHub Repository" icon={Github}>
+                      <Input
+                        className={inputStyles}
+                        placeholder="https://github.com/your-project"
+                        value={formData.github}
+                        onChange={(event) => updateField("github", event.target.value)}
+                        onBlur={() => handleBlur("github")}
+                      />
+                      <FieldFeedback error={errors.github} helper="Optional. Link the source when it can be shared." />
+                    </FieldShell>
+
+                    <ProjectVideoUploadField
+                      file={formData.video}
+                      onChange={handleVideoChange}
+                      error={errors.video}
+                    />
+
+                    {formData.type === "thesis" ? (
+                      <div className="border-t border-[#DCE7ED] pt-6">
+                        <FileDropField
+                          label="Thesis Drafts"
+                          required
+                          accept="application/pdf"
+                          icon={FileText}
+                          onChange={handleThesisUpload}
+                          error={errors.thesisDrafts}
+                          helper="Upload one or more thesis drafts."
+                        />
+
+                        {formData.thesisDrafts.length ? (
+                          <div className="mt-4 divide-y divide-[#DCE7ED] border-y border-[#DCE7ED]">
+                            {formData.thesisDrafts.map((draft) => (
+                              <div key={draft.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="min-w-0">
+                                  <p className="truncate text-[13px] font-black text-[#183247]">{draft.file.name}</p>
+                                  <p className="mt-1 text-[11px] font-semibold text-[#7B8D99]">{draft.isFinal ? "Final draft · Public" : "Private draft"}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {!draft.isFinal ? (
+                                    <button type="button" onClick={() => setFinalDraft(draft.id)} className="rounded-xl border border-[#355872]/14 bg-white px-3 py-2 text-[11px] font-black text-[#355872]">Set final</button>
+                                  ) : null}
+                                  <button type="button" onClick={() => removeDraft(draft.id)} className="rounded-xl px-3 py-2 text-[11px] font-black text-red-500 hover:bg-red-50">Remove</button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
+              {activeSection === "team" ? (
+                <div className="px-6 py-7 sm:px-9">
+                  <SectionHeader
+                    title="Team"
+                    description="Invite the people who belong on this project."
+                    icon={Users}
+                  />
+
+                  <div className="mt-7 divide-y divide-[#DCE7ED]">
+                    {formData.type !== "thesis" ? (
+                      <TeamEditorGroup
+                        title="Collaborators"
+                        description="Invite students who worked with you on this project."
+                        items={selectedCollaborators}
+                        emptyText="No collaborators invited yet."
+                        buttonLabel="Invite collaborator"
+                        onInvite={() => openInviteDialog("collab")}
+                        onRemove={removeCollaborator}
+                        feedback={inviteFeedback.collab}
+                      />
+                    ) : null}
+
+                    <TeamEditorGroup
+                      title="Course instructors"
+                      description="Invite instructors to review or supervise the project."
+                      items={selectedInstructors}
+                      emptyText="No instructors invited yet."
+                      buttonLabel="Invite instructor"
+                      onInvite={() => openInviteDialog("instructor")}
+                      onRemove={removeInstructor}
+                      feedback={inviteFeedback.instructor}
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </section>
+
+          </div>
         </form>
       </main>
     </DashboardLayout>

@@ -23,9 +23,13 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function ExploreProjects({showReport = false,}) {
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   /* STATE */
   const getDisplayCourse = (project) => {
@@ -256,6 +260,22 @@ const instructorOptions = [
   return 0;
 });
 
+  const openProject = (project) => {
+    if (!project?.id) return;
+
+    const projectIds = filteredProjects.map((item) => String(item.id));
+
+    navigate(`/project?projectId=${encodeURIComponent(project.id)}`, {
+      state: {
+        projectFlow: {
+          originPath: `${location.pathname}${location.search}`,
+          originLabel: "Explore Projects",
+          projectIds,
+        },
+      },
+    });
+  };
+
   return (
     <DashboardLayout>
 
@@ -448,6 +468,7 @@ const instructorOptions = [
           }}
             view={view}
             toggleFavorite={toggleFavorite}
+            onOpenProject={openProject}
             showReport={showReport}
            onReport={(project) => {
           setSelectedProject(project);

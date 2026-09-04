@@ -85,11 +85,6 @@ export default function DiscoverPage() {
     />
   </div>
 
-  {/* RECOMMENDED */}
-  <RecommendedProjectsSection
-    projects={recommendedProjects}
-  />
-
   {/* INSIGHTS */}
   
 

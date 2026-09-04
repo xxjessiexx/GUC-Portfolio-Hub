@@ -21,12 +21,21 @@ import {
   User,
 } from "lucide-react";
 
-import { easeOutExpo, tapScale } from "@/lib/motionVariants";
+import {
+  easeOutExpo,
+  tapScale,
+} from "@/lib/motionVariants";
 
 export default function Register({ addUser }) {
   const [role, setRole] = useState("student");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [
+    showConfirmPassword,
+    setShowConfirmPassword,
+  ] = useState(false);
 
   const navigate = useNavigate();
 
@@ -39,8 +48,9 @@ export default function Register({ addUser }) {
     "Dentistry",
   ];
 
-  const semesterOptions = Array.from({ length: 10 }, (_, i) =>
-    String(i + 1)
+  const semesterOptions = Array.from(
+    { length: 10 },
+    (_, index) => String(index + 1)
   );
 
   const [form, setForm] = useState({
@@ -59,13 +69,13 @@ export default function Register({ addUser }) {
   const [errors, setErrors] = useState({});
 
   const updateField = (field, value) => {
-    setForm((prev) => ({
-      ...prev,
+    setForm((previous) => ({
+      ...previous,
       [field]: value,
     }));
 
-    setErrors((prev) => ({
-      ...prev,
+    setErrors((previous) => ({
+      ...previous,
       [field]: "",
     }));
   };
@@ -74,61 +84,81 @@ export default function Register({ addUser }) {
     const newErrors = {};
 
     if (!form.fullName.trim()) {
-      newErrors.fullName = "Full name is required";
+      newErrors.fullName =
+        "Full name is required";
     }
 
     if (!form.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email =
+        "Email is required";
     } else if (
       role === "student" &&
-      !form.email.endsWith("@student.guc.edu.eg")
+      !form.email.endsWith(
+        "@student.guc.edu.eg"
+      )
     ) {
-      newErrors.email = "Please use your GUC student email address";
+      newErrors.email =
+        "Please use your GUC student email address";
     } else if (
       role === "instructor" &&
       !form.email.endsWith("@guc.edu.eg")
     ) {
-      newErrors.email = "Please use your GUC instructor email address";
+      newErrors.email =
+        "Please use your GUC instructor email address";
     } else if (
       role === "employer" &&
       !/\S+@\S+\.\S+/.test(form.email)
     ) {
-      newErrors.email = "Please enter a valid company email";
+      newErrors.email =
+        "Please enter a valid company email";
     }
 
     if (!form.password.trim()) {
-      newErrors.password = "Password is required";
-    } else if (form.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password =
+        "Password is required";
+    } else if (
+      form.password.length < 6
+    ) {
+      newErrors.password =
+        "Password must be at least 6 characters";
     }
 
-    if (form.confirmPassword !== form.password) {
-      newErrors.confirmPassword = "Passwords do not match";
+    if (
+      form.confirmPassword !==
+      form.password
+    ) {
+      newErrors.confirmPassword =
+        "Passwords do not match";
     }
 
     if (role === "student") {
       if (!form.faculty.trim()) {
-        newErrors.faculty = "Faculty is required";
+        newErrors.faculty =
+          "Faculty is required";
       }
 
       if (!form.semester.trim()) {
-        newErrors.semester = "Semester is required";
+        newErrors.semester =
+          "Semester is required";
       }
     }
 
     if (role === "instructor") {
       if (!form.department.trim()) {
-        newErrors.department = "Department is required";
+        newErrors.department =
+          "Department is required";
       }
     }
 
     if (role === "employer") {
       if (!form.companyName.trim()) {
-        newErrors.companyName = "Company name is required";
+        newErrors.companyName =
+          "Company name is required";
       }
 
       if (!form.industry.trim()) {
-        newErrors.industry = "Industry is required";
+        newErrors.industry =
+          "Industry is required";
       }
 
       if (!form.verificationDocument) {
@@ -139,7 +169,9 @@ export default function Register({ addUser }) {
 
     setErrors(newErrors);
 
-    return Object.keys(newErrors).length === 0;
+    return (
+      Object.keys(newErrors).length === 0
+    );
   };
 
   const handleSubmit = (event) => {
@@ -149,7 +181,9 @@ export default function Register({ addUser }) {
 
     const newUser = {
       name: form.fullName.trim(),
-      email: form.email.trim().toLowerCase(),
+      email: form.email
+        .trim()
+        .toLowerCase(),
       password: form.password,
       role,
       faculty: form.faculty || "",
@@ -163,7 +197,9 @@ export default function Register({ addUser }) {
     };
 
     try {
-      if (typeof addUser !== "function") {
+      if (
+        typeof addUser !== "function"
+      ) {
         throw new Error(
           "Registration is not connected correctly. Please check the /register route in App.jsx."
         );
@@ -178,11 +214,15 @@ export default function Register({ addUser }) {
         {
           className:
             "!border-white/10 !bg-[linear-gradient(135deg,var(--dark),var(--primary))] !text-white !shadow-[0_18px_55px_rgba(44,57,71,0.22)]",
-          descriptionClassName: "!text-white/70",
+          descriptionClassName:
+            "!text-white/70",
         }
       );
 
-      sessionStorage.setItem("lastRegisteredRole", role);
+      sessionStorage.setItem(
+        "lastRegisteredRole",
+        role
+      );
 
       navigate("/login", {
         replace: true,
@@ -194,7 +234,8 @@ export default function Register({ addUser }) {
         {
           className:
             "!border-white/10 !bg-[linear-gradient(135deg,var(--dark),var(--primary))] !text-white !shadow-[0_18px_55px_rgba(44,57,71,0.22)]",
-          descriptionClassName: "!text-white/70",
+          descriptionClassName:
+            "!text-white/70",
         }
       );
     }
@@ -203,24 +244,21 @@ export default function Register({ addUser }) {
   const roleOptions = [
     {
       id: "student",
-      title: "Student",
+      label: "Student",
+      subtitle: "Academic work",
       icon: GraduationCap,
-      description:
-        "Create a portfolio and showcase your projects.",
     },
     {
       id: "instructor",
-      title: "Instructor",
+      label: "Instructor",
+      subtitle: "Feedback & review",
       icon: User,
-      description:
-        "Review projects and manage academic feedback.",
     },
     {
       id: "employer",
-      title: "Employer",
+      label: "Employer",
+      subtitle: "Talent & internships",
       icon: Briefcase,
-      description:
-        "Discover student talent and post internships.",
     },
   ];
 
@@ -233,298 +271,634 @@ export default function Register({ addUser }) {
 
   return (
     <AuthLayout
-      maxWidth="max-w-[760px]"
-      contentClassName="px-12 py-10 max-sm:px-6"
+      maxWidth="max-w-[740px]"
+      contentClassName="
+        px-10
+        py-5
+        max-sm:px-6
+        max-sm:py-6
+      "
     >
+      {/* ================= HEADER ================= */}
+
       <AuthHeader
+        compact
         badge="Join GUC Portfolio Hub"
         title="Create your"
         highlightedWord="Account"
-        description="Choose your role to personalize your registration flow."
+        description="Set up your account and start building your portfolio."
       />
 
-      {/* ================= ROLE SELECTION ================= */}
-      <div className="mb-8 grid gap-4 md:grid-cols-3">
-        {roleOptions.map((option) => {
-          const Icon = option.icon;
-          const isSelected = role === option.id;
+      {/* ================= ROLE SELECTOR ================= */}
 
-          return (
-            <motion.button
-              key={option.id}
-              type="button"
-              whileHover={{ y: -4 }}
-              whileTap={tapScale}
-              transition={{
-                duration: 0.22,
-                ease: easeOutExpo,
-              }}
-              onClick={() => {
-                setRole(option.id);
-                setErrors({});
-              }}
-              className={`rounded-3xl border p-5 text-left transition hover:-translate-y-1 ${
-                isSelected
-                  ? "border-[color:var(--gold)] bg-[color:var(--accent)]/25 shadow-[0_18px_40px_rgba(53,88,114,0.16)]"
-                  : "border-white/80 bg-white/55 hover:border-[color:var(--secondary)]/50"
-              }`}
-            >
-              <Icon className="mb-4 h-7 w-7 text-[color:var(--primary)]" />
+      <div className="mb-5">
+        <div
+          className="
+            grid
+            grid-cols-3
+            border-b
+            border-[#C9DCE8]
+          "
+        >
+          {roleOptions.map((option) => {
+            const Icon = option.icon;
+            const selected =
+              role === option.id;
 
-              <h3 className="font-black text-[color:var(--ink)]">
-                {option.title}
-              </h3>
+            return (
+              <motion.button
+                key={option.id}
+                type="button"
+                whileTap={tapScale}
+                transition={{
+                  duration: 0.18,
+                  ease: easeOutExpo,
+                }}
+                onClick={() => {
+                  setRole(option.id);
+                  setErrors({});
+                }}
+                className="
+                  group
+                  relative
+                  flex
+                  items-center
+                  justify-center
+                  gap-3
+                  px-3
+                  pb-3.5
+                  pt-1
+                  text-left
+                "
+              >
+                <div
+                  className={`
+                    grid
+                    h-9
+                    w-9
+                    shrink-0
+                    place-items-center
+                    rounded-full
+                    transition-all
+                    duration-200
 
-              <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
-                {option.description}
-              </p>
-            </motion.button>
-          );
-        })}
+                    ${
+                      selected
+                        ? `
+                          bg-[#29465D]
+                          text-white
+                          shadow-[0_7px_18px_rgba(44,57,71,0.18)]
+                        `
+                        : `
+                          bg-[#EDF6FB]
+                          text-[#72A0BF]
+                          group-hover:bg-[#E5F2F9]
+                          group-hover:text-[#355872]
+                        `
+                    }
+                  `}
+                >
+                  <Icon
+                    className="
+                      h-[15px]
+                      w-[15px]
+                    "
+                  />
+                </div>
+
+                <div>
+                  <p
+                    className={`
+                      text-[12px]
+                      font-black
+                      transition-colors
+
+                      ${
+                        selected
+                          ? "text-[#102735]"
+                          : "text-[#738594] group-hover:text-[#355872]"
+                      }
+                    `}
+                  >
+                    {option.label}
+                  </p>
+
+                  <p
+                    className={`
+                      mt-[2px]
+                      text-[8px]
+                      font-semibold
+                      transition-colors
+
+                      ${
+                        selected
+                          ? "text-[#6594B6]"
+                          : "text-[#97A9B5]"
+                      }
+                    `}
+                  >
+                    {option.subtitle}
+                  </p>
+                </div>
+
+                {selected && (
+                  <motion.span
+                    layoutId="register-role"
+                    transition={{
+                      duration: 0.23,
+                      ease: easeOutExpo,
+                    }}
+                    className="
+                      absolute
+                      -bottom-[1px]
+                      left-[17%]
+                      right-[17%]
+                      h-[3px]
+                      rounded-t-full
+                      bg-[linear-gradient(90deg,#E6C77B_0%,#79B0E3_100%)]
+                    "
+                  />
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
 
+      {/* ================= FORM ================= */}
+
       <form
-        className="space-y-6"
+        className="space-y-4"
         onSubmit={handleSubmit}
       >
-        {/* ================= NAME + EMAIL ================= */}
-        <div className="grid gap-5 md:grid-cols-2">
-          <AuthInput
-            label="Full Name"
-            required
-            icon={User}
-            value={form.fullName}
-            error={errors.fullName}
-            placeholder="Your full name"
-            onChange={(e) =>
-              updateField("fullName", e.target.value)
-            }
-          />
+        {/* ACCOUNT DETAILS */}
 
-          <AuthInput
-            label="Email"
-            icon={Mail}
-            type="email"
-            value={form.email}
-            required
-            error={errors.email}
-            placeholder={emailPlaceholder}
-            onChange={(e) =>
-              updateField("email", e.target.value)
-            }
-          />
-        </div>
+        <section>
+          <p
+            className="
+              mb-2.5
+              text-[9px]
+              font-black
+              uppercase
+              tracking-[0.17em]
+              text-[#6689A4]
+            "
+          >
+            Account details
+          </p>
 
-        {/* ================= PASSWORDS ================= */}
-        <div className="grid gap-5 md:grid-cols-2">
-          <AuthInput
-            label="Password"
-            icon={Lock}
-            type="password"
-            enableToggle
-            showPassword={showPassword}
-            setShowPassword={setShowPassword}
-            tapScale={tapScale}
-            required
-            easeOutExpo={easeOutExpo}
-            value={form.password}
-            error={errors.password}
-            placeholder="••••••••"
-            onChange={(e) =>
-              updateField("password", e.target.value)
-            }
-          />
-
-          <AuthInput
-            label="Confirm Password"
-            icon={Lock}
-            type="password"
-            enableToggle
-            required
-            showPassword={showConfirmPassword}
-            setShowPassword={setShowConfirmPassword}
-            tapScale={tapScale}
-            easeOutExpo={easeOutExpo}
-            value={form.confirmPassword}
-            error={errors.confirmPassword}
-            placeholder="••••••••"
-            onChange={(e) =>
-              updateField("confirmPassword", e.target.value)
-            }
-          />
-        </div>
-
-        {/* ================= STUDENT FIELDS ================= */}
-        {role === "student" && (
-          <div className="grid gap-5 md:grid-cols-2">
-            {/* FACULTY */}
-            <div>
-              <label className="mb-2 block text-sm font-black text-[color:var(--dark)]">
-                Faculty{" "}
-                <span className="text-red-500">*</span>
-              </label>
-
-              <AppSelect
-                value={form.faculty}
-                onValueChange={(value) =>
-                  updateField("faculty", value)
+          <div className="space-y-3.5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <AuthInput
+                label="Full Name"
+                required
+                icon={User}
+                value={form.fullName}
+                error={errors.fullName}
+                placeholder="Your full name"
+                onChange={(event) =>
+                  updateField(
+                    "fullName",
+                    event.target.value
+                  )
                 }
-                options={facultyOptions}
-                placeholder="Select faculty"
               />
 
-              {errors.faculty && (
-                <p className="mt-2 text-sm font-semibold text-red-500">
-                  {errors.faculty}
-                </p>
-              )}
+              <AuthInput
+                label="Email"
+                icon={Mail}
+                type="email"
+                value={form.email}
+                required
+                error={errors.email}
+                placeholder={
+                  emailPlaceholder
+                }
+                onChange={(event) =>
+                  updateField(
+                    "email",
+                    event.target.value
+                  )
+                }
+              />
             </div>
 
-            {/* SEMESTER */}
-            <div>
-              <label className="mb-2 block text-sm font-black text-[color:var(--dark)]">
-                Semester{" "}
-                <span className="text-red-500">*</span>
-              </label>
-
-              <AppSelect
-                value={form.semester}
-                onValueChange={(value) =>
-                  updateField("semester", value)
+            <div className="grid gap-4 md:grid-cols-2">
+              <AuthInput
+                label="Password"
+                icon={Lock}
+                type="password"
+                enableToggle
+                showPassword={showPassword}
+                setShowPassword={
+                  setShowPassword
                 }
-                options={semesterOptions}
-                placeholder="Select semester"
+                tapScale={tapScale}
+                required
+                easeOutExpo={easeOutExpo}
+                value={form.password}
+                error={errors.password}
+                placeholder="••••••••"
+                onChange={(event) =>
+                  updateField(
+                    "password",
+                    event.target.value
+                  )
+                }
               />
 
-              {errors.semester && (
-                <p className="mt-2 text-sm font-semibold text-red-500">
-                  {errors.semester}
-                </p>
-              )}
+              <AuthInput
+                label="Confirm Password"
+                icon={Lock}
+                type="password"
+                enableToggle
+                required
+                showPassword={
+                  showConfirmPassword
+                }
+                setShowPassword={
+                  setShowConfirmPassword
+                }
+                tapScale={tapScale}
+                easeOutExpo={
+                  easeOutExpo
+                }
+                value={
+                  form.confirmPassword
+                }
+                error={
+                  errors.confirmPassword
+                }
+                placeholder="••••••••"
+                onChange={(event) =>
+                  updateField(
+                    "confirmPassword",
+                    event.target.value
+                  )
+                }
+              />
             </div>
           </div>
-        )}
+        </section>
 
-        {/* ================= INSTRUCTOR FIELD ================= */}
-        {role === "instructor" && (
-          <AuthInput
-            label="Department"
-            icon={Building2}
-            value={form.department}
-            error={errors.department}
-            placeholder="Software Engineering"
-            onChange={(e) =>
-              updateField("department", e.target.value)
-            }
-          />
-        )}
+        {/* ================= STUDENT ================= */}
 
-        {/* ================= EMPLOYER FIELDS ================= */}
-        {role === "employer" && (
-          <>
-            <div className="grid gap-5 md:grid-cols-2">
-              <AuthInput
-                label="Company Name"
-                icon={Building2}
-                value={form.companyName}
-                error={errors.companyName}
-                placeholder="TechVista"
-                onChange={(e) =>
-                  updateField(
-                    "companyName",
-                    e.target.value
-                  )
-                }
-              />
+        {role === "student" && (
+          <motion.section
+            key="student-fields"
+            initial={{
+              opacity: 0,
+              y: 4,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.2,
+            }}
+          >
+            <p
+              className="
+                mb-2.5
+                text-[9px]
+                font-black
+                uppercase
+                tracking-[0.17em]
+                text-[#6689A4]
+              "
+            >
+              GUC details
+            </p>
 
-              <AuthInput
-                label="Industry"
-                icon={Briefcase}
-                value={form.industry}
-                error={errors.industry}
-                placeholder="Software / FinTech / AI..."
-                onChange={(e) =>
-                  updateField(
-                    "industry",
-                    e.target.value
-                  )
-                }
-              />
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label
+                  className="
+                    mb-1.5
+                    block
+                    text-sm
+                    font-black
+                    text-[color:var(--dark)]
+                  "
+                >
+                  Faculty{" "}
+                  <span className="text-red-500">
+                    *
+                  </span>
+                </label>
+
+                <AppSelect
+                  value={form.faculty}
+                  onValueChange={(value) =>
+                    updateField(
+                      "faculty",
+                      value
+                    )
+                  }
+                  options={facultyOptions}
+                  placeholder="Select faculty"
+                />
+
+                {errors.faculty && (
+                  <p
+                    className="
+                      mt-1.5
+                      text-xs
+                      font-semibold
+                      text-red-500
+                    "
+                  >
+                    {errors.faculty}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  className="
+                    mb-1.5
+                    block
+                    text-sm
+                    font-black
+                    text-[color:var(--dark)]
+                  "
+                >
+                  Semester{" "}
+                  <span className="text-red-500">
+                    *
+                  </span>
+                </label>
+
+                <AppSelect
+                  value={form.semester}
+                  onValueChange={(value) =>
+                    updateField(
+                      "semester",
+                      value
+                    )
+                  }
+                  options={
+                    semesterOptions
+                  }
+                  placeholder="Select semester"
+                />
+
+                {errors.semester && (
+                  <p
+                    className="
+                      mt-1.5
+                      text-xs
+                      font-semibold
+                      text-red-500
+                    "
+                  >
+                    {errors.semester}
+                  </p>
+                )}
+              </div>
             </div>
-
-<div>
-  <label className="mb-2 block text-sm font-black text-[color:var(--dark)]">
-    Company Verification Document
-  </label>
-
-  <label
-  htmlFor="verificationDocument"
-  className="
-    group
-    flex h-[60px] w-full cursor-pointer items-center
-    rounded-2xl border border-[color:var(--border-blue)]
-    bg-white/70 px-5
-    transition
-    hover:border-[color:var(--secondary)]/60
-  "
->
-    <Briefcase className="mr-5 h-5 w-5 shrink-0 text-[color:var(--primary)]" />
-
-    <span
-  className="
-    flex h-9 shrink-0 items-center justify-center
-    rounded-full
-    bg-gray-100
-    px-5
-    font-bold
-    text-[color:var(--primary)]
-    transition-colors
-    group-hover:bg-gray-200
-  "
->
-  Choose File
-</span>
-
-    <span
-      className="
-        ml-4 truncate
-        text-sm font-medium
-        text-[color:var(--muted)]
-      "
-    >
-      {form.verificationDocument || "No file chosen"}
-    </span>
-
-    <input
-      id="verificationDocument"
-      type="file"
-      className="hidden"
-      onChange={(e) =>
-        updateField(
-          "verificationDocument",
-          e.target.files?.[0]?.name || ""
-        )
-      }
-    />
-  </label>
-
-  {errors.verificationDocument && (
-    <p className="mt-2 text-sm font-semibold text-red-500">
-      {errors.verificationDocument}
-    </p>
-  )}
-</div>
-          </>
+          </motion.section>
         )}
 
-        <AuthSubmitButton>
-          Create Account
-        </AuthSubmitButton>
+        {/* ================= INSTRUCTOR ================= */}
+
+        {role === "instructor" && (
+          <motion.section
+            key="instructor-fields"
+            initial={{
+              opacity: 0,
+              y: 4,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.2,
+            }}
+          >
+            <p
+              className="
+                mb-2.5
+                text-[9px]
+                font-black
+                uppercase
+                tracking-[0.17em]
+                text-[#6689A4]
+              "
+            >
+              GUC details
+            </p>
+
+            <AuthInput
+              label="Department"
+              icon={Building2}
+              value={form.department}
+              error={errors.department}
+              placeholder="Software Engineering"
+              onChange={(event) =>
+                updateField(
+                  "department",
+                  event.target.value
+                )
+              }
+            />
+          </motion.section>
+        )}
+
+        {/* ================= EMPLOYER ================= */}
+
+        {role === "employer" && (
+          <motion.section
+            key="employer-fields"
+            initial={{
+              opacity: 0,
+              y: 4,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.2,
+            }}
+          >
+            <p
+              className="
+                mb-2.5
+                text-[9px]
+                font-black
+                uppercase
+                tracking-[0.17em]
+                text-[#6689A4]
+              "
+            >
+              Company details
+            </p>
+
+            <div className="space-y-3.5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <AuthInput
+                  label="Company Name"
+                  icon={Building2}
+                  value={
+                    form.companyName
+                  }
+                  error={
+                    errors.companyName
+                  }
+                  placeholder="TechVista"
+                  onChange={(event) =>
+                    updateField(
+                      "companyName",
+                      event.target.value
+                    )
+                  }
+                />
+
+                <AuthInput
+                  label="Industry"
+                  icon={Briefcase}
+                  value={
+                    form.industry
+                  }
+                  error={
+                    errors.industry
+                  }
+                  placeholder="Software / FinTech / AI..."
+                  onChange={(event) =>
+                    updateField(
+                      "industry",
+                      event.target.value
+                    )
+                  }
+                />
+              </div>
+
+              <div>
+                <label
+                  className="
+                    mb-1.5
+                    block
+                    text-sm
+                    font-black
+                    text-[color:var(--dark)]
+                  "
+                >
+                  Company Verification
+                  Document
+                </label>
+
+                <label
+                  htmlFor="verificationDocument"
+                  className="
+                    group
+                    flex
+                    h-14
+                    w-full
+                    cursor-pointer
+                    items-center
+                    rounded-2xl
+                    border
+                    border-[color:var(--border-blue)]
+                    bg-white/70
+                    px-4
+                    transition
+                    hover:border-[color:var(--secondary)]/60
+                  "
+                >
+                  <Briefcase
+                    className="
+                      mr-4
+                      h-[18px]
+                      w-[18px]
+                      shrink-0
+                      text-[color:var(--primary)]
+                    "
+                  />
+
+                  <span
+                    className="
+                      flex
+                      h-8
+                      shrink-0
+                      items-center
+                      justify-center
+                      rounded-full
+                      bg-gray-100
+                      px-4
+                      text-xs
+                      font-bold
+                      text-[color:var(--primary)]
+                      transition
+                      group-hover:bg-gray-200
+                    "
+                  >
+                    Choose File
+                  </span>
+
+                  <span
+                    className="
+                      ml-3
+                      truncate
+                      text-xs
+                      font-medium
+                      text-[color:var(--muted)]
+                    "
+                  >
+                    {form.verificationDocument ||
+                      "No file chosen"}
+                  </span>
+
+                  <input
+                    id="verificationDocument"
+                    type="file"
+                    className="hidden"
+                    onChange={(event) =>
+                      updateField(
+                        "verificationDocument",
+                        event.target.files?.[0]
+                          ?.name || ""
+                      )
+                    }
+                  />
+                </label>
+
+                {errors.verificationDocument && (
+                  <p
+                    className="
+                      mt-1.5
+                      text-xs
+                      font-semibold
+                      text-red-500
+                    "
+                  >
+                    {
+                      errors.verificationDocument
+                    }
+                  </p>
+                )}
+              </div>
+            </div>
+          </motion.section>
+        )}
+
+        {/* ================= PRIMARY ACTION ================= */}
+
+        <div className="pt-3">
+          <AuthSubmitButton compact>
+            Create Account
+          </AuthSubmitButton>
+        </div>
       </form>
 
-      <AuthDivider />
+      {/* ================= FOOTER ================= */}
+
+      <AuthDivider compact />
 
       <AuthBottomLink
+        compact
         text="Already have an account?"
         linkText="Sign In"
         to="/login"

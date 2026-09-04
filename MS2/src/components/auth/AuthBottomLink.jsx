@@ -1,21 +1,35 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 
-export default function AuthBottomLink({ text, linkText, to, backTo = "/",backLabel = "Back to home" }) {
+export default function AuthBottomLink({
+  text,
+  linkText,
+  to,
+  compact = false,
+}) {
   return (
-    <>
-      <p className="text-center text-lg font-semibold text-[color:var(--ink)]">
-        {text}
+    <p
+      className={`
+        text-center
+        font-semibold
+        text-[color:var(--ink)]
 
-        <Link
-          to={to}
-          className="ml-4 font-extrabold text-[color:var(--secondary)] hover:text-[color:var(--primary)]"
-        >
-          {linkText}
-        </Link>
-      </p>
+        ${compact ? "text-sm" : "text-lg"}
+      `}
+    >
+      {text}
 
-      
-    </>
+      <Link
+        to={to}
+        className={`
+          font-extrabold
+          text-[color:var(--secondary)]
+          hover:text-[color:var(--primary)]
+
+          ${compact ? "ml-2" : "ml-4"}
+        `}
+      >
+        {linkText}
+      </Link>
+    </p>
   );
 }

@@ -126,9 +126,11 @@ export default function PortfolioCard({
       {/* INFO */}
       <div className="mt-5">
 
-        <h3 className="text-2xl font-black text-[var(--ink)]">
+        <button
+  onClick={() => navigate(`/public-portfolio?userId=${portfolio.id}`)} className="text-2xl font-black text-[var(--ink)] hover:text-[var(--accent)]
+    transition-all ">
           {portfolio.name}
-        </h3>
+        </button>
 
         <p className="mt-1 text-[var(--muted)] font-semibold">
           {portfolio.major} • {portfolio.level}
@@ -151,23 +153,8 @@ export default function PortfolioCard({
         ))}
       </div>
 
-      {/* BUTTON */}
-      <div className="mt-auto flex justify-end pt-6">
-      <button
-  onClick={() => navigate(`/public-portfolio?userId=${portfolio.id}`)}
-  className="
-    mt-6
-    text-[var(--primary)]
-    font-bold
-    flex items-center gap-2
-    hover:text-[var(--accent)]
-    transition-all
-  "
->
-  View Portfolio
-  
-</button>
-        </div>
+      
+       
     </AppCard>
   );
 }

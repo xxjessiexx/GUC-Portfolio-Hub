@@ -1,8 +1,8 @@
 export default function ProjectPageVideo({ src }) {
   if (!src) {
     return (
-      <section className="mx-auto w-full max-w-4xl">
-        <div className="flex aspect-video w-full items-center justify-center rounded-2xl border border-dashed border-[color:var(--primary)]/20 bg-white/50 text-sm font-bold text-[var(--muted)]">
+      <section className="w-full">
+        <div className="flex aspect-video w-full items-center justify-center rounded-[22px] border border-dashed border-[#355872]/18 bg-[#F4F8FA] px-6 text-center text-sm font-bold text-[#7890A0]">
           No demo video added yet.
         </div>
       </section>
@@ -10,13 +10,14 @@ export default function ProjectPageVideo({ src }) {
   }
 
   return (
-    <section className="mx-auto w-full max-w-4xl">
+    <section className="w-full">
       <video
+        src={src}
         controls
-        className="aspect-video w-full rounded-2xl border border-[color:var(--primary)]/10 bg-black object-contain shadow-md"
-      >
-        <source src={src} type="video/mp4" />
-      </video>
+        preload="metadata"
+        playsInline
+        className="aspect-video w-full rounded-[22px] border border-[#355872]/10 bg-[#101820] object-contain shadow-[0_18px_42px_rgba(38,72,95,0.16)]"
+      />
     </section>
   );
 }

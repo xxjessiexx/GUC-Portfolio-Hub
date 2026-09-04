@@ -15,68 +15,56 @@ export default function ExploreProjectCard({
   project,
   view,
   toggleFavorite,
+  onOpenProject,
   showReport = false,
   onReport,
 }) {
   const navigate = useNavigate();
 
+  const openProject = () => {
+    if (typeof onOpenProject === "function") {
+      onOpenProject(project);
+      return;
+    }
+
+    navigate(`/project?projectId=${encodeURIComponent(project.id)}`);
+  };
+
   return (
     <AppCard
       className={`
-  overflow-hidden
-  rounded-3xl
-
-  bg-[var(--card-bg)]
-  border border-[var(--card-border)]
-
-  shadow-[var(--shadow-card)]
-  hover:shadow-[var(--shadow-lifted)]
-
-  backdrop-blur-md
-
-  transition-all
-  duration-300
-
-  hover:-translate-y-1
-  hover:border-[var(--primary)]
-
-  ${
-    view === "grid"
-      ? "max-w-[320px]"
-      : "w-full flex flex-row h-[220px]"
-  }
-`}
+        overflow-hidden
+        rounded-3xl
+        bg-[var(--card-bg)]
+        border border-[var(--card-border)]
+        shadow-[var(--shadow-card)]
+        hover:shadow-[var(--shadow-lifted)]
+        backdrop-blur-md
+        transition-all
+        duration-300
+        hover:-translate-y-1
+        hover:border-[var(--primary)]
+        ${view === "grid" ? "max-w-[320px]" : "w-full flex flex-row h-[220px]"}
+      `}
     >
-      {/* IMAGE */}
       <div className="relative">
         <img
           src={project.image}
           alt={project.title}
-          className={`
-            object-cover
-            ${
-              view === "grid"
-                ? "h-44 w-full"
-                : "h-full w-[280px]"
-            }
-          `}
+          className={`object-cover ${
+            view === "grid" ? "h-44 w-full" : "h-full w-[280px]"
+          }`}
         />
 
-        {/* HEART / REPORT */}
         <div className="absolute top-3 right-4 z-10">
           {showReport ? (
             <button
-              onClick={() => onReport?.(project)}
-              className="
-                w-11 h-11
-                rounded-full
-                bg-[color:var(--card-bg)]
-                border border-[color:var(--card-border)]
-                shadow-sm
-                flex items-center justify-center
-                hover:bg-[#FFF3EE]
-                transition
-              "
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onReport?.(project);
+              }}
+              className="w-11 h-11 rounded-full bg-[color:var(--card-bg)] border border-[color:var(--card-border)] shadow-sm flex items-center justify-center hover:bg-[#FFF3EE] transition"
             >
               <Flag
                 size={18}
@@ -96,49 +84,29 @@ export default function ExploreProjectCard({
         </div>
       </div>
 
-      {/* CONTENT */}
       <div className="p-5 flex-1">
         <div className="flex items-start justify-between">
           <div>
-            {/* TITLE */}
             <h3
-              onClick={() =>
-                navigate(`/project?projectId=${project.id}`)
-              }
-              className="
-                text-lg font-black text-[color:var(--ink)]
-                cursor-pointer hover:text-[color:var(--accent)]
-                transition
-              "
+              onClick={openProject}
+              className="text-lg font-black text-[color:var(--ink)] cursor-pointer hover:text-[color:var(--accent)] transition"
             >
               {project.title}
             </h3>
 
             <p className="text-sm text-gray-500 font-medium mt-1">
-              {String(project.type || "")
-                .toLowerCase()
-                .includes("bachelor") ||
-              String(project.type || "")
-                .toLowerCase()
-                .includes("thesis")
+              {String(project.type || "").toLowerCase().includes("bachelor") ||
+              String(project.type || "").toLowerCase().includes("thesis")
                 ? "Bachelor Project"
-                : (
-                    project.course ||
-                    project.courseName ||
-                    project.courseCode
-                  )}
+                : project.course || project.courseName || project.courseCode}
             </p>
           </div>
 
-          <button>
-            <MoreVertical
-              size={18}
-              className="text-[color:var(--muted)]"
-            />
+          <button type="button">
+            <MoreVertical size={18} className="text-[color:var(--muted)]" />
           </button>
         </div>
 
-        {/* INFO */}
         <div className="mt-4 space-y-3 text-sm text-[color:var(--muted)]">
           <div className="flex items-center gap-2">
             <Users size={15} />
@@ -147,10 +115,7 @@ export default function ExploreProjectCard({
 
           <div className="flex items-center gap-2">
             <Users size={16} />
-
-            <span className="text-sm font-medium">
-              {project.students} Students
-            </span>
+            <span className="text-sm font-medium">{project.students} Students</span>
           </div>
 
           <div className="flex items-center justify-between">
@@ -166,16 +131,11 @@ export default function ExploreProjectCard({
           </div>
         </div>
 
-        {/* TAGS */}
-        {/* TAGS */}
-<div className="mt-2 flex flex-wrap gap-2">
-  {project.tags.map((tag) => (
-    <CourseBadge
-      key={tag}
-      course={tag}
-    />
-  ))}
-</div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {(project.tags || []).map((tag) => (
+            <CourseBadge key={tag} course={tag} />
+          ))}
+        </div>
       </div>
     </AppCard>
   );

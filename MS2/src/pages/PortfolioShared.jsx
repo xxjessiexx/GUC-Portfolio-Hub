@@ -1844,7 +1844,23 @@ useEffect(() => {
   };
 
   const handleOpenProject = (project) => {
-    navigate(`/project?projectId=${project.id}`);
+    const sequence = [...pinnedProjects, ...filteredProjects];
+    const projectIds = Array.from(
+      new Set(sequence.map((item) => String(item.id)))
+    );
+
+    navigate(`/project?projectId=${encodeURIComponent(project.id)}`, {
+      state: {
+        projectFlow: {
+          originPath: `${location.pathname}${location.search}`,
+          originLabel:
+            viewMode === "public"
+              ? `${portfolioProfile?.name || "Student"}'s Portfolio`
+              : "My Portfolio",
+          projectIds,
+        },
+      },
+    });
   };
 
   const handleTogglePin = (project) => {

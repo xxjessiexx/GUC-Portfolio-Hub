@@ -6,6 +6,7 @@ export default function AuthHeader({
   highlightedWord,
   description,
   showBrand = false,
+  compact = false,
 }) {
   if (showBrand) {
     return (
@@ -37,6 +38,31 @@ export default function AuthHeader({
           </p>
         </div>
       </>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div className="mb-5 text-center">
+        <div className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-[14px] border border-white/80 bg-[color:var(--accent)]/35 shadow-[0_10px_22px_rgba(53,88,114,0.14),0_0_0_4px_rgba(156,213,255,0.12)]">
+          <GraduationCap className="h-6 w-6 text-[color:var(--primary)]" />
+        </div>
+
+        <span className="mb-3 inline-flex rounded-full border border-[color:var(--accent)]/60 bg-[color:var(--accent)]/20 px-3 py-1.5 text-[11px] font-bold text-[color:var(--primary)]">
+          {badge}
+        </span>
+
+        <h1 className="text-[38px] font-black leading-none tracking-[-0.055em] text-[color:var(--ink)] max-sm:text-3xl">
+          {title}{" "}
+          <span className="relative text-[color:var(--primary)] after:absolute after:-bottom-1.5 after:left-1 after:h-[3px] after:w-full after:rounded-full after:bg-[linear-gradient(90deg,var(--gold),transparent)]">
+            {highlightedWord}
+          </span>
+        </h1>
+
+        <p className="mx-auto mt-3 max-w-[430px] text-[13px] leading-5 text-[color:var(--muted)]">
+          {description}
+        </p>
+      </div>
     );
   }
 

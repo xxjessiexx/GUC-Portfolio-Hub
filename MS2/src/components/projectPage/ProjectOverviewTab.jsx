@@ -1,27 +1,26 @@
+import { ExternalLink, UsersRound } from "lucide-react";
 import { FaGithub as Github } from "react-icons/fa";
 
-import { EmptyState } from "@/components/projectPage/ProjectPageShared";
-
-function PersonCard({ person, variant = "default" }) {
-  const isInstructor = variant === "instructor";
+function PersonRow({ person, tone = "member" }) {
+  const instructor = tone === "instructor";
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-2xl border p-3 transition hover:-translate-y-0.5 hover:shadow-sm ${
-        isInstructor ? "border-emerald-100 bg-emerald-50/70" : "bg-white/70"
+      className={`flex min-w-0 items-center gap-3 rounded-[15px] px-3.5 py-3 ${
+        instructor ? "bg-[#F2F8F5]" : "bg-[#F6F9FB]"
       }`}
     >
       <img
         src={person.img}
         alt={person.name || "User"}
-        className="h-11 w-11 shrink-0 rounded-full object-cover"
+        className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-white"
       />
 
       <div className="min-w-0">
-        <p className="truncate text-sm font-black text-[var(--ink)]">
+        <p className="truncate text-[13px] font-black text-[#173042]">
           {person.name}
         </p>
-        <p className="truncate text-xs font-semibold text-[var(--muted)]">
+        <p className="mt-0.5 truncate text-[11px] font-semibold text-[#7A8B96]">
           {person.role}
         </p>
       </div>
@@ -30,96 +29,139 @@ function PersonCard({ person, variant = "default" }) {
 }
 
 export default function ProjectOverviewTab({ project, isBachelorProject }) {
+  const technologies = project.technologies || [];
+  const team = project.team || [];
+  const instructors = project.instructors || [];
+
   return (
-    <div className="space-y-8">
-      <section className="grid gap-5 lg:grid-cols-[1.4fr_0.9fr]">
-        <div className="rounded-2xl border bg-white/60 p-5">
-          <h3 className="mb-2 text-lg font-black text-[var(--ink)]">
-            About This Project
-          </h3>
-
-          <p className="max-w-4xl text-sm leading-7 text-[var(--muted)]">
-            {project.description}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border bg-white/60 p-5">
-          <h3 className="mb-3 text-lg font-black text-[var(--ink)]">
-            Technologies
-          </h3>
-
-          <div className="flex flex-wrap gap-2">
-            {project.technologies.length > 0 ? (
-              project.technologies.map((tech) => (
-                <span
-                  key={tech}
-                  className="rounded-full bg-white px-3 py-1 text-xs font-black text-[var(--primary)] shadow-sm"
-                >
-                  {tech}
-                </span>
-              ))
-            ) : (
-              <p className="text-sm font-semibold text-[var(--muted)]">
-                No technologies added.
+    <div className="space-y-5">
+      {/* PRIMARY OVERVIEW SURFACE */}
+      <section className="overflow-hidden rounded-[26px] border border-[#CDDBE3] bg-white shadow-[0_16px_38px_rgba(53,88,114,0.08)]">
+        <div className="grid lg:grid-cols-[1.35fr_0.85fr]">
+          <div className="px-6 py-6 sm:px-7">
+            <div className="flex items-center gap-2">
+              <span className="h-[2px] w-7 rounded-full bg-[#E6C77B]" />
+              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#64879D]">
+                Project brief
               </p>
-            )}
+            </div>
+
+            <h2 className="mt-3 text-[23px] font-black tracking-[-0.025em] text-[#142C3C]">
+              About this project
+            </h2>
+
+            <p className="mt-3 max-w-3xl text-[14px] font-medium leading-7 text-[#677A87]">
+              {project.description}
+            </p>
+          </div>
+
+          <div className="border-t border-[#E0E8ED] bg-[#F7FAFC] px-6 py-6 lg:border-l lg:border-t-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#64879D]">
+              Tech stack
+            </p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {technologies.length > 0 ? (
+                technologies.map((tech) => (
+                  <span
+                    key={tech}
+                    className="rounded-full border border-[#D3E0E7] bg-white px-3 py-1.5 text-[11px] font-black text-[#355872]"
+                  >
+                    {tech}
+                  </span>
+                ))
+              ) : (
+                <p className="text-[12px] font-semibold text-[#7B8D98]">
+                  No technologies added.
+                </p>
+              )}
+            </div>
           </div>
         </div>
-      </section>
 
-      {project.github && (
-        <section className="rounded-2xl border bg-white/60 p-5">
-          <h3 className="mb-2 flex items-center gap-2 text-lg font-black text-[var(--ink)]">
-            <Github className="h-4 w-4 text-[var(--primary)]" />
-            GitHub Repository
-          </h3>
-
+        {project.github ? (
           <a
             href={project.github}
             target="_blank"
             rel="noreferrer"
-            className="break-all text-sm font-bold text-[var(--primary)] underline-offset-4 hover:underline"
+            className="group flex items-center justify-between gap-4 border-t border-[#E0E8ED] bg-[#FBFDFE] px-6 py-4 transition hover:bg-[#F3F8FA] sm:px-7"
           >
-            {project.github}
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[11px] bg-[#EAF3F8] text-[#355872]">
+                <Github className="h-4 w-4" />
+              </span>
+
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.13em] text-[#6E8DA0]">
+                  Repository
+                </p>
+                <p className="mt-0.5 truncate text-[12px] font-black text-[#355872]">
+                  {project.github}
+                </p>
+              </div>
+            </div>
+
+            <ExternalLink className="h-4 w-4 shrink-0 text-[#7394A8] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </a>
-        </section>
-      )}
+        ) : null}
+      </section>
 
-      {!isBachelorProject && (
-        <section>
-          <h3 className="mb-3 text-lg font-black text-[var(--ink)]">
-            Team Members
-          </h3>
+      {/* PEOPLE — ONE SECTION, NOT CARD SOUP */}
+      <section className="rounded-[26px] border border-[#CDDBE3] bg-white px-6 py-6 shadow-[0_14px_34px_rgba(53,88,114,0.07)] sm:px-7">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <UsersRound className="h-4 w-4 text-[#6F95AC]" />
+              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#64879D]">
+                People
+              </p>
+            </div>
+            <h2 className="mt-2 text-[21px] font-black tracking-[-0.02em] text-[#142C3C]">
+              Project team
+            </h2>
+          </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {project.team.map((member) => (
-              <PersonCard key={member.id || member.name} person={member} />
+          {!isBachelorProject ? (
+            <span className="text-[11px] font-bold text-[#8798A2]">
+              {team.length} member{team.length === 1 ? "" : "s"}
+            </span>
+          ) : null}
+        </div>
+
+        {!isBachelorProject ? (
+          <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            {team.map((member) => (
+              <PersonRow key={member.id || member.name} person={member} />
             ))}
           </div>
-        </section>
-      )}
+        ) : null}
 
-      <section>
-        <h3 className="mb-3 text-lg font-black text-[var(--ink)]">
-          Instructor{project.instructors.length === 1 ? "" : "s"}
-        </h3>
-
-        {project.instructors.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {project.instructors.map((instructor) => (
-              <PersonCard
-                key={instructor.id || instructor.name}
-                person={instructor}
-                variant="instructor"
-              />
-            ))}
+        <div className={`${!isBachelorProject ? "mt-5 border-t border-[#E2E9ED] pt-5" : "mt-4"}`}>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.13em] text-[#6B899C]">
+              Instructor{instructors.length === 1 ? "" : "s"}
+            </p>
+            <span className="text-[11px] font-bold text-[#91A0A9]">
+              {instructors.length || "None assigned"}
+            </span>
           </div>
-        ) : (
-          <EmptyState
-            title="No instructor assigned"
-            description="No course instructor has accepted this project yet."
-          />
-        )}
+
+          {instructors.length > 0 ? (
+            <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+              {instructors.map((instructor) => (
+                <PersonRow
+                  key={instructor.id || instructor.name}
+                  person={instructor}
+                  tone="instructor"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[16px] bg-[#F7FAFC] px-4 py-4 text-[12px] font-semibold text-[#748690]">
+              No course instructor has accepted this project yet.
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );
