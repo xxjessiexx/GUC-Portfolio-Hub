@@ -29,11 +29,11 @@ export default function SkillsEditor({ skills = [], onChange }) {
         Skills
       </h3>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-[24px] border border-[color:var(--primary)]/12 bg-white/75 px-4 py-4 shadow-sm dark:border-white/10 dark:bg-white/[0.055]">
+      <div className="flex flex-wrap items-center gap-3 rounded-[24px] border border-[color:var(--primary)]/12 bg-white/75 px-4 py-4 shadow-sm dark:border-white/10 dark:bg-white/[0.055]  dark:bg-[image:var(--nav-gradient)]">
         {skills.map((skill) => (
           <span
             key={skill}
-            className="inline-flex h-11 items-center gap-2 rounded-full border border-[#7AAACE]/55 bg-[#5F86A3] px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(53,88,114,0.14)] dark:border-white/10 dark:bg-white/10 dark:text-[color:var(--accent)] dark:shadow-none"
+            className="inline-flex h-9 items-center gap-2 rounded-full border border-[#7AAACE]/55 bg-[#5F86A3] px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(53,88,114,0.14)] dark:border-white/10 dark:bg-white/10 dark:text-[color:var(--accent)] dark:shadow-none"
           >
             <span>{skill}</span>
 
