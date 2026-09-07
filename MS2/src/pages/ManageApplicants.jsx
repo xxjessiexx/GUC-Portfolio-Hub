@@ -4,7 +4,6 @@ import {
   Bookmark,
   CheckCircle2,
   Download,
-  Eye,
   MessageSquare,
   Star,
   Users,
@@ -265,7 +264,7 @@ export default function ManageApplicants() {
   return (
     <DashboardLayout>
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
+        <div className="mx-auto w-full max-w-[1480px] space-y-6">
           <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
             <div>
               <h1 className="text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
@@ -388,15 +387,18 @@ export default function ManageApplicants() {
                 {filteredApplicants.map((applicant) => (
                   <div
                     key={applicant.id}
-                    className="grid gap-4 border-b border-[color:var(--primary)]/10 px-5 py-5 last:border-b-0 lg:grid-cols-[1.4fr_0.95fr_0.5fr_1.15fr_0.95fr_0.45fr_0.55fr_0.85fr_0.75fr] lg:items-center"
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(`/public-portfolio?userId=${applicant.userId}`)
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => navigate(`/public-portfolio?userId=${applicant.userId}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigate(`/public-portfolio?userId=${applicant.userId}`);
                       }
-                      className="flex items-center gap-3 text-left"
-                    >
+                    }}
+                    className="grid cursor-pointer gap-4 border-b border-[color:var(--primary)]/10 px-5 py-5 outline-none transition hover:bg-[#F6FAFC] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7AAACE] last:border-b-0 lg:grid-cols-[1.4fr_0.95fr_0.5fr_1.15fr_0.95fr_0.45fr_0.55fr_0.85fr_0.75fr] lg:items-center"
+                  >
+                    <div className="flex items-center gap-3 text-left">
                       {applicant.image ? (
                         <img
                           src={applicant.image}
@@ -424,7 +426,7 @@ export default function ManageApplicants() {
                           {applicant.university}
                         </p>
                       </div>
-                    </button>
+                    </div>
 
                     <p className="text-sm font-semibold text-[color:var(--muted)]">
                       {applicant.major}
@@ -461,6 +463,7 @@ export default function ManageApplicants() {
                       {applicant.score}
                     </span>
 
+                    <div onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
                     <AppSelect
                       value={applicant.status}
                       onChange={(value) =>
@@ -476,23 +479,13 @@ export default function ManageApplicants() {
                       placeholder="Select status"
                       className="h-10 min-w-[145px] text-xs font-black"
                     />
+                    </div>
 
                     <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                         
-
-                           navigate(`/public-portfolio?userId=${applicant.userId}`)
-  }
-                        
-                        className="grid h-9 w-9 place-items-center rounded-xl bg-white/60 text-[color:var(--primary)]"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
 
                       <button
                         type="button"
+                        onClick={(event) => event.stopPropagation()}
                         className="grid h-9 w-9 place-items-center rounded-xl bg-white/60 text-[color:var(--primary)]"
                       >
                         <MessageSquare className="h-4 w-4" />

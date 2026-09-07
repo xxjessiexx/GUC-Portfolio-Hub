@@ -30,11 +30,11 @@ export default function SearchFilterToolbar({
   useEffect(() => {
     if (!filtersOpen) return;
 
-    const handleEscape = (event) => {
+    const onEscape = (event) => {
       if (event.key === "Escape") onToggleFilters?.();
     };
 
-    const handleOutsideClick = (event) => {
+    const onPointerDown = (event) => {
       if (
         window.matchMedia("(min-width: 768px)").matches &&
         rootRef.current &&
@@ -44,12 +44,12 @@ export default function SearchFilterToolbar({
       }
     };
 
-    document.addEventListener("keydown", handleEscape);
-    document.addEventListener("pointerdown", handleOutsideClick);
+    document.addEventListener("keydown", onEscape);
+    document.addEventListener("pointerdown", onPointerDown);
 
     return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.removeEventListener("pointerdown", handleOutsideClick);
+      document.removeEventListener("keydown", onEscape);
+      document.removeEventListener("pointerdown", onPointerDown);
     };
   }, [filtersOpen, onToggleFilters]);
 
@@ -60,9 +60,8 @@ export default function SearchFilterToolbar({
           flex min-h-[64px] w-full items-stretch overflow-hidden
           rounded-[22px]
           border border-[#D5E3EA]
-          bg-[#F4F9FC]
+          bg-[#F7FBFD]
           shadow-[0_12px_30px_rgba(53,88,114,0.07)]
-
           dark:border-white/10
           dark:bg-[#102638]
           dark:shadow-[0_16px_36px_rgba(0,0,0,0.24)]
@@ -72,10 +71,8 @@ export default function SearchFilterToolbar({
           <div className="relative min-w-0 flex-1">
             <Search
               className="
-                pointer-events-none absolute left-5 top-1/2
-                h-4 w-4 -translate-y-1/2
-                text-[#718796]
-                dark:text-[#9CB2C1]
+                pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2
+                text-[#708695] dark:text-[#9CB2C1]
               "
             />
 
@@ -91,7 +88,6 @@ export default function SearchFilterToolbar({
                 !shadow-none outline-none
                 placeholder:text-[#8294A0]
                 focus-visible:!ring-0
-
                 dark:placeholder:text-[#8FA6B6]
               "
             />
@@ -111,7 +107,23 @@ export default function SearchFilterToolbar({
               value={sortValue}
               onChange={onSortChange}
               options={sortOptions}
-              variant="toolbar"
+              className="
+                !h-11 !min-h-11 !w-full
+                !rounded-[14px]
+                !border-0
+                !bg-transparent
+                !px-3
+                !shadow-none
+                hover:!bg-[#EEF5F9]
+                dark:hover:!bg-white/[0.06]
+              "
+              contentClassName="
+                !border-[#D5E3EA]
+                !bg-[#F7FBFD]
+                !backdrop-blur-none
+                dark:!border-white/10
+                dark:!bg-[#102638]
+              "
             />
           </div>
         )}
@@ -130,19 +142,13 @@ export default function SearchFilterToolbar({
               onClick={onToggleFilters}
               aria-expanded={filtersOpen}
               className={`
-                inline-flex h-11 items-center justify-center gap-2
-                rounded-[14px] px-4
-                text-[13px] font-black
-                transition
-
-                focus-visible:outline-none
-                focus-visible:ring-4
-                focus-visible:ring-[#7AAACE]/20
-
+                inline-flex h-11 items-center justify-center gap-2 rounded-[14px] px-4
+                text-[13px] font-black transition
+                focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#7AAACE]/20
                 ${
                   filtersOpen
-                    ? "bg-[#E8F3F9] text-[#294F69] ring-1 ring-[#BDD7E6] dark:bg-[#9CD5FF]/10 dark:text-[#CDEBFF] dark:ring-[#9CD5FF]/20"
-                    : "text-[color:var(--ink)] hover:bg-[#EAF3F8] dark:hover:bg-white/[0.06]"
+                    ? "bg-[#EAF4FA] text-[#294F69] ring-1 ring-[#BFD8E7] dark:bg-[#9CD5FF]/10 dark:text-[#CDEBFF] dark:ring-[#9CD5FF]/20"
+                    : "text-[color:var(--ink)] hover:bg-[#EEF5F9] dark:hover:bg-white/[0.06]"
                 }
               `}
             >
@@ -177,7 +183,22 @@ export default function SearchFilterToolbar({
             value={sortValue}
             onChange={onSortChange}
             options={sortOptions}
-            variant="standalone"
+            className="
+              !h-11 !min-h-11 !w-full
+              !rounded-[14px]
+              !border-[#D5E3EA]
+              !bg-[#F7FBFD]
+              !shadow-[0_8px_20px_rgba(53,88,114,0.06)]
+              dark:!border-white/10
+              dark:!bg-[#102638]
+            "
+            contentClassName="
+              !border-[#D5E3EA]
+              !bg-[#F7FBFD]
+              !backdrop-blur-none
+              dark:!border-white/10
+              dark:!bg-[#102638]
+            "
           />
         </div>
       )}
@@ -197,7 +218,6 @@ export default function SearchFilterToolbar({
                 border border-[#D5E3EA]
                 bg-[#F7FBFD]
                 shadow-[0_24px_60px_rgba(31,59,78,0.18)]
-
                 dark:border-white/10
                 dark:bg-[#0A1926]
                 dark:shadow-[0_28px_70px_rgba(0,0,0,0.42)]
@@ -206,8 +226,7 @@ export default function SearchFilterToolbar({
               <div
                 className="
                   flex items-center justify-between gap-4
-                  border-b border-[#D8E6ED]
-                  px-5 py-4
+                  border-b border-[#D8E6ED] px-5 py-4
                   dark:border-white/10
                 "
               >
@@ -225,15 +244,10 @@ export default function SearchFilterToolbar({
                   onClick={onToggleFilters}
                   aria-label="Close filters"
                   className="
-                    inline-flex h-9 w-9 items-center justify-center
-                    rounded-[11px]
-                    text-[color:var(--muted)]
-                    transition
-                    hover:bg-[#EAF3F8]
-                    hover:text-[#355872]
-
-                    dark:hover:bg-white/[0.06]
-                    dark:hover:text-[#9CD5FF]
+                    inline-flex h-9 w-9 items-center justify-center rounded-[11px]
+                    text-[color:var(--muted)] transition
+                    hover:bg-[#EEF5F9] hover:text-[#355872]
+                    dark:hover:bg-white/[0.06] dark:hover:text-white
                   "
                 >
                   <X className="h-4 w-4" />
@@ -244,6 +258,7 @@ export default function SearchFilterToolbar({
                 title={filterTitle}
                 onClear={onClearFilters}
                 onDone={onToggleFilters}
+                variant="popover"
               >
                 {children}
               </FilterPanel>
@@ -260,12 +275,11 @@ export default function SearchFilterToolbar({
 
             <div
               className="
-                absolute inset-x-0 bottom-0 max-h-[78vh]
-                overflow-hidden rounded-t-[26px]
+                absolute inset-x-0 bottom-0 max-h-[78vh] overflow-hidden
+                rounded-t-[26px]
                 border-t border-[#D5E3EA]
                 bg-[#F7FBFD]
                 shadow-[0_-20px_60px_rgba(22,48,65,0.22)]
-
                 dark:border-white/10
                 dark:bg-[#0A1926]
                 dark:shadow-[0_-24px_70px_rgba(0,0,0,0.45)]
@@ -274,8 +288,7 @@ export default function SearchFilterToolbar({
               <div
                 className="
                   flex items-center justify-between gap-4
-                  border-b border-[#D8E6ED]
-                  px-5 py-4
+                  border-b border-[#D8E6ED] px-5 py-4
                   dark:border-white/10
                 "
               >
@@ -293,11 +306,9 @@ export default function SearchFilterToolbar({
                   onClick={onToggleFilters}
                   aria-label="Close filters"
                   className="
-                    inline-flex h-9 w-9 items-center justify-center
-                    rounded-[11px]
+                    inline-flex h-9 w-9 items-center justify-center rounded-[11px]
                     text-[color:var(--muted)]
-                    hover:bg-[#EAF3F8]
-
+                    hover:bg-[#EEF5F9]
                     dark:hover:bg-white/[0.06]
                   "
                 >
@@ -310,6 +321,7 @@ export default function SearchFilterToolbar({
                   title={filterTitle}
                   onClear={onClearFilters}
                   onDone={onToggleFilters}
+                  variant="sheet"
                 >
                   {children}
                 </FilterPanel>

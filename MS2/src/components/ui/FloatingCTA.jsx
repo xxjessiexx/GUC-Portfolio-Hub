@@ -119,12 +119,11 @@ export default function FloatingCTA() {
         >
           <div className="
             rounded-[20px]
-            border border-white/12
-            bg-[#071C2C]/94
+            border border-[#355872]/35
+            bg-[#071C2C]
             px-4 py-3
             text-white
-            shadow-[0_22px_60px_rgba(7,28,44,0.28)]
-            backdrop-blur-2xl
+            shadow-[0_22px_60px_rgba(7,28,44,0.32)]
           ">
             <div className="
               flex items-center
@@ -142,7 +141,7 @@ export default function FloatingCTA() {
                 <p className="
                   mt-0.5 hidden
                   text-xs font-medium
-                  text-white/55
+                  text-white/72
                   sm:block
                 ">
                   Turn your work into something worth showing.

@@ -344,17 +344,6 @@ function ProjectRow({
           </div>
 
           <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onOpen(project.id);
-              }}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#355872]/15 bg-white/80 px-4 text-xs font-black text-[#355872] transition hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-white/[0.06] dark:text-[#9CD5FF] dark:hover:bg-white/[0.1]"
-            >
-              <Eye className="h-4 w-4" />
-              View Project
-            </button>
 
             <div className="flex items-center gap-2">
        <button
@@ -703,7 +692,7 @@ export default function ViewAllProjects() {
   return (
     <DashboardLayout>
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
+        <div className="mx-auto w-full max-w-[1480px] space-y-6">
           <SectionHeader
             className="
               [&_h2]:mt-3

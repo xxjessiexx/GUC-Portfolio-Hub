@@ -711,36 +711,6 @@ function InvitationCard({
               sm:justify-between
             "
           >
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onOpen(invitation);
-              }}
-              className="
-                group/open
-                inline-flex
-                items-center
-                gap-2
-                text-[10px]
-                font-black
-                text-[#628DA7]
-                transition
-
-                hover:text-[#355872]
-              "
-            >
-              View project
-
-              <ArrowRight
-                className="
-                  h-3.5
-                  w-3.5
-                  transition-transform
-                  group-hover/open:translate-x-1
-                "
-              />
-            </button>
 
             {pending ? (
               <div
@@ -1026,7 +996,8 @@ export default function ProjectInvitations() {
         <div
           className="
             mx-auto
-            max-w-7xl
+            w-full
+            max-w-[1480px]
           "
         >
           {/* =================================================

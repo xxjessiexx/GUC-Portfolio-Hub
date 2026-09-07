@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   BarChart3,
   Bookmark,
@@ -8,10 +7,9 @@ import {
   Clock,
   MapPin,
 } from "lucide-react";
-
+import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
-import { AppButton } from "@/components/ui/AppButton";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import { Input } from "@/components/ui/input";
 
@@ -480,7 +478,7 @@ export default function MyApplications() {
   return (
     <DashboardLayout >
       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
+        <div className="mx-auto w-full max-w-[1480px] space-y-6">
           
           <div>
             <h1 className="text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
@@ -560,12 +558,11 @@ export default function MyApplications() {
                   ))}
                 </div>
 
-                <div className="hidden grid-cols-[1.5fr_0.7fr_0.75fr_1.15fr_0.7fr] border-b border-[color:var(--primary)]/10 px-6 py-4 text-sm font-black text-[color:var(--dark)] lg:grid lg:items-center lg:gap-4">
+                <div className="hidden grid-cols-[1.5fr_0.7fr_0.75fr_1.15fr] border-b border-[color:var(--primary)]/10 px-6 py-4 text-sm font-black text-[color:var(--dark)] lg:grid lg:items-center lg:gap-4">
                   <p>Internship</p>
                   <p>Date Applied</p>
                   <p>Status</p>
                   <p>Next Step</p>
-                  <p>Action</p>
                 </div>
 
                 {filteredApplications.length === 0 ? (
@@ -581,7 +578,16 @@ export default function MyApplications() {
                   filteredApplications.map((application) => (
                     <div
                       key={application.id}
-                      className="grid gap-4 border-b border-[color:var(--primary)]/10 px-6 py-5 last:border-b-0 lg:grid-cols-[1.5fr_0.7fr_0.75fr_1.15fr_0.7fr] lg:items-center"
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => navigate(`/internships/${application.internshipId}`)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          navigate(`/internships/${application.internshipId}`);
+                        }
+                      }}
+                      className="grid cursor-pointer gap-4 border-b border-[color:var(--primary)]/10 px-6 py-5 outline-none transition hover:bg-[#F6FAFC] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7AAACE] last:border-b-0 lg:grid-cols-[1.5fr_0.7fr_0.75fr_1.15fr] lg:items-center"
                     >
                       <div className="flex gap-4">
                         <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--primary),var(--secondary))] text-white">
@@ -630,22 +636,6 @@ export default function MyApplications() {
                           {application.note}
                         </p>
                       </div>
-
-                      <Link to={`/internships/${application.internshipId}`}>
-                      <AppButton
-  className="
-    rounded-2xl
-    border border-[color:var(--border)]
-    bg-[color:var(--card)]
-    px-4
-    font-black
-    text-[color:var(--primary)]
-    hover:bg-[color:var(--card-hover)]
-  "
->
-                          View Internship
-                        </AppButton>
-                      </Link>
                     </div>
                   ))
                 )}

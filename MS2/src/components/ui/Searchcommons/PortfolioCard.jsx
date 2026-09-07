@@ -16,9 +16,21 @@ export default function PortfolioCard({
   onReport,
   compactBadges = false,
 }) { const navigate = useNavigate();
+  const openPortfolio = () => navigate(`/public-portfolio?userId=${portfolio.id}`);
+
   return (
     <AppCard
+      role="link"
+      tabIndex={0}
+      onClick={openPortfolio}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openPortfolio();
+        }
+      }}
       className="
+  group
   h-full
   flex
   flex-col
@@ -32,6 +44,10 @@ export default function PortfolioCard({
   hover:shadow-[var(--shadow-lifted)]
 
   backdrop-blur-md
+  cursor-pointer
+  outline-none
+  focus-visible:ring-4
+  focus-visible:ring-[#7AAACE]/20
   transition-all
   duration-300
   transform: translateY(-4px);
@@ -125,12 +141,9 @@ export default function PortfolioCard({
 
       {/* INFO */}
       <div className="mt-5">
-
-        <button
-  onClick={() => navigate(`/public-portfolio?userId=${portfolio.id}`)} className="text-2xl font-black text-[var(--ink)] hover:text-[var(--accent)]
-    transition-all ">
+        <h3 className="text-2xl font-black text-[var(--ink)] transition group-hover:text-[var(--primary)]">
           {portfolio.name}
-        </button>
+        </h3>
 
         <p className="mt-1 text-[var(--muted)] font-semibold">
           {portfolio.major} • {portfolio.level}

@@ -12,6 +12,32 @@ const socialIcons = {
   email: FaEnvelope,
 };
 
+function buildGmailComposeUrl(href, devName) {
+  const rawEmail = String(href || "")
+    .replace(/^mailto:/i, "")
+    .split("?")[0]
+    .trim();
+
+  if (!rawEmail) return href;
+
+  const subject = `GUC Portfolio Hub — Contact ${devName}`;
+  const body = `Hi ${devName},
+
+I came across your profile on the GUC Portfolio Hub and wanted to get in touch.
+
+`;
+
+  const params = new URLSearchParams({
+    view: "cm",
+    fs: "1",
+    to: rawEmail,
+    su: subject,
+    body,
+  });
+
+  return `https://mail.google.com/mail/?${params.toString()}`;
+}
+
 function DeveloperPhoto({ dev }) {
   const [failed, setFailed] = useState(false);
 
@@ -75,12 +101,17 @@ function SocialLinks({ dev }) {
 
         if (!Icon) return null;
 
+        const destination =
+          type === "email"
+            ? buildGmailComposeUrl(href, dev.name)
+            : href;
+
         return (
           <a
             key={type}
-            href={href}
-            target={type === "email" ? undefined : "_blank"}
-            rel={type === "email" ? undefined : "noreferrer"}
+            href={destination}
+            target="_blank"
+            rel="noreferrer"
             aria-label={`${dev.name} ${type}`}
             className="
               grid h-8 w-8

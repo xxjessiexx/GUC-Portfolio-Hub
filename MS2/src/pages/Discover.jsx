@@ -39,7 +39,7 @@ export default function DiscoverPage() {
       
         {/* HEADER */}
           <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
+        <div className="mx-auto w-full max-w-[1480px] space-y-6">
         <div>
            <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
             Discover

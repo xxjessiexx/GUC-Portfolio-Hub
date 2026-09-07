@@ -1,10 +1,19 @@
-import { Mail, MapPin, Eye } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 import { AppCard } from "@/components/ui/AppCard";
 import CourseBadge from "@/components/ui/CourseBadge";
 
 export default function InstructorCard({ instructor,onView }) {
   return (
     <AppCard
+  role="link"
+  tabIndex={0}
+  onClick={onView}
+  onKeyDown={(event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onView?.();
+    }
+  }}
   className="
     p-6
     rounded-[28px]
@@ -16,6 +25,10 @@ export default function InstructorCard({ instructor,onView }) {
     hover:shadow-[var(--shadow-lifted)]
 
     backdrop-blur-md
+    cursor-pointer
+    outline-none
+    focus-visible:ring-4
+    focus-visible:ring-[#7AAACE]/20
     transition-all
     duration-300
 
@@ -27,7 +40,7 @@ export default function InstructorCard({ instructor,onView }) {
         className="
           grid
           grid-cols-1
-          xl:grid-cols-[1.2fr_0.9fr_1.3fr_auto]
+          xl:grid-cols-[1.2fr_0.9fr_1.3fr]
           gap-6
           items-center
         "
@@ -87,34 +100,6 @@ border-[var(--card-border)] xl:px-6">
               />
             ))}
           </div>
-        </div>
-
-        {/* BUTTON */}
-        <div className="flex justify-end">
-          <button
-  onClick={onView}
-  className="
-h-12
-px-6
-rounded-full
-
-border border-[var(--border-blue)]
-bg-[var(--surface)]
-
-text-[var(--primary)]
-font-semibold
-
-flex items-center gap-2
-
-transition-all
-
-hover:bg-[var(--surface-elevated)]
-hover:border-[var(--primary)]
-"
->
-  <Eye size={18} />
-  View Profile
-</button>
         </div>
 
       </div>
