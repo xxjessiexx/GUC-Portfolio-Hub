@@ -329,13 +329,7 @@ export default function InternshipDetails() {
       <main className="px-4 py-5 pb-20 sm:px-6 lg:px-7 xl:px-8">
         <div className="mx-auto w-full max-w-[1480px]">
           <div className="mb-5 flex items-center justify-between gap-4">
-            <Link
-              to="/internships"
-              className="inline-flex items-center gap-2 text-[12px] font-black text-[#5D788B] transition hover:text-[#294F69] dark:text-[#9BB0BE] dark:hover:text-[#9CD5FF]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Explore internships
-            </Link>
+            
 
             {isStudent ? (
               <button

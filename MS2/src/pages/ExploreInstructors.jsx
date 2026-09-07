@@ -87,7 +87,7 @@ export default function ExploreInstructors() {
 );
     const [currentPage, setCurrentPage] = useState(1);
     const resultsTopRef = useRef(null);
-    const ITEMS_PER_PAGE = 8;
+    const ITEMS_PER_PAGE = 9;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -222,7 +222,7 @@ export default function ExploreInstructors() {
 
 </div>
         {/* INSTRUCTORS LIST */}
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paginatedInstructors.map((instructor) => (
             <InstructorCard
   key={instructor.id}

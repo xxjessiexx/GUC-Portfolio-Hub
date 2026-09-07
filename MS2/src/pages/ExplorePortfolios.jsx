@@ -292,7 +292,7 @@ const [currentPage, setCurrentPage] = useState(1);
 
             {/* PORTFOLIOS */}
             {/* PORTFOLIOS */}
-<div ref={resultsTopRef} className="grid scroll-mt-28 grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+<div ref={resultsTopRef} className="grid scroll-mt-28 grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 
   {paginatedPortfolios.map((portfolio) => (
     <PortfolioCard
