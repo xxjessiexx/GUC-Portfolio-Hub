@@ -616,12 +616,12 @@ export default function ProjectPage() {
   const activeTabCopy = getActiveTabCopy(safeActiveTab);
 
   return (
-    <DashboardLayout>
-      <main className="min-h-0 px-3 py-4 pb-6 sm:px-5 lg:px-6">
-        <div className="mx-auto w-full max-w-[1480px]">
+    <DashboardLayout showFooter={false}>
+      <main className="h-[calc(100vh-144px)] min-h-0">
+        <div className="mx-auto h-full min-h-0 w-full max-w-[1480px]">
           <AppCard
             style={LIGHT_WORKSPACE_THEME}
-            className="flex overflow-hidden rounded-[30px] border border-[#C7D8E2] bg-[#F8FBFD] p-0 text-[#102536] shadow-[0_34px_80px_rgba(53,88,114,0.20)] xl:h-[calc(100vh-8.1rem)] xl:min-h-[620px] xl:flex-col"
+            className="flex h-full min-h-0 overflow-hidden rounded-[30px] border border-[#C7D8E2] bg-[#F8FBFD] p-0 text-[#102536] shadow-[0_34px_80px_rgba(53,88,114,0.20)] xl:flex-col"
           >
             <div className="grid min-h-0 flex-1 xl:grid-cols-[minmax(390px,0.68fr)_minmax(0,1.32fr)]">
               {/* =================================================

@@ -95,7 +95,7 @@ export default function App() {
   <ScrollToTop />
 
   <NotificationsProvider>
-    <UserProfileProvider>
+      <UserProfileProvider currentUser={currentUser}>
        <FloatingCTA />
 
           <Toaster richColors position="top-right" />

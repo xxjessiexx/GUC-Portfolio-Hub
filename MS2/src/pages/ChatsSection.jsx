@@ -14,7 +14,6 @@ import {
 
 import ChatSidebar from "@/components/chat/ChatSidebar";
 import ChatWindow from "@/components/chat/ChatWindow";
-import { AppCard } from "@/components/ui/AppCard";
 
 export default function ChatsSection() {
   const currentUser = getCurrentUser();
@@ -143,48 +142,40 @@ export default function ChatsSection() {
   };
 
   return (
-    <DashboardLayout>
-      <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <AppCard className="relative overflow-hidden rounded-[32px] border-[color:var(--border-soft)] bg-[var(--surface)] px-4 py-6 shadow-[var(--shadow-soft)] sm:px-6 lg:px-8 lg:py-8">
-          <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,rgba(230,199,123,0.12),transparent_70%)] blur-2xl" />
-          <div className="pointer-events-none absolute bottom-0 left-0 h-72 w-72 -translate-x-1/3 translate-y-1/3 rounded-full bg-[radial-gradient(circle,rgba(156,213,255,0.10),transparent_72%)] blur-2xl" />
-
-          <div className="relative mx-auto max-w-6xl">
-            <header className="mb-6 flex items-start gap-4">
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-[color:var(--gold)]/30 bg-[linear-gradient(135deg,rgba(230,199,123,0.16),rgba(255,255,255,0.18))] text-[color:var(--gold)] shadow-[0_16px_38px_rgba(230,199,123,0.14)] sm:h-16 sm:w-16">
-                <MessageCircle className="h-7 w-7" />
-              </div>
-
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-[color:var(--primary)]">
-                  Message Center
-                </p>
-
-                <h1 className="mt-2 text-3xl font-black tracking-tight text-[color:var(--ink)] sm:text-4xl">
-                  Chats
-                </h1>
-
-                <p className="mt-2 text-sm font-semibold leading-6 text-[color:var(--muted)]">
-                  Keep track of project conversations, feedback, and recruiter
-                  chats.
-                </p>
-              </div>
-            </header>
-
-            <div className="mt-7 grid h-[620px] overflow-hidden rounded-[30px] lg:grid-cols-[360px_1fr]">
-              <ChatSidebar
-                chats={chats}
-                selectedChatId={selectedChatId}
-                setSelectedChatId={handleSelectChat}
-              />
-
-              <ChatWindow
-                selectedChat={selectedChat}
-                onCreatedChat={handleCreatedChat}
-              />
-            </div>
+    <DashboardLayout showFooter={false}>
+      <section className="mx-auto flex h-[calc(100vh-144px)] min-h-0 w-full max-w-[1480px] flex-col">
+        <header className="mb-5 flex shrink-0 items-start gap-4">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-[color:var(--gold)]/30 bg-[linear-gradient(135deg,rgba(230,199,123,0.16),rgba(255,255,255,0.12))] text-[color:var(--gold)] shadow-[0_12px_30px_rgba(230,199,123,0.12)] sm:h-14 sm:w-14">
+            <MessageCircle className="h-6 w-6" />
           </div>
-        </AppCard>
+
+          <div className="min-w-0">
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[color:var(--primary)]">
+              Message Center
+            </p>
+
+            <h1 className="mt-1.5 text-3xl font-black tracking-tight text-[color:var(--ink)] sm:text-4xl">
+              Chats
+            </h1>
+
+            <p className="mt-2 text-sm font-semibold leading-6 text-[color:var(--muted)]">
+              Keep track of project conversations, feedback, and recruiter chats.
+            </p>
+          </div>
+        </header>
+
+        <div className="grid min-h-0 flex-1 overflow-hidden rounded-[30px] border border-white/60 bg-[rgba(255,255,255,0.40)] shadow-[0_24px_60px_rgba(27,63,85,0.14),0_6px_18px_rgba(27,63,85,0.08),inset_0_1px_0_rgba(255,255,255,0.82)] ring-1 ring-[rgba(109,163,195,0.08)] backdrop-blur-md lg:grid-cols-[390px_minmax(0,1fr)] xl:grid-cols-[410px_minmax(0,1fr)]">
+          <ChatSidebar
+            chats={chats}
+            selectedChatId={selectedChatId}
+            setSelectedChatId={handleSelectChat}
+          />
+
+          <ChatWindow
+            selectedChat={selectedChat}
+            onCreatedChat={handleCreatedChat}
+          />
+        </div>
       </section>
     </DashboardLayout>
   );

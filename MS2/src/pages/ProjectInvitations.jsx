@@ -1,14 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Check,
   CheckCircle2,
   Clock3,
   FolderKanban,
   GraduationCap,
-  Search,
   UserRound,
   X,
   XCircle,
@@ -16,6 +17,8 @@ import {
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
+import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import FilterSelect from "@/components/common/FilterSelect";
 
 import {
   getCurrentUser,
@@ -816,6 +819,8 @@ function InvitationCard({
    PAGE
 ========================================================= */
 
+const ITEMS_PER_PAGE = 4;
+
 export default function ProjectInvitations() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -827,6 +832,15 @@ export default function ProjectInvitations() {
 
   const [searchTerm, setSearchTerm] =
     useState("");
+
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
+  const [filtersOpen, setFiltersOpen] =
+    useState(false);
+
+  const [selectedSort, setSelectedSort] =
+    useState("Newest");
 
   const [invitations, setInvitations] =
     useState(() =>
@@ -873,7 +887,7 @@ export default function ProjectInvitations() {
         .trim()
         .toLowerCase();
 
-      return invitations.filter(
+      const filtered = invitations.filter(
         (invitation) => {
           const status =
             normalizeStatus(
@@ -907,11 +921,81 @@ export default function ProjectInvitations() {
           );
         }
       );
+
+      return [...filtered].sort((a, b) => {
+        if (selectedSort === "Oldest") {
+          return (
+            new Date(a.sentAt || 0).getTime() -
+            new Date(b.sentAt || 0).getTime()
+          );
+        }
+
+        if (selectedSort === "Project A-Z") {
+          return String(a.projectTitle || "").localeCompare(
+            String(b.projectTitle || "")
+          );
+        }
+
+        return (
+          new Date(b.sentAt || 0).getTime() -
+          new Date(a.sentAt || 0).getTime()
+        );
+      });
     }, [
       invitations,
       activeFilter,
       searchTerm,
+      selectedSort,
     ]);
+
+  /* =========================================================
+     PAGINATION
+  ========================================================= */
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(
+      filteredInvitations.length /
+        ITEMS_PER_PAGE
+    )
+  );
+
+  const safeCurrentPage = Math.min(
+    currentPage,
+    totalPages
+  );
+
+  const pageStartIndex =
+    (safeCurrentPage - 1) *
+    ITEMS_PER_PAGE;
+
+  const paginatedInvitations =
+    filteredInvitations.slice(
+      pageStartIndex,
+      pageStartIndex + ITEMS_PER_PAGE
+    );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const changePage = (page) => {
+    const nextPage = Math.min(
+      Math.max(page, 1),
+      totalPages
+    );
+
+    setCurrentPage(nextPage);
+
+    requestAnimationFrame(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    });
+  };
 
   /* =========================================================
      NAVIGATION
@@ -959,28 +1043,7 @@ export default function ProjectInvitations() {
     );
   };
 
-  const filters = [
-    {
-      id: "all",
-      label: "All",
-      count: counts.all,
-    },
-    {
-      id: "pending",
-      label: "Pending",
-      count: counts.pending,
-    },
-    {
-      id: "accepted",
-      label: "Accepted",
-      count: counts.accepted,
-    },
-    {
-      id: "rejected",
-      label: "Declined",
-      count: counts.rejected,
-    },
-  ];
+
 
   return (
     <DashboardLayout>
@@ -1035,159 +1098,70 @@ export default function ProjectInvitations() {
           </header>
 
           {/* =================================================
-              TOOLBAR SURFACE
+              SEARCH + SORT + FILTERS
           ================================================== */}
 
-          <div
-            className="
-              mt-7
-              rounded-[22px]
-              border
-              border-white/85
-              bg-white/72
-              px-5
-              py-3.5
-              shadow-[0_12px_32px_rgba(53,88,114,0.08)]
-              backdrop-blur-xl
-            "
-          >
-            <div
-              className="
-                flex
-                flex-col
-                gap-4
-                lg:flex-row
-                lg:items-center
-                lg:justify-between
-              "
+          <div className="mt-7">
+            <SearchFilterToolbar
+              searchValue={searchTerm}
+              onSearchChange={(value) => {
+                setSearchTerm(value);
+                setCurrentPage(1);
+              }}
+              searchPlaceholder="Search invitations by project, course, inviter, or technology..."
+              showSort
+              sortValue={`Sort by: ${selectedSort}`}
+              onSortChange={(value) => {
+                setSelectedSort(
+                  value.replace("Sort by: ", "")
+                );
+                setCurrentPage(1);
+              }}
+              sortOptions={[
+                "Sort by: Newest",
+                "Sort by: Oldest",
+                "Sort by: Project A-Z",
+              ]}
+              showFilters
+              filtersOpen={filtersOpen}
+              onToggleFilters={() =>
+                setFiltersOpen((current) => !current)
+              }
+              filterTitle="Filter invitations"
+              onClearFilters={() => {
+                setActiveFilter("all");
+                setCurrentPage(1);
+              }}
             >
-              {/* FILTERS */}
+              <FilterSelect
+                value={`Status: ${
+                  activeFilter === "all"
+                    ? "All"
+                    : activeFilter === "rejected"
+                      ? "Declined"
+                      : activeFilter.charAt(0).toUpperCase() +
+                        activeFilter.slice(1)
+                }`}
+                onChange={(value) => {
+                  const selected = value
+                    .replace("Status: ", "")
+                    .toLowerCase();
 
-              <div
-                className="
-                  flex
-                  flex-wrap
-                  items-center
-                  gap-7
-                "
-              >
-                {filters.map((filter) => {
-                  const active =
-                    activeFilter ===
-                    filter.id;
-
-                  return (
-                    <button
-                      key={filter.id}
-                      type="button"
-                      onClick={() =>
-                        setActiveFilter(
-                          filter.id
-                        )
-                      }
-                      className={`
-                        relative
-                        py-2
-                        text-[12px]
-                        font-black
-                        transition-colors
-
-                        ${
-                          active
-                            ? "text-[#28485E]"
-                            : "text-[#8193A0] hover:text-[#355872]"
-                        }
-                      `}
-                    >
-                      {filter.label}
-
-                      <span
-                        className={`
-                          ml-1.5
-                          text-[9px]
-
-                          ${
-                            active
-                              ? "text-[#6C9CC0]"
-                              : "text-[#A5B1B9]"
-                          }
-                        `}
-                      >
-                        {filter.count}
-                      </span>
-
-                      {active && (
-                        <span
-                          className="
-                            absolute
-                            -bottom-[5px]
-                            left-0
-                            h-[3px]
-                            w-full
-                            rounded-full
-                            bg-[linear-gradient(90deg,#E6C77B_0%,#79B0E3_100%)]
-                          "
-                        />
-                      )}
-                    </button>
+                  setActiveFilter(
+                    selected === "declined"
+                      ? "rejected"
+                      : selected
                   );
-                })}
-              </div>
-
-              {/* SEARCH */}
-
-              <div
-                className="
-                  relative
-                  w-full
-                  lg:w-[330px]
-                "
-              >
-                <Search
-                  className="
-                    pointer-events-none
-                    absolute
-                    left-4
-                    top-1/2
-                    h-4
-                    w-4
-                    -translate-y-1/2
-                    text-[#879DAA]
-                  "
-                />
-
-                <input
-                  value={searchTerm}
-                  onChange={(event) =>
-                    setSearchTerm(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Search invitations..."
-                  className="
-                    h-11
-                    w-full
-                    rounded-[15px]
-                    border
-                    border-[#D5E2E9]
-                    bg-white/88
-                    pl-11
-                    pr-4
-                    text-[12px]
-                    font-semibold
-                    text-[color:var(--ink)]
-                    outline-none
-                    transition
-
-                    placeholder:text-[#96A5AF]
-
-                    focus:border-[#8DB6CF]
-                    focus:bg-white
-                    focus:shadow-[0_0_0_3px_rgba(122,170,206,0.10)]
-                  "
-                />
-              </div>
-            </div>
+                  setCurrentPage(1);
+                }}
+                options={[
+                  "Status: All",
+                  "Status: Pending",
+                  "Status: Accepted",
+                  "Status: Declined",
+                ]}
+              />
+            </SearchFilterToolbar>
           </div>
 
           {/* =================================================
@@ -1271,7 +1245,7 @@ export default function ProjectInvitations() {
                 gap-5
               "
             >
-              {filteredInvitations.map(
+              {paginatedInvitations.map(
                 (invitation) => (
                   <InvitationCard
                     key={invitation.id}
@@ -1284,6 +1258,138 @@ export default function ProjectInvitations() {
                     }
                   />
                 )
+              )}
+
+              {totalPages > 1 && (
+                <div
+                  className="
+                    mt-2
+                    flex
+                    flex-col
+                    gap-3
+                    border-t
+                    border-[#CFDEE7]
+                    pt-5
+                    sm:flex-row
+                    sm:items-center
+                    sm:justify-between
+                  "
+                >
+                  <p
+                    className="
+                      text-[10px]
+                      font-semibold
+                      text-[color:var(--muted)]
+                    "
+                  >
+                    Showing {pageStartIndex + 1}–{Math.min(
+                      pageStartIndex + ITEMS_PER_PAGE,
+                      filteredInvitations.length
+                    )} of {filteredInvitations.length} invitations
+                  </p>
+
+                  <div
+                    className="
+                      flex
+                      items-center
+                      gap-1.5
+                    "
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        changePage(
+                          safeCurrentPage - 1
+                        )
+                      }
+                      disabled={
+                        safeCurrentPage === 1
+                      }
+                      className="
+                        grid
+                        h-9
+                        w-9
+                        place-items-center
+                        rounded-[11px]
+                        border
+                        border-[#CADAE4]
+                        bg-white/70
+                        text-[#55758A]
+                        transition-all
+
+                        hover:border-[#AFC6D4]
+                        hover:bg-white
+                        disabled:cursor-not-allowed
+                        disabled:opacity-35
+                      "
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+
+                    {Array.from(
+                      { length: totalPages },
+                      (_, index) => index + 1
+                    ).map((page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() =>
+                          changePage(page)
+                        }
+                        className={`
+                          h-9
+                          min-w-9
+                          rounded-[11px]
+                          px-2
+                          text-[11px]
+                          font-black
+                          transition-all
+
+                          ${
+                            page === safeCurrentPage
+                              ? "bg-[#355872] text-white shadow-[0_6px_16px_rgba(53,88,114,0.20)]"
+                              : "border border-[#CADAE4] bg-white/70 text-[#637D8D] hover:border-[#AFC6D4] hover:bg-white"
+                          }
+                        `}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        changePage(
+                          safeCurrentPage + 1
+                        )
+                      }
+                      disabled={
+                        safeCurrentPage === totalPages
+                      }
+                      className="
+                        grid
+                        h-9
+                        w-9
+                        place-items-center
+                        rounded-[11px]
+                        border
+                        border-[#CADAE4]
+                        bg-white/70
+                        text-[#55758A]
+                        transition-all
+
+                        hover:border-[#AFC6D4]
+                        hover:bg-white
+                        disabled:cursor-not-allowed
+                        disabled:opacity-35
+                      "
+                      aria-label="Next page"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           ) : (

@@ -217,20 +217,34 @@ const instructorOptions = [
       selectedInstructor.toLowerCase()
     );
 
-    const courseOptions = [
-  "Course: All Courses",
+    const matchesDate = (() => {
+      if (selectedDate === "Anytime") return true;
 
-  ...new Set(
-    projects.map(
-      (project) => `Course: ${getDisplayCourse(project)}`
-    )
-  ),
-];
+      const rawDate = project.date || project.createdAt || project.updatedAt;
+      const projectDate = rawDate ? new Date(rawDate) : null;
+      if (!projectDate || Number.isNaN(projectDate.getTime())) return false;
+
+      const now = new Date();
+      const cutoff = new Date(now);
+
+      if (selectedDate === "This Week") {
+        cutoff.setDate(now.getDate() - 7);
+        return projectDate >= cutoff && projectDate <= now;
+      }
+
+      if (selectedDate === "This Month") {
+        cutoff.setMonth(now.getMonth() - 1);
+        return projectDate >= cutoff && projectDate <= now;
+      }
+
+      return true;
+    })();
 
     return (
       matchesSearch &&
       matchesCourse &&
-      matchesInstructor
+      matchesInstructor &&
+      matchesDate
     );
   })
 
@@ -370,35 +384,39 @@ const instructorOptions = [
               setSelectedCourse("All Courses");
               setSelectedInstructor("All Instructors");
               setSelectedDate("Anytime");
+              setCurrentPage(1);
             }}
           >
             <FilterSelect
               value={`Course: ${selectedCourse}`}
-              onChange={(value) =>
+              onChange={(value) => {
                 setSelectedCourse(
                   value.replace("Course: ", "")
-                )
-              }
+                );
+                setCurrentPage(1);
+              }}
               options={courseOptions}
             />
 
             <FilterSelect
               value={`Instructor: ${selectedInstructor}`}
-              onChange={(value) =>
+              onChange={(value) => {
                 setSelectedInstructor(
                   value.replace("Instructor: ", "")
-                )
-              }
+                );
+                setCurrentPage(1);
+              }}
               options={instructorOptions}
             />
 
             <FilterSelect
               value={`Date: ${selectedDate}`}
-              onChange={(value) =>
+              onChange={(value) => {
                 setSelectedDate(
                   value.replace("Date: ", "")
-                )
-              }
+                );
+                setCurrentPage(1);
+              }}
               options={[
                 "Date: Anytime",
                 "Date: This Week",

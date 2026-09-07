@@ -34,16 +34,29 @@ export default function SearchFilterToolbar({
       if (event.key === "Escape") onToggleFilters?.();
     };
 
-    const handleOutsideClick = (event) => {
-      if (
-        window.matchMedia("(min-width: 768px)").matches &&
-        rootRef.current &&
-        !rootRef.current.contains(event.target)
-      ) {
-        onToggleFilters?.();
-      }
-    };
+   const handleOutsideClick = (event) => {
+  if (!window.matchMedia("(min-width: 768px)").matches) return;
+  if (!rootRef.current) return;
 
+  const target = event.target;
+
+  // Radix Select renders its menu in a Portal, outside rootRef.
+  // Treat clicks inside that portal as part of this toolbar.
+  // Otherwise the filter panel unmounts on pointerdown before
+  // Radix can fire onValueChange, which makes the dropdowns look dead.
+  const clickedInsideSelectPortal =
+    target instanceof Element &&
+    Boolean(
+      target.closest(
+        '[data-slot="select-content"], [data-slot="select-item"], [data-radix-popper-content-wrapper]'
+      )
+    );
+
+  if (clickedInsideSelectPortal) return;
+  if (rootRef.current.contains(target)) return;
+
+  onToggleFilters?.();
+};
     document.addEventListener("keydown", handleEscape);
     document.addEventListener("pointerdown", handleOutsideClick);
 
