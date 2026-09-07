@@ -3,8 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
   Check,
   CheckCircle2,
   Clock3,
@@ -18,6 +16,8 @@ import {
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import PageHeader from "@/components/common/PageHeader";
+import Pagination from "@/components/common/Pagination";
 import FilterSelect from "@/components/common/FilterSelect";
 
 import {
@@ -1047,55 +1047,11 @@ export default function ProjectInvitations() {
 
   return (
     <DashboardLayout>
-      <main
-        className="
-          px-4
-          py-7
-          pb-24
-          sm:px-6
-          lg:px-8
-        "
-      >
-        <div
-          className="
-            mx-auto
-            w-full
-            max-w-[1480px]
-          "
-        >
-          {/* =================================================
-              HEADER
-          ================================================== */}
-
-          <header>
-            <h1
-              className="
-                text-[42px]
-                font-black
-                leading-none
-                tracking-[-0.045em]
-                text-[color:var(--ink)]
-                sm:text-[48px]
-              "
-            >
-              Project Invitations
-            </h1>
-
-            <p
-              className="
-                mt-3
-                max-w-3xl
-                text-[14px]
-                font-semibold
-                leading-6
-                text-[color:var(--muted)]
-              "
-            >
-              Review projects you&apos;ve
-              been invited to and decide
-              which teams you want to join.
-            </p>
-          </header>
+      <div className="mx-auto w-full max-w-[1480px]">
+        <PageHeader
+          title="Project Invitations"
+          description="Review projects you've been invited to and decide which teams you want to join."
+        />
 
           {/* =================================================
               SEARCH + SORT + FILTERS
@@ -1260,137 +1216,15 @@ export default function ProjectInvitations() {
                 )
               )}
 
-              {totalPages > 1 && (
-                <div
-                  className="
-                    mt-2
-                    flex
-                    flex-col
-                    gap-3
-                    border-t
-                    border-[#CFDEE7]
-                    pt-5
-                    sm:flex-row
-                    sm:items-center
-                    sm:justify-between
-                  "
-                >
-                  <p
-                    className="
-                      text-[10px]
-                      font-semibold
-                      text-[color:var(--muted)]
-                    "
-                  >
-                    Showing {pageStartIndex + 1}–{Math.min(
-                      pageStartIndex + ITEMS_PER_PAGE,
-                      filteredInvitations.length
-                    )} of {filteredInvitations.length} invitations
-                  </p>
-
-                  <div
-                    className="
-                      flex
-                      items-center
-                      gap-1.5
-                    "
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        changePage(
-                          safeCurrentPage - 1
-                        )
-                      }
-                      disabled={
-                        safeCurrentPage === 1
-                      }
-                      className="
-                        grid
-                        h-9
-                        w-9
-                        place-items-center
-                        rounded-[11px]
-                        border
-                        border-[#CADAE4]
-                        bg-white/70
-                        text-[#55758A]
-                        transition-all
-
-                        hover:border-[#AFC6D4]
-                        hover:bg-white
-                        disabled:cursor-not-allowed
-                        disabled:opacity-35
-                      "
-                      aria-label="Previous page"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-
-                    {Array.from(
-                      { length: totalPages },
-                      (_, index) => index + 1
-                    ).map((page) => (
-                      <button
-                        key={page}
-                        type="button"
-                        onClick={() =>
-                          changePage(page)
-                        }
-                        className={`
-                          h-9
-                          min-w-9
-                          rounded-[11px]
-                          px-2
-                          text-[11px]
-                          font-black
-                          transition-all
-
-                          ${
-                            page === safeCurrentPage
-                              ? "bg-[#355872] text-white shadow-[0_6px_16px_rgba(53,88,114,0.20)]"
-                              : "border border-[#CADAE4] bg-white/70 text-[#637D8D] hover:border-[#AFC6D4] hover:bg-white"
-                          }
-                        `}
-                      >
-                        {page}
-                      </button>
-                    ))}
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        changePage(
-                          safeCurrentPage + 1
-                        )
-                      }
-                      disabled={
-                        safeCurrentPage === totalPages
-                      }
-                      className="
-                        grid
-                        h-9
-                        w-9
-                        place-items-center
-                        rounded-[11px]
-                        border
-                        border-[#CADAE4]
-                        bg-white/70
-                        text-[#55758A]
-                        transition-all
-
-                        hover:border-[#AFC6D4]
-                        hover:bg-white
-                        disabled:cursor-not-allowed
-                        disabled:opacity-35
-                      "
-                      aria-label="Next page"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
+              <Pagination
+                currentPage={safeCurrentPage}
+                totalPages={totalPages}
+                totalItems={filteredInvitations.length}
+                pageStartIndex={pageStartIndex}
+                pageSize={ITEMS_PER_PAGE}
+                onPageChange={changePage}
+                ariaLabel="Invitation results pagination"
+              />
             </div>
           ) : (
             <AppCard
@@ -1452,7 +1286,6 @@ export default function ProjectInvitations() {
             </AppCard>
           )}
         </div>
-      </main>
     </DashboardLayout>
   );
 }

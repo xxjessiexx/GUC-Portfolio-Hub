@@ -12,6 +12,8 @@ import {
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import FilterSelect from "@/components/common/FilterSelect";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import PageHeader from "@/components/common/PageHeader";
+import Pagination from "@/components/common/Pagination";
 
 import {
   getApplicationsForStudent,
@@ -332,17 +334,11 @@ export default function Internships() {
 
   return (
     <DashboardLayout>
-      <main className="px-4 py-7 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-[1480px]">
-          <header className="max-w-4xl">
-            <div className="mb-3 h-[3px] w-12 rounded-full bg-[#B89736]" />
-            <h1 className="text-[42px] font-black leading-none tracking-[-0.045em] text-[color:var(--ink)] sm:text-[48px]">
-              Discover Internships
-            </h1>
-            <p className="mt-3 max-w-3xl text-[15px] font-semibold leading-7 text-[color:var(--muted)]">
-              Find open roles that match the work you want to try next. Roles you apply to move to My Applications automatically.
-            </p>
-          </header>
+      <div className="mx-auto w-full max-w-[1480px]">
+        <PageHeader
+          title="Discover Internships"
+          description="Find open roles that match the work you want to try next. Roles you apply to move to My Applications automatically."
+        />
 
           <SearchFilterToolbar
             className="mt-7"
@@ -436,74 +432,17 @@ export default function Internships() {
               </div>
             )}
 
-            {filteredInternships.length > ITEMS_PER_PAGE ? (
-              <nav
-                className="mt-8 flex flex-col gap-3 border-t border-[#355872]/10 pt-6 sm:flex-row sm:items-center sm:justify-between"
-                aria-label="Internship results pagination"
-              >
-                <p className="text-[12px] font-semibold text-[color:var(--muted)]">
-                  Showing {pageStartIndex + 1}–
-                  {Math.min(
-                    pageStartIndex + ITEMS_PER_PAGE,
-                    filteredInternships.length
-                  )} of {filteredInternships.length}
-                </p>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => goToPage(safeCurrentPage - 1)}
-                    disabled={safeCurrentPage === 1}
-                    className="inline-flex h-10 items-center justify-center rounded-[12px] border border-[#355872]/14 bg-white/75 px-4 text-[12px] font-black text-[#355872] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35"
-                  >
-                    Previous
-                  </button>
-
-                  {getVisiblePageNumbers().map((page) => {
-                    if (typeof page === "string") {
-                      return (
-                        <span
-                          key={page}
-                          className="inline-flex h-10 min-w-8 items-center justify-center px-1 text-[12px] font-black text-[#8A9AA4]"
-                        >
-                          …
-                        </span>
-                      );
-                    }
-
-                    const isActive = page === safeCurrentPage;
-
-                    return (
-                      <button
-                        key={page}
-                        type="button"
-                        onClick={() => goToPage(page)}
-                        aria-current={isActive ? "page" : undefined}
-                        className={`inline-flex h-10 min-w-10 items-center justify-center rounded-[12px] border px-3 text-[12px] font-black transition ${
-                          isActive
-                            ? "border-[#355872] bg-[#355872] text-white shadow-[0_8px_18px_rgba(53,88,114,0.18)]"
-                            : "border-[#355872]/12 bg-white/70 text-[#355872] hover:bg-white"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
-
-                  <button
-                    type="button"
-                    onClick={() => goToPage(safeCurrentPage + 1)}
-                    disabled={safeCurrentPage === totalPages}
-                    className="inline-flex h-10 items-center justify-center rounded-[12px] border border-[#355872]/14 bg-white/75 px-4 text-[12px] font-black text-[#355872] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35"
-                  >
-                    Next
-                  </button>
-                </div>
-              </nav>
-            ) : null}
+            <Pagination
+              currentPage={safeCurrentPage}
+              totalPages={totalPages}
+              totalItems={filteredInternships.length}
+              pageStartIndex={pageStartIndex}
+              pageSize={ITEMS_PER_PAGE}
+              onPageChange={goToPage}
+              ariaLabel="Internship results pagination"
+            />
           </section>
         </div>
-      </main>
     </DashboardLayout>
   );
 }

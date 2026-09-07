@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { FolderOpen, UserRound } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import PageHeader from "@/components/common/PageHeader";
+import Pagination from "@/components/common/Pagination";
 import ExploreProjectCard from "@/components/ui/Searchcommons/ExploreProjectCard";
 import PortfolioCard from "@/components/ui/Searchcommons/PortfolioCard";
 
@@ -74,144 +76,6 @@ function EmptyCollection({
         </button>
       </div>
     </div>
-  );
-}
-
-function Pagination({
-  currentPage,
-  totalPages,
-  totalItems,
-  pageStartIndex,
-  onPageChange,
-}) {
-  if (totalPages <= 1) return null;
-
-  const pages =
-    totalPages <= 7
-      ? Array.from({ length: totalPages }, (_, index) => index + 1)
-      : currentPage <= 4
-      ? [1, 2, 3, 4, 5, "ellipsis-end", totalPages]
-      : currentPage >= totalPages - 3
-      ? [
-          1,
-          "ellipsis-start",
-          totalPages - 4,
-          totalPages - 3,
-          totalPages - 2,
-          totalPages - 1,
-          totalPages,
-        ]
-      : [
-          1,
-          "ellipsis-start",
-          currentPage - 1,
-          currentPage,
-          currentPage + 1,
-          "ellipsis-end",
-          totalPages,
-        ];
-
-  return (
-    <nav
-      className="
-        mt-6 flex flex-col gap-3
-        border-t border-[#355872]/10
-        pt-6
-        sm:flex-row sm:items-center sm:justify-between
-        dark:border-white/10
-      "
-      aria-label="Favorites pagination"
-    >
-      <p className="text-[12px] font-semibold text-[color:var(--muted)]">
-        Showing {pageStartIndex + 1}–
-        {Math.min(pageStartIndex + ITEMS_PER_PAGE, totalItems)} of {totalItems}
-      </p>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="
-            inline-flex h-10 items-center justify-center
-            rounded-[12px]
-            border border-[#355872]/14
-            bg-white/75
-            px-4
-            text-[12px] font-black text-[#355872]
-            transition hover:bg-white
-            disabled:cursor-not-allowed disabled:opacity-35
-
-            dark:border-white/10
-            dark:bg-white/[0.05]
-            dark:text-[#9CD5FF]
-          "
-        >
-          Previous
-        </button>
-
-        {pages.map((page) => {
-          if (typeof page === "string") {
-            return (
-              <span
-                key={page}
-                className="
-                  inline-flex h-10 min-w-8 items-center justify-center
-                  px-1 text-[12px] font-black text-[#8A9AA4]
-                "
-              >
-                …
-              </span>
-            );
-          }
-
-          const active = page === currentPage;
-
-          return (
-            <button
-              key={page}
-              type="button"
-              onClick={() => onPageChange(page)}
-              aria-current={active ? "page" : undefined}
-              className={`
-                inline-flex h-10 min-w-10 items-center justify-center
-                rounded-[12px] border px-3
-                text-[12px] font-black transition
-                ${
-                  active
-                    ? "border-[#355872] bg-[#355872] text-white shadow-[0_8px_18px_rgba(53,88,114,0.18)] dark:border-[#9CD5FF] dark:bg-[#9CD5FF] dark:text-[#071521]"
-                    : "border-[#355872]/12 bg-white/70 text-[#355872] hover:bg-white dark:border-white/10 dark:bg-white/[0.05] dark:text-[#9CD5FF]"
-                }
-              `}
-            >
-              {page}
-            </button>
-          );
-        })}
-
-        <button
-          type="button"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="
-            inline-flex h-10 items-center justify-center
-            rounded-[12px]
-            border border-[#355872]/14
-            bg-white/75
-            px-4
-            text-[12px] font-black text-[#355872]
-            transition hover:bg-white
-            disabled:cursor-not-allowed disabled:opacity-35
-
-            dark:border-white/10
-            dark:bg-white/[0.05]
-            dark:text-[#9CD5FF]
-          "
-        >
-          Next
-        </button>
-      </div>
-    </nav>
   );
 }
 
@@ -370,32 +234,12 @@ export default function FavoriteList() {
 
   return (
     <DashboardLayout>
-      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-[1480px]">
-          <header className="mb-10">
-            <div className="mb-3 h-[3px] w-10 rounded-full bg-[var(--gold)]" />
-
-            <h1
-              className="
-                text-4xl font-black tracking-[-0.04em]
-                text-[var(--ink)]
-                sm:text-5xl
-              "
-            >
-              Favorite List
-            </h1>
-
-            <p
-              className="
-                mt-3 max-w-2xl
-                text-[15px] font-semibold leading-6
-                text-[var(--muted)]
-              "
-            >
-              A saved collection of projects and student portfolios you want to
-              come back to.
-            </p>
-          </header>
+      <div className="mx-auto w-full max-w-[1480px]">
+        <PageHeader
+          className="mb-10"
+          title="Favorites"
+          description="A saved collection of projects and student portfolios you want to come back to."
+        />
 
           <div className="space-y-12">
             <section ref={projectSectionRef} className="scroll-mt-28">
@@ -430,6 +274,7 @@ export default function FavoriteList() {
                     totalPages={projectTotalPages}
                     totalItems={favoriteProjects.length}
                     pageStartIndex={projectStartIndex}
+                    pageSize={ITEMS_PER_PAGE}
                     onPageChange={goToProjectPage}
                   />
                 </>
@@ -475,6 +320,7 @@ export default function FavoriteList() {
                     totalPages={portfolioTotalPages}
                     totalItems={favoritePortfolios.length}
                     pageStartIndex={portfolioStartIndex}
+                    pageSize={ITEMS_PER_PAGE}
                     onPageChange={goToPortfolioPage}
                   />
                 </>
@@ -490,7 +336,6 @@ export default function FavoriteList() {
             </section>
           </div>
         </div>
-      </main>
     </DashboardLayout>
   );
 }

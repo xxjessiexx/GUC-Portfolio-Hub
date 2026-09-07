@@ -10,6 +10,8 @@ import {AppCard} from "@/components/ui/AppCard";
 import PrimaryActionButton from "@/components/ui/Searchcommons/PrimaryActionButton";
 import FavoriteButton from "@/components/ui/Searchcommons/FavoriteButton";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import PageHeader from "@/components/common/PageHeader";
+import Pagination from "@/components/common/Pagination";
 import FilterSelect from "@/components/common/FilterSelect";
 import { useLocation } from "react-router-dom";
 import { useNavigate }
@@ -193,19 +195,11 @@ const [currentPage, setCurrentPage] = useState(1);
   return (
     <DashboardLayout>
 
-      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-[1480px] space-y-6">
-
-        {/* HEADER */}
-        <div>
-           <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
-            Explore Portfolios
-          </h1>
-
-           <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
-            Discover and get inspired by portfolios from talented GUC students across all majors and interests.
-          </p>
-        </div>
+      <div className="mx-auto w-full max-w-[1480px] space-y-6">
+        <PageHeader
+          title="Explore Portfolios"
+          description="Discover and get inspired by portfolios from talented GUC students across all majors and interests."
+        />
 
         <div className="space-y-5">
 
@@ -310,71 +304,15 @@ const [currentPage, setCurrentPage] = useState(1);
 </div>
 
 
-        {filteredPortfolios.length > ITEMS_PER_PAGE ? (
-          <nav
-            className="mt-8 flex flex-col gap-3 border-t border-[#355872]/10 pt-6 sm:flex-row sm:items-center sm:justify-between"
-            aria-label="Portfolio results pagination"
-          >
-            <p className="text-[12px] font-semibold text-[color:var(--muted)]">
-              Showing {pageStartIndex + 1}–
-              {Math.min(
-                pageStartIndex + ITEMS_PER_PAGE,
-                filteredPortfolios.length
-              )} of {filteredPortfolios.length}
-            </p>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => goToPage(safeCurrentPage - 1)}
-                disabled={safeCurrentPage === 1}
-                className="inline-flex h-10 items-center justify-center rounded-[12px] border border-[#355872]/14 bg-white/75 px-4 text-[12px] font-black text-[#355872] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35"
-              >
-                Previous
-              </button>
-
-              {getVisiblePageNumbers().map((page) => {
-                if (typeof page === "string") {
-                  return (
-                    <span
-                      key={page}
-                      className="inline-flex h-10 min-w-8 items-center justify-center px-1 text-[12px] font-black text-[#8A9AA4]"
-                    >
-                      …
-                    </span>
-                  );
-                }
-
-                const isActive = page === safeCurrentPage;
-
-                return (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => goToPage(page)}
-                    aria-current={isActive ? "page" : undefined}
-                    className={`inline-flex h-10 min-w-10 items-center justify-center rounded-[12px] border px-3 text-[12px] font-black transition ${
-                      isActive
-                        ? "border-[#355872] bg-[#355872] text-white shadow-[0_8px_18px_rgba(53,88,114,0.18)]"
-                        : "border-[#355872]/12 bg-white/70 text-[#355872] hover:bg-white"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                );
-              })}
-
-              <button
-                type="button"
-                onClick={() => goToPage(safeCurrentPage + 1)}
-                disabled={safeCurrentPage === totalPages}
-                className="inline-flex h-10 items-center justify-center rounded-[12px] border border-[#355872]/14 bg-white/75 px-4 text-[12px] font-black text-[#355872] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35"
-              >
-                Next
-              </button>
-            </div>
-          </nav>
-        ) : null}
+        <Pagination
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          totalItems={filteredPortfolios.length}
+          pageStartIndex={pageStartIndex}
+          pageSize={ITEMS_PER_PAGE}
+          onPageChange={goToPage}
+          ariaLabel="Portfolio results pagination"
+        />
 
         
 
@@ -402,7 +340,6 @@ const [currentPage, setCurrentPage] = useState(1);
         </AppModal>
       )}
       </div>
-      </main>
     </DashboardLayout>
   );
 }

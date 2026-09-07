@@ -13,8 +13,9 @@ import {
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
-import { SectionHeader } from "@/components/ui/SectionHeader";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import PageHeader from "@/components/common/PageHeader";
+import Pagination from "@/components/common/Pagination";
 import FilterSelect from "@/components/common/FilterSelect";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import { AdminActionDialog } from "@/components/adminModule/AdminActionDialog";
@@ -26,6 +27,8 @@ import {
   updateProject,
   deleteProject as deleteProjectFromStore,
 } from "@/data/demoStore";
+
+const ITEMS_PER_PAGE = 6;
 
 const normalizeVisibility = (value) => {
   if (!value) return "Public";
@@ -483,6 +486,7 @@ export default function ViewAllProjects() {
   const [filterCourse, setFilterCourse] = useState("All");
   const [sortBy, setSortBy] = useState("Updated");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [projectToDelete, setProjectToDelete] = useState(null);
 
@@ -574,6 +578,33 @@ export default function ViewAllProjects() {
 
       return 0;
     });
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredProjects.length / ITEMS_PER_PAGE)
+  );
+
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedProjects = filteredProjects.slice(
+    pageStartIndex,
+    pageStartIndex + ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const goToPage = (page) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(nextPage);
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  };
 
   const flaggedProjects = projects.filter((project) =>
     reportedProjects.some(
@@ -691,44 +722,31 @@ export default function ViewAllProjects() {
 
   return (
     <DashboardLayout>
-      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-[1480px] space-y-6">
-          <SectionHeader
-            className="
-              [&_h2]:mt-3
-              [&_h2]:text-4xl
-              [&_h2]:font-black
-              [&_h2]:tracking-tight
-              [&_h2]:text-[color:var(--ink)]
-              sm:[&_h2]:text-5xl
-
-              [&_p]:mt-3
-              [&_p]:text-base
-              [&_p]:font-semibold
-              [&_p]:text-[color:var(--muted)]
-            "
-            title="My Projects"
-            subtitle="Manage, edit, and organize your projects."
-            action={
-              <button
-                type="button"
-                onClick={() => navigate("/create-project")}
-                className="inline-flex h-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)] px-8 text-sm font-black text-white shadow-[0_12px_30px_rgba(53,88,114,.22)] transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)] hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)]"
-              >
-                + Create Project
-              </button>
-            }
-          />
+      <div className="mx-auto w-full max-w-[1480px] space-y-6">
+        <PageHeader
+          title="My Projects"
+          description="Manage, edit, and organize your projects."
+          action={
+            <button
+              type="button"
+              onClick={() => navigate("/create-project")}
+              className="inline-flex h-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)] px-8 text-sm font-black text-white shadow-[0_12px_30px_rgba(53,88,114,.22)] transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_20px_40px_rgba(53,88,114,.30)]"
+            >
+              + Create Project
+            </button>
+          }
+        />
 
           <SearchFilterToolbar
             searchValue={search}
-            onSearchChange={setSearch}
+            onSearchChange={(value) => { setSearch(value); setCurrentPage(1); }}
             searchPlaceholder="Search my projects..."
             showSort
             sortValue={`Sort: ${sortBy}`}
-            onSortChange={(value) =>
-              setSortBy(value.replace("Sort: ", ""))
-            }
+            onSortChange={(value) => {
+              setSortBy(value.replace("Sort: ", ""));
+              setCurrentPage(1);
+            }}
             sortOptions={[
               "Sort: None",
               "Sort: Updated",
@@ -743,23 +761,24 @@ export default function ViewAllProjects() {
             onClearFilters={() => {
               setFilterCourse("All");
               setFilterVisibility("All");
+              setCurrentPage(1);
             }}
           >
             <FilterSelect
               value={`Course: ${filterCourse}`}
-              onChange={(value) =>
-                setFilterCourse(value.replace("Course: ", ""))
-              }
+              onChange={(value) => {
+                setFilterCourse(value.replace("Course: ", ""));
+                setCurrentPage(1);
+              }}
               options={courseOptions}
             />
 
             <FilterSelect
               value={`Visibility: ${filterVisibility}`}
-              onChange={(value) =>
-                setFilterVisibility(
-                  value.replace("Visibility: ", "")
-                )
-              }
+              onChange={(value) => {
+                setFilterVisibility(value.replace("Visibility: ", ""));
+                setCurrentPage(1);
+              }}
               options={[
                 "Visibility: All",
                 "Visibility: Public",
@@ -806,31 +825,7 @@ export default function ViewAllProjects() {
                 ))}
               </div>
             </AppCard>
-          ) : (
-            <AppCard className="px-5 py-4">
-              <div className="flex items-center gap-3">
-                <div className="grid h-9 w-9 place-items-center rounded-2xl bg-[#355872]/8 text-[#355872] dark:bg-white/[0.05] dark:text-[#9CD5FF]">
-                  <AlertTriangle className="h-4 w-4" />
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-black text-[color:var(--ink)]">
-                      Flagged Projects
-                    </h2>
-
-                    <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[#355872]/8 px-2 text-[11px] font-black text-[#355872] dark:bg-white/[0.05] dark:text-[#9CD5FF]">
-                      0
-                    </span>
-                  </div>
-
-                  <p className="mt-0.5 text-xs font-semibold text-[color:var(--muted)]">
-                    No projects currently require moderation review.
-                  </p>
-                </div>
-              </div>
-            </AppCard>
-          )}
+          ) : null}
 
           <AppCard className="overflow-hidden p-5">
             <div className="mb-5 flex items-center justify-between gap-4">
@@ -861,7 +856,7 @@ export default function ViewAllProjects() {
               </div>
             ) : (
               <div className="space-y-5">
-                {filteredProjects.map((project) => (
+                {paginatedProjects.map((project) => (
                   <ProjectRow
                     key={project.id}
                     project={project}
@@ -875,6 +870,16 @@ export default function ViewAllProjects() {
               </div>
             )}
           </AppCard>
+
+          <Pagination
+            currentPage={safeCurrentPage}
+            totalPages={totalPages}
+            totalItems={filteredProjects.length}
+            pageStartIndex={pageStartIndex}
+            pageSize={ITEMS_PER_PAGE}
+            onPageChange={goToPage}
+            ariaLabel="My projects pagination"
+          />
         </div>
 
         <DeleteConfirmationModal
@@ -907,7 +912,6 @@ export default function ViewAllProjects() {
           }}
           onConfirm={submitAppeal}
         />
-      </main>
     </DashboardLayout>
   );
 }

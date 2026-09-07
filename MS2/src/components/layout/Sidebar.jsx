@@ -22,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { clearCurrentUser } from "@/data/demoStore";
 import { student } from "@/data/studentDashboardData";
 import { useState } from "react";
 
@@ -123,10 +124,10 @@ const [logoutOpen, setLogoutOpen] = useState(false);
   const items = workspaceItems[activeWorkspace];
 
   const handleLogout = () => {
-  setLogoutOpen(false);
-  sessionStorage.removeItem("currentUser");
-  navigate("/", { replace: true });
-};
+    setLogoutOpen(false);
+    clearCurrentUser();
+    navigate("/", { replace: true });
+  };
 
   const handleNavigate = (path) => {
     if (!path) return;

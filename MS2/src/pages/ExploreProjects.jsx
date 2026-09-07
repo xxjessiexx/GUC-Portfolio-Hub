@@ -2,6 +2,8 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import ExploreProjectCard from "@/components/ui/Searchcommons/ExploreProjectCard";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import PageHeader from "@/components/common/PageHeader";
+import Pagination from "@/components/common/Pagination";
 import FilterPanel from "@/components/common/FilterPanel";
 import FilterSelect from "@/components/common/FilterSelect";
 import { AdminActionDialog }
@@ -338,20 +340,11 @@ const instructorOptions = [
   return (
     <DashboardLayout>
 
-      {/* MAIN */}
-      <main className="px-4 py-7 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-[1480px] space-y-6">
-
-        {/* HEADER */}
-        <div>
-           <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
-            Explore Projects
-          </h1>
-
-           <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
-            Discover projects created by GUC students.
-          </p>
-        </div>
+      <div className="mx-auto w-full max-w-[1480px] space-y-6">
+        <PageHeader
+          title="Explore Projects"
+          description="Discover projects created by GUC students."
+        />
 
         {/* SEARCH + FILTERS */}
         
@@ -545,71 +538,15 @@ const instructorOptions = [
 
         </div>
 
-        {filteredProjects.length > ITEMS_PER_PAGE ? (
-          <nav
-            className="mt-8 flex flex-col gap-3 border-t border-[#355872]/10 pt-6 sm:flex-row sm:items-center sm:justify-between"
-            aria-label="Project results pagination"
-          >
-            <p className="text-[12px] font-semibold text-[color:var(--muted)]">
-              Showing {pageStartIndex + 1}–
-              {Math.min(
-                pageStartIndex + ITEMS_PER_PAGE,
-                filteredProjects.length
-              )} of {filteredProjects.length}
-            </p>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => goToPage(safeCurrentPage - 1)}
-                disabled={safeCurrentPage === 1}
-                className="inline-flex h-10 items-center justify-center rounded-[12px] border border-[#355872]/14 bg-white/75 px-4 text-[12px] font-black text-[#355872] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35 dark:border-white/10 dark:bg-white/[0.04] dark:text-[#9CD5FF] dark:hover:bg-white/[0.07]"
-              >
-                Previous
-              </button>
-
-              {getVisiblePageNumbers().map((page) => {
-                if (typeof page === "string") {
-                  return (
-                    <span
-                      key={page}
-                      className="inline-flex h-10 min-w-8 items-center justify-center px-1 text-[12px] font-black text-[#8A9AA4]"
-                    >
-                      …
-                    </span>
-                  );
-                }
-
-                const isActive = page === safeCurrentPage;
-
-                return (
-                  <button
-                    key={page}
-                    type="button"
-                    onClick={() => goToPage(page)}
-                    aria-current={isActive ? "page" : undefined}
-                    className={`inline-flex h-10 min-w-10 items-center justify-center rounded-[12px] border px-3 text-[12px] font-black transition ${
-                      isActive
-                        ? "border-[#355872] bg-[#355872] text-white shadow-[0_8px_18px_rgba(53,88,114,0.18)] dark:border-[#9CD5FF] dark:bg-[#9CD5FF] dark:text-[#071521]"
-                        : "border-[#355872]/12 bg-white/70 text-[#355872] hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-[#9CD5FF] dark:hover:bg-white/[0.07]"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                );
-              })}
-
-              <button
-                type="button"
-                onClick={() => goToPage(safeCurrentPage + 1)}
-                disabled={safeCurrentPage === totalPages}
-                className="inline-flex h-10 items-center justify-center rounded-[12px] border border-[#355872]/14 bg-white/75 px-4 text-[12px] font-black text-[#355872] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35 dark:border-white/10 dark:bg-white/[0.04] dark:text-[#9CD5FF] dark:hover:bg-white/[0.07]"
-              >
-                Next
-              </button>
-            </div>
-          </nav>
-        ) : null}
+        <Pagination
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          totalItems={filteredProjects.length}
+          pageStartIndex={pageStartIndex}
+          pageSize={ITEMS_PER_PAGE}
+          onPageChange={goToPage}
+          ariaLabel="Project results pagination"
+        />
       </div>
 
       <AdminActionDialog
@@ -720,7 +657,6 @@ const instructorOptions = [
   title={notification?.title}
   description={notification?.text}
 />
-</main>
     </DashboardLayout>
   );
 }
