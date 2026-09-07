@@ -1,79 +1,149 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Bell,
   Bot,
+  BriefcaseBusiness,
   Building2,
+  Check,
   ChevronRight,
-  Download,
   Eye,
   GraduationCap,
   KeyRound,
-  Lock,
+  Link2,
+  LoaderCircle,
   Mail,
+  MessageSquare,
   Moon,
   Palette,
-  RotateCcw,
   Shield,
+  ShieldCheck,
   Sun,
   User,
+  Users,
+  Volume2,
+  X,
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import AppSelect from "@/components/common/AppSelect";
+import ProfilePhotoUploader from "@/components/profile/ProfilePhotoUploader";
 import { useTheme } from "@/hooks/useTheme";
 import { useUserProfile } from "@/context/UserProfileContext";
-import { getCurrentUser, setCurrentUser, updateUser } from "@/data/demoStore";
+import { useNotifications } from "@/context/NotificationsContext";
+import {
+  getCurrentUser,
+  setCurrentUser,
+  updateUser,
+} from "@/data/demoStore";
+
+const NOTIFICATION_SOUND_KEY = "guc-notification-sound-enabled";
 
 const AI_KEYS = {
   collapsed: "guc-ai-companion-collapsed",
-  legacyEnabled: "guc-ai-companion-enabled",
   name: "guc-ai-companion-name",
   gender: "guc-ai-companion-gender",
-  launcherPosition: "guc-ai-companion-launcher-position",
-  panelPosition: "guc-ai-companion-panel-position",
 };
 
 const roleMeta = {
   student: {
     label: "Student",
-    title: "Settings",
-    subtitle: "Manage visibility, notifications, appearance, and assistant preferences.",
-    icon: GraduationCap,
     profileRoute: "/edit-student-profile",
   },
   instructor: {
     label: "Instructor",
-    title: "Settings",
-    subtitle: "Manage visibility, notifications, appearance, and assistant preferences.",
-    icon: User,
     profileRoute: "/edit-instructor-profile",
   },
   employer: {
     label: "Employer",
-    title: "Settings",
-    subtitle: "Manage company visibility, notifications, appearance, and assistant preferences.",
-    icon: Building2,
     profileRoute: "/edit-employer-profile",
   },
   admin: {
     label: "Admin",
-    title: "Settings",
-    subtitle: "Manage platform preferences, notifications, appearance, and assistant preferences.",
-    icon: Shield,
     profileRoute: "/admin/overview",
   },
 };
 
 const tabs = [
-  { id: "account", label: "Account", icon: User },
-  { id: "visibility", label: "Visibility", icon: Eye },
+  { id: "profile", label: "Profile", icon: User },
+  { id: "account", label: "Account", icon: KeyRound },
+  { id: "privacy", label: "Privacy", icon: Shield },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "appearance", label: "Appearance", icon: Palette },
-  { id: "assistant", label: "AI Companion", icon: Bot },
-  { id: "data", label: "Data", icon: Download },
+  { id: "ai", label: "AI Companion", icon: Bot },
 ];
+
+const facultyOptions = [
+  "Engineering and Technology",
+  "Management Technology",
+  "Pharmacy and Biotechnology",
+  "Applied Sciences and Arts",
+  "Law and Legal Studies",
+  "Dentistry",
+];
+
+const majorOptions = [
+  "MET",
+  "DMET",
+  "CSEN",
+  "IET",
+  "EMS",
+  "BI",
+  "Applied Sciences and Arts",
+  "Architecture",
+  "Pharmacy and Biotechnology",
+  "Civil",
+  "Dentistry",
+  "Law and Legal Studies",
+  "Management",
+  "Mechatronics",
+];
+
+const semesterOptions = Array.from({ length: 10 }, (_, index) =>
+  String(index + 1)
+);
+
+const engineeringMajors = new Set([
+  "MET",
+  "DMET",
+  "CSEN",
+  "IET",
+  "EMS",
+  "Civil",
+  "Mechatronics",
+]);
+
+function resolveFaculty(major, currentFaculty) {
+  if (engineeringMajors.has(String(major || ""))) {
+    return "Engineering and Technology";
+  }
+
+  if (major === "Management" || major === "BI") {
+    return "Management Technology";
+  }
+
+  if (major === "Pharmacy and Biotechnology") {
+    return "Pharmacy and Biotechnology";
+  }
+
+  if (major === "Dentistry") {
+    return "Dentistry";
+  }
+
+  if (major === "Law and Legal Studies") {
+    return "Law and Legal Studies";
+  }
+
+  if (
+    major === "Applied Sciences and Arts" ||
+    major === "Architecture"
+  ) {
+    return "Applied Sciences and Arts";
+  }
+
+  return currentFaculty || "Engineering and Technology";
+}
 
 function normalizeRole(value) {
   const role = String(value || "").toLowerCase();
@@ -83,463 +153,1419 @@ function normalizeRole(value) {
   return "student";
 }
 
-function readLocalBool(key, fallback) {
-  if (typeof window === "undefined") return fallback;
-  const value = localStorage.getItem(key);
-  if (value === null) return fallback;
-  return value === "true";
-}
-
-function readLocalText(key, fallback = "") {
-  if (typeof window === "undefined") return fallback;
-  return localStorage.getItem(key) ?? fallback;
-}
-
-function getDefaultAssistantName(gender) {
-  return gender === "female" ? "Nova" : "Atlas";
-}
-
-function getDefaultPreferences(role, user = {}) {
-  const stored = user.preferences || {};
+function getDefaultPrivacy(role, user = {}) {
+  const stored =
+    user?.preferences?.visibility ||
+    user?.preferences?.privacy ||
+    user?.settings?.privacy ||
+    {};
 
   return {
-    visibility: {
-      profileVisibility: role === "student" ? "public" : "listed",
-      showEmail: false,
-      showProjects: role !== "admin",
-      allowMessages: role !== "admin",
-      allowEmployerContact: role === "student",
-      showCourses: role === "instructor",
-      showInternships: role === "employer",
-      ...(stored.visibility || stored.privacy || {}),
-    },
-    notifications: {
-      muteAll: Boolean(user.notificationMuted || stored.notifications?.muteAll || stored.notifications?.mutedAll),
-      inApp: true,
-      email: false,
-      messages: true,
-      projectUpdates: true,
-      internshipUpdates: role === "student" || role === "employer",
-      courseUpdates: role === "student" || role === "instructor",
-      adminAnnouncements: true,
-      ...(stored.notifications || {}),
-    },
-    appearance: {
-      compactMode: false,
-      reduceMotion: false,
-      highContrast: false,
-      ...(stored.appearance || stored.workspace || stored.accessibility || {}),
-    },
+    profileVisibility: role === "admin" ? "private" : "public",
+    showEmail: false,
+    showProjects: role !== "admin" && role !== "employer",
+    allowMessages: role !== "admin",
+    allowEmployerContact: role === "student",
+    showCourses: role === "instructor",
+    showInternships: role === "employer",
+    ...stored,
   };
 }
 
-function applySavedAppearance(preferences) {
-  if (typeof document === "undefined" || typeof localStorage === "undefined") return;
-  const appearance = preferences?.appearance || {};
-  document.documentElement.classList.toggle("guc-compact-mode", Boolean(appearance.compactMode));
-  document.documentElement.classList.toggle("guc-reduce-motion", Boolean(appearance.reduceMotion));
-  document.documentElement.classList.toggle("guc-high-contrast", Boolean(appearance.highContrast));
-  localStorage.setItem("guc-portfolio-appearance-preferences", JSON.stringify(appearance));
+function defaultCompanionName(gender) {
+  return gender === "female" ? "Nova" : "Atlas";
 }
 
-function ToggleControl({ checked, onChange, disabled = false }) {
+function readAiSettings() {
+  if (typeof window === "undefined") {
+    return {
+      name: "Atlas",
+      gender: "male",
+      collapsed: true,
+    };
+  }
+
+  const gender =
+    localStorage.getItem(AI_KEYS.gender) === "female" ? "female" : "male";
+
+  return {
+    gender,
+    name:
+      localStorage.getItem(AI_KEYS.name) ||
+      defaultCompanionName(gender),
+    collapsed: localStorage.getItem(AI_KEYS.collapsed) === "true",
+  };
+}
+
+function Surface({ children, className = "" }) {
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`relative h-8 w-[58px] rounded-full border p-1 transition ${
-        checked
-          ? "border-[color:var(--primary)] bg-[image:var(--gradient-brand)] shadow-[0_10px_25px_rgba(53,88,114,0.22)]"
-          : "border-[#AFC0CC] bg-[#D8E1E7] shadow-inner dark:border-white/15 dark:bg-white/15"
-      } ${disabled ? "cursor-not-allowed opacity-45" : "hover:-translate-y-0.5"}`}
-      aria-pressed={checked}
+    <section
+      className={`
+        border-b border-[#D2E0E7]
+        bg-[#F7FAFB] dark:bg-transparent
+        last:border-b-0
+        dark:border-white/10
+        ${className}
+      `}
     >
-      <span
-        className={`block h-6 w-6 rounded-full bg-white shadow-md transition-transform ${checked ? "translate-x-[26px]" : "translate-x-0"}`}
-      />
-    </button>
-  );
-}
-
-function TextField({ label, value, onChange, placeholder }) {
-  return (
-    <label className="block">
-      <span className="text-xs font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</span>
-      <input
-        value={value || ""}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border-soft)] bg-white/75 px-4 text-sm font-semibold text-[color:var(--ink)] outline-none transition placeholder:text-[color:var(--muted)]/60 focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent)]/20 dark:bg-white/5"
-      />
-    </label>
-  );
-}
-
-function SelectField({ label, value, onChange, options }) {
-  return (
-    <div className="block">
-      <span className="text-xs font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</span>
-      <AppSelect
-        value={value || ""}
-        onChange={onChange}
-        options={options}
-        placeholder={`Select ${label}`}
-        className="mt-2"
-      />
-    </div>
-  );
-}
-
-function SettingsCard({ title, description, icon: Icon, children }) {
-  return (
-    <section className="rounded-[28px] border border-[color:var(--border-soft)] bg-[color:var(--card-bg-strong)] p-5 shadow-[var(--shadow-card)] sm:p-6">
-      <div className="mb-5 flex items-start gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--border-blue)] bg-[color:var(--surface-soft)] text-[color:var(--primary)]">
-          <Icon className="h-5 w-5" />
-        </div>
-        <div>
-          <h2 className="text-xl font-black text-[color:var(--ink)]">{title}</h2>
-          {description ? <p className="mt-1 max-w-3xl text-sm font-semibold leading-6 text-[color:var(--muted)]">{description}</p> : null}
-        </div>
-      </div>
-      <div className="divide-y divide-[color:var(--border-soft)] rounded-3xl border border-[color:var(--border-soft)] bg-white/45 dark:bg-white/[0.03]">
-        {children}
-      </div>
+      {children}
     </section>
   );
 }
 
-function SettingRow({ icon: Icon, title, description, right, children }) {
+function PanelHeading({ title, description, action }) {
   return (
-    <div className="p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          {Icon ? <Icon className="h-5 w-5 shrink-0 text-[color:var(--primary)]" /> : null}
-          <div className="min-w-0">
-            <p className="text-sm font-black text-[color:var(--ink)]">{title}</p>
-            {description ? <p className="mt-1 text-sm font-semibold leading-5 text-[color:var(--muted)]">{description}</p> : null}
-          </div>
-        </div>
-        {right ?? <ChevronRight className="h-5 w-5 shrink-0 text-[color:var(--muted)]" />}
+    <div className="flex flex-col gap-3 border-b border-[#D2E0E7] px-7 py-6 sm:flex-row sm:items-center sm:justify-between dark:border-white/10">
+      <div>
+        <h2 className="text-[21px] font-black tracking-[-0.025em] text-[color:var(--ink)]">
+          {title}
+        </h2>
+        {description ? (
+          <p className="mt-1 max-w-2xl text-[12.5px] font-semibold leading-5 text-[#6E8290] dark:text-[#91A6B4]">
+            {description}
+          </p>
+        ) : null}
       </div>
-      {children ? <div className="mt-4 pl-0 sm:pl-8">{children}</div> : null}
+
+      {action}
     </div>
   );
 }
 
-function ToggleRow({ icon, title, description, checked, onChange, disabled = false }) {
+function FieldRow({
+  label,
+  hint,
+  children,
+  last = false,
+}) {
   return (
-    <SettingRow
-      icon={icon}
-      title={title}
-      description={description}
-      right={<ToggleControl checked={Boolean(checked)} disabled={disabled} onChange={onChange} />}
+    <div
+      className={`grid gap-3 px-6 py-4 md:grid-cols-[205px_minmax(0,1fr)] md:items-center ${
+        last ? "" : "border-b border-[#D2E0E7] dark:border-white/10"
+      }`}
+    >
+      <div>
+        <p className="text-[13px] font-black text-[color:var(--ink)]">
+          {label}
+        </p>
+        {hint ? (
+          <p className="mt-1 text-[11px] font-semibold leading-4 text-[#6E8290] dark:text-[#91A6B4]">
+            {hint}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+function TextInput({
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+}) {
+  return (
+    <input
+      type={type}
+      value={value || ""}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      className="
+        h-11 w-full rounded-[11px]
+        border border-[#CFDEE6]
+        bg-[#F2F7F9] px-4
+        text-[13px] font-semibold text-[color:var(--ink)]
+        outline-none transition
+        placeholder:text-[#6E8290] dark:text-[#91A6B4]/55
+        focus:border-[#7AAACE]
+        focus:ring-4 focus:ring-[#7AAACE]/14
+        dark:border-white/10
+        dark:bg-[#142B3D]
+      "
     />
   );
 }
 
-function PrimaryButton({ children, onClick, icon: Icon, variant = "primary" }) {
-  const base = "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-black transition hover:-translate-y-0.5";
-  const styles = variant === "primary"
-    ? "bg-[image:var(--gradient-brand)] text-white shadow-[var(--shadow-brand)]"
-    : "border border-[color:var(--border-blue)] bg-white/65 text-[color:var(--primary)] hover:bg-[color:var(--surface-soft)] dark:bg-white/10 dark:text-[color:var(--accent)]";
+function TextArea({ value, onChange, placeholder }) {
   return (
-    <button type="button" onClick={onClick} className={`${base} ${styles}`}>
-      {Icon ? <Icon className="h-4 w-4" /> : null}
+    <textarea
+      value={value || ""}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      rows={4}
+      className="
+        w-full resize-none rounded-[11px]
+        border border-[#CFDEE6]
+        bg-[#F2F7F9] px-4 py-3
+        text-[13px] font-semibold leading-6 text-[color:var(--ink)]
+        outline-none transition
+        placeholder:text-[#6E8290] dark:text-[#91A6B4]/55
+        focus:border-[#7AAACE]
+        focus:ring-4 focus:ring-[#7AAACE]/14
+        dark:border-white/10
+        dark:bg-[#142B3D]
+      "
+    />
+  );
+}
+
+function InlineSaveStatus({ state, className = "" }) {
+  if (!state || state === "idle") return null;
+
+  if (state === "saving") {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 text-[10.5px] font-black text-[#B18C2E] dark:text-[#E7C66B] ${className}`}
+      >
+        <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+        Saving…
+      </span>
+    );
+  }
+
+  if (state === "error") {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 text-[10.5px] font-black text-[#B94D55] dark:text-[#FF9AA1] ${className}`}
+      >
+        Couldn’t save
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 text-[10.5px] font-black text-[#B18C2E] dark:text-[#E7C66B] ${className}`}
+    >
+      <Check className="h-3.5 w-3.5" />
+      Saved
+    </span>
+  );
+}
+
+function SectionTitle({ title, description, status }) {
+  return (
+    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <p className="text-[13px] font-black text-[color:var(--ink)]">
+          {title}
+        </p>
+        {description ? (
+          <p className="mt-1 text-[11px] font-semibold leading-4 text-[#6E8290] dark:text-[#91A6B4]">
+            {description}
+          </p>
+        ) : null}
+      </div>
+
+      <InlineSaveStatus state={status} className="mt-0.5" />
+    </div>
+  );
+}
+
+function GhostButton({ onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="
+        inline-flex h-10 items-center justify-center rounded-[12px]
+        border border-[#CBDCE5]
+        bg-[#F2F7F9] px-4
+        text-[12px] font-black text-[#355872]
+        transition hover:bg-[#F0F6F9]
+        dark:border-white/10
+        dark:bg-white/[0.05]
+        dark:text-[#BFE5FF]
+        dark:hover:bg-white/[0.08]
+      "
+    >
       {children}
     </button>
   );
 }
 
-export default function Settings() {
-  const navigate = useNavigate();
-  const { profile, updateProfile } = useUserProfile();
-  const { theme, setTheme } = useTheme();
-  const [user, setUserState] = useState(() => getCurrentUser() || profile || {});
-  const role = normalizeRole(user.role || user.accountRole || user.systemRole || profile?.role);
-  const meta = roleMeta[role] || roleMeta.student;
-  const RoleIcon = meta.icon;
+function Switch({ checked, onChange, disabled = false, label }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={checked}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={`
+        relative shrink-0 rounded-full border-2
+        transition-colors duration-200
+        focus-visible:outline-none
+        focus-visible:ring-4
+        focus-visible:ring-[#7AAACE]/20
+        ${
+          checked
+            ? "border-[#355872] bg-[#355872] dark:border-[#9CD5FF] dark:bg-[#9CD5FF]"
+            : "border-[#A6BAC6] bg-[#DDE7EC] dark:border-white/18 dark:bg-[#173044]"
+        }
+        ${disabled ? "cursor-not-allowed opacity-35" : "cursor-pointer"}
+      `}
+      style={{
+        width: 52,
+        height: 30,
+        minWidth: 52,
+        overflow: "hidden",
+        boxSizing: "border-box",
+      }}
+    >
+      <span
+        className="
+          pointer-events-none absolute rounded-full bg-white
+          shadow-[0_2px_6px_rgba(20,43,58,0.24)]
+          transition-[left] duration-200
+        "
+        style={{
+          width: 20,
+          height: 20,
+          top: 3,
+          left: checked ? 25 : 3,
+        }}
+      />
+    </button>
+  );
+}
 
-  const [activeTab, setActiveTab] = useState("account");
-  const [preferences, setPreferences] = useState(() => getDefaultPreferences(role, user));
-  const [assistant, setAssistant] = useState(() => {
-    const gender = readLocalText(AI_KEYS.gender, "male") === "female" ? "female" : "male";
-    return {
-      collapsed: readLocalBool(AI_KEYS.collapsed, true),
-      name: readLocalText(AI_KEYS.name, getDefaultAssistantName(gender)),
-      gender,
-    };
-  });
+function ToggleRow({
+  icon: Icon,
+  title,
+  description,
+  checked,
+  onChange,
+  disabled = false,
+  last = false,
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between gap-6 px-6 py-[17px] ${
+        last ? "" : "border-b border-[#D2E0E7] dark:border-white/10"
+      }`}
+    >
+      <div className="flex min-w-0 items-start gap-3.5">
+        <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-[#EEF5F8] text-[#46677E] dark:bg-white/[0.05] dark:text-[#9CD5FF]">
+          <Icon className="h-4 w-4" />
+        </div>
 
-  const resetFormFromStore = () => {
-    const nextUser = getCurrentUser() || profile || {};
-    const nextRole = normalizeRole(nextUser.role || profile?.role);
-    const gender = readLocalText(AI_KEYS.gender, "male") === "female" ? "female" : "male";
-    setUserState(nextUser);
-    setPreferences(getDefaultPreferences(nextRole, nextUser));
-    setAssistant({
-      collapsed: readLocalBool(AI_KEYS.collapsed, true),
-      name: readLocalText(AI_KEYS.name, getDefaultAssistantName(gender)),
-      gender,
-    });
+        <div>
+          <p className="text-[13.5px] font-black text-[color:var(--ink)]">
+            {title}
+          </p>
+          <p className="mt-1 max-w-2xl text-[11.5px] font-semibold leading-5 text-[#6E8290] dark:text-[#91A6B4]">
+            {description}
+          </p>
+        </div>
+      </div>
+
+      <Switch
+        checked={Boolean(checked)}
+        onChange={onChange}
+        disabled={disabled}
+        label={title}
+      />
+    </div>
+  );
+}
+
+function Choice({
+  selected,
+  title,
+  description,
+  icon: Icon,
+  onClick,
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={`
+        relative rounded-[14px] border p-4 text-left transition
+        ${
+          selected
+            ? "border-[#355872] bg-[#EDF5F9] shadow-[0_10px_24px_rgba(53,88,114,0.10)] dark:border-[#9CD5FF]/70 dark:bg-[#9CD5FF]/[0.08]"
+            : "border-[#D3E1E8] bg-white hover:border-[#ACC6D5] dark:border-white/10 dark:bg-white/[0.035]"
+        }
+      `}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div
+          className={`grid h-8 w-8 place-items-center rounded-[10px] ${
+            selected
+              ? "bg-[#355872] text-white dark:bg-[#9CD5FF] dark:text-[#071521]"
+              : "bg-[#EEF5F8] text-[#55758B] dark:bg-white/[0.05] dark:text-[#9CB5C6]"
+          }`}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+
+        {selected ? (
+          <span className="grid h-5 w-5 place-items-center rounded-full bg-[#355872] text-white dark:bg-[#9CD5FF] dark:text-[#071521]">
+            <Check className="h-3 w-3" />
+          </span>
+        ) : null}
+      </div>
+
+      <p className="mt-3 text-[13px] font-black text-[color:var(--ink)]">
+        {title}
+      </p>
+      <p className="mt-1 text-[11px] font-semibold leading-4 text-[#6E8290] dark:text-[#91A6B4]">
+        {description}
+      </p>
+    </button>
+  );
+}
+
+function SkillEditor({ skills, onChange }) {
+  const [draft, setDraft] = useState("");
+
+  const add = () => {
+    const value = draft.trim();
+    if (!value || skills.includes(value)) return;
+    onChange([...skills, value]);
+    setDraft("");
   };
 
-  useEffect(() => {
-    applySavedAppearance(preferences);
-  }, [preferences]);
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2">
+        {skills.map((skill) => (
+          <span
+            key={skill}
+            className="
+              inline-flex items-center gap-2 rounded-full
+              border border-[#C8DBE5]
+              bg-[#EEF5F8] px-3 py-1.5
+              text-[11px] font-black text-[#355872]
+              dark:border-white/10 dark:bg-white/[0.06] dark:text-[#BFE5FF]
+            "
+          >
+            {skill}
+            <button
+              type="button"
+              onClick={() => onChange(skills.filter((item) => item !== skill))}
+              className="opacity-55 transition hover:opacity-100"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+      </div>
+
+      <div className="mt-3 flex gap-2">
+        <TextInput
+          value={draft}
+          onChange={setDraft}
+          placeholder="Add a skill"
+        />
+        <GhostButton onClick={add}>Add</GhostButton>
+      </div>
+    </div>
+  );
+}
+
+export default function Settings() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { profile, updateProfile } = useUserProfile();
+  const { theme, setTheme } = useTheme();
+  const {
+    notificationPreferences,
+    setNotificationPreference,
+    toggleMuteAll,
+  } = useNotifications();
+
+  const [user, setUser] = useState(() => getCurrentUser() || profile || {});
+  const role = normalizeRole(
+    user.role || user.accountRole || user.systemRole || profile?.role
+  );
+  const meta = roleMeta[role] || roleMeta.student;
+
+  const requestedTab = searchParams.get("tab");
+  const initialTab = tabs.some((tab) => tab.id === requestedTab)
+    ? requestedTab
+    : "profile";
+
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const activeMeta =
+    tabs.find((tab) => tab.id === activeTab) || tabs[0];
+
+  const [privacy, setPrivacy] = useState(() => getDefaultPrivacy(role, user));
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem(NOTIFICATION_SOUND_KEY) !== "false";
+  });
+  const [ai, setAi] = useState(readAiSettings);
+  const [aiSaveState, setAiSaveState] = useState("idle");
+  const [aiSaveGroup, setAiSaveGroup] = useState(null);
+  const aiSaveTimerRef = useRef(null);
+
+
+  const [profileDraft, setProfileDraft] = useState(() => ({
+    bio: profile?.bio || "",
+    major: profile?.major || majorOptions[0],
+    faculty: resolveFaculty(
+      profile?.major || majorOptions[0],
+      profile?.faculty
+    ),
+    semester: String(profile?.semester || "1"),
+    skills: profile?.skills || [],
+    links: {
+      linkedin: profile?.links?.linkedin || "",
+      github: profile?.links?.github || "",
+      behance: profile?.links?.behance || "",
+    },
+  }));
+
+  const [profileSaveStates, setProfileSaveStates] = useState({
+    photo: "idle",
+    bio: "idle",
+    academic: "idle",
+    skills: "idle",
+    links: "idle",
+  });
+  const profileSaveTimerRef = useRef(null);
+  const savedFeedbackTimersRef = useRef({});
 
   useEffect(() => {
-    const refresh = () => resetFormFromStore();
+    const next = searchParams.get("tab");
+    if (next && tabs.some((tab) => tab.id === next)) {
+      setActiveTab(next);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    setProfileDraft({
+      bio: profile?.bio || "",
+      major: profile?.major || majorOptions[0],
+      faculty: resolveFaculty(
+        profile?.major || majorOptions[0],
+        profile?.faculty
+      ),
+      semester: String(profile?.semester || "1"),
+      skills: profile?.skills || [],
+      links: {
+        linkedin: profile?.links?.linkedin || "",
+        github: profile?.links?.github || "",
+        behance: profile?.links?.behance || "",
+      },
+    });
+  }, [profile]);
+
+  useEffect(() => {
+    return () => {
+      if (profileSaveTimerRef.current) {
+        clearTimeout(profileSaveTimerRef.current);
+      }
+
+      Object.values(savedFeedbackTimersRef.current).forEach((timer) => {
+        if (timer) clearTimeout(timer);
+      });
+
+      if (aiSaveTimerRef.current) {
+        clearTimeout(aiSaveTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => {
+      const nextUser = getCurrentUser() || profile || {};
+      setUser(nextUser);
+      setPrivacy(getDefaultPrivacy(normalizeRole(nextUser.role), nextUser));
+    };
+
     window.addEventListener("demo-current-user-change", refresh);
     window.addEventListener("demo-db-change", refresh);
+
     return () => {
       window.removeEventListener("demo-current-user-change", refresh);
       window.removeEventListener("demo-db-change", refresh);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
-  const persistPreferences = (nextPreferences) => {
-    const payload = {
-      preferences: nextPreferences,
-      notificationMuted: nextPreferences.notifications.muteAll,
-    };
+  const selectTab = (tabId) => {
+    setActiveTab(tabId);
+    setSearchParams({ tab: tabId });
+  };
 
-    let saved = null;
+  const setProfileGroupState = (group, state) => {
+    setProfileSaveStates((current) => ({
+      ...current,
+      [group]: state,
+    }));
+  };
 
-    if (user?.id) {
-      saved = updateUser(user.id, payload);
+  const settleProfileGroup = (group) => {
+    if (savedFeedbackTimersRef.current[group]) {
+      clearTimeout(savedFeedbackTimersRef.current[group]);
     }
 
-    const nextUser = saved || {
-      ...user,
-      ...payload,
-    };
-
-    setCurrentUser(nextUser);
-    updateProfile(nextUser);
-    setUserState(nextUser);
-
-    localStorage.setItem(
-      "guc-portfolio-notification-preferences",
-      JSON.stringify(nextPreferences.notifications)
-    );
-
-    localStorage.setItem(
-      "guc-portfolio-visibility-preferences",
-      JSON.stringify(nextPreferences.visibility)
-    );
-
-    applySavedAppearance(nextPreferences);
-
-    window.dispatchEvent(
-      new CustomEvent("guc-settings-updated", {
-        detail: {
-          preferences: nextPreferences,
-          user: nextUser,
-        },
-      })
-    );
+    savedFeedbackTimersRef.current[group] = setTimeout(() => {
+      setProfileGroupState(group, "idle");
+    }, 1500);
   };
 
-  const updatePreference = (group, key, value) => {
-    const nextPreferences = {
-      ...preferences,
-      [group]: {
-        ...preferences[group],
-        [key]: value,
-      },
-    };
+  const persistProfileDraft = (draft, group) => {
+    const normalizedFaculty = resolveFaculty(
+      draft.major,
+      draft.faculty
+    );
 
-    setPreferences(nextPreferences);
-    persistPreferences(nextPreferences);
-  };
+    try {
+      updateProfile({
+        bio: draft.bio,
+        faculty: normalizedFaculty,
+        major: draft.major,
+        semester: draft.semester,
+        skills: draft.skills,
+        links: draft.links,
+        role: `${draft.major} Student`,
+      });
 
-  const persistAssistant = (nextAssistant) => {
-    localStorage.removeItem(AI_KEYS.legacyEnabled);
-    localStorage.setItem(AI_KEYS.collapsed, String(Boolean(nextAssistant.collapsed)));
-    localStorage.setItem(AI_KEYS.name, nextAssistant.name || getDefaultAssistantName(nextAssistant.gender));
-    localStorage.setItem(AI_KEYS.gender, nextAssistant.gender || "male");
-    window.dispatchEvent(new CustomEvent("guc-ai-companion-settings-change", { detail: nextAssistant }));
-  };
-
-  const updateAssistant = (key, value) => {
-    setAssistant((current) => {
-      const next = { ...current, [key]: value };
-      if (key === "gender") {
-        const previousDefault = getDefaultAssistantName(current.gender);
-        if (!current.name || current.name === previousDefault) next.name = getDefaultAssistantName(value);
+      if (draft.faculty !== normalizedFaculty) {
+        setProfileDraft((current) => ({
+          ...current,
+          faculty: normalizedFaculty,
+        }));
       }
-      persistAssistant(next);
+
+      setProfileGroupState(group, "saved");
+      settleProfileGroup(group);
+    } catch (error) {
+      setProfileGroupState(group, "error");
+      toast.error(error?.message || "Could not save profile changes.");
+    }
+  };
+
+  const queueProfileSave = (
+    nextDraft,
+    group,
+    immediate = false
+  ) => {
+    if (profileSaveTimerRef.current) {
+      clearTimeout(profileSaveTimerRef.current);
+    }
+
+    if (savedFeedbackTimersRef.current[group]) {
+      clearTimeout(savedFeedbackTimersRef.current[group]);
+    }
+
+    setProfileGroupState(group, "saving");
+
+    profileSaveTimerRef.current = setTimeout(
+      () => persistProfileDraft(nextDraft, group),
+      immediate ? 0 : 650
+    );
+  };
+
+  const changeProfileDraft = (
+    updater,
+    group,
+    immediate = false
+  ) => {
+    setProfileDraft((current) => {
+      const next =
+        typeof updater === "function"
+          ? updater(current)
+          : { ...current, ...updater };
+
+      queueProfileSave(next, group, immediate);
       return next;
     });
   };
 
-  const requestPasswordReset = () => {
-    navigate("/forgot-password");
+  const saveProfilePhoto = (image) => {
+    setProfileGroupState("photo", "saving");
+
+    try {
+      updateProfile({ image });
+      setProfileGroupState("photo", "saved");
+      settleProfileGroup("photo");
+    } catch (error) {
+      setProfileGroupState("photo", "error");
+      toast.error(error?.message || "Could not update profile photo.");
+    }
   };
 
-  const exportData = () => {
-    const blob = new Blob([
-      JSON.stringify(
-        {
-          user: {
-            id: user?.id,
-            name: user?.name,
-            email: user?.email,
-            role,
-            preferences,
-          },
-          assistant,
-          theme,
-          exportedAt: new Date().toISOString(),
-        },
-        null,
-        2
-      ),
-    ], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${role}-settings.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast.success("Settings exported");
+  const persistPrivacy = (nextPrivacy) => {
+    const nextPreferences = {
+      ...(user.preferences || {}),
+      visibility: nextPrivacy,
+    };
+
+    const payload = { preferences: nextPreferences };
+    const saved = user?.id ? updateUser(user.id, payload) : null;
+    const nextUser = saved || { ...user, ...payload };
+
+    setCurrentUser(nextUser);
+    setUser(nextUser);
+    setPrivacy(nextPrivacy);
   };
 
-  const resetAssistantPosition = () => {
-    localStorage.removeItem(AI_KEYS.launcherPosition);
-    localStorage.removeItem(AI_KEYS.panelPosition);
-    window.dispatchEvent(new Event("guc-ai-companion-reset-position"));
-    toast.success("Assistant position reset");
+  const updatePrivacy = (key, value) => {
+    persistPrivacy({
+      ...privacy,
+      [key]: value,
+    });
   };
+
+  const updateSound = (value) => {
+    setSoundEnabled(value);
+    localStorage.setItem(NOTIFICATION_SOUND_KEY, value ? "true" : "false");
+  };
+
+  const persistAi = (nextAi) => {
+    try {
+      localStorage.setItem(
+        AI_KEYS.name,
+        nextAi.name || defaultCompanionName(nextAi.gender)
+      );
+      localStorage.setItem(AI_KEYS.gender, nextAi.gender);
+      localStorage.setItem(
+        AI_KEYS.collapsed,
+        String(Boolean(nextAi.collapsed))
+      );
+
+      window.dispatchEvent(
+        new CustomEvent("guc-ai-companion-settings-change", {
+          detail: nextAi,
+        })
+      );
+
+      setAiSaveState("saved");
+
+      setTimeout(() => {
+        setAiSaveState("idle");
+      }, 1600);
+    } catch (error) {
+      setAiSaveState("error");
+      toast.error(error?.message || "Could not save AI companion settings.");
+    }
+  };
+
+  const changeAi = (updater, group, immediate = false) => {
+    setAi((current) => {
+      const next =
+        typeof updater === "function"
+          ? updater(current)
+          : { ...current, ...updater };
+
+      if (aiSaveTimerRef.current) {
+        clearTimeout(aiSaveTimerRef.current);
+      }
+
+      setAiSaveGroup(group);
+      setAiSaveState("saving");
+      aiSaveTimerRef.current = setTimeout(
+        () => persistAi(next),
+        immediate ? 0 : 500
+      );
+
+      return next;
+    });
+  };
+
+  const notificationItems = [
+    {
+      key: "projectInvitations",
+      title: "Project invitations",
+      description: "Invites to join student projects.",
+      icon: Users,
+    },
+    {
+      key: "commentsFeedback",
+      title: "Comments & feedback",
+      description: "New comments, reviews, and feedback on your work.",
+      icon: MessageSquare,
+    },
+    {
+      key: "privateMessages",
+      title: "Messages",
+      description: "Direct messages and collaboration conversations.",
+      icon: Mail,
+    },
+    {
+      key: "internshipUpdates",
+      title: "Internship updates",
+      description: "Application and internship activity.",
+      icon: BriefcaseBusiness,
+      roles: ["student", "employer"],
+    },
+    {
+      key: "courseLinking",
+      title: "Course updates",
+      description: "Course-related activity and linking.",
+      icon: GraduationCap,
+      roles: ["student", "instructor"],
+    },
+    {
+      key: "adminAnnouncements",
+      title: "Platform announcements",
+      description: "Important administrative notices.",
+      icon: Shield,
+    },
+  ];
 
   const content = {
+    profile: (
+      <Surface>
+        <PanelHeading
+          title="Profile"
+          description="Information shown on your profile and portfolio."
+        />
+
+        <div className="border-b border-[#D2E0E7] px-6 py-5 dark:border-white/10">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <ProfilePhotoUploader
+              image={profile.image}
+              setImage={saveProfilePhoto}
+              name={profile.name}
+              size="compact"
+            />
+
+            <div className="min-w-0">
+              <h3 className="text-[18px] font-black tracking-[-0.025em] text-[color:var(--ink)]">
+                {profile.name}
+              </h3>
+              <p className="mt-1 text-[12px] font-semibold text-[#6E8290] dark:text-[#91A6B4]">
+                {profile.email}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <p className="text-[11px] font-semibold text-[#5D788B] dark:text-[#94AAB8]">
+                  Change your photo using the edit icon.
+                </p>
+                <InlineSaveStatus state={profileSaveStates.photo} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-b border-[#D2E0E7] px-6 py-5 dark:border-white/10">
+          <div className="grid gap-4 md:grid-cols-[170px_minmax(0,1fr)]">
+            <SectionTitle
+              title="Bio"
+              description="A short introduction shown on your portfolio."
+              status={profileSaveStates.bio}
+            />
+
+            <TextArea
+              value={profileDraft.bio}
+              onChange={(value) =>
+                changeProfileDraft(
+                  (current) => ({
+                    ...current,
+                    bio: value,
+                  }),
+                  "bio"
+                )
+              }
+              placeholder="Write a short bio"
+            />
+          </div>
+        </div>
+
+        {role === "student" ? (
+          <div className="border-b border-[#D2E0E7] px-6 py-5 dark:border-white/10">
+            <SectionTitle
+              title="Academic information"
+              description="Faculty, major, and current semester."
+              status={profileSaveStates.academic}
+            />
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <label>
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
+                  Faculty
+                </span>
+                <AppSelect
+                  value={profileDraft.faculty}
+                  options={facultyOptions}
+                  placeholder="Select faculty"
+                  onValueChange={(value) =>
+                    changeProfileDraft(
+                      (current) => ({
+                        ...current,
+                        faculty: value,
+                      }),
+                      "academic",
+                      true
+                    )
+                  }
+                />
+              </label>
+
+              <label>
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
+                  Major
+                </span>
+                <AppSelect
+                  value={profileDraft.major}
+                  options={majorOptions}
+                  placeholder="Select major"
+                  onValueChange={(value) =>
+                    changeProfileDraft(
+                      (current) => ({
+                        ...current,
+                        major: value,
+                        faculty: resolveFaculty(value, current.faculty),
+                      }),
+                      "academic",
+                      true
+                    )
+                  }
+                />
+              </label>
+
+              <label>
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
+                  Semester
+                </span>
+                <AppSelect
+                  value={profileDraft.semester}
+                  options={semesterOptions}
+                  placeholder="Select semester"
+                  onValueChange={(value) =>
+                    changeProfileDraft(
+                      (current) => ({
+                        ...current,
+                        semester: value,
+                      }),
+                      "academic",
+                      true
+                    )
+                  }
+                />
+              </label>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="border-b border-[#D2E0E7] px-6 py-5 dark:border-white/10">
+          <div className="grid gap-4 md:grid-cols-[170px_minmax(0,1fr)]">
+            <SectionTitle
+              title="Skills"
+              description="Keep this focused on the skills you want to showcase."
+              status={profileSaveStates.skills}
+            />
+
+            <SkillEditor
+              skills={profileDraft.skills}
+              onChange={(skills) =>
+                changeProfileDraft(
+                  (current) => ({ ...current, skills }),
+                  "skills",
+                  true
+                )
+              }
+            />
+          </div>
+        </div>
+
+        <div className="px-6 py-5">
+          <div className="mb-4 flex items-start gap-2">
+            <Link2 className="mt-0.5 h-4 w-4 text-[#55758B] dark:text-[#9CD5FF]" />
+            <div className="min-w-0 flex-1">
+              <SectionTitle
+                title="Portfolio links"
+                description="Add the profiles you want visitors to reach."
+                status={profileSaveStates.links}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-3 lg:grid-cols-3">
+            <label>
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
+                LinkedIn
+              </span>
+              <TextInput
+                value={profileDraft.links.linkedin}
+                onChange={(value) =>
+                  changeProfileDraft(
+                    (current) => ({
+                      ...current,
+                      links: { ...current.links, linkedin: value },
+                    }),
+                    "links"
+                  )
+                }
+                placeholder="linkedin.com/in/..."
+              />
+            </label>
+
+            <label>
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
+                GitHub
+              </span>
+              <TextInput
+                value={profileDraft.links.github}
+                onChange={(value) =>
+                  changeProfileDraft(
+                    (current) => ({
+                      ...current,
+                      links: { ...current.links, github: value },
+                    }),
+                    "links"
+                  )
+                }
+                placeholder="github.com/..."
+              />
+            </label>
+
+            <label>
+              <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
+                Behance
+              </span>
+              <TextInput
+                value={profileDraft.links.behance}
+                onChange={(value) =>
+                  changeProfileDraft(
+                    (current) => ({
+                      ...current,
+                      links: { ...current.links, behance: value },
+                    }),
+                    "links"
+                  )
+                }
+                placeholder="behance.net/..."
+              />
+            </label>
+          </div>
+        </div>
+      </Surface>
+    ),
+
     account: (
-      <SettingsCard title="Account" description="Profile details live on your existing profile page. Settings only controls account-level actions." icon={User}>
-        <SettingRow
-          icon={User}
-          title="Profile information"
-          description="Edit your name, image, bio, links, and role-specific profile fields from the existing profile page."
-          right={<PrimaryButton variant="secondary" onClick={() => navigate(meta.profileRoute)}>Edit profile</PrimaryButton>}
+      <Surface>
+        <PanelHeading
+          title="Account"
+          description="Sign-in and account-level actions."
         />
-        <SettingRow
-          icon={Mail}
-          title="Signed in email"
-          description={user?.email || profile?.email || "No email found for this demo account."}
-          right={<span className="rounded-full bg-[color:var(--surface-soft)] px-3 py-1.5 text-xs font-black text-[color:var(--muted)]">{meta.label}</span>}
-        />
-        <SettingRow
-          icon={KeyRound}
-          title="Change password"
-          description="Use the same password reset flow that already exists in your app."
-          right={<PrimaryButton icon={Lock} onClick={requestPasswordReset}>Reset password</PrimaryButton>}
-        />
-      </SettingsCard>
+
+        <FieldRow label="Email">
+          <p className="text-[13px] font-semibold text-[#6E8290] dark:text-[#91A6B4]">
+            {user?.email || profile?.email}
+          </p>
+        </FieldRow>
+
+        <FieldRow label="Password" last>
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-[13px] font-semibold text-[#6E8290] dark:text-[#91A6B4]">
+              Reset your password using account recovery.
+            </p>
+            <GhostButton onClick={() => navigate("/forgot-password")}>
+              Reset password
+            </GhostButton>
+          </div>
+        </FieldRow>
+      </Surface>
     ),
-    visibility: (
-      <SettingsCard title="Visibility" description="These preferences are saved with the current user in demoStore." icon={Eye}>
-        <div className="p-4 sm:p-5">
-          <SelectField label="Profile visibility" value={preferences.visibility.profileVisibility} onChange={(value) => updatePreference("visibility", "profileVisibility", value)} options={[{ value: "public", label: "Public" }, { value: "guc", label: "GUC only" }, { value: "private", label: "Private" }, { value: "listed", label: "Listed" }]} />
-        </div>
-        <ToggleRow icon={Mail} title="Show email" description="Allow your email/contact email to appear on public-facing profile surfaces." checked={preferences.visibility.showEmail} onChange={(value) => updatePreference("visibility", "showEmail", value)} />
-        {role !== "admin" ? <ToggleRow icon={Eye} title={role === "employer" ? "Show active internships" : "Show projects"} description={role === "employer" ? "Display internships on the company profile." : "Display project work on your profile/portfolio."} checked={role === "employer" ? preferences.visibility.showInternships : preferences.visibility.showProjects} onChange={(value) => updatePreference("visibility", role === "employer" ? "showInternships" : "showProjects", value)} /> : null}
-        <ToggleRow icon={Mail} title="Allow messages" description="Allow other stakeholders to contact this account inside the platform." checked={preferences.visibility.allowMessages} onChange={(value) => updatePreference("visibility", "allowMessages", value)} />
-        {role === "student" ? <ToggleRow icon={Building2} title="Allow employer contact" description="Employers can reach out about internship opportunities." checked={preferences.visibility.allowEmployerContact} onChange={(value) => updatePreference("visibility", "allowEmployerContact", value)} /> : null}
-        {role === "instructor" ? <ToggleRow icon={GraduationCap} title="Show courses" description="Show taught courses on the instructor profile." checked={preferences.visibility.showCourses} onChange={(value) => updatePreference("visibility", "showCourses", value)} /> : null}
-      </SettingsCard>
+
+    privacy: (
+      <div>
+        {role !== "admin" ? (
+          <Surface>
+            <PanelHeading
+              title="Profile visibility"
+              description="Choose who can discover your profile."
+            />
+
+            <div className="grid gap-3 p-6 md:grid-cols-3">
+              <Choice
+                selected={privacy.profileVisibility === "public"}
+                title="Public"
+                description="Visible to people using the platform."
+                icon={Users}
+                onClick={() => updatePrivacy("profileVisibility", "public")}
+              />
+              <Choice
+                selected={privacy.profileVisibility === "guc"}
+                title="GUC only"
+                description="Visible only within the GUC community."
+                icon={GraduationCap}
+                onClick={() => updatePrivacy("profileVisibility", "guc")}
+              />
+              <Choice
+                selected={privacy.profileVisibility === "private"}
+                title="Private"
+                description="Hidden from discovery and public-facing surfaces."
+                icon={ShieldCheck}
+                onClick={() => updatePrivacy("profileVisibility", "private")}
+              />
+            </div>
+          </Surface>
+        ) : null}
+
+        <Surface>
+          <PanelHeading
+            title="Contact & visibility"
+            description="Control which profile details and contact options are available."
+          />
+
+          <ToggleRow
+            icon={Mail}
+            title="Show email"
+            description="Display your email where profile contact details are shown."
+            checked={privacy.showEmail}
+            onChange={(value) => updatePrivacy("showEmail", value)}
+          />
+
+          {role === "student" || role === "instructor" ? (
+            <ToggleRow
+              icon={Eye}
+              title="Show projects"
+              description="Display your project work on your profile."
+              checked={privacy.showProjects}
+              onChange={(value) => updatePrivacy("showProjects", value)}
+            />
+          ) : null}
+
+          {role === "employer" ? (
+            <ToggleRow
+              icon={BriefcaseBusiness}
+              title="Show active internships"
+              description="Display active internship listings on the company profile."
+              checked={privacy.showInternships}
+              onChange={(value) => updatePrivacy("showInternships", value)}
+            />
+          ) : null}
+
+          {role !== "admin" ? (
+            <ToggleRow
+              icon={MessageSquare}
+              title="Allow messages"
+              description="Let other people on the platform contact you directly."
+              checked={privacy.allowMessages}
+              onChange={(value) => updatePrivacy("allowMessages", value)}
+            />
+          ) : null}
+
+          {role === "student" ? (
+            <ToggleRow
+              icon={Building2}
+              title="Allow employer contact"
+              description="Let employers contact you about internship opportunities."
+              checked={privacy.allowEmployerContact}
+              onChange={(value) =>
+                updatePrivacy("allowEmployerContact", value)
+              }
+              last
+            />
+          ) : null}
+        </Surface>
+      </div>
     ),
+
     notifications: (
-      <SettingsCard title="Notifications" description="Notification preferences are stored in demoStore and mirrored to localStorage." icon={Bell}>
-        <ToggleRow icon={Bell} title="Mute all notifications" description="Stops non-critical notifications while keeping your category choices saved." checked={preferences.notifications.muteAll} onChange={(value) => updatePreference("notifications", "muteAll", value)} />
-        <ToggleRow icon={Bell} title="In-app notifications" checked={preferences.notifications.inApp} disabled={preferences.notifications.muteAll} onChange={(value) => updatePreference("notifications", "inApp", value)} />
-        <ToggleRow icon={Mail} title="Email notifications" checked={preferences.notifications.email} disabled={preferences.notifications.muteAll} onChange={(value) => updatePreference("notifications", "email", value)} />
-        <ToggleRow icon={User} title="Messages" checked={preferences.notifications.messages} disabled={preferences.notifications.muteAll} onChange={(value) => updatePreference("notifications", "messages", value)} />
-        <ToggleRow icon={Eye} title="Project updates" checked={preferences.notifications.projectUpdates} disabled={preferences.notifications.muteAll} onChange={(value) => updatePreference("notifications", "projectUpdates", value)} />
-        <ToggleRow icon={Building2} title="Internship updates" checked={preferences.notifications.internshipUpdates} disabled={preferences.notifications.muteAll} onChange={(value) => updatePreference("notifications", "internshipUpdates", value)} />
-        <ToggleRow icon={GraduationCap} title="Course updates" checked={preferences.notifications.courseUpdates} disabled={preferences.notifications.muteAll} onChange={(value) => updatePreference("notifications", "courseUpdates", value)} />
-      </SettingsCard>
+      <div>
+        <Surface>
+          <PanelHeading
+            title="Notification settings"
+            description="Choose how notifications behave inside the app."
+          />
+
+          <ToggleRow
+            icon={Bell}
+            title="Mute all notifications"
+            description="Temporarily silence non-critical notifications."
+            checked={notificationPreferences.muteAll}
+            onChange={() => toggleMuteAll()}
+          />
+
+          <ToggleRow
+            icon={Bell}
+            title="In-app notifications"
+            description="Show alerts and notification toasts in the app."
+            checked={notificationPreferences.inApp}
+            disabled={notificationPreferences.muteAll}
+            onChange={(value) => setNotificationPreference("inApp", value)}
+          />
+
+          <ToggleRow
+            icon={Volume2}
+            title="Notification sound"
+            description="Play a short sound when a notification appears."
+            checked={soundEnabled}
+            disabled={notificationPreferences.muteAll}
+            onChange={updateSound}
+            last
+          />
+        </Surface>
+
+        <Surface>
+          <PanelHeading
+            title="Activity"
+            description="Choose which events create notifications."
+          />
+
+          {notificationItems
+            .filter((item) => !item.roles || item.roles.includes(role))
+            .map((item, index, items) => (
+              <ToggleRow
+                key={item.key}
+                icon={item.icon}
+                title={item.title}
+                description={item.description}
+                checked={notificationPreferences[item.key] !== false}
+                disabled={notificationPreferences.muteAll}
+                onChange={(value) =>
+                  setNotificationPreference(item.key, value)
+                }
+                last={index === items.length - 1}
+              />
+            ))}
+        </Surface>
+      </div>
     ),
+
     appearance: (
-      <SettingsCard title="Appearance" description="Display preferences are applied immediately where the app supports them." icon={Palette}>
-        <ToggleRow icon={theme === "dark" ? Moon : Sun} title="Dark mode" description="Changes the global app theme immediately." checked={theme === "dark"} onChange={(value) => setTheme(value ? "dark" : "light")} />
-        <ToggleRow icon={Palette} title="Compact mode" description="Saved as a global appearance preference for dense pages." checked={preferences.appearance.compactMode} onChange={(value) => updatePreference("appearance", "compactMode", value)} />
-        <ToggleRow icon={Palette} title="Reduce motion" description="Saved and applied as a global reduced-motion class." checked={preferences.appearance.reduceMotion} onChange={(value) => updatePreference("appearance", "reduceMotion", value)} />
-        <ToggleRow icon={Palette} title="High contrast" description="Saved and applied as a global high-contrast class." checked={preferences.appearance.highContrast} onChange={(value) => updatePreference("appearance", "highContrast", value)} />
-      </SettingsCard>
-    ),
-    assistant: (
-      <SettingsCard title="AI Companion" description="These controls update the visible companion immediately, without refreshing the page." icon={Bot}>
-        <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
-          <TextField label="Companion name" value={assistant.name} onChange={(value) => updateAssistant("name", value)} placeholder="Atlas" />
-          <SelectField label="Companion style" value={assistant.gender} onChange={(value) => updateAssistant("gender", value)} options={[{ value: "male", label: "Male" }, { value: "female", label: "Female" }]} />
+      <Surface>
+        <PanelHeading
+          title="Appearance"
+          description="Choose the interface theme."
+        />
+
+        <div className="grid gap-3 p-6 sm:grid-cols-2">
+          <Choice
+            title="Light"
+            description="Use the light interface."
+            icon={Sun}
+            selected={theme !== "dark"}
+            onClick={() => setTheme("light")}
+          />
+
+          <Choice
+            title="Dark"
+            description="Use the dark interface."
+            icon={Moon}
+            selected={theme === "dark"}
+            onClick={() => setTheme("dark")}
+          />
         </div>
-        <ToggleRow icon={Bot} title="Start as small circle" description="Dashboards open with the companion collapsed into its draggable circle." checked={assistant.collapsed} onChange={(value) => updateAssistant("collapsed", value)} />
-        <SettingRow icon={RotateCcw} title="Reset companion position" description="Move the tiny circle and open panel back to their default dashboard position." right={<PrimaryButton variant="secondary" onClick={resetAssistantPosition}>Reset</PrimaryButton>} />
-      </SettingsCard>
+      </Surface>
     ),
-    data: (
-      <SettingsCard title="Data" description="Simple demo data controls." icon={Download}>
-        <SettingRow icon={Download} title="Export my settings" description="Download the current preferences, theme, and companion settings as JSON." right={<PrimaryButton variant="secondary" onClick={exportData}>Export</PrimaryButton>} />
-      </SettingsCard>
+
+    ai: (
+      <Surface>
+        <PanelHeading
+          title="AI Companion"
+          description="Personalize how your assistant appears in the workspace."
+        />
+
+        <FieldRow
+          label="Name"
+          hint={
+            <span className="flex flex-wrap items-center gap-2">
+              <span>The name shown in the companion interface.</span>
+              <InlineSaveStatus
+                state={aiSaveGroup === "name" ? aiSaveState : "idle"}
+              />
+            </span>
+          }
+        >
+          <TextInput
+            value={ai.name}
+            onChange={(value) =>
+              changeAi(
+                (current) => ({ ...current, name: value }),
+                "name"
+              )
+            }
+            placeholder={defaultCompanionName(ai.gender)}
+          />
+        </FieldRow>
+
+        <FieldRow
+          label="Gender"
+          hint={
+            <span className="flex flex-wrap items-center gap-2">
+              <span>Changes the companion's supported visual persona.</span>
+              <InlineSaveStatus
+                state={aiSaveGroup === "gender" ? aiSaveState : "idle"}
+              />
+            </span>
+          }
+        >
+          <div className="inline-flex rounded-[12px] border border-[#D3E1E8] bg-[#EEF4F7] p-1 dark:border-white/10 dark:bg-white/[0.04]">
+            {[
+              ["male", "Male"],
+              ["female", "Female"],
+            ].map(([value, label]) => {
+              const active = ai.gender === value;
+
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() =>
+                    changeAi((current) => ({
+                      ...current,
+                      gender: value,
+                      name:
+                        !current.name ||
+                        current.name ===
+                          defaultCompanionName(
+                            value === "male" ? "female" : "male"
+                          )
+                          ? defaultCompanionName(value)
+                          : current.name,
+                    }), "gender", true)
+                  }
+                  className={`
+                    min-w-[96px] rounded-[9px] px-4 py-2.5
+                    text-[12px] font-black transition
+                    ${
+                      active
+                        ? "bg-white text-[#294F69] shadow-sm dark:bg-[#9CD5FF] dark:text-[#071521]"
+                        : "text-[#6B8190] hover:text-[#294F69] dark:text-[#8FA8B8] dark:hover:text-white"
+                    }
+                  `}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </FieldRow>
+
+        <FieldRow
+          label="Default state"
+          hint={
+            <span className="flex flex-wrap items-center gap-2">
+              <span>Choose how the companion appears when you enter the workspace.</span>
+              <InlineSaveStatus
+                state={
+                  aiSaveGroup === "defaultState" ? aiSaveState : "idle"
+                }
+              />
+            </span>
+          }
+          last
+        >
+          <div className="flex items-center justify-between gap-4 rounded-[14px] border border-[#D3E1E8] bg-[#F2F7F9] px-4 py-3 dark:border-white/10 dark:bg-white/[0.035]">
+            <div>
+              <p className="text-[12.5px] font-black text-[color:var(--ink)]">
+                Start as small circle
+              </p>
+              <p className="mt-1 text-[11px] font-semibold text-[#6E8290] dark:text-[#91A6B4]">
+                Keep the assistant collapsed until you open it.
+              </p>
+            </div>
+
+            <Switch
+              checked={ai.collapsed}
+              onChange={(value) =>
+                changeAi(
+                  (current) => ({ ...current, collapsed: value }),
+                  "defaultState",
+                  true
+                )
+              }
+              label="Start as small circle"
+            />
+          </div>
+        </FieldRow>
+      </Surface>
     ),
   };
 
   return (
     <DashboardLayout>
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <header className="mb-7 flex flex-col gap-4 rounded-[30px] border border-[color:var(--border-soft)] bg-[color:var(--card-bg-strong)] p-5 shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-[color:var(--border-blue)] bg-[color:var(--surface-soft)]">
-              {user?.image || user?.avatar ? <img src={user.image || user.avatar} alt={user?.name || "Profile"} className="h-full w-full object-cover" /> : <RoleIcon className="h-6 w-6 text-[color:var(--primary)]" />}
-            </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[color:var(--muted)]">{meta.label} workspace</p>
-              <h1 className="mt-1 text-2xl font-black text-[color:var(--ink)]">{meta.title}</h1>
-              <p className="mt-1 max-w-2xl text-sm font-semibold text-[color:var(--muted)]">{meta.subtitle}</p>
+      <main className="px-4 py-5 pb-16 sm:px-6 lg:px-7 xl:px-8">
+        <div className="mx-auto w-full max-w-[1480px]">
+          <header className="mb-5">
+            <div className="mb-3 h-[3px] w-10 rounded-full bg-[var(--gold)]" />
+            <h1 className="text-[44px] font-black leading-none tracking-[-0.045em] text-[color:var(--ink)] sm:text-[50px]">
+              Settings
+            </h1>
+            <p className="mt-2.5 max-w-3xl text-[14px] font-semibold leading-6 text-[#6E8290] dark:text-[#91A6B4]">
+              Manage your profile, privacy, notifications, appearance, and AI companion.
+            </p>
+          </header>
+
+          <div
+            className="
+              overflow-hidden rounded-[22px]
+              border border-[#C9DBE4]
+              bg-[#EEF4F7]
+              shadow-[0_12px_30px_rgba(53,88,114,0.065)]
+              dark:border-white/10
+              dark:bg-[#0B1C29]
+              dark:shadow-[0_16px_36px_rgba(0,0,0,0.22)]
+            "
+          >
+            <div className="grid lg:grid-cols-[236px_minmax(0,1fr)]">
+              <aside
+                className="
+                  border-b border-[#D2E0E7]
+                  bg-[#EEF4F7]
+                  p-4
+                  lg:border-b-0 lg:border-r
+                  dark:border-white/10
+                  dark:bg-[#0F2433]
+                "
+              >
+                <div className="px-2 pb-3 pt-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6D8392] dark:text-[#87A1B2]">
+                    Settings
+                  </p>
+                </div>
+
+                <nav className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const active = activeTab === tab.id;
+
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => selectTab(tab.id)}
+                        className={`
+                          flex w-full items-center gap-3 rounded-[11px]
+                          px-3.5 py-3 text-left transition
+                          ${
+                            active
+                              ? "bg-[#355872] text-white shadow-[0_8px_18px_rgba(53,88,114,0.16)] dark:bg-[#9CD5FF] dark:text-[#071521]"
+                              : "text-[#607686] hover:bg-white/80 hover:text-[#183247] dark:text-[#91A9B8] dark:hover:bg-white/[0.05] dark:hover:text-white"
+                          }
+                        `}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="flex-1 text-[13px] font-black">
+                          {tab.label}
+                        </span>
+                        <ChevronRight
+                          className={`h-4 w-4 ${
+                            active ? "opacity-75" : "opacity-25"
+                          }`}
+                        />
+                      </button>
+                    );
+                  })}
+                </nav>
+              </aside>
+
+              <section
+                aria-label={`${activeMeta.label} settings`}
+                className="
+                  min-w-0
+                  bg-[#F3F7F9]
+                  dark:bg-[#0D2130]
+                "
+              >
+                {content[activeTab]}
+              </section>
             </div>
           </div>
-        </header>
-
-        <div className="grid items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
-          <aside className="rounded-[28px] border border-[color:var(--border-soft)] bg-[color:var(--card-bg-strong)] p-3 shadow-[var(--shadow-card)] lg:sticky lg:top-28">
-            <nav className="space-y-1">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                const active = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-black transition ${
-                      active
-                        ? "bg-white text-[color:var(--primary)] shadow-[0_8px_20px_rgba(53,88,114,0.08)]"
-                        : "text-[color:var(--muted)] hover:bg-white/60 hover:text-[color:var(--ink)]"
-                    }`}
-                  >
-                    <span className="flex items-center gap-3">
-                      <Icon className="h-4 w-4" />
-                      {tab.label}
-                    </span>
-
-                    {active ? (
-                      <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--gold)]" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-[color:var(--muted)]/50" />
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-          </aside>
-
-          <main>
-            {content[activeTab]}
-          </main>
         </div>
-      </div>
+      </main>
     </DashboardLayout>
   );
 }

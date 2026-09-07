@@ -29,10 +29,10 @@ const workspaceMeta = {
 };
 
 const profilePaths = {
-  student: "/edit-student-profile",
-  instructor: "/edit-instructor-profile",
-  employer: "/edit-employer-profile",
-  admin: "/admin-dashboard",
+  student: "/settings?tab=profile",
+  instructor: "/settings?tab=profile",
+  employer: "/settings?tab=profile",
+  admin: "/settings?tab=profile",
 };
 
 const roleLabels = {

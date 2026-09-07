@@ -144,7 +144,7 @@ export default function Internships() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const resultsTopRef = useRef(null);
-  const ITEMS_PER_PAGE = 8;
+  const ITEMS_PER_PAGE = 9;
 
   const [internships, setInternships] = useState([]);
   const [savedIds, setSavedIds] = useState([]);
@@ -423,7 +423,7 @@ export default function Internships() {
             {paginatedInternships.length === 0 ? (
               <EmptyState onClear={clearFilters} />
             ) : (
-              <div className="grid gap-5 lg:grid-cols-2">
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {paginatedInternships.map((internship) => (
                   <InternshipSurface
                     key={internship.id}
@@ -520,18 +520,12 @@ function InternshipSurface({ internship, saved, onOpen, onSave }) {
           onOpen();
         }
       }}
-      className={`group relative min-h-[300px] cursor-pointer overflow-hidden rounded-[26px] border bg-[#FBFCFA] p-6 shadow-[0_18px_42px_rgba(53,88,114,0.10)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#7AAACE]/20 hover:-translate-y-[2px] hover:shadow-[0_24px_52px_rgba(53,88,114,0.14)] sm:p-7 ${
+      className={`group relative min-h-[285px] cursor-pointer overflow-hidden rounded-[24px] border bg-[#FBFCFA] p-5 shadow-[0_16px_36px_rgba(53,88,114,0.09)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#7AAACE]/20 hover:-translate-y-[2px] hover:shadow-[0_22px_46px_rgba(53,88,114,0.13)] sm:p-6 ${
         internship.featured
           ? "border-[#DDC98E]"
           : "border-[#C9DBE4]"
       }`}
     >
-      {internship.featured ? (
-        <div className="absolute inset-y-0 left-0 w-[4px] bg-[#B89736]" />
-      ) : (
-        <div className="absolute inset-y-0 left-0 w-[4px] bg-[#355872]" />
-      )}
-
       <div className="flex items-start justify-between gap-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -545,7 +539,7 @@ function InternshipSurface({ internship, saved, onOpen, onSave }) {
             ) : null}
           </div>
 
-          <h3 className="mt-3 text-[24px] font-black leading-[1.08] tracking-[-0.035em] text-[#183247] transition-colors group-hover:text-[#244D69]">
+          <h3 className="mt-2.5 text-[21px] font-black leading-[1.1] tracking-[-0.035em] text-[#183247] transition-colors group-hover:text-[#244D69]">
             {internship.title}
           </h3>
         </div>
@@ -560,11 +554,11 @@ function InternshipSurface({ internship, saved, onOpen, onSave }) {
         </button>
       </div>
 
-      <p className="mt-4 line-clamp-3 max-w-[95%] text-[14px] font-semibold leading-6 text-[#647A89]">
+      <p className="mt-3.5 line-clamp-3 text-[12.5px] font-semibold leading-5 text-[#647A89]">
         {internship.overview}
       </p>
 
-      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-[#DCE7ED] py-3 text-[12px] font-bold text-[#627887]">
+      <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-y border-[#DCE7ED] py-3 text-[11px] font-bold text-[#627887]">
         <span className="inline-flex items-center gap-1.5">
           <MapPin className="h-3.5 w-3.5 text-[#456D87]" />
           {internship.location}
@@ -579,7 +573,7 @@ function InternshipSurface({ internship, saved, onOpen, onSave }) {
         </span>
       </div>
 
-      <div className="mt-5 flex items-end justify-between gap-5">
+      <div className="mt-4 flex items-end justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap gap-x-4 gap-y-1.5">
             {internship.skills.slice(0, 3).map((skill) => (
@@ -598,7 +592,7 @@ function InternshipSurface({ internship, saved, onOpen, onSave }) {
         </div>
       </div>
 
-      <ArrowUpRight className="pointer-events-none absolute bottom-6 right-6 h-4 w-4 text-[#355872] opacity-0 transition-opacity group-hover:opacity-25" />
+      <ArrowUpRight className="pointer-events-none absolute bottom-5 right-5 h-4 w-4 text-[#355872] opacity-0 transition-opacity group-hover:opacity-25 sm:bottom-6 sm:right-6" />
     </article>
   );
 }

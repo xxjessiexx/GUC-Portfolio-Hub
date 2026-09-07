@@ -1,11 +1,11 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { NotificationsProvider } from "./context/NotificationsContext";
 import { UserProfileProvider } from "./context/UserProfileContext";
 import { Toaster } from "sonner";
 
 import { getRegisteredUsers, initializeDemoStore, registerUser } from "@/data/demoStore";
-
+import ScrollToTop from "@/components/common/ScrollToTop";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
@@ -15,7 +15,6 @@ import InstructorDashboard from "./pages/InstructorDashboard";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ForgotPassword from "./pages/forgot-password";
-import EditStudentProfile from "./pages/EditStudentProfile";
 import EditInstructorProfile from "./pages/EditInstructorProfile";
 import EditEmployerProfile from "./pages/EditEmployerProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
@@ -93,9 +92,11 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <NotificationsProvider>
-        <UserProfileProvider currentUser={currentUser}>
-          <FloatingCTA />
+  <ScrollToTop />
+
+  <NotificationsProvider>
+    <UserProfileProvider>
+       <FloatingCTA />
 
           <Toaster richColors position="top-right" />
 
@@ -473,7 +474,7 @@ export default function App() {
               path="/edit-student-profile"
               element={
                 <ProtectedRoute allowedRoles={["student"]}>
-                  <EditStudentProfile />
+                  <Navigate to="/settings?tab=profile" replace />
                 </ProtectedRoute>
               }
             />
@@ -602,8 +603,9 @@ export default function App() {
               }
             />
           </Routes>
-        </UserProfileProvider>
-      </NotificationsProvider>
-    </BrowserRouter>
+    </UserProfileProvider>
+  </NotificationsProvider>
+</BrowserRouter>
+
   );
 }

@@ -113,9 +113,7 @@ export default function ExploreProjectCard({
             </p>
           </div>
 
-          <button type="button" onClick={(event) => event.stopPropagation()}>
-            <MoreVertical size={18} className="text-[color:var(--muted)]" />
-          </button>
+         
         </div>
 
         <div className="mt-4 space-y-3 text-sm text-[color:var(--muted)]">

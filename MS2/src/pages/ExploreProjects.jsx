@@ -23,13 +23,9 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { useState, useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 
 export default function ExploreProjects({showReport = false,}) {
-
-  const navigate = useNavigate();
-  const location = useLocation();
 
   /* STATE */
   const getDisplayCourse = (project) => {
@@ -96,10 +92,6 @@ const [reportReason, setReportReason] =
 
 }, []);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const resultsTopRef = useRef(null);
-  const ITEMS_PER_PAGE = 8;
-
   const [view, setView] = useState("grid");
 
   const [search, setSearch] = useState("");
@@ -116,6 +108,9 @@ const [reportReason, setReportReason] =
   const [selectedSort, setSelectedSort] =
     useState("Newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const resultsTopRef = useRef(null);
+  const ITEMS_PER_PAGE = 12;
   const [notification, setNotification] =
   useState(null);
 
@@ -264,19 +259,6 @@ const instructorOptions = [
   return 0;
 });
 
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [
-    search,
-    selectedCourse,
-    selectedInstructor,
-    selectedDate,
-    selectedSort,
-    view,
-  ]);
-
-
   const totalPages = Math.max(
     1,
     Math.ceil(filteredProjects.length / ITEMS_PER_PAGE)
@@ -339,27 +321,11 @@ const instructorOptions = [
     ];
   };
 
-  const openProject = (project) => {
-    if (!project?.id) return;
-
-    const projectIds = filteredProjects.map((item) => String(item.id));
-
-    navigate(`/project?projectId=${encodeURIComponent(project.id)}`, {
-      state: {
-        projectFlow: {
-          originPath: `${location.pathname}${location.search}`,
-          originLabel: "Explore Projects",
-          projectIds,
-        },
-      },
-    });
-  };
-
   return (
     <DashboardLayout>
 
       {/* MAIN */}
-      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
+      <main className="px-4 py-7 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1480px] space-y-6">
 
         {/* HEADER */}
@@ -377,13 +343,17 @@ const instructorOptions = [
         
           <SearchFilterToolbar
             searchValue={search}
-            onSearchChange={setSearch}
+            onSearchChange={(value) => {
+              setSearch(value);
+              setCurrentPage(1);
+            }}
             searchPlaceholder="Search projects by title, keyword, or technology..."
             showSort
             sortValue={`Sort by: ${selectedSort}`}
-            onSortChange={(value) =>
-              setSelectedSort(value.replace("Sort by: ", ""))
-            }
+            onSortChange={(value) => {
+              setSelectedSort(value.replace("Sort by: ", ""));
+              setCurrentPage(1);
+            }}
             sortOptions={[
               "Sort by: Newest",
               "Sort by: Oldest",
@@ -547,7 +517,6 @@ const instructorOptions = [
           }}
             view={view}
             toggleFavorite={toggleFavorite}
-            onOpenProject={openProject}
             showReport={showReport}
            onReport={(project) => {
           setSelectedProject(project);
@@ -576,7 +545,7 @@ const instructorOptions = [
                 type="button"
                 onClick={() => goToPage(safeCurrentPage - 1)}
                 disabled={safeCurrentPage === 1}
-                className="inline-flex h-10 items-center justify-center rounded-[12px] border border-[#355872]/14 bg-white/75 px-4 text-[12px] font-black text-[#355872] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35"
+                className="inline-flex h-10 items-center justify-center rounded-[12px] border border-[#355872]/14 bg-white/75 px-4 text-[12px] font-black text-[#355872] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35 dark:border-white/10 dark:bg-white/[0.04] dark:text-[#9CD5FF] dark:hover:bg-white/[0.07]"
               >
                 Previous
               </button>
@@ -603,8 +572,8 @@ const instructorOptions = [
                     aria-current={isActive ? "page" : undefined}
                     className={`inline-flex h-10 min-w-10 items-center justify-center rounded-[12px] border px-3 text-[12px] font-black transition ${
                       isActive
-                        ? "border-[#355872] bg-[#355872] text-white shadow-[0_8px_18px_rgba(53,88,114,0.18)]"
-                        : "border-[#355872]/12 bg-white/70 text-[#355872] hover:bg-white"
+                        ? "border-[#355872] bg-[#355872] text-white shadow-[0_8px_18px_rgba(53,88,114,0.18)] dark:border-[#9CD5FF] dark:bg-[#9CD5FF] dark:text-[#071521]"
+                        : "border-[#355872]/12 bg-white/70 text-[#355872] hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-[#9CD5FF] dark:hover:bg-white/[0.07]"
                     }`}
                   >
                     {page}
@@ -616,14 +585,13 @@ const instructorOptions = [
                 type="button"
                 onClick={() => goToPage(safeCurrentPage + 1)}
                 disabled={safeCurrentPage === totalPages}
-                className="inline-flex h-10 items-center justify-center rounded-[12px] border border-[#355872]/14 bg-white/75 px-4 text-[12px] font-black text-[#355872] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35"
+                className="inline-flex h-10 items-center justify-center rounded-[12px] border border-[#355872]/14 bg-white/75 px-4 text-[12px] font-black text-[#355872] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-35 dark:border-white/10 dark:bg-white/[0.04] dark:text-[#9CD5FF] dark:hover:bg-white/[0.07]"
               >
                 Next
               </button>
             </div>
           </nav>
         ) : null}
-
       </div>
 
       <AdminActionDialog
