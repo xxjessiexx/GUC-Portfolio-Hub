@@ -541,11 +541,11 @@ export function getEmployerDashboardSnapshot(employerId = getCurrentUser()?.id) 
 
 export function clearCurrentUser() {
   if (typeof window === "undefined") return;
+
+  // Logging out must only end the authenticated session. Project, internship,
+  // application, and favorite compatibility caches represent persisted demo
+  // data and should not be destroyed just because a user signs out.
   sessionStorage.removeItem(CURRENT_USER_KEY);
-  writeLocal(PROJECTS_STORAGE_KEY, []);
-  writeLocal(INTERNSHIPS_STORAGE_KEY, []);
-  writeLocal(APPLIED_INTERNSHIPS_KEY, []);
-  writeLocal(SAVED_INTERNSHIPS_KEY, []);
   dispatchUserChange();
 }
 
