@@ -1,16 +1,15 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   BookOpen,
   GraduationCap,
   Hash,
   Layers3,
-  RotateCcw,
   Save,
 } from "lucide-react";
 
 import { AdminPageShell } from "@/components/adminModule/AdminPageShell";
-import { AdminField, RequirementLine } from "@/components/adminModule/AdminFormPrimitives";
+import { AdminField } from "@/components/adminModule/AdminFormPrimitives";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -23,13 +22,6 @@ import { useAdminModuleData } from "@/hooks/useAdminModuleData";
 import { useToast } from "@/context/ToastContext";
 
 const COURSE_TYPES = ["Course", "Bachelor Project", "Elective", "Lab"];
-
-const emptyCourse = {
-  code: "",
-  name: "",
-  type: "Course",
-  note: "",
-};
 
 const inputStyles =
   "min-h-[52px] rounded-[14px] border border-[#C7D7E0] bg-[rgba(247,250,252,0.84)] px-4 text-[14px] font-extrabold text-[#183247] shadow-[inset_0_1px_0_rgba(255,255,255,0.66)] placeholder:text-[#8798A4] transition hover:border-[#9AB3C1] focus-visible:border-[#557C97] focus-visible:bg-white/95 focus-visible:ring-4 focus-visible:ring-[#7AAACE]/10";
@@ -98,14 +90,36 @@ function SectionHeader({ icon: Icon, title, description }) {
   );
 }
 
-export default function AdminCreateCourse() {
+export default function AdminEditCourse() {
+  const { courseId } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { courses, actions } = useAdminModuleData();
 
-  const [form, setForm] = useState(emptyCourse);
+  const course = useMemo(
+    () => courses.find((item) => String(item.id) === String(courseId)) || null,
+    [courses, courseId]
+  );
+
+  const [form, setForm] = useState({
+    code: "",
+    name: "",
+    type: "Course",
+    note: "",
+  });
   const [submitted, setSubmitted] = useState(false);
   const [activeSection, setActiveSection] = useState("identity");
+
+  useEffect(() => {
+    if (!course) return;
+
+    setForm({
+      code: course.code || "",
+      name: course.name || "",
+      type: course.type || "Course",
+      note: "",
+    });
+  }, [course]);
 
   const update = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -117,10 +131,11 @@ export default function AdminCreateCourse() {
     () =>
       Boolean(normalizedCode) &&
       courses.some(
-        (course) =>
-          String(course.code || "").trim().toUpperCase() === normalizedCode
+        (item) =>
+          String(item.id) !== String(courseId) &&
+          String(item.code || "").trim().toUpperCase() === normalizedCode
       ),
-    [courses, normalizedCode]
+    [courses, normalizedCode, courseId]
   );
 
   const errors = {
@@ -128,7 +143,7 @@ export default function AdminCreateCourse() {
       submitted && !normalizedCode
         ? "Course code is required."
         : duplicateCode
-          ? "This course code already exists."
+          ? "Another course already uses this code."
           : "",
     name:
       submitted && !form.name.trim()
@@ -141,53 +156,60 @@ export default function AdminCreateCourse() {
     Boolean(form.name.trim()) &&
     !duplicateCode;
 
-  const completion = [
-    normalizedCode && !duplicateCode,
-    form.name.trim(),
-    form.type,
-  ].filter(Boolean).length;
-
-  const resetForm = () => {
-    setForm(emptyCourse);
-    setSubmitted(false);
-    setActiveSection("identity");
-  };
-
   const submit = (event) => {
     event.preventDefault();
     setSubmitted(true);
 
-    if (!canSubmit) {
+    if (!canSubmit || !course) {
       setActiveSection("identity");
       return;
     }
 
-    const createdCode = normalizedCode;
-    const createdName = form.name.trim();
-
-    actions.addCourse({
-      code: createdCode,
-      name: createdName,
-      type: form.type,
-      note: form.note.trim(),
-    });
+    actions.updateCourse(
+      course.id,
+      {
+        code: normalizedCode,
+        name: form.name.trim(),
+        type: form.type,
+      },
+      form.note.trim()
+    );
 
     showToast({
-      title: "Course created successfully",
-      description: `${createdCode} — ${createdName} was added to the course catalog.`,
+      title: "Course updated",
+      description: `${normalizedCode} was updated successfully.`,
       type: "success",
     });
 
-    navigate("/admin/courses", { replace: true });
+    navigate("/admin/courses");
   };
 
+  if (!course) {
+    return (
+      <AdminPageShell>
+        <main className="mx-auto w-full max-w-[1480px]">
+          <div className="rounded-[24px] border border-[#C9DBE4]/80 bg-white/70 p-8">
+            <h1 className="text-3xl font-black text-[#112A3B]">
+              Course not found
+            </h1>
+            <p className="mt-2 text-sm font-semibold text-[#718391]">
+              This course may have been removed or the link is no longer valid.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/admin/courses")}
+              className="mt-6 h-11 rounded-[14px] bg-[#355872] px-5 text-sm font-black text-white"
+            >
+              Back to courses
+            </button>
+          </div>
+        </main>
+      </AdminPageShell>
+    );
+  }
+
   return (
-    <AdminPageShell
-      sidebarProgress={{
-        label: "Course readiness",
-        value: Math.round((completion / 3) * 100),
-      }}
-    >
+    <AdminPageShell>
       <main className="mx-auto flex h-[calc(100vh-9rem)] min-h-0 w-full max-w-[1480px] flex-col">
         <form
           id="course-editor-form"
@@ -205,11 +227,11 @@ export default function AdminCreateCourse() {
                 </div>
 
                 <h1 className="mt-3 text-[40px] font-black leading-none tracking-[-0.045em] text-[#112A3B] sm:text-[46px]">
-                  Create Course
+                  Edit Course
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-[14px] font-semibold leading-6 text-[#718391]">
-                  Add a course to the academic catalog in one focused workspace.
+                  Update the catalog record without changing the editor pattern.
                 </p>
               </div>
 
@@ -228,7 +250,7 @@ export default function AdminCreateCourse() {
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-[14px] bg-[#355872] px-6 text-[12px] font-black text-white shadow-[0_10px_24px_rgba(53,88,114,0.18)] transition hover:bg-[#294A61] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Save className="h-4 w-4" />
-                  Create course
+                  Save changes
                 </button>
               </div>
             </div>
@@ -248,7 +270,7 @@ export default function AdminCreateCourse() {
                   <SectionHeader
                     icon={BookOpen}
                     title="Course identity"
-                    description="Set the official course code and catalog name."
+                    description="Update the official course code and catalog name."
                   />
 
                   <div className="grid gap-5 md:grid-cols-2">
@@ -262,14 +284,12 @@ export default function AdminCreateCourse() {
                           ? "Course code is available."
                           : ""
                       }
-                      feedback="Use the official course code, for example CSEN501."
                     >
                       <Input
                         value={form.code}
                         onChange={(event) =>
                           update("code", event.target.value)
                         }
-                        placeholder="CSEN501"
                         className={inputStyles}
                       />
                     </AdminField>
@@ -279,14 +299,12 @@ export default function AdminCreateCourse() {
                       required
                       icon={GraduationCap}
                       error={errors.name}
-                      feedback="This name appears in projects, search, and course links."
                     >
                       <Input
                         value={form.name}
                         onChange={(event) =>
                           update("name", event.target.value)
                         }
-                        placeholder="Software Engineering"
                         className={inputStyles}
                       />
                     </AdminField>
@@ -299,14 +317,13 @@ export default function AdminCreateCourse() {
                   <SectionHeader
                     icon={Layers3}
                     title="Academic setup"
-                    description="Classify the course and add an optional administrative note."
+                    description="Update the course category and record an optional administrative note."
                   />
 
                   <div className="grid gap-5 md:grid-cols-2">
                     <AdminField
                       label="Course type"
                       icon={Layers3}
-                      feedback="Choose the category that best describes this catalog entry."
                     >
                       <Select
                         value={form.type}
@@ -327,10 +344,10 @@ export default function AdminCreateCourse() {
                     </AdminField>
                   </div>
 
-                  <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
+                  <div className="mt-5">
                     <AdminField
                       label="Admin note"
-                      feedback="Optional internal note about this catalog entry."
+                      feedback="Optional note explaining this catalog change."
                     >
                       <textarea
                         value={form.note}
@@ -342,37 +359,6 @@ export default function AdminCreateCourse() {
                         className={`${inputStyles} min-h-32 w-full resize-none py-3`}
                       />
                     </AdminField>
-
-                    <aside className="rounded-[18px] border border-[#C9DBE4]/75 bg-white/50 p-4">
-                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#718391]">
-                        Course readiness
-                      </p>
-
-                      <div className="mt-4 space-y-2">
-                        <RequirementLine
-                          done={Boolean(normalizedCode && !duplicateCode)}
-                        >
-                          Unique course code
-                        </RequirementLine>
-                        <RequirementLine done={Boolean(form.name.trim())}>
-                          Course name added
-                        </RequirementLine>
-                        <RequirementLine done={Boolean(form.type)}>
-                          Course type selected
-                        </RequirementLine>
-                      </div>
-                    </aside>
-                  </div>
-
-                  <div className="mt-6 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={resetForm}
-                      className="inline-flex h-11 items-center gap-2 rounded-[14px] border border-[#C9DBE4] bg-white/55 px-5 text-[12px] font-black text-[#718391] transition hover:bg-white hover:text-[#355872]"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                      Reset
-                    </button>
                   </div>
                 </section>
               ) : null}

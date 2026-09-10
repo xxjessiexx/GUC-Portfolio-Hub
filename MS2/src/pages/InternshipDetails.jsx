@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Bookmark,
@@ -11,11 +11,14 @@ import {
   MapPin,
   Send,
   Star,
+  Users,
+  Pencil,
 } from "lucide-react";
 
 import { AdminActionDialog } from "@/components/adminModule/AdminActionDialog";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppButton } from "@/components/ui/AppButton";
+import NotificationToast from "@/components/notificationPage/notificationsToast";
 import { useUserProfile } from "@/context/UserProfileContext";
 
 import {
@@ -25,6 +28,23 @@ import {
   applyToInternship,
   toggleSavedInternship,
 } from "@/data/demoStore";
+
+function getLocationLabel(value, fallback = "") {
+  if (!value) return fallback;
+  if (typeof value === "string") return value;
+
+  if (typeof value === "object") {
+    return (
+      value.label ||
+      value.name ||
+      value.address ||
+      value.city ||
+      fallback
+    );
+  }
+
+  return String(value);
+}
 
 function normalizeArray(value) {
   if (!value) return [];
@@ -116,7 +136,7 @@ function normalizeInternshipDetails(internship) {
     startDate: internship.startDate || "Flexible",
     workMode: internship.workMode || internship.mode || "Not specified",
     duration: internship.duration || internship.period || "Not specified",
-    location: internship.location || internship.workLocation || "Not specified",
+    location: getLocationLabel(internship.location || internship.workLocation, "Not specified"),
     postedAt: internship.postedAt || internship.createdAt || "Posted recently",
   };
 }
@@ -198,7 +218,7 @@ function RelatedOpportunity({ internship }) {
       </h3>
 
       <p className="mt-2 text-[10.5px] font-semibold text-[color:var(--muted)]">
-        {internship.location} · {internship.workMode} · {internship.duration}
+        {getLocationLabel(internship.location, "Not specified")} · {internship.workMode} · {internship.duration}
       </p>
 
       <span className="mt-3 inline-flex text-[10.5px] font-black text-[#55758B] transition group-hover:translate-x-1 dark:text-[#9CD5FF]">
@@ -209,6 +229,7 @@ function RelatedOpportunity({ internship }) {
 }
 
 export default function InternshipDetails() {
+  const navigate = useNavigate();
   const { internshipId } = useParams();
   const { profile } = useUserProfile();
 
@@ -217,6 +238,7 @@ export default function InternshipDetails() {
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
   const [coverLetterError, setCoverLetterError] = useState("");
+  const [feedbackToast, setFeedbackToast] = useState(null);
 
   const currentUser =
     getCurrentUser() ||
@@ -230,6 +252,12 @@ export default function InternshipDetails() {
     "student";
 
   const isStudent = userRole === "student";
+  const isEmployer = userRole === "employer";
+
+  const isOwner =
+    isEmployer &&
+    internship &&
+    String(internship.employerId || "") === String(currentUser?.id || "");
 
   const refreshDetails = () => {
     setInternship(
@@ -262,6 +290,16 @@ export default function InternshipDetails() {
     return [...sameCompany, ...others].slice(0, 3);
   }, [allInternships, internship]);
 
+  const showFeedback = (title, message, type = "info") => {
+    setFeedbackToast({
+      id: `feedback-${Date.now()}`,
+      title,
+      message,
+      type,
+      createdAt: new Date().toISOString(),
+    });
+  };
+
   if (!internship) {
     return (
       <DashboardLayout>
@@ -271,11 +309,11 @@ export default function InternshipDetails() {
               Internship not found
             </h1>
             <Link
-              to="/internships"
+              to={isEmployer ? "/manage-internships" : "/internships"}
               className="mt-4 inline-flex items-center gap-2 text-sm font-black text-[#355872] dark:text-[#9CD5FF]"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to internships
+              {isEmployer ? "Back to manage internships" : "Back to internships"}
             </Link>
           </div>
         </main>
@@ -295,8 +333,17 @@ export default function InternshipDetails() {
   );
 
   const toggleSave = () => {
+    const wasSaved = isSaved;
     toggleSavedInternship(internship.id);
     refreshDetails();
+
+    showFeedback(
+      wasSaved ? "Removed from saved internships" : "Internship saved",
+      wasSaved
+        ? `${internship.title} was removed from your saved internships.`
+        : `${internship.title} was added to your saved internships.`,
+      "internship"
+    );
   };
 
   const openApplyConfirmation = () => {
@@ -316,12 +363,27 @@ export default function InternshipDetails() {
   const confirmApply = () => {
     if (!isStudent || isApplied || !coverLetter.trim()) return;
 
-    applyToInternship(internship.id, coverLetter.trim());
-
+    const created = applyToInternship(internship.id, coverLetter.trim());
     setApplyDialogOpen(false);
+
+    if (!created) {
+      showFeedback(
+        "Application not submitted",
+        "Something went wrong while submitting your application.",
+        "application-error"
+      );
+      return;
+    }
+
     setCoverLetter("");
     setCoverLetterError("");
     refreshDetails();
+
+    showFeedback(
+      "Application submitted",
+      `Your application for ${internship.title} was sent successfully.`,
+      "application"
+    );
   };
 
   return (
@@ -375,7 +437,7 @@ export default function InternshipDetails() {
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
-              <MetaItem icon={MapPin}>{internship.location}</MetaItem>
+              <MetaItem icon={MapPin}>{getLocationLabel(internship.location, "Not specified")}</MetaItem>
               <MetaItem icon={BriefcaseBusiness}>{internship.workMode}</MetaItem>
               <MetaItem icon={Clock3}>{internship.duration}</MetaItem>
               <MetaItem icon={CalendarDays}>{internship.postedAt}</MetaItem>
@@ -470,7 +532,7 @@ export default function InternshipDetails() {
                   </div>
                 </section>
 
-                {relatedInternships.length ? (
+                {!isOwner && relatedInternships.length ? (
                   <section className="border-t border-[#D1DFE6] px-6 py-5 sm:px-7 lg:px-8 dark:border-white/10">
                     <div className="flex flex-wrap items-end justify-between gap-4">
                       <div>
@@ -512,7 +574,97 @@ export default function InternshipDetails() {
                 "
               >
                 <div className="sticky top-24">
-                  <div className="px-6 py-6">
+                  {isOwner ? (
+                    <div className="px-6 py-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#6E8391] dark:text-[#8FA6B5]">
+                            Your posting
+                          </p>
+                          <h2 className="mt-1.5 text-[24px] font-black tracking-[-0.035em] text-[color:var(--ink)]">
+                            Manage this role
+                          </h2>
+                          <p className="mt-1.5 text-[11px] font-semibold leading-5 text-[color:var(--muted)]">
+                            Review hiring activity or update the internship details.
+                          </p>
+                        </div>
+
+                        <span className="shrink-0 rounded-full border border-[#D8BF69] bg-[#F8EDC4] px-3 py-1.5 text-[10px] font-black text-[#7B6324]">
+                          {internship.status || "Active"}
+                        </span>
+                      </div>
+
+                      <div className="mt-5 grid grid-cols-2 gap-3">
+                        <div className="rounded-[13px] border border-[#C8D8E0] bg-[#F2F7F9] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                          <p className="text-[9px] font-black uppercase tracking-[0.13em] text-[#7A8E9A] dark:text-[#8FA4B2]">
+                            Applicants
+                          </p>
+                          <p className="mt-1 text-[24px] font-black tracking-[-0.04em] text-[color:var(--ink)]">
+                            {normalizeArray(internship.applications).length}
+                          </p>
+                        </div>
+
+                        <div className="rounded-[13px] border border-[#C8D8E0] bg-[#F2F7F9] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                          <p className="text-[9px] font-black uppercase tracking-[0.13em] text-[#7A8E9A] dark:text-[#8FA4B2]">
+                            Deadline
+                          </p>
+                          <p className="mt-1 text-[11.5px] font-black leading-5 text-[color:var(--ink)]">
+                            {internship.deadline}
+                          </p>
+                        </div>
+                      </div>
+
+                      <AppButton
+                        type="button"
+                        onClick={() =>
+                          navigate(`/manage-applicants/${encodeURIComponent(internship.id)}`)
+                        }
+                        className="mt-5 min-h-11 w-full rounded-[11px] bg-[#355872] text-[11.5px] font-black text-white shadow-none hover:bg-[#294C64] dark:bg-[#9CD5FF] dark:text-[#071521]"
+                      >
+                        <Users className="mr-2 h-4 w-4" />
+                        Review applicants
+                      </AppButton>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`/edit-internship/${encodeURIComponent(internship.id)}`)
+                        }
+                        className="mt-2.5 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-[11px] border border-[#BDD0DA] bg-[#F5F9FB] px-4 text-[11px] font-black text-[#355872] transition hover:border-[#7AAACE] hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-[#BBDFF5]"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Edit internship
+                      </button>
+
+                      <div className="mt-5 border-t border-[#CADAE2] pt-5 dark:border-white/10">
+                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#6E8391] dark:text-[#8FA6B5]">
+                          Posting details
+                        </p>
+
+                        <div className="mt-3 space-y-2.5 text-[11px] font-semibold text-[color:var(--muted)]">
+                          <div className="flex items-center justify-between gap-4">
+                            <span>Work mode</span>
+                            <strong className="font-black text-[color:var(--ink)]">
+                              {internship.workMode}
+                            </strong>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span>Duration</span>
+                            <strong className="font-black text-[color:var(--ink)]">
+                              {internship.duration}
+                            </strong>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <span>Openings</span>
+                            <strong className="font-black text-[color:var(--ink)]">
+                              {internship.openings || 1}
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="px-6 py-6">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#6E8391] dark:text-[#8FA6B5]">
@@ -639,13 +791,19 @@ export default function InternshipDetails() {
                         ) : null}
                       </div>
                     ) : null}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </aside>
             </div>
           </section>
         </div>
       </main>
+
+      <NotificationToast
+        toast={feedbackToast}
+        onClose={() => setFeedbackToast(null)}
+      />
 
       <AdminActionDialog
         open={applyDialogOpen}

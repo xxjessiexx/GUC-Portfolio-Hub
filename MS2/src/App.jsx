@@ -31,6 +31,7 @@ import Internships from "./pages/Internships";
 import InternshipDetails from "./pages/InternshipDetails";
 import MyApplications from "./pages/MyApplications";
 import ManageInternships from "./pages/ManageInternships";
+import ArchivedInternships from "@/pages/ArchivedInternships";
 import ManageApplicants from "./pages/ManageApplicants";
 import ProjectPage from "./pages/ProjectPage";
 import ExploreInstructors from "./pages/ExploreInstructors";
@@ -48,7 +49,9 @@ import AdminLinkRequests from "@/pages/admin/AdminLinkRequests";
 import AdminFlaggedProjects from "@/pages/admin/AdminFlaggedProjects";
 import AdminStatistics from "@/pages/admin/AdminStatistics";
 import AdminCreateCourse from "@/pages/admin/AdminCreateCourse";
+import AdminEditCourse from "@/pages/admin/AdminEditCourse";
 import AdminCreateAccount from "@/pages/admin/AdminCreateAccount";
+import AdminEditAccount from "@/pages/admin/AdminEditAccount";
 import ViewInstructor from "@/pages/ViewInstructor"
 import FavoriteList from "@/pages/FavoriteList"
 import FavoritePortfolios from "./pages/FavoritePortfolios";
@@ -279,6 +282,15 @@ export default function App() {
     </ProtectedRoute>
   }
 />
+
+<Route
+  path="/admin/courses/:courseId/edit"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminEditCourse />
+    </ProtectedRoute>
+  }
+/>
 <Route
   path="/admin/overview"
   element={
@@ -292,6 +304,15 @@ export default function App() {
   element={
     <ProtectedRoute allowedRoles={["admin"]}>
       <AdminCreateAccount />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/users/:userId/edit"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminEditAccount />
     </ProtectedRoute>
   }
 />
@@ -377,6 +398,15 @@ export default function App() {
             />
 
             <Route
+              path="/my-projects"
+              element={
+                <ProtectedRoute allowedRoles={["student"]}>
+                  <ViewAllProjects />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/view-all-projects"
               element={
                 <ProtectedRoute allowedRoles={["student", "instructor", "admin"]}>
@@ -430,6 +460,15 @@ export default function App() {
               element={
                 <ProtectedRoute allowedRoles={["employer"]}>
                   <ManageInternships />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/archived-internships"
+              element={
+                <ProtectedRoute allowedRoles={["employer"]}>
+                  <ArchivedInternships />
                 </ProtectedRoute>
               }
             />
@@ -538,7 +577,9 @@ export default function App() {
             <Route
               path="/explore-instructors"
               element={
-                <ProtectedRoute allowedRoles={["student", "instructor", "admin"]}>
+                <ProtectedRoute
+                  allowedRoles={["student", "instructor", "employer", "admin"]}
+                >
                   <ExploreInstructors />
                 </ProtectedRoute>
               }

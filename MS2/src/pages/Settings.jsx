@@ -1476,10 +1476,10 @@ export default function Settings() {
   };
 
   return (
-    <DashboardLayout>
-      <main className="px-4 py-5 pb-16 sm:px-6 lg:px-7 xl:px-8">
-        <div className="mx-auto w-full max-w-[1480px]">
-          <header className="mb-5">
+    <DashboardLayout showFooter={false}>
+      <main className="h-[calc(100vh-144px)] overflow-hidden px-4 py-5 sm:px-6 lg:px-7 xl:px-8">
+        <div className="mx-auto flex h-full w-full max-w-[1480px] min-h-0 flex-col">
+          <header className="mb-5 shrink-0">
             <div className="mb-3 h-[3px] w-10 rounded-full bg-[var(--gold)]" />
             <h1 className="text-[44px] font-black leading-none tracking-[-0.045em] text-[color:var(--ink)] sm:text-[50px]">
               Settings
@@ -1491,7 +1491,7 @@ export default function Settings() {
 
           <div
             className="
-              overflow-hidden rounded-[22px]
+              min-h-0 flex-1 overflow-hidden rounded-[22px]
               border border-[#C9DBE4]
               bg-[#EEF4F7]
               shadow-[0_12px_30px_rgba(53,88,114,0.065)]
@@ -1500,9 +1500,10 @@ export default function Settings() {
               dark:shadow-[0_16px_36px_rgba(0,0,0,0.22)]
             "
           >
-            <div className="grid lg:grid-cols-[236px_minmax(0,1fr)]">
+            <div className="grid h-full min-h-0 lg:grid-cols-[236px_minmax(0,1fr)]">
               <aside
                 className="
+                  shrink-0 overflow-hidden
                   border-b border-[#D2E0E7]
                   bg-[#EEF4F7]
                   p-4
@@ -1555,7 +1556,7 @@ export default function Settings() {
               <section
                 aria-label={`${activeMeta.label} settings`}
                 className="
-                  min-w-0
+                  min-h-0 min-w-0 overflow-y-auto overscroll-contain
                   bg-[#F3F7F9]
                   dark:bg-[#0D2130]
                 "

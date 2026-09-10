@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
-  ChevronDown,
   Code2,
   Edit3,
   Eye,
@@ -17,6 +16,13 @@ import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import PageHeader from "@/components/common/PageHeader";
 import Pagination from "@/components/common/Pagination";
 import FilterSelect from "@/components/common/FilterSelect";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import { AdminActionDialog } from "@/components/adminModule/AdminActionDialog";
 
@@ -161,30 +167,6 @@ function TechTag({ children }) {
   );
 }
 
-function MiniMetric({ label, value, tone = "soft" }) {
-  const styles = {
-    blue:
-      "border-[#355872]/12 bg-[#355872]/8 text-[#355872] dark:border-white/10 dark:bg-white/[0.04] dark:text-[#9CD5FF]",
-    gold:
-      "border-[#B89736]/20 bg-[#E6C77B]/14 text-[#B89736] dark:border-white/10 dark:bg-white/[0.04] dark:text-[#E6C77B]",
-    navy:
-      "border-[#355872]/12 bg-white/70 text-[#355872] dark:border-white/10 dark:bg-white/[0.04] dark:text-white",
-    soft:
-      "border-[#355872]/10 bg-white/75 text-[color:var(--muted)] dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70",
-  };
-
-  return (
-    <div className={`rounded-[1rem] border px-3 py-2.5 ${styles[tone]}`}>
-      <p className="text-[9px] font-black uppercase tracking-[0.12em] opacity-80">
-        {label}
-      </p>
-
-      <p className="mt-1 truncate text-sm font-black text-[color:var(--ink)]">
-        {value}
-      </p>
-    </div>
-  );
-}
 
 function VisibilityControl({ project, onChange }) {
   const visibility = normalizeVisibility(project.visibility);
@@ -192,44 +174,71 @@ function VisibilityControl({ project, onChange }) {
 
   return (
     <div
-      className="relative z-20 w-fit"
+      className="relative z-20"
       onClick={(event) => event.stopPropagation()}
     >
-      <select
+      <Select
         value={visibility}
-        onChange={(event) => onChange(project.id, event.target.value)}
-        className={`h-8 appearance-none rounded-full border px-8 pl-9 text-xs font-black outline-none backdrop-blur-md transition ${
-          isPublic
-            ? "border-white/10 bg-white/10 text-[#9CD5FF] hover:bg-white/15"
-            : "border-white/15 bg-white/10 text-white/80 hover:bg-white/15"
-        }`}
+        onValueChange={(nextValue) => onChange(project.id, nextValue)}
       >
-        <option className="text-slate-900" value="Public">
-          Public
-        </option>
-        <option className="text-slate-900" value="Private">
-          Private
-        </option>
-      </select>
+        <SelectTrigger
+          className={`h-9 min-h-9 w-[116px] rounded-[12px] border px-3 pl-9 text-[11px] font-black shadow-[0_8px_18px_rgba(122,97,34,0.16)] backdrop-blur-md transition ${
+            isPublic
+              ? "border-[#D9BE63] bg-[#F5E7B2]/94 text-[#6F571C] hover:bg-[#F1DEA0]"
+              : "border-[#C7A84A] bg-[#8A6D26]/94 text-white hover:bg-[#7A5F20]"
+          }`}
+        >
+          <SelectValue />
+        </SelectTrigger>
+
+        <SelectContent
+          position="popper"
+          align="start"
+          className="!min-w-[116px] !w-[116px] !rounded-[12px] !border-[#DFC873] !bg-[#FFF9E8] !p-1 !shadow-[0_14px_30px_rgba(122,97,34,0.16)] !backdrop-blur-none"
+        >
+          <SelectItem
+            value="Public"
+            className="!rounded-[9px] !px-2.5 !py-2 !pr-7 !text-[11px] !font-black !text-[#6F571C] focus:!bg-[#F3E3A9] data-[state=checked]:!bg-[#F3E3A9] data-[state=checked]:!text-[#6F571C]"
+          >
+            Public
+          </SelectItem>
+
+          <SelectItem
+            value="Private"
+            className="!rounded-[9px] !px-2.5 !py-2 !pr-7 !text-[11px] !font-black !text-[#6F571C] focus:!bg-[#F3E3A9] data-[state=checked]:!bg-[#F3E3A9] data-[state=checked]:!text-[#6F571C]"
+          >
+            Private
+          </SelectItem>
+        </SelectContent>
+      </Select>
 
       {isPublic ? (
-        <Eye className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#9CD5FF]" />
+        <Eye className="pointer-events-none absolute left-3 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-[#8A6D26]" />
       ) : (
-        <Lock className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/75" />
+        <Lock className="pointer-events-none absolute left-3 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-white/85" />
       )}
-
-      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/60" />
     </div>
   );
 }
-
 function ProjectVisual({
   project,
   onVisibilityChange,
 }) {
+  const image = project.image || "";
+
   return (
-    <div className="relative min-h-[220px] overflow-hidden bg-[#071C2C] dark:bg-[#071521]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(122,170,206,0.18),transparent_32%),radial-gradient(circle_at_82%_82%,rgba(230,199,123,0.08),transparent_34%)]" />
+    <div className="relative min-h-[220px] overflow-hidden bg-[#DDE7EC] dark:bg-[#071521]">
+      {image ? (
+        <img
+          src={image}
+          alt={getProjectName(project)}
+          className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-[linear-gradient(145deg,#DCE8EE_0%,#EEF4F7_55%,#D5E3EA_100%)] dark:bg-[linear-gradient(145deg,#102B3D_0%,#17394E_55%,#234F69_100%)]" />
+      )}
+
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,28,44,0.08)_0%,transparent_48%,rgba(7,28,44,0.42)_100%)]" />
 
       <div className="absolute left-4 top-4 z-10">
         <VisibilityControl
@@ -239,18 +248,13 @@ function ProjectVisual({
       </div>
 
       <div className="absolute bottom-5 left-5 right-5">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+        <p className="inline-flex rounded-full border border-white/20 bg-[#071C2C]/72 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white backdrop-blur-md">
           {getProjectType(project)}
         </p>
-
-        <h3 className="mt-2 line-clamp-3 text-[1.65rem] font-black leading-tight text-white">
-          {getProjectName(project)}
-        </h3>
       </div>
     </div>
   );
 }
-
 function ProjectRow({
   project,
   courses,
@@ -266,7 +270,7 @@ function ProjectRow({
   return (
     <article
       onClick={() => onOpen(project.id)}
-      className="group cursor-pointer overflow-hidden rounded-[1.65rem] border border-white/70 bg-white/74 shadow-[0_18px_44px_rgba(53,88,114,0.09)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_24px_52px_rgba(53,88,114,0.14)] dark:border-white/10 dark:bg-white/[0.045]"
+      className="group cursor-pointer overflow-hidden rounded-[1.65rem] border border-[color:var(--border-soft)] bg-[var(--surface)] shadow-[var(--shadow-card)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_24px_52px_rgba(53,88,114,0.14)] dark:border-white/10"
     >
       <div className="grid min-h-[220px] lg:grid-cols-[260px_1fr]">
         <ProjectVisual
@@ -323,27 +327,40 @@ function ProjectRow({
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-4">
-            <MiniMetric
-              label="Collaborators"
-              value={getProjectCollaborators(project)}
-              tone="blue"
-            />
-            <MiniMetric
-              label="Instructors"
-              value={getProjectInstructors(project)}
-              tone="gold"
-            />
-            <MiniMetric
-              label="Comments"
-              value={getProjectComments(project)}
-              tone="navy"
-            />
-            <MiniMetric
-              label="Updated"
-              value={getProjectUpdated(project)}
-              tone="soft"
-            />
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#DCE6EB] pt-4 text-[11px] font-bold text-[color:var(--muted)] dark:border-white/10">
+            <span>
+              <strong className="font-black text-[#355872] dark:text-[#9CD5FF]">
+                {getProjectCollaborators(project)}
+              </strong>{" "}
+              collaborators
+            </span>
+
+            <span className="hidden h-4 w-px bg-[#D3E1E9] sm:block dark:bg-white/10" />
+
+            <span>
+              <strong className="font-black text-[#355872] dark:text-[#9CD5FF]">
+                {getProjectInstructors(project)}
+              </strong>{" "}
+              instructors
+            </span>
+
+            <span className="hidden h-4 w-px bg-[#D3E1E9] sm:block dark:bg-white/10" />
+
+            <span>
+              <strong className="font-black text-[#355872] dark:text-[#9CD5FF]">
+                {getProjectComments(project)}
+              </strong>{" "}
+              comments
+            </span>
+
+            <span className="hidden h-4 w-px bg-[#D3E1E9] sm:block dark:bg-white/10" />
+
+            <span>
+              Updated{" "}
+              <strong className="font-black text-[#355872] dark:text-[#9CD5FF]">
+                {getProjectUpdated(project)}
+              </strong>
+            </span>
           </div>
 
           <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
@@ -827,23 +844,7 @@ export default function ViewAllProjects() {
             </AppCard>
           ) : null}
 
-          <AppCard className="overflow-hidden p-5">
-            <div className="mb-5 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-black text-[color:var(--ink)]">
-                  All My Projects
-                </h2>
-
-                <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full border border-[#355872]/10 bg-white/65 px-2 text-xs font-black text-[#355872] dark:border-white/10 dark:bg-white/[0.05] dark:text-[#9CD5FF]">
-                  {filteredProjects.length}
-                </span>
-              </div>
-
-              <p className="hidden text-sm font-semibold text-[color:var(--muted)] md:block">
-                Open a project to view its full details.
-              </p>
-            </div>
-
+          <section>
             {filteredProjects.length === 0 ? (
               <div className="rounded-[1.75rem] border border-dashed border-[#355872]/20 bg-white/45 p-8 text-center dark:border-white/10 dark:bg-white/[0.035]">
                 <p className="text-base font-black text-[color:var(--ink)]">
@@ -869,7 +870,7 @@ export default function ViewAllProjects() {
                 ))}
               </div>
             )}
-          </AppCard>
+          </section>
 
           <Pagination
             currentPage={safeCurrentPage}

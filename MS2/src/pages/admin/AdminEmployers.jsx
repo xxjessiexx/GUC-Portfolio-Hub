@@ -86,8 +86,21 @@ export default function AdminEmployers() {
       }));
   }, []);
 
-  const displayedEmployers =
-    dbEmployers.length > 0 ? dbEmployers : employers;
+  const displayedEmployers = useMemo(() => {
+    const source = dbEmployers.length > 0 ? dbEmployers : employers;
+    const seen = new Set();
+
+    return source.filter((employer, index) => {
+      const stableKey =
+        employer?.id ||
+        employer?.email ||
+        `${employer?.companyName || "employer"}-${index}`;
+
+      if (seen.has(stableKey)) return false;
+      seen.add(stableKey);
+      return true;
+    });
+  }, [dbEmployers, employers]);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");

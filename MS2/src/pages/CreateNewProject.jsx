@@ -69,11 +69,11 @@ const initialProjectData = {
 };
 
 const inputStyles =
-  "min-h-[58px] rounded-[15px] border border-[#C5D6E0] bg-[#F4F8FA] px-4 text-[15px] font-extrabold text-[#183247] shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] placeholder:text-[#8798A4] transition hover:border-[#90AFC0] focus-visible:border-[#4F7EA4] focus-visible:bg-white focus-visible:ring-4 focus-visible:ring-[#7AAACE]/14";
+  "min-h-[52px] rounded-[14px] border border-[#C7D7E0] bg-[rgba(247,250,252,0.84)] px-4 text-[14px] font-extrabold text-[#183247] shadow-[inset_0_1px_0_rgba(255,255,255,0.66)] placeholder:text-[#8798A4] transition hover:border-[#9AB3C1] focus-visible:border-[#557C97] focus-visible:bg-white/95 focus-visible:ring-4 focus-visible:ring-[#7AAACE]/10";
 
 const selectTriggerStyles = cn(
   inputStyles,
-  "h-[58px] w-full justify-between py-0 text-left bg-white [&>span]:text-[#183247] [&>span]:font-extrabold [&>svg]:h-5 [&>svg]:w-5 [&>svg]:text-[#294F69]"
+  "h-[52px] w-full justify-between py-0 text-left [&>span]:text-[#183247] [&>span]:font-extrabold [&>svg]:h-[18px] [&>svg]:w-[18px] [&>svg]:text-[#294F69]"
 );
 
 const EDITOR_THEME = {
@@ -720,7 +720,7 @@ function EditorTabs({ active, onChange }) {
   ];
 
   return (
-    <nav className="mt-6 flex items-center gap-1 border-b border-[#BFD1DC]" aria-label="Project editor sections">
+    <nav className="mt-5 flex items-center gap-1 border-b border-[#BFD1DC]/85" aria-label="Project editor sections">
       {items.map((item) => {
         const Icon = item.icon;
         const selected = active === item.id;
@@ -737,10 +737,10 @@ function EditorTabs({ active, onChange }) {
                 : "text-[#7A8D99] hover:text-[#355872]"
             )}
           >
-            <Icon className={cn("h-4 w-4", selected ? "text-[#4F7EA4]" : "text-[#8EA0AA]")} />
+            <Icon className={cn("h-4 w-4", selected ? "text-[#355872]" : "text-[#8EA0AA]")} />
             {item.label}
             {selected ? (
-              <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-full bg-[#4F7EA4]" />
+              <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-full bg-[#E6C77B]" />
             ) : null}
           </button>
         );
@@ -1669,7 +1669,7 @@ setSaveMessage({ type: "", message: "" });
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout showFooter={false}>
       <SideToast
         open={toast.open}
         title={toast.title}
@@ -1710,15 +1710,15 @@ setSaveMessage({ type: "", message: "" });
         onSelectUser={selectInviteUser}
       />
 
-      <main className="px-4 py-6 pb-16 sm:px-6 lg:px-8">
+      <main className="h-[calc(100vh-9rem)] min-h-0">
         <form
           id="project-editor-form"
           onSubmit={handleSubmit}
           style={EDITOR_THEME}
-          className="mx-auto w-full max-w-[1180px]"
+          className="mx-auto flex h-full min-h-0 w-full max-w-[1480px] flex-col"
         >
           {/* EDITOR HEADER */}
-          <div className="border-b border-[#BFD1DC] pb-6">
+          <div className="shrink-0 border-b border-[#BFD1DC]/75 pb-4">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="min-w-0">
                 <div className="flex items-center gap-3">
@@ -1775,13 +1775,15 @@ setSaveMessage({ type: "", message: "" });
             </div>
           </div>
 
-          <EditorTabs active={activeSection} onChange={setActiveSection} />
+          <div className="shrink-0">
+            <EditorTabs active={activeSection} onChange={setActiveSection} />
+          </div>
 
-          <div className="mt-6 w-full">
+          <div className="mt-4 min-h-0 flex-1">
             {/* EDITOR */}
-            <section className="relative w-full overflow-hidden rounded-[24px] border border-[#C9DBE4] border-l-[4px] border-l-[#355872] bg-[#FBFCFA] shadow-[0_18px_42px_rgba(53,88,114,0.10)]">
+            <section className="relative flex h-full min-h-0 w-full overflow-hidden rounded-[24px] border border-[#C9DBE4]/80 bg-[rgba(249,252,253,0.70)] shadow-[0_16px_36px_rgba(53,88,114,0.065)] backdrop-blur-xl">
               {activeSection === "details" ? (
-                <div className="px-6 py-7 sm:px-9">
+                <div className="h-full w-full overflow-y-auto px-6 py-6 pr-5 sm:px-9 sm:pr-7 [scrollbar-gutter:stable] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#9AAAB4]/35 hover:[&::-webkit-scrollbar-thumb]:bg-[#8799A5]/50">
                   <SectionHeader
                     title="Project details"
                     description="Give the project a clear identity and enough context to understand it quickly."
@@ -1878,7 +1880,7 @@ setSaveMessage({ type: "", message: "" });
               ) : null}
 
               {activeSection === "media" ? (
-                <div className="px-6 py-7 sm:px-9">
+                <div className="h-full w-full overflow-y-auto px-6 py-6 pr-5 sm:px-9 sm:pr-7 [scrollbar-gutter:stable] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#9AAAB4]/35 hover:[&::-webkit-scrollbar-thumb]:bg-[#8799A5]/50">
                   <SectionHeader
                     title="Media & links"
                     description="Give visitors something concrete to inspect — your repository, demo, or thesis files."
@@ -1940,7 +1942,7 @@ setSaveMessage({ type: "", message: "" });
               ) : null}
 
               {activeSection === "team" ? (
-                <div className="px-6 py-7 sm:px-9">
+                <div className="h-full w-full overflow-y-auto px-6 py-6 pr-5 sm:px-9 sm:pr-7 [scrollbar-gutter:stable] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#9AAAB4]/35 hover:[&::-webkit-scrollbar-thumb]:bg-[#8799A5]/50">
                   <SectionHeader
                     title="Team"
                     description="Invite the people who belong on this project."

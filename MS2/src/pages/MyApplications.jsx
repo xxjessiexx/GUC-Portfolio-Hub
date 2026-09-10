@@ -27,8 +27,11 @@ function normalizeStatus(status) {
 
   if (value === "accepted" || value === "approved") return "Accepted";
   if (value === "rejected" || value === "declined") return "Rejected";
+  if (value === "shortlisted") return "Shortlisted";
+  if (value === "nominated") return "Nominated";
+  if (value === "reviewing" || value === "under review") return "Reviewing";
 
-  return "Pending";
+  return "Reviewing";
 }
 
 function formatDisplayDate(value) {
@@ -71,10 +74,14 @@ function normalizeApplication(application) {
       application.nextStep ||
       application.nextAction ||
       (status === "Accepted"
-        ? "Offer accepted"
+        ? "Application accepted"
         : status === "Rejected"
-        ? "Application closed"
-        : "Waiting for employer response"),
+          ? "Application closed"
+          : status === "Nominated"
+            ? "You've been nominated"
+            : status === "Shortlisted"
+              ? "You've been shortlisted"
+              : "Employer review in progress"),
     note:
       application.note ||
       application.feedback ||
@@ -83,8 +90,12 @@ function normalizeApplication(application) {
       (status === "Accepted"
         ? "Open the internship to review the role and any next steps."
         : status === "Rejected"
-        ? "This application is no longer active."
-        : "Your application is still waiting for an employer response."),
+          ? "This application is no longer active."
+          : status === "Nominated"
+            ? "The employer has moved your application forward to the nomination stage."
+            : status === "Shortlisted"
+              ? "Your application has moved forward and remains under consideration."
+              : "The employer is currently reviewing your application."),
   };
 }
 
@@ -324,7 +335,9 @@ export default function MyApplications() {
               }}
               options={[
                 "Status: All Statuses",
-                "Status: Pending",
+                "Status: Reviewing",
+                "Status: Shortlisted",
+                "Status: Nominated",
                 "Status: Accepted",
                 "Status: Rejected",
               ]}
@@ -412,66 +425,147 @@ export default function MyApplications() {
 }
 
 function ApplicationSurface({ application, onOpen }) {
+  const statusTone =
+    application.status === "Accepted"
+      ? {
+          label: "Accepted application",
+          accent: "text-[#9BD2AE]",
+          dot: "bg-[#9BD2AE]",
+          line: "bg-[#9BD2AE]",
+        }
+      : application.status === "Rejected"
+        ? {
+            label: "Closed application",
+            accent: "text-[#F0A8A8]",
+            dot: "bg-[#EFA0A0]",
+            line: "bg-[#EFA0A0]",
+          }
+        : application.status === "Nominated"
+          ? {
+              label: "Nominated",
+              accent: "text-[#E6C77B]",
+              dot: "bg-[#E6C77B]",
+              line: "bg-[#E6C77B]",
+            }
+          : application.status === "Shortlisted"
+            ? {
+                label: "Shortlisted",
+                accent: "text-[#A7D9FA]",
+                dot: "bg-[#A7D9FA]",
+                line: "bg-[#A7D9FA]",
+              }
+            : {
+                label: "Application in review",
+                accent: "text-[#E6C77B]",
+                dot: "bg-[#E6C77B]",
+                line: "bg-[#E6C77B]",
+              };
+
   return (
     <article
-      role="link"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onOpen();
-        }
-      }}
-      className="group relative cursor-pointer overflow-hidden rounded-[24px] border border-[#C9DBE4] bg-[#FBFCFA] px-5 py-5 shadow-[0_16px_36px_rgba(53,88,114,0.08)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#7AAACE]/20 hover:-translate-y-[2px] hover:shadow-[0_22px_46px_rgba(53,88,114,0.12)] sm:px-6 sm:py-6 dark:border-[var(--card-border)] dark:bg-[var(--surface)]"
+      className="group overflow-hidden rounded-[30px] border border-white bg-white/95 p-0 shadow-[0_22px_55px_rgba(53,88,114,0.13)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-[3px] hover:shadow-[0_30px_68px_rgba(53,88,114,0.18)] dark:border-[var(--card-border)] dark:bg-[var(--surface)]"
     >
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(250px,0.55fr)] lg:items-center lg:gap-8">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <p className="text-[11px] font-black uppercase tracking-[0.11em] text-[#355872] dark:text-[var(--secondary)]">
+      <div className="grid lg:grid-cols-[290px_minmax(0,1fr)]">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="relative flex min-h-[235px] flex-col overflow-hidden bg-[linear-gradient(145deg,#071D2C_0%,#102F45_52%,#1E4964_100%)] p-7 text-left text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#79B0E3]"
+        >
+          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(156,213,255,0.19),transparent_69%)]" />
+          <div className="pointer-events-none absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(230,199,123,0.11),transparent_70%)]" />
+
+          <div className="relative">
+            <div className="flex items-center justify-between gap-3">
+              <p className={`text-[9px] font-black uppercase tracking-[0.18em] ${statusTone.accent}`}>
+                {statusTone.label}
+              </p>
+
+              <span className={`h-2.5 w-2.5 rounded-full ${statusTone.dot}`} />
+            </div>
+
+            <span className={`mt-4 block h-[2px] w-10 rounded-full ${statusTone.line}`} />
+
+            <p className="mt-5 text-[11px] font-black uppercase tracking-[0.10em] text-[#8FC3E5]">
               {application.company}
             </p>
+
+            <h3 className="mt-3 max-w-[220px] text-[28px] font-black leading-[1.02] tracking-[-0.045em] text-white">
+              {application.title}
+            </h3>
+          </div>
+
+          <div className="relative mt-auto border-t border-white/15 pt-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] font-black text-white/85">
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-[#A7D9FA]" />
+                {application.location}
+              </span>
+
+              <span className="inline-flex items-center gap-1.5">
+                <Clock3 className="h-3.5 w-3.5 text-[#A7D9FA]" />
+                {application.duration}
+              </span>
+            </div>
+          </div>
+        </button>
+
+        <div className="relative flex min-w-0 flex-col px-7 py-6 sm:px-8">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(156,213,255,0.10),transparent_70%)]" />
+
+          <div className="relative flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.17em] text-[#B89736]">
+                Next step
+              </p>
+
+              <h4 className="mt-1.5 text-[22px] font-black leading-tight tracking-[-0.03em] text-[color:var(--ink)]">
+                {application.nextStep}
+              </h4>
+
+              <p className="mt-2 max-w-3xl text-[13px] font-medium leading-6 text-[color:var(--muted)]">
+                {application.note}
+              </p>
+            </div>
+
             <StatusBadge status={application.status} />
           </div>
 
-          <h3 className="mt-2.5 text-[21px] font-black leading-[1.1] tracking-[-0.035em] text-[#183247] transition-colors group-hover:text-[#244D69] dark:text-[var(--ink)]">
-            {application.title}
-          </h3>
+          <div className="relative mt-6 flex flex-wrap items-end gap-x-6 gap-y-4">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                Applied
+              </p>
+              <p className="mt-1 text-[11px] font-black text-[#355872]">
+                {formatDisplayDate(application.dateApplied)}
+              </p>
+            </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] font-bold text-[#627887] dark:text-[var(--muted)]">
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-[#456D87] dark:text-[var(--secondary)]" />
-              {application.location}
-            </span>
+            <span className="hidden h-8 w-px bg-[#D3E1E9] sm:block" />
 
-            <span className="inline-flex items-center gap-1.5">
-              <Clock3 className="h-3.5 w-3.5 text-[#456D87] dark:text-[var(--secondary)]" />
-              {application.duration}
-            </span>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                Company
+              </p>
+              <p className="mt-1 text-[11px] font-black text-[#355872]">
+                {application.company}
+              </p>
+            </div>
 
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarDays className="h-3.5 w-3.5 text-[#456D87] dark:text-[var(--secondary)]" />
-              Applied {formatDisplayDate(application.dateApplied)}
-            </span>
+            <span className="hidden h-8 w-px bg-[#D3E1E9] sm:block" />
+
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                Status
+              </p>
+              <p className="mt-1 text-[11px] font-black text-[#355872]">
+                {application.status}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="border-t border-[#DCE7ED] pt-4 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0 dark:border-[var(--card-border)]">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#B89736]">
-            Next step
-          </p>
-
-          <p className="mt-2 text-[14px] font-black text-[#183247] dark:text-[var(--ink)]">
-            {application.nextStep}
-          </p>
-
-          <p className="mt-1.5 line-clamp-2 text-[12px] font-semibold leading-5 text-[#708491] dark:text-[var(--muted)]">
-            {application.note}
-          </p>
+          
         </div>
       </div>
-
-      <ArrowUpRight className="pointer-events-none absolute bottom-5 right-5 h-4 w-4 text-[#355872] opacity-0 transition-opacity group-hover:opacity-25 sm:bottom-6 sm:right-6 dark:text-[var(--secondary)]" />
     </article>
   );
 }

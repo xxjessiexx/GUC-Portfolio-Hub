@@ -22,6 +22,23 @@ import {
   toggleSavedInternship,
 } from "@/data/demoStore";
 
+function getLocationLabel(value, fallback = "") {
+  if (!value) return fallback;
+  if (typeof value === "string") return value;
+
+  if (typeof value === "object") {
+    return (
+      value.label ||
+      value.name ||
+      value.address ||
+      value.city ||
+      fallback
+    );
+  }
+
+  return String(value);
+}
+
 function getEmployerName(internship, users) {
   if (internship.company) return internship.company;
   if (internship.companyName) return internship.companyName;
@@ -73,7 +90,7 @@ function normalizeInternship(internship, users) {
     title:
       internship.title || internship.role || internship.position || "Internship",
     company: getEmployerName(internship, users),
-    location: internship.location || internship.workLocation || "Not specified",
+    location: getLocationLabel(internship.location || internship.workLocation, "Not specified"),
     duration: internship.duration || internship.period || "Not specified",
     workMode: internship.workMode || internship.mode || internship.type || "On-site",
     department: internship.department || internship.field || "General",
@@ -500,7 +517,7 @@ function InternshipSurface({ internship, saved, onOpen, onSave }) {
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-y border-[#DCE7ED] py-3 text-[11px] font-bold text-[#627887]">
         <span className="inline-flex items-center gap-1.5">
           <MapPin className="h-3.5 w-3.5 text-[#456D87]" />
-          {internship.location}
+          {getLocationLabel(internship.location, "Not specified")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <BriefcaseBusiness className="h-3.5 w-3.5 text-[#456D87]" />

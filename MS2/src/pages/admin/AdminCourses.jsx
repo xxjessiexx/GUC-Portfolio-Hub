@@ -7,7 +7,6 @@ import { AdminPageShell } from "@/components/adminModule/AdminPageShell";
 import { AdminPageHeader } from "@/components/adminModule/AdminPageHeader";
 import { AdminGridTable } from "@/components/adminModule/AdminTable";
 import AdminTableActions from "@/components/adminModule/AdminTableActions";
-import AdminCourseEditPanel from "@/components/adminModule/AdminCourseEditPanel";
 import { AdminStatusBadge } from "@/components/adminModule/AdminStatusBadge";
 import { AdminActionDialog } from "@/components/adminModule/AdminActionDialog";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -33,7 +32,6 @@ export default function AdminCourses() {
   type: "success",
 });
   const [status, setStatus] = useState("all");
-  const [editingCourse, setEditingCourse] = useState(null);
   const [decision, setDecision] = useState(null);
   const [note, setNote] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -73,12 +71,6 @@ export default function AdminCourses() {
     [courses, search, status]
   );
 
-  const startEditing = (course) => {
-    setEditingCourse({
-      ...course,
-      note: "",
-    });
-  };
 
   const openDecision = (course, action, nextStatus) => {
     setDecision({
@@ -90,48 +82,6 @@ export default function AdminCourses() {
     setNote("");
   };
 
-  const saveEdit = () => {
-    if (
-      !editingCourse?.code?.trim() ||
-      !editingCourse?.name?.trim()
-    ) {
-      setToastData({
-        open: true,
-        title: "Missing course details",
-        description: "Course code and name are required.",
-        type: "error",
-      });
-
-      return;
-    }
-
-    const updatedCode =
-      editingCourse.code.trim().toUpperCase();
-
-    actions.updateCourse(
-      editingCourse.id,
-      {
-        code: updatedCode,
-        name: editingCourse.name.trim(),
-        type:
-          editingCourse.type.trim() ||
-          "Course",
-        instructor:
-          editingCourse.instructor.trim() ||
-          "Unassigned",
-      },
-      editingCourse.note?.trim()
-    );
-
-    setToastData({
-      open: true,
-      title: "Course updated",
-      description: `${updatedCode} was updated successfully.`,
-      type: "success",
-    });
-
-    setEditingCourse(null);
-  };
 
   const confirmDecision = () => {
     if (!decision) return;
@@ -253,7 +203,7 @@ export default function AdminCourses() {
               label: "Edit course",
               icon: Pencil,
               onClick: () =>
-                startEditing(course),
+                navigate(`/admin/courses/${course.id}/edit`),
             },
 
             {
@@ -341,15 +291,6 @@ export default function AdminCourses() {
                   </div>
                 }
               />
-      
-      <AdminCourseEditPanel
-        editingCourse={editingCourse}
-        setEditingCourse={setEditingCourse}
-        onCancel={() =>
-          setEditingCourse(null)
-        }
-        onSave={saveEdit}
-      />
 
       <SearchFilterToolbar
         searchValue={search}

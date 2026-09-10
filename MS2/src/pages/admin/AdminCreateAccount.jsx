@@ -1,9 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeft,
   Eye,
   EyeOff,
   KeyRound,
@@ -15,16 +12,7 @@ import {
 } from "lucide-react";
 
 import { AdminPageShell } from "@/components/adminModule/AdminPageShell";
-import {
-  AdminField,
-  AdminFormSectionHeader,
-  AdminMotionCard,
-  RequirementLine,
-} from "@/components/adminModule/AdminFormPrimitives";
-import { AdminPageHeader } from "@/components/adminModule/AdminPageHeader";
-import { adminInputStyles, cardMotion, pageMotion } from "@/lib/adminFormTokens";
-import { AppButton } from "@/components/ui/AppButton";
-import { AppCard } from "@/components/ui/AppCard";
+import { AdminField, RequirementLine } from "@/components/adminModule/AdminFormPrimitives";
 import { Input } from "@/components/ui/input";
 import { useAdminModuleData } from "@/hooks/useAdminModuleData";
 import { useToast } from "@/context/ToastContext";
@@ -39,6 +27,70 @@ const emptyAdmin = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
 
+const inputStyles =
+  "min-h-[52px] w-full rounded-[14px] border border-[#C7D7E0] bg-[rgba(247,250,252,0.84)] px-4 text-[14px] font-extrabold text-[#183247] shadow-[inset_0_1px_0_rgba(255,255,255,0.66)] placeholder:text-[#8798A4] transition hover:border-[#9AB3C1] focus-visible:border-[#557C97] focus-visible:bg-white/95 focus-visible:ring-4 focus-visible:ring-[#7AAACE]/10";
+
+function AdminEditorTabs({ active, onChange }) {
+  const items = [
+    { id: "account", label: "Account", icon: UserRound },
+    { id: "access", label: "Access", icon: ShieldCheck },
+  ];
+
+  return (
+    <nav
+      className="mt-5 flex items-center gap-1 border-b border-[#BFD1DC]/85"
+      aria-label="Admin editor sections"
+    >
+      {items.map((item) => {
+        const Icon = item.icon;
+        const selected = active === item.id;
+
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onChange(item.id)}
+            className={`relative inline-flex h-12 items-center gap-2.5 px-4 text-[13px] font-black transition ${
+              selected
+                ? "text-[#17384E]"
+                : "text-[#7A8D99] hover:text-[#355872]"
+            }`}
+          >
+            <Icon
+              className={`h-4 w-4 ${
+                selected ? "text-[#355872]" : "text-[#8EA0AA]"
+              }`}
+            />
+            {item.label}
+            {selected ? (
+              <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-full bg-[#E6C77B]" />
+            ) : null}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+function SectionHeader({ icon: Icon, title, description }) {
+  return (
+    <div className="mb-7 flex items-start gap-3">
+      <span className="mt-2 h-[2px] w-8 shrink-0 rounded-full bg-[#E6C77B]" />
+      <div>
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4 text-[#557C97]" />
+          <h2 className="text-[20px] font-black tracking-[-0.025em] text-[#142A3A]">
+            {title}
+          </h2>
+        </div>
+        <p className="mt-1 text-[13px] font-semibold leading-5 text-[#718391]">
+          {description}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminCreateAccount() {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -47,12 +99,10 @@ export default function AdminCreateAccount() {
   const [form, setForm] = useState(emptyAdmin);
   const [submitted, setSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [activeSection, setActiveSection] = useState("account");
 
   const update = (key, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const normalizedEmail = form.email.trim().toLowerCase();
@@ -87,7 +137,6 @@ export default function AdminCreateAccount() {
       submitted && !form.name.trim()
         ? "Full name is required."
         : "",
-
     email:
       submitted && !normalizedEmail
         ? "GUC email is required."
@@ -96,14 +145,12 @@ export default function AdminCreateAccount() {
           : duplicateEmail
             ? "This email already exists."
             : "",
-
     username:
       submitted && !normalizedUsername
         ? "Username is required."
         : duplicateUsername
           ? "This username already exists."
           : "",
-
     password:
       submitted && !form.password
         ? "Password is required."
@@ -131,7 +178,14 @@ export default function AdminCreateAccount() {
     event.preventDefault();
     setSubmitted(true);
 
-    if (!canSubmit) return;
+    if (!canSubmit) {
+      if (!form.name.trim() || !emailValid || duplicateEmail) {
+        setActiveSection("account");
+      } else {
+        setActiveSection("access");
+      }
+      return;
+    }
 
     const adminName = form.name.trim();
 
@@ -143,22 +197,10 @@ export default function AdminCreateAccount() {
       note: form.note.trim(),
     });
 
-    /*
-      Clear the submitted form immediately after creation.
-
-      createAdminUser updates the users collection synchronously. If the
-      newly-created email remains in this form for the next render,
-      duplicateEmail becomes true and the page briefly shows
-      "This email already exists" even though creation succeeded.
-    */
     setForm(emptyAdmin);
     setSubmitted(false);
     setShowPassword(false);
 
-    /*
-      The global toast provider stays mounted during navigation, so the
-      success message remains visible after redirecting to All Users.
-    */
     showToast({
       title: "Admin account created",
       description: `${adminName} can now sign in as an administrator.`,
@@ -172,6 +214,7 @@ export default function AdminCreateAccount() {
     setForm(emptyAdmin);
     setSubmitted(false);
     setShowPassword(false);
+    setActiveSection("account");
   };
 
   return (
@@ -181,293 +224,231 @@ export default function AdminCreateAccount() {
         value: Math.round((completion / 4) * 100),
       }}
     >
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={pageMotion}
-        className="space-y-5"
-      >
-        
-
-      
-
-         <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-                <div className="mx-auto max-w-7xl space-y-6">
-                  <SectionHeader
-            className="
-              [&_h2]:mt-3
-              [&_h2]:text-4xl
-              [&_h2]:font-black
-              [&_h2]:tracking-tight
-              [&_h2]:text-[color:var(--ink)]
-              sm:[&_h2]:text-5xl
-          
-              [&_p]:mt-3
-              [&_p]:text-base
-              [&_p]:font-semibold
-              [&_p]:text-[color:var(--muted)]
-            "
-           
-            title="Admin Access"
-            subtitle="Create a new administrator account and set up the credentials they will use to sign in."
-            action={
-                      <div className="-m-2">
-                        <span
-                          onClick={() => navigate("/admin/users")}
-                          className="inline-flex items-center rounded-2xl px-9 py-3 text-white font-semibold 
-                          bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
-          hover:bg-[linear-gradient(135deg,#355872_0%,#46739A_55%,#8CC3EA_100%)] shadow-md hover:bg-[#243f69] transition-all cursor-pointer  hover:-translate-y-1
-                hover:scale-[1.02]
-                hover:brightness-110
-                hover:shadow-[0_24px_50px_rgba(53,88,114,.35)]  shadow-[0_12px_30px_rgba(53,88,114,.22)]
-          
-                transition-all
-                duration-300
-                ease-out
-                hover:shadow-[0_20px_40px_rgba(53,88,114,.30),0_10px_45px_rgba(122,170,206,.35)] hover:bg-[linear-gradient(135deg,#1F2E3C_0%,#2D4B63_55%,#4F7EA4_100%)]"
-                        >
-                          <ArrowLeft className="mr-2 size-4" />
-                            Back To Users 
-                        </span>
-                      </div>
-                    }
-                  />
-          
-
+      <main className="mx-auto flex h-[calc(100vh-9rem)] min-h-0 w-full max-w-[1480px] flex-col">
         <form
+          id="admin-account-form"
           onSubmit={submit}
-          className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]"
+          className="flex h-full min-h-0 flex-col"
         >
-          <div className="space-y-4">
-            <AdminMotionCard>
-              <div className="space-y-4">
-                <AdminFormSectionHeader
-                  icon={UserPlus}
-                  title="Admin identity"
-                  description="Enter the administrator's basic account details."
-                />
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <AdminField
-                    label="Full name"
-                    required
-                    icon={UserRound}
-                    error={errors.name}
-                    feedback="This name will appear across the admin workspace."
-                  >
-                    <Input
-                      value={form.name}
-                      onChange={(event) =>
-                        update("name", event.target.value)
-                      }
-                      placeholder="Nadine Admin"
-                      className={adminInputStyles}
-                    />
-                  </AdminField>
-
-                  <AdminField
-                    label="GUC email"
-                    required
-                    icon={Mail}
-                    error={errors.email}
-                    success={
-                      emailValid && !duplicateEmail
-                        ? "Email is available."
-                        : ""
-                    }
-                    feedback="Use the administrator's GUC email address."
-                  >
-                    <Input
-                      value={form.email}
-                      onChange={(event) =>
-                        update("email", event.target.value)
-                      }
-                      placeholder="admin@guc.edu.eg"
-                      className={adminInputStyles}
-                    />
-                  </AdminField>
+          <div className="shrink-0 border-b border-[#BFD1DC]/75 pb-4">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <span className="h-[3px] w-9 rounded-full bg-[#E6C77B]" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#5C8199]">
+                    Admin editor
+                  </p>
                 </div>
+                <h1 className="mt-3 text-[40px] font-black leading-none tracking-[-0.045em] text-[#112A3B] sm:text-[46px]">
+                  Create Admin
+                </h1>
+                <p className="mt-3 max-w-2xl text-[14px] font-semibold leading-6 text-[#718391]">
+                  Create an administrator account in one focused workspace.
+                </p>
               </div>
-            </AdminMotionCard>
 
-            <AdminMotionCard>
-              <div className="space-y-4">
-                <AdminFormSectionHeader
-                  icon={ShieldCheck}
-                  title="Login credentials"
-                  description="Choose the username and password the administrator will use to sign in."
-                />
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <AdminField
-                    label="Username"
-                    required
-                    icon={ShieldCheck}
-                    error={errors.username}
-                    success={
-                      normalizedUsername && !duplicateUsername
-                        ? "Username is available."
-                        : ""
-                    }
-                    feedback="Choose a unique username for administrator sign-in."
-                  >
-                    <Input
-                      value={form.username}
-                      onChange={(event) =>
-                        update("username", event.target.value)
-                      }
-                      placeholder="nadine.admin"
-                      className={adminInputStyles}
-                    />
-                  </AdminField>
-
-                  <AdminField
-                    label="Password"
-                    required
-                    icon={KeyRound}
-                    error={errors.password}
-                    success={
-                      passwordStrongEnough
-                        ? "Password meets the minimum length."
-                        : ""
-                    }
-                    feedback="Use at least 6 characters."
-                  >
-                    <div className="relative">
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        value={form.password}
-                        onChange={(event) =>
-                          update("password", event.target.value)
-                        }
-                        placeholder="••••••••"
-                        className={`${adminInputStyles} pr-12`}
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowPassword((prev) => !prev)
-                        }
-                        aria-label={
-                          showPassword ? "Hide password" : "Show password"
-                        }
-                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 text-[color:var(--muted)] transition hover:bg-black/5 hover:text-[color:var(--ink)]"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="size-4" />
-                        ) : (
-                          <Eye className="size-4" />
-                        )}
-                      </button>
-                    </div>
-                  </AdminField>
-                </div>
-
-                <AdminField
-                  label="Admin note"
-                  feedback="Optional. Add a short internal note about this account."
+              <div className="flex shrink-0 items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => navigate("/admin/users")}
+                  className="h-11 rounded-[14px] px-4 text-[12px] font-black text-[#718391] transition hover:bg-[#EAF2F6] hover:text-[#355872]"
                 >
-                  <textarea
-                    value={form.note}
-                    onChange={(event) =>
-                      update("note", event.target.value)
-                    }
-                    rows={3}
-                    placeholder="Add an optional note about this administrator..."
-                    className={`${adminInputStyles} min-h-[90px] w-full resize-none py-3`}
-                  />
-                </AdminField>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!canSubmit}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-[14px] bg-[#355872] px-6 text-[12px] font-black text-white shadow-[0_10px_24px_rgba(53,88,114,0.18)] transition hover:bg-[#294A61] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Create admin
+                </button>
               </div>
-            </AdminMotionCard>
-
-            <motion.div
-              variants={cardMotion}
-              className="flex flex-col-reverse gap-3 rounded-[28px] border border-white/70 bg-white/45 p-4 shadow-[0_18px_45px_rgba(53,88,114,0.08)] sm:flex-row sm:justify-end"
-            >
-              <AppButton
-                type="button"
-                variant="glass"
-                className="rounded-2xl px-6 py-3 font-black"
-                onClick={resetForm}
-              >
-                <RotateCcw className="size-4" />
-                Reset
-              </AppButton>
-
-              <AppButton
-                type="submit"
-                className="rounded-2xl bg-[color:var(--primary)] px-6 py-3 font-black text-white shadow-[0_14px_30px_rgba(31,58,92,0.22)] transition hover:-translate-y-0.5 hover:bg-[color:var(--primary)]/90"
-              >
-                <UserPlus className="size-4" />
-                Create admin
-              </AppButton>
-            </motion.div>
+            </div>
           </div>
 
-          <motion.aside
-            variants={cardMotion}
-            className="space-y-4 xl:sticky xl:top-6 xl:self-start"
-          >
-            <AppCard
-              variant="strong"
-              radius="lg"
-              padding="lg"
-              className="p-5"
-            >
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[color:var(--secondary)]">
-                Account preview
-              </p>
+          <div className="shrink-0">
+            <AdminEditorTabs
+              active={activeSection}
+              onChange={setActiveSection}
+            />
+          </div>
 
-              <div className="mt-4 rounded-3xl border border-[color:var(--border-blue)] bg-white/70 p-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--primary)] text-lg font-black text-white">
-                  {form.name?.[0]?.toUpperCase() || "A"}
-                </div>
+          <div className="mt-4 min-h-0 flex-1 overflow-hidden rounded-[24px] border border-[#C9DBE4]/80 bg-[rgba(249,252,253,0.70)] shadow-[0_16px_36px_rgba(53,88,114,0.065)] backdrop-blur-xl">
+            <div className="h-full overflow-y-auto px-6 py-6 pr-5 sm:px-9 sm:pr-7 [scrollbar-gutter:stable] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#9AAAB4]/35 hover:[&::-webkit-scrollbar-thumb]:bg-[#8799A5]/50">
+              {activeSection === "account" ? (
+                <section>
+                  <SectionHeader
+                    icon={UserRound}
+                    title="Account details"
+                    description="Set the administrator's identity and GUC email."
+                  />
 
-                <p className="mt-3 font-black text-[color:var(--ink)]">
-                  {form.name || "Admin name"}
-                </p>
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <AdminField
+                      label="Full name"
+                      required
+                      icon={UserRound}
+                      error={errors.name}
+                      feedback="This name appears across the admin workspace."
+                    >
+                      <Input
+                        value={form.name}
+                        onChange={(event) => update("name", event.target.value)}
+                        placeholder="Nadine Admin"
+                        className={inputStyles}
+                      />
+                    </AdminField>
 
-                <p className="text-sm font-semibold text-[color:var(--muted)]">
-                  {normalizedEmail || "admin@guc.edu.eg"}
-                </p>
+                    <AdminField
+                      label="GUC email"
+                      required
+                      icon={Mail}
+                      error={errors.email}
+                      success={
+                        emailValid && !duplicateEmail
+                          ? "Email is available."
+                          : ""
+                      }
+                      feedback="Use the administrator's GUC email address."
+                    >
+                      <Input
+                        value={form.email}
+                        onChange={(event) => update("email", event.target.value)}
+                        placeholder="admin@guc.edu.eg"
+                        className={inputStyles}
+                      />
+                    </AdminField>
+                  </div>
+                </section>
+              ) : null}
 
-                <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--primary)]">
-                  @{normalizedUsername || "username"}
-                </p>
-              </div>
+              {activeSection === "access" ? (
+                <section>
+                  <SectionHeader
+                    icon={ShieldCheck}
+                    title="Access & credentials"
+                    description="Set sign-in credentials and review account readiness."
+                  />
 
-              <div className="mt-4 space-y-2">
-                <RequirementLine done={Boolean(form.name.trim())}>
-                  Full name added
-                </RequirementLine>
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <AdminField
+                      label="Username"
+                      required
+                      icon={ShieldCheck}
+                      error={errors.username}
+                      success={
+                        normalizedUsername && !duplicateUsername
+                          ? "Username is available."
+                          : ""
+                      }
+                    >
+                      <Input
+                        value={form.username}
+                        onChange={(event) =>
+                          update("username", event.target.value)
+                        }
+                        placeholder="nadine.admin"
+                        className={inputStyles}
+                      />
+                    </AdminField>
 
-                <RequirementLine
-                  done={Boolean(emailValid && !duplicateEmail)}
-                >
-                  Valid unique email
-                </RequirementLine>
+                    <AdminField
+                      label="Password"
+                      required
+                      icon={KeyRound}
+                      error={errors.password}
+                      success={
+                        passwordStrongEnough
+                          ? "Password meets the minimum length."
+                          : ""
+                      }
+                    >
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          value={form.password}
+                          onChange={(event) =>
+                            update("password", event.target.value)
+                          }
+                          placeholder="••••••••"
+                          className={`${inputStyles} pr-12`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          aria-label={
+                            showPassword ? "Hide password" : "Show password"
+                          }
+                          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 text-[#718391] transition hover:bg-black/5 hover:text-[#183247]"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </AdminField>
+                  </div>
 
-                <RequirementLine
-                  done={Boolean(
-                    normalizedUsername && !duplicateUsername
-                  )}
-                >
-                  Unique username
-                </RequirementLine>
+                  <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
+                    <AdminField
+                      label="Admin note"
+                      feedback="Optional internal note about this administrator."
+                    >
+                      <textarea
+                        value={form.note}
+                        onChange={(event) => update("note", event.target.value)}
+                        rows={5}
+                        placeholder="Add an optional note..."
+                        className={`${inputStyles} min-h-32 resize-none py-3`}
+                      />
+                    </AdminField>
 
-                <RequirementLine done={passwordStrongEnough}>
-                  Password accepted
-                </RequirementLine>
-              </div>
-            </AppCard>
-          </motion.aside>
+                    <aside className="rounded-[18px] border border-[#C9DBE4]/75 bg-white/50 p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#718391]">
+                        Account readiness
+                      </p>
+                      <div className="mt-4 space-y-2">
+                        <RequirementLine done={Boolean(form.name.trim())}>
+                          Full name added
+                        </RequirementLine>
+                        <RequirementLine
+                          done={Boolean(emailValid && !duplicateEmail)}
+                        >
+                          Valid unique email
+                        </RequirementLine>
+                        <RequirementLine
+                          done={Boolean(
+                            normalizedUsername && !duplicateUsername
+                          )}
+                        >
+                          Unique username
+                        </RequirementLine>
+                        <RequirementLine done={passwordStrongEnough}>
+                          Password accepted
+                        </RequirementLine>
+                      </div>
+                    </aside>
+                  </div>
+
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="inline-flex h-11 items-center gap-2 rounded-[14px] border border-[#C9DBE4] bg-white/55 px-5 text-[12px] font-black text-[#718391] transition hover:bg-white hover:text-[#355872]"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      Reset
+                    </button>
+                  </div>
+                </section>
+              ) : null}
+            </div>
+          </div>
         </form>
-         </div>
       </main>
-      </motion.div>
-    
-     
     </AdminPageShell>
   );
 }
