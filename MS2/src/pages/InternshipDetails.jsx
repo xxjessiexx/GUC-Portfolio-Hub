@@ -170,11 +170,11 @@ function MetaItem({ icon: Icon, children }) {
 
 function EditorialList({ items }) {
   return (
-    <ul className="mt-4 space-y-3">
+    <ul className="mt-4 space-y-2.5">
       {items.map((item) => (
         <li
           key={item}
-          className="grid grid-cols-[14px_minmax(0,1fr)] gap-3 text-[13.5px] font-semibold leading-6 text-[#586F7E] dark:text-[#B2C1CA]"
+          className="grid grid-cols-[14px_minmax(0,1fr)] gap-3 text-[13px] font-semibold leading-6 text-[#586F7E] dark:text-[#B2C1CA]"
         >
           <span className="mt-[9px] h-1.5 w-1.5 rounded-full bg-[#7AAACE]" />
           <span>{item}</span>
@@ -198,8 +198,8 @@ function RelatedOpportunity({ internship }) {
       to={`/internships/${internship.id}`}
       className="
         group block overflow-hidden rounded-[16px]
-        border border-[#C9DBE4]
-        bg-[#F8FBFC] p-4
+        border border-[#D1DEE5]
+        bg-white p-4
         transition
         hover:-translate-y-[2px]
         hover:border-[#9AB9CB]
@@ -390,49 +390,57 @@ export default function InternshipDetails() {
     <DashboardLayout>
       <main className="px-4 py-5 pb-20 sm:px-6 lg:px-7 xl:px-8">
         <div className="mx-auto w-full max-w-[1480px]">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            
+          <header className="mb-5">
+            <div className="flex items-start justify-between gap-6">
+              <div className="min-w-0">
+                <div className="mb-3 h-[3px] w-10 rounded-full bg-[var(--gold)]" />
 
-            {isStudent ? (
-              <button
-                type="button"
-                onClick={toggleSave}
-                className={`
-                  inline-flex h-9 items-center gap-2 rounded-[10px]
-                  border px-3 text-[11px] font-black transition
-                  ${
-                    isSaved
-                      ? "border-[#D6B75C] bg-[#FFF8E2] text-[#8A6C16] dark:border-[#E5C66D]/35 dark:bg-[#E5C66D]/10 dark:text-[#E5C66D]"
-                      : "border-[#C3D5DE] bg-[#F5F9FB] text-[#355872] hover:border-[#7AAACE] dark:border-white/10 dark:bg-white/[0.04] dark:text-[#BBDFF5]"
-                  }
-                `}
-              >
-                <Bookmark className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
-                {isSaved ? "Saved" : "Save"}
-              </button>
-            ) : null}
-          </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6A8190] dark:text-[#8DA8B8]">
+                    Internship
+                    {internship.department ? ` · ${internship.department}` : ""}
+                  </p>
 
-          <header className="mb-6">
-            <div className="mb-3 h-[3px] w-10 rounded-full bg-[var(--gold)]" />
+                  {internship.featured ? (
+                    <span className="text-[10px] font-black uppercase tracking-[0.14em] text-[#B18C2E] dark:text-[#E7C66B]">
+                      Featured
+                    </span>
+                  ) : null}
+                </div>
+              </div>
 
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#5F7D90] dark:text-[#8DA8B8]">
-                {internship.company}
-              </p>
-
-              {internship.featured ? (
-                <span className="text-[10px] font-black uppercase tracking-[0.14em] text-[#B18C2E] dark:text-[#E7C66B]">
-                  Featured
-                </span>
+              {isStudent ? (
+                <button
+                  type="button"
+                  onClick={toggleSave}
+                  aria-pressed={isSaved}
+                  className={`
+                    inline-flex h-10 shrink-0 items-center gap-2 rounded-[11px]
+                    border px-3.5 text-[11px] font-black transition
+                    ${
+                      isSaved
+                        ? "border-[#D6B75C] bg-[#FFF8E2] text-[#8A6C16] dark:border-[#E5C66D]/35 dark:bg-[#E5C66D]/10 dark:text-[#E5C66D]"
+                        : "border-[#C3D5DE] bg-white/70 text-[#355872] hover:border-[#7AAACE] hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-[#BBDFF5]"
+                    }
+                  `}
+                >
+                  <Bookmark
+                    className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`}
+                  />
+                  {isSaved ? "Saved" : "Save"}
+                </button>
               ) : null}
             </div>
 
-            <h1 className="mt-2 max-w-[980px] text-[42px] font-black leading-[1.02] tracking-[-0.05em] text-[color:var(--ink)] sm:text-[52px]">
-              {internship.title}
+            <h1 className="mt-2 max-w-[1040px] text-[48px] font-black leading-[0.98] tracking-[-0.055em] text-[color:var(--ink)] sm:text-[58px]">
+              {internship.title || "Untitled internship"}
             </h1>
 
-            <p className="mt-4 max-w-4xl text-[14px] font-semibold leading-7 text-[color:var(--muted)]">
+            <p className="mt-3 text-[15px] font-black text-[#355872] dark:text-[#9CD5FF]">
+              {internship.company}
+            </p>
+
+            <p className="mt-2.5 max-w-4xl text-[13.5px] font-semibold leading-6 text-[color:var(--muted)]">
               {internship.overview}
             </p>
 
@@ -453,7 +461,7 @@ export default function InternshipDetails() {
                     key={skill}
                     className="
                       rounded-full border border-[#C6D8E1]
-                      bg-[#EEF4F7] px-3 py-1.5
+                      bg-white/45 px-3 py-1.5
                       text-[10.5px] font-black text-[#355872]
                       dark:border-white/10 dark:bg-white/[0.045]
                       dark:text-[#9CD5FF]
@@ -468,10 +476,10 @@ export default function InternshipDetails() {
 
           <section
             className="
-              overflow-hidden rounded-[24px]
-              border border-[#C9DBE4]
-              bg-[#F3F7F9]
-              shadow-[0_16px_38px_rgba(53,88,114,0.09)]
+              overflow-hidden rounded-[22px]
+              border border-[#C7D9E2]
+              bg-[#F9FBFC]
+              shadow-[0_18px_46px_rgba(53,88,114,0.085)]
               dark:border-white/10
               dark:bg-[#0D2130]
             "
@@ -484,44 +492,33 @@ export default function InternshipDetails() {
                       <h2 className="text-[26px] font-black tracking-[-0.038em] text-[color:var(--ink)]">
                         What you’ll do
                       </h2>
-                      <div className="mt-2 h-[2px] w-8 rounded-full bg-[#D6B65A]" />
                       <EditorialList items={internship.responsibilities} />
                     </div>
 
-                    <div className="border-t border-[#D1DFE6] pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0 dark:border-white/10">
+                    <div className="border-t border-[#D9E4E9] pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0 dark:border-white/10">
                       <h2 className="text-[26px] font-black tracking-[-0.038em] text-[color:var(--ink)]">
                         What we’re looking for
                       </h2>
-                      <div className="mt-2 h-[2px] w-8 rounded-full bg-[#D6B65A]" />
                       <EditorialList items={internship.requirements} />
                     </div>
                   </div>
                 </section>
 
-                <section className="border-t border-[#D1DFE6] bg-[#EAF1F5]/70 px-6 py-6 sm:px-7 lg:px-8 dark:border-white/10 dark:bg-white/[0.02]">
-                  <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+                <section className="border-t border-[#D1DFE6] bg-[#F2F6F8] px-6 py-6 sm:px-7 lg:px-8 dark:border-white/10 dark:bg-white/[0.02]">
+                  <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#6B8291] dark:text-[#8FA5B4]">
-                        About the company
+                      <p className="text-[9.5px] font-black uppercase tracking-[0.16em] text-[#9A7A25] dark:text-[#E7C66B]">
+                        Benefits
                       </p>
-                      <h2 className="mt-2 text-[21px] font-black tracking-[-0.03em] text-[color:var(--ink)]">
-                        {internship.company}
-                      </h2>
-                      <p className="mt-3 max-w-3xl text-[13px] font-semibold leading-7 text-[#617887] dark:text-[#A8BAC5]">
-                        {internship.companyAbout}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#6B8291] dark:text-[#8FA5B4]">
+                      <h2 className="mt-1.5 text-[20px] font-black tracking-[-0.03em] text-[color:var(--ink)]">
                         What you’ll get
-                      </p>
+                      </h2>
 
-                      <div className="mt-3 grid gap-2.5">
+                      <div className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
                         {internship.benefits.map((item) => (
                           <div
                             key={item}
-                            className="flex gap-2.5 text-[12.5px] font-semibold leading-5 text-[#617887] dark:text-[#A8BAC5]"
+                            className="flex gap-2.5 text-[12px] font-semibold leading-5 text-[#6B7F8C] dark:text-[#A8BAC5]"
                           >
                             <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#6F9D82]" />
                             {item}
@@ -529,6 +526,50 @@ export default function InternshipDetails() {
                         ))}
                       </div>
                     </div>
+
+                    <div className="border-t border-[#D1DFE6] pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0 dark:border-white/10">
+                      <p className="text-[9.5px] font-black uppercase tracking-[0.16em] text-[#748A97] dark:text-[#8FA5B4]">
+                        Role information
+                      </p>
+                      <h2 className="mt-1.5 text-[20px] font-black tracking-[-0.03em] text-[color:var(--ink)]">
+                        Practical details
+                      </h2>
+
+                      <dl className="mt-4 divide-y divide-[#D6E1E7] dark:divide-white/10">
+                        {[
+                          ["Start", internship.startDate],
+                          ["Deadline", internship.deadline],
+                          ["Stipend", internship.stipend],
+                          ["Openings", internship.openings || 1],
+                        ].map(([label, value]) => (
+                          <div
+                            key={label}
+                            className="flex items-center justify-between gap-5 py-2.5 first:pt-0"
+                          >
+                            <dt className="text-[11px] font-semibold text-[color:var(--muted)]">
+                              {label}
+                            </dt>
+                            <dd className="text-right text-[11px] font-black text-[color:var(--ink)]">
+                              {value}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 border-t border-[#D1DFE6] pt-7 dark:border-white/10">
+                    <p className="text-[9.5px] font-black uppercase tracking-[0.16em] text-[#748A97] dark:text-[#8FA5B4]">
+                      Company
+                    </p>
+
+                    <h2 className="mt-1.5 text-[20px] font-black tracking-[-0.03em] text-[color:var(--ink)]">
+                      About {internship.company}
+                    </h2>
+
+                    <p className="mt-3 max-w-3xl text-[13px] font-semibold leading-7 text-[#617887] dark:text-[#A8BAC5]">
+                      {internship.companyAbout}
+                    </p>
                   </div>
                 </section>
 
@@ -567,7 +608,7 @@ export default function InternshipDetails() {
               <aside
                 className="
                   border-t border-[#CADAE2]
-                  bg-[#E8F0F4]
+                  bg-[#E7F0F4]
                   xl:border-l xl:border-t-0
                   dark:border-white/10
                   dark:bg-[#102636]
@@ -576,41 +617,50 @@ export default function InternshipDetails() {
                 <div className="sticky top-24">
                   {isOwner ? (
                     <div className="px-6 py-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#6E8391] dark:text-[#8FA6B5]">
-                            Your posting
-                          </p>
-                          <h2 className="mt-1.5 text-[24px] font-black tracking-[-0.035em] text-[color:var(--ink)]">
-                            Manage this role
+                      <div>
+                        <p className="text-[9.5px] font-black uppercase tracking-[0.16em] text-[#748A97] dark:text-[#8FA6B5]">
+                          Your posting
+                        </p>
+
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2.5">
+                          <h2 className="text-[24px] font-black tracking-[-0.04em] text-[color:var(--ink)]">
+                            Hiring activity
                           </h2>
-                          <p className="mt-1.5 text-[11px] font-semibold leading-5 text-[color:var(--muted)]">
-                            Review hiring activity or update the internship details.
-                          </p>
+
+                          <span className="rounded-full border border-[#D8BF69] bg-[#FFF7DB] px-2.5 py-1 text-[9px] font-black text-[#7B6324]">
+                            {internship.status || "Active"}
+                          </span>
                         </div>
 
-                        <span className="shrink-0 rounded-full border border-[#D8BF69] bg-[#F8EDC4] px-3 py-1.5 text-[10px] font-black text-[#7B6324]">
-                          {internship.status || "Active"}
-                        </span>
+                        <p className="mt-1.5 text-[11px] font-semibold leading-5 text-[color:var(--muted)]">
+                          Review candidates and manage this posting.
+                        </p>
                       </div>
 
-                      <div className="mt-5 grid grid-cols-2 gap-3">
-                        <div className="rounded-[13px] border border-[#C8D8E0] bg-[#F2F7F9] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                          <p className="text-[9px] font-black uppercase tracking-[0.13em] text-[#7A8E9A] dark:text-[#8FA4B2]">
-                            Applicants
-                          </p>
-                          <p className="mt-1 text-[24px] font-black tracking-[-0.04em] text-[color:var(--ink)]">
-                            {normalizeArray(internship.applications).length}
-                          </p>
-                        </div>
+                      <div className="mt-5 border-l-[3px] border-[#D6B65A] pl-4">
+                        <div className="flex items-end justify-between gap-6">
+                          <div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.13em] text-[#7A8E9A] dark:text-[#8FA4B2]">
+                              Applicants
+                            </p>
+                            <div className="mt-1 flex items-end gap-2">
+                              <p className="text-[48px] font-black leading-[0.88] tracking-[-0.065em] text-[color:var(--ink)]">
+                                {normalizeArray(internship.applications).length}
+                              </p>
+                              <span className="pb-1 text-[10px] font-black uppercase tracking-[0.11em] text-[#9A7A25] dark:text-[#E7C66B]">
+                                candidates
+                              </span>
+                            </div>
+                          </div>
 
-                        <div className="rounded-[13px] border border-[#C8D8E0] bg-[#F2F7F9] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                          <p className="text-[9px] font-black uppercase tracking-[0.13em] text-[#7A8E9A] dark:text-[#8FA4B2]">
-                            Deadline
-                          </p>
-                          <p className="mt-1 text-[11.5px] font-black leading-5 text-[color:var(--ink)]">
-                            {internship.deadline}
-                          </p>
+                          <div className="pb-0.5 text-right opacity-75">
+                            <p className="text-[8.5px] font-black uppercase tracking-[0.13em] text-[#7A8E9A] dark:text-[#8FA4B2]">
+                              Deadline
+                            </p>
+                            <p className="mt-1 text-[10px] font-black text-[color:var(--ink)]">
+                              {internship.deadline}
+                            </p>
+                          </div>
                         </div>
                       </div>
 
@@ -619,7 +669,7 @@ export default function InternshipDetails() {
                         onClick={() =>
                           navigate(`/manage-applicants/${encodeURIComponent(internship.id)}`)
                         }
-                        className="mt-5 min-h-11 w-full rounded-[11px] bg-[#355872] text-[11.5px] font-black text-white shadow-none hover:bg-[#294C64] dark:bg-[#9CD5FF] dark:text-[#071521]"
+                        className="mt-5 min-h-12 w-full rounded-[12px] bg-[#355872] text-[12px] font-black text-white shadow-[0_12px_26px_rgba(53,88,114,0.16)] transition hover:-translate-y-0.5 hover:bg-[#294C64] dark:bg-[#9CD5FF] dark:text-[#071521]"
                       >
                         <Users className="mr-2 h-4 w-4" />
                         Review applicants
@@ -630,18 +680,14 @@ export default function InternshipDetails() {
                         onClick={() =>
                           navigate(`/edit-internship/${encodeURIComponent(internship.id)}`)
                         }
-                        className="mt-2.5 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-[11px] border border-[#BDD0DA] bg-[#F5F9FB] px-4 text-[11px] font-black text-[#355872] transition hover:border-[#7AAACE] hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-[#BBDFF5]"
+                        className="mt-2.5 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-[11px] border border-[#C7D8E0] bg-white/55 px-4 text-[11px] font-black text-[#355872] transition hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-[#BBDFF5]"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                         Edit internship
                       </button>
 
-                      <div className="mt-5 border-t border-[#CADAE2] pt-5 dark:border-white/10">
-                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#6E8391] dark:text-[#8FA6B5]">
-                          Posting details
-                        </p>
-
-                        <div className="mt-3 space-y-2.5 text-[11px] font-semibold text-[color:var(--muted)]">
+                      <div className="mt-5 border-t border-[#CADAE2] pt-4 dark:border-white/10">
+                        <div className="space-y-2 text-[10px] font-semibold text-[color:var(--muted)] opacity-80">
                           <div className="flex items-center justify-between gap-4">
                             <span>Work mode</span>
                             <strong className="font-black text-[color:var(--ink)]">
@@ -665,12 +711,12 @@ export default function InternshipDetails() {
                     </div>
                   ) : (
                     <div className="px-6 py-6">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#6E8391] dark:text-[#8FA6B5]">
-                          Application
-                        </p>
-                        <h2 className="mt-1.5 text-[24px] font-black tracking-[-0.035em] text-[color:var(--ink)]">
+                    <div>
+                      <p className="text-[9.5px] font-black uppercase tracking-[0.16em] text-[#748A97] dark:text-[#8FA6B5]">
+                        Application
+                      </p>
+                      <div className="mt-1.5 border-l-[3px] border-[#D6B65A] pl-3.5">
+                        <h2 className="text-[26px] font-black tracking-[-0.045em] text-[color:var(--ink)]">
                           Apply for this role
                         </h2>
                         <p className="mt-1.5 text-[11px] font-semibold leading-5 text-[color:var(--muted)]">
@@ -678,18 +724,18 @@ export default function InternshipDetails() {
                         </p>
                       </div>
 
-                      <div className="shrink-0 rounded-[11px] border border-[#C4D5DE] bg-[#F5F9FB] px-3 py-2 text-right dark:border-white/10 dark:bg-white/[0.035]">
-                        <p className="text-[8.5px] font-black uppercase tracking-[0.13em] text-[#7A8E9A] dark:text-[#8FA4B2]">
-                          Deadline
-                        </p>
-                        <p className="mt-0.5 text-[11.5px] font-black text-[color:var(--ink)]">
+                      <div className="mt-4 flex items-center justify-between gap-4 border-t border-[#CADAE2] pt-4 dark:border-white/10">
+                        <span className="text-[10px] font-semibold text-[color:var(--muted)]">
+                          Application deadline
+                        </span>
+                        <strong className="rounded-full bg-[#FFF7DB] px-2.5 py-1 text-[9.5px] font-black text-[#7B6324] dark:bg-[#E5C66D]/10 dark:text-[#E5C66D]">
                           {internship.deadline}
-                        </p>
+                        </strong>
                       </div>
                     </div>
 
-                    <div className="mt-5 rounded-[13px] border border-[#C8D8E0] bg-[#F2F7F9] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                      <p className="text-[11.5px] font-black text-[color:var(--ink)]">
+                    <div className="mt-5 border-t border-[#CADAE2] pt-4 dark:border-white/10">
+                      <p className="text-[10px] font-black uppercase tracking-[0.11em] text-[#708795] dark:text-[#8DA5B4]">
                         Eligibility
                       </p>
 
@@ -737,8 +783,8 @@ export default function InternshipDetails() {
                           disabled={isApplied}
                           className="
                             mt-3 min-h-[124px] w-full resize-none
-                            rounded-[12px] border border-[#BFD2DC]
-                            bg-[#F7FAFB] px-3 py-2.5
+                            rounded-[11px] border border-[#BFD2DC]
+                            bg-white/62 px-3 py-2.5
                             text-[11.5px] font-semibold leading-5
                             text-[color:var(--ink)] outline-none
                             placeholder:text-[#92A4AE]
