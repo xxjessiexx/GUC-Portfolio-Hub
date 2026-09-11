@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { CheckCircle2, Pencil, XCircle } from "lucide-react";
 
 import SideToast from "@/components/ui/SideToast";
 
@@ -19,6 +20,7 @@ const usersGrid =
   "lg:grid-cols-[1.6fr_0.8fr_0.75fr_0.65fr_0.9fr_0.8fr_0.7fr]";
 
 export default function AdminUsers() {
+  const navigate = useNavigate();
   const { users, actions } = useAdminModuleData();
 
   const [search, setSearch] = useState("");
@@ -172,6 +174,15 @@ export default function AdminUsers() {
           openMenu={openMenu}
           setOpenMenu={setOpenMenu}
           actions={[
+            ...(user.role === "admin"
+              ? [
+                  {
+                    label: "Edit admin",
+                    icon: Pencil,
+                    onClick: () => navigate(`/admin/users/${user.id}/edit`),
+                  },
+                ]
+              : []),
             {
               label: "Activate account",
               icon: CheckCircle2,

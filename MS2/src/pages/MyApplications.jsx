@@ -1,49 +1,44 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  BarChart3,
-  Bookmark,
-  Briefcase,
+  ArrowUpRight,
+  BriefcaseBusiness,
   CalendarDays,
-  Clock,
+  Clock3,
   MapPin,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { AppCard } from "@/components/ui/AppCard";
-import { AppButton } from "@/components/ui/AppButton";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
-import { Input } from "@/components/ui/input";
-
+import PageHeader from "@/components/common/PageHeader";
+import Pagination from "@/components/common/Pagination";
 import FilterSelect from "@/components/common/FilterSelect";
 import StatusBadge from "@/components/common/StatusBadge";
 
-import { getCurrentUser, getCollection } from "@/data/demoStore";
+import {
+  getApplicationsForStudent,
+  getCurrentUser,
+} from "@/data/demoStore";
+
+const ITEMS_PER_PAGE = 6;
 
 function normalizeStatus(status) {
-  const value = String(status || "Pending").toLowerCase();
+  const value = String(status || "pending").trim().toLowerCase();
 
   if (value === "accepted" || value === "approved") return "Accepted";
   if (value === "rejected" || value === "declined") return "Rejected";
+  if (value === "shortlisted") return "Shortlisted";
+  if (value === "nominated") return "Nominated";
+  if (value === "reviewing" || value === "under review") return "Reviewing";
 
-  if (
-    value === "under_review" ||
-    value === "under review" ||
-    value === "review" ||
-    value === "reviewing"
-  ) {
-    return "Under Review";
-  }
-
-  return "Pending";
+  return "Reviewing";
 }
 
 function formatDisplayDate(value) {
-  if (!value) return "Unknown";
+  if (!value) return "Date unavailable";
 
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) return value;
+  if (Number.isNaN(date.getTime())) return String(value);
 
   return date.toLocaleDateString("en", {
     month: "short",
@@ -52,393 +47,125 @@ function formatDisplayDate(value) {
   });
 }
 
-function formatDateInputValue(value) {
-  if (!value) return "";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return String(value).slice(0, 10);
-  }
-
-  return date.toISOString().slice(0, 10);
-}
-
-function getEmployerName(internship, users) {
-  if (internship?.company) return internship.company;
-  if (internship?.companyName) return internship.companyName;
-
-  const employerId =
-    internship?.employerId || internship?.companyId || internship?.ownerId || "";
-
-  const employer = users.find((user) => user.id === employerId);
-
-  return employer?.companyName || employer?.name || "Unknown Company";
-}
-function toArray(value) {
-  if (!value) return [];
-
-  if (Array.isArray(value)) return value;
-
-  if (typeof value === "object") return Object.values(value);
-
-  return [];
-}
-function getApplicationDate(application) {
-  return (
-    application?.dateApplied ||
-    application?.appliedAt ||
-    application?.createdAt ||
-    application?.submittedAt ||
-    application?.updatedAt ||
-    ""
-  );
-}
-
-function getStudentMatchValues(currentUser) {
-  return [
-    currentUser?.id,
-    currentUser?.email,
-    currentUser?.name,
-    currentUser?.studentId,
-  ]
-    .filter(Boolean)
-    .map((value) => String(value).toLowerCase());
-}
-
-function applicationBelongsToCurrentStudent(application, currentUser) {
-  const studentValues = getStudentMatchValues(currentUser);
-
-  const possibleApplicationValues = [
-    application?.studentId,
-    application?.applicantId,
-    application?.userId,
-    application?.ownerId,
-    application?.createdBy,
-    application?.studentEmail,
-    application?.applicantEmail,
-    application?.email,
-    application?.studentName,
-    application?.applicantName,
-    application?.name,
-  ]
-    .filter(Boolean)
-    .map((value) => String(value).toLowerCase());
-
-  return possibleApplicationValues.some((value) => studentValues.includes(value));
-}
-
-function normalizeApplicationFromStore(application, internship, users) {
-  const status = normalizeStatus(application?.status);
-  const dateApplied = getApplicationDate(application);
+function normalizeApplication(application) {
+  const status = normalizeStatus(application.status);
 
   return {
-    id:
-      application?.id ||
-      `${internship?.id || application?.internshipId || "internship"}-${
-        application?.studentId ||
-        application?.applicantId ||
-        application?.studentEmail ||
-        application?.email ||
-        Date.now()
-      }`,
-
-    internshipId: application?.internshipId || internship?.id,
-
-    company: getEmployerName(internship || application || {}, users),
-
-    title:
-      internship?.title ||
-      internship?.role ||
-      internship?.position ||
-      application?.title ||
-      application?.role ||
-      "Internship Application",
-
-    location:
-      internship?.location ||
-      internship?.workLocation ||
-      application?.location ||
-      "Not specified",
-
-    duration:
-      internship?.duration ||
-      internship?.period ||
-      application?.duration ||
-      "Not specified",
-
-    dateApplied,
-
-    displayDate: formatDisplayDate(dateApplied),
-
+    ...application,
     status,
-
+    company:
+      application.company ||
+      application.companyName ||
+      "Unknown Company",
+    title:
+      application.title ||
+      application.role ||
+      application.position ||
+      "Internship",
+    location: application.location || "Location not specified",
+    duration: application.duration || "Duration not specified",
+    dateApplied:
+      application.dateApplied ||
+      application.appliedAt ||
+      application.createdAt ||
+      application.submittedAt ||
+      "",
     nextStep:
-      application?.nextStep ||
-      application?.nextAction ||
+      application.nextStep ||
+      application.nextAction ||
       (status === "Accepted"
-        ? "Offer accepted"
+        ? "Application accepted"
         : status === "Rejected"
-        ? "Application closed"
-        : status === "Under Review"
-        ? "Application under review"
-        : "Waiting for employer response"),
-
+          ? "Application closed"
+          : status === "Nominated"
+            ? "You've been nominated"
+            : status === "Shortlisted"
+              ? "You've been shortlisted"
+              : "Employer review in progress"),
     note:
-      application?.note ||
-      application?.feedback ||
-      application?.message ||
-      application?.reason ||
+      application.note ||
+      application.feedback ||
+      application.message ||
+      application.reason ||
       (status === "Accepted"
-        ? "Check the internship details for next steps."
+        ? "Open the internship to review the role and any next steps."
         : status === "Rejected"
-        ? "You can keep browsing other internships."
-        : status === "Under Review"
-        ? "The employer is reviewing your application."
-        : "We will update you once the employer responds."),
+          ? "This application is no longer active."
+          : status === "Nominated"
+            ? "The employer has moved your application forward to the nomination stage."
+            : status === "Shortlisted"
+              ? "Your application has moved forward and remains under consideration."
+              : "The employer is currently reviewing your application."),
   };
 }
 
-function getApplicationsForCurrentStudent() {
-  const currentUser = getCurrentUser();
-
-  if (!currentUser?.id) return [];
-
-  const applications = [
-    ...(getCollection("applications") || []),
-    ...(getCollection("internshipApplications") || []),
-  ];
-
-  const internships = getCollection("internships") || [];
-  const users = getCollection("users") || [];
-
-  const topLevelApplications = applications
-    .filter((application) =>
-      applicationBelongsToCurrentStudent(application, currentUser)
-    )
-    .map((application) => {
-      const internship = internships.find(
-        (item) => item.id === application.internshipId
-      );
-
-      return normalizeApplicationFromStore(application, internship, users);
-    });
-
-  const nestedApplications = internships.flatMap((internship) => {
-   const possibleNestedApplications = [
-  ...toArray(internship.applications),
-  ...toArray(internship.applicants),
-  ...toArray(internship.candidates),
-];
-    
-
-    return possibleNestedApplications
-      .map((application) => {
-        if (typeof application === "string") {
-          return {
-            id: `${internship.id}-${application}`,
-            internshipId: internship.id,
-            studentId: application,
-            status: "Pending",
-            createdAt: internship.createdAt || internship.updatedAt || "",
-          };
-        }
-
-        return {
-          ...application,
-          internshipId: application.internshipId || internship.id,
-        };
-      })
-      .filter((application) =>
-        applicationBelongsToCurrentStudent(application, currentUser)
-      )
-      .map((application) =>
-        normalizeApplicationFromStore(application, internship, users)
-      );
-  });
-
-  const mergedApplications = [...topLevelApplications, ...nestedApplications];
-
-  return Array.from(
-    new Map(
-      mergedApplications.map((application) => [
-        `${application.internshipId}-${application.id}`,
-        application,
-      ])
-    ).values()
-  );
-}
-
-function getSavedInternshipsForCurrentStudent() {
-  const currentUser = getCurrentUser();
-
-  if (!currentUser?.id) return [];
-
-  const internships = getCollection("internships") || [];
-  const bookmarks = getCollection("bookmarks") || [];
-  const users = getCollection("users") || [];
-
-  const savedIdsFromUser = [
-    ...(currentUser.savedInternshipIds || []),
-    ...(currentUser.bookmarkedInternshipIds || []),
-    ...(currentUser.savedInternships || []),
-  ];
-
-  const savedIdsFromBookmarks = bookmarks
-    .filter((bookmark) => {
-      const userId =
-        bookmark.userId ||
-        bookmark.studentId ||
-        bookmark.ownerId ||
-        bookmark.createdBy;
-
-      const type = String(
-        bookmark.type ||
-          bookmark.itemType ||
-          bookmark.collection ||
-          ""
-      ).toLowerCase();
-
-      return (
-        String(userId || "").toLowerCase() ===
-          String(currentUser.id).toLowerCase() &&
-        (type === "internship" || bookmark.internshipId || bookmark.itemId)
-      );
-    })
-    .map((bookmark) => bookmark.internshipId || bookmark.itemId);
-
-  const savedIdsFromInternships = internships
-    .filter((internship) => {
-      const savedBy = internship.savedBy || internship.bookmarkedBy || [];
-
-      return savedBy
-        .map((value) => String(value).toLowerCase())
-        .some((value) => getStudentMatchValues(currentUser).includes(value));
-    })
-    .map((internship) => internship.id);
-
-  const savedIds = [
-    ...new Set([
-      ...savedIdsFromUser,
-      ...savedIdsFromBookmarks,
-      ...savedIdsFromInternships,
-    ]),
-  ];
-
-  return savedIds
-    .map((internshipId) => {
-      const internship = internships.find((item) => item.id === internshipId);
-
-      if (!internship) return null;
-
-      return {
-        id: `saved-${internship.id}`,
-        internshipId: internship.id,
-        title: internship.title || internship.role || internship.position || "Internship",
-        company: getEmployerName(internship, users),
-      };
-    })
-    .filter(Boolean);
-}
-
-
-function getUpcomingInterviews(applications) {
-  return applications
-    .filter((application) => application.status === "Accepted")
-    .slice(0, 2)
-    .map((application, index) => {
-      const date = new Date(application.dateApplied);
-
-      if (!Number.isNaN(date.getTime())) {
-        date.setDate(date.getDate() + 7 + index * 2);
-      }
-
-      const day = Number.isNaN(date.getTime())
-        ? "--"
-        : date.toLocaleDateString("en", { day: "2-digit" });
-
-      const month = Number.isNaN(date.getTime())
-        ? "TBD"
-        : date.toLocaleDateString("en", { month: "short" });
-
-      const time = Number.isNaN(date.getTime())
-        ? "Interview date to be announced"
-        : `${formatDisplayDate(date.toISOString())} • ${
-            index === 0 ? "2:00 PM" : "11:00 AM"
-          }`;
-
-      return {
-        id: `interview-${application.id}`,
-        day,
-        month,
-        company: application.company,
-        role: application.title,
-        time,
-      };
-    });
+function getApplicationTimestamp(application) {
+  const date = new Date(application.dateApplied || "");
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
 export default function MyApplications() {
-  const [applications, setApplications] = useState([]);
-  const [savedApplications, setSavedApplications] = useState([]);
+  const navigate = useNavigate();
+  const resultsTopRef = useRef(null);
 
-  const [activeTab, setActiveTab] = useState("All");
+  const [applications, setApplications] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
   const [selectedCompany, setSelectedCompany] = useState("All Companies");
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState("Anytime");
+  const [selectedSort, setSelectedSort] = useState("Newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const refreshApplications = () => {
-    setApplications(getApplicationsForCurrentStudent());
-    setSavedApplications(getSavedInternshipsForCurrentStudent());
+    const currentUser = getCurrentUser();
+
+    const nextApplications = currentUser?.id
+      ? getApplicationsForStudent(currentUser.id).map(normalizeApplication)
+      : [];
+
+    setApplications(nextApplications);
   };
 
   useEffect(() => {
     refreshApplications();
+
+    const handleStoreChange = () => refreshApplications();
+
+    window.addEventListener("demo-db-change", handleStoreChange);
+    window.addEventListener("demo-current-user-change", handleStoreChange);
+
+    return () => {
+      window.removeEventListener("demo-db-change", handleStoreChange);
+      window.removeEventListener("demo-current-user-change", handleStoreChange);
+    };
   }, []);
 
-  const statusCounts = {
-    All: applications.length,
-    "Under Review": applications.filter((app) => app.status === "Under Review")
-      .length,
-    Pending: applications.filter((app) => app.status === "Pending").length,
-    Accepted: applications.filter((app) => app.status === "Accepted").length,
-    Rejected: applications.filter((app) => app.status === "Rejected").length,
-  };
-
-  const companies = [
-    "All Companies",
-    ...new Set(applications.map((app) => app.company)),
-  ];
-
-  const upcomingInterviews = useMemo(() => {
-    return getUpcomingInterviews(applications);
-  }, [applications]);
-
-  const hasActiveFilters =
-    searchTerm ||
-    selectedStatus !== "All Statuses" ||
-    selectedCompany !== "All Companies" ||
-    selectedDate ||
-    activeTab !== "All";
+  const companyOptions = useMemo(
+    () => [
+      "All Companies",
+      ...Array.from(
+        new Set(applications.map((application) => application.company))
+      ).sort((a, b) => a.localeCompare(b)),
+    ],
+    [applications]
+  );
 
   const filteredApplications = useMemo(() => {
-    return applications.filter((application) => {
-      const searchableText = [
-        application.company,
+    const query = searchTerm.trim().toLowerCase();
+    const now = Date.now();
+
+    const filtered = applications.filter((application) => {
+      const searchable = [
         application.title,
+        application.company,
         application.location,
-        application.duration,
         application.status,
       ]
         .join(" ")
         .toLowerCase();
 
-      const matchesSearch = searchableText.includes(searchTerm.toLowerCase());
-
-      const matchesTab =
-        activeTab === "All" || application.status === activeTab;
+      const matchesSearch = !query || searchable.includes(query);
 
       const matchesStatus =
         selectedStatus === "All Statuses" ||
@@ -448,398 +175,427 @@ export default function MyApplications() {
         selectedCompany === "All Companies" ||
         application.company === selectedCompany;
 
-      const matchesDate =
-        !selectedDate ||
-        formatDateInputValue(application.dateApplied) === selectedDate;
+      const timestamp = getApplicationTimestamp(application);
+      let matchesPeriod = true;
+
+      if (selectedPeriod === "This Week") {
+        matchesPeriod =
+          timestamp > 0 &&
+          now - timestamp <= 7 * 24 * 60 * 60 * 1000;
+      }
+
+      if (selectedPeriod === "This Month") {
+        matchesPeriod =
+          timestamp > 0 &&
+          now - timestamp <= 30 * 24 * 60 * 60 * 1000;
+      }
 
       return (
         matchesSearch &&
-        matchesTab &&
         matchesStatus &&
         matchesCompany &&
-        matchesDate
+        matchesPeriod
       );
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (selectedSort === "Oldest") {
+        return getApplicationTimestamp(a) - getApplicationTimestamp(b);
+      }
+
+      if (selectedSort === "A-Z") {
+        return a.title.localeCompare(b.title);
+      }
+
+      return getApplicationTimestamp(b) - getApplicationTimestamp(a);
     });
   }, [
     applications,
-    activeTab,
     searchTerm,
     selectedStatus,
     selectedCompany,
-    selectedDate,
+    selectedPeriod,
+    selectedSort,
   ]);
 
-  const resetFilters = () => {
-    setSearchTerm("");
-    setSelectedStatus("All Statuses");
-    setSelectedCompany("All Companies");
-    setSelectedDate("");
-    setActiveTab("All");
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredApplications.length / ITEMS_PER_PAGE)
+  );
+
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+
+  const paginatedApplications = filteredApplications.slice(
+    pageStartIndex,
+    pageStartIndex + ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const goToPage = (page) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(nextPage);
+
+    requestAnimationFrame(() => {
+      resultsTopRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   };
 
+  const getVisiblePageNumbers = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (safeCurrentPage <= 4) {
+      return [1, 2, 3, 4, 5, "ellipsis-end", totalPages];
+    }
+
+    if (safeCurrentPage >= totalPages - 3) {
+      return [
+        1,
+        "ellipsis-start",
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ];
+    }
+
+    return [
+      1,
+      "ellipsis-start",
+      safeCurrentPage - 1,
+      safeCurrentPage,
+      safeCurrentPage + 1,
+      "ellipsis-end",
+      totalPages,
+    ];
+  };
+
+  const resetFilters = () => {
+    setSelectedStatus("All Statuses");
+    setSelectedCompany("All Companies");
+    setSelectedPeriod("Anytime");
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters =
+    selectedStatus !== "All Statuses" ||
+    selectedCompany !== "All Companies" ||
+    selectedPeriod !== "Anytime";
+
   return (
-    <DashboardLayout >
-      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          
-          <div>
-            <h1 className="text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
-              My Applications
-            </h1>
+    <DashboardLayout>
+      <div className="mx-auto w-full max-w-[1480px] space-y-6">
+        <PageHeader
+          title="My Applications"
+          description="Track your internship applications and keep up with each employer's decision."
+        />
 
-            <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
-              Track your internship applications, next steps, saved internships,
-              and application statuses.
-            </p>
-          </div>
+          <SearchFilterToolbar
+            searchValue={searchTerm}
+            onSearchChange={(value) => {
+              setSearchTerm(value);
+              setCurrentPage(1);
+            }}
+            searchPlaceholder="Search applications by company, role, or location..."
+            showSort
+            sortValue={`Sort by: ${selectedSort}`}
+            onSortChange={(value) => {
+              setSelectedSort(value.replace("Sort by: ", ""));
+              setCurrentPage(1);
+            }}
+            sortOptions={[
+              "Sort by: Newest",
+              "Sort by: Oldest",
+              "Sort by: A-Z",
+            ]}
+            showFilters
+            filtersOpen={filtersOpen}
+            onToggleFilters={() =>
+              setFiltersOpen((current) => !current)
+            }
+            filterTitle="Filter applications"
+            onClearFilters={hasActiveFilters ? resetFilters : undefined}
+          >
+            <FilterSelect
+              value={`Status: ${selectedStatus}`}
+              onChange={(value) => {
+                setSelectedStatus(value.replace("Status: ", ""));
+                setCurrentPage(1);
+              }}
+              options={[
+                "Status: All Statuses",
+                "Status: Reviewing",
+                "Status: Shortlisted",
+                "Status: Nominated",
+                "Status: Accepted",
+                "Status: Rejected",
+              ]}
+            />
 
-          <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
-            <div className="space-y-6">
-              <SearchFilterToolbar
-                searchValue={searchTerm}
-                onSearchChange={setSearchTerm}
-                searchPlaceholder="Search by company or role..."
-                showFilters
-                filtersOpen={filtersOpen}
-                onToggleFilters={() => setFiltersOpen((current) => !current)}
-                filterTitle="Filter applications"
-                onClearFilters={hasActiveFilters ? resetFilters : undefined}
-              >
-                <FilterSelect
-                  value={`Status: ${selectedStatus}`}
-                  onChange={(value) =>
-                    setSelectedStatus(value.replace("Status: ", ""))
-                  }
-                  options={[
-                    "Status: All Statuses",
-                    "Status: Under Review",
-                    "Status: Pending",
-                    "Status: Accepted",
-                    "Status: Rejected",
-                  ]}
-                />
+            <FilterSelect
+              value={`Company: ${selectedCompany}`}
+              onChange={(value) => {
+                setSelectedCompany(value.replace("Company: ", ""));
+                setCurrentPage(1);
+              }}
+              options={companyOptions.map(
+                (company) => `Company: ${company}`
+              )}
+            />
 
-                <FilterSelect
-                  value={`Company: ${selectedCompany}`}
-                  onChange={(value) =>
-                    setSelectedCompany(value.replace("Company: ", ""))
-                  }
-                  options={companies.map((company) => `Company: ${company}`)}
-                />
+            <FilterSelect
+              value={`Date: ${selectedPeriod}`}
+              onChange={(value) => {
+                setSelectedPeriod(value.replace("Date: ", ""));
+                setCurrentPage(1);
+              }}
+              options={[
+                "Date: Anytime",
+                "Date: This Week",
+                "Date: This Month",
+              ]}
+            />
+          </SearchFilterToolbar>
 
-                <div className="relative">
-                  <CalendarDays className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
+          <section ref={resultsTopRef} className="scroll-mt-28">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-bold text-[var(--ink)]">
+                {filteredApplications.length} application
+                {filteredApplications.length === 1 ? "" : "s"} found
+              </h2>
 
-                  <Input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(event) => setSelectedDate(event.target.value)}
-                    className="h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] pl-11 pr-3 text-sm font-black text-[color:var(--ink)] shadow-sm"/>
-                </div>
-              </SearchFilterToolbar>
-
-              <AppCard className="overflow-hidden">
-                <div className="grid grid-cols-5 border-b border-[color:var(--primary)]/10 text-center text-sm font-black">
-                  {[
-                    "All",
-                    "Under Review",
-                    "Pending",
-                    "Accepted",
-                    "Rejected",
-                  ].map((tab) => (
-                    <Tab
-                      key={tab}
-                      label={tab}
-                      count={statusCounts[tab]}
-                      active={activeTab === tab}
-                      onClick={() => {
-                        setActiveTab(tab);
-                        setSelectedStatus("All Statuses");
-                      }}
-                    />
-                  ))}
-                </div>
-
-                <div className="hidden grid-cols-[1.5fr_0.7fr_0.75fr_1.15fr_0.7fr] border-b border-[color:var(--primary)]/10 px-6 py-4 text-sm font-black text-[color:var(--dark)] lg:grid lg:items-center lg:gap-4">
-                  <p>Internship</p>
-                  <p>Date Applied</p>
-                  <p>Status</p>
-                  <p>Next Step</p>
-                  <p>Action</p>
-                </div>
-
-                {filteredApplications.length === 0 ? (
-                  <div className="p-10 text-center">
-                    <h2 className="text-2xl font-black text-[color:var(--ink)]">
-                      No applications found
-                    </h2>
-                    <p className="mt-2 text-sm font-semibold text-[color:var(--muted)]">
-                      Try changing your search or filter options.
-                    </p>
-                  </div>
-                ) : (
-                  filteredApplications.map((application) => (
-                    <div
-                      key={application.id}
-                      className="grid gap-4 border-b border-[color:var(--primary)]/10 px-6 py-5 last:border-b-0 lg:grid-cols-[1.5fr_0.7fr_0.75fr_1.15fr_0.7fr] lg:items-center"
-                    >
-                      <div className="flex gap-4">
-                        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--primary),var(--secondary))] text-white">
-                          <Briefcase className="h-5 w-5" />
-                        </div>
-
-                        <div>
-                          <h2 className="font-black text-[color:var(--ink)]">
-                            {application.company}
-                          </h2>
-
-                          <p className="text-sm font-bold text-[color:var(--primary)]">
-                            {application.title}
-                          </p>
-
-                          <div className="mt-2 flex flex-wrap gap-3 text-xs font-semibold text-[color:var(--muted)]">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3.5 w-3.5" />
-                              {application.location}
-                            </span>
-
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3.5 w-3.5" />
-                              {application.duration}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-black text-[color:var(--ink)]">
-                          {application.displayDate}
-                        </p>
-                        <p className="text-xs font-semibold text-[color:var(--muted)]">
-                          Recently applied
-                        </p>
-                      </div>
-
-                      <StatusBadge status={application.status} />
-
-                      <div>
-                        <p className="text-sm font-black text-[color:var(--ink)]">
-                          {application.nextStep}
-                        </p>
-                        <p className="text-xs font-semibold text-[color:var(--muted)]">
-                          {application.note}
-                        </p>
-                      </div>
-
-                      <Link to={`/internships/${application.internshipId}`}>
-                      <AppButton
-  className="
-    rounded-2xl
-    border border-[color:var(--border)]
-    bg-[color:var(--card)]
-    px-4
-    font-black
-    text-[color:var(--primary)]
-    hover:bg-[color:var(--card-hover)]
-  "
->
-                          View Internship
-                        </AppButton>
-                      </Link>
-                    </div>
-                  ))
-                )}
-              </AppCard>
+              {hasActiveFilters ? (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="text-[12px] font-black text-[var(--primary)] transition hover:opacity-70"
+                >
+                  Clear filters
+                </button>
+              ) : null}
             </div>
 
-            <aside className="space-y-6">
-              <AppCard className="p-6">
-                <div className="mb-5 flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-[color:var(--primary)]" />
-                  <h2 className="text-xl font-black text-[color:var(--ink)]">
-                    Application Overview
-                  </h2>
-                </div>
-
-                <p className="text-5xl font-black text-[color:var(--primary)]">
-                  {applications.length}
-                </p>
-
-                <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
-                  Total Applications
-                </p>
-
-                <div className="mt-6 space-y-3">
-                  <OverviewRow
-                    label="Under Review"
-                    value={statusCounts["Under Review"]}
-                    color="bg-blue-400"
+            {paginatedApplications.length ? (
+              <div className="space-y-4">
+                {paginatedApplications.map((application) => (
+                  <ApplicationSurface
+                    key={application.id}
+                    application={application}
+                    onOpen={() =>
+                      navigate(`/internships/${application.internshipId}`)
+                    }
                   />
-                  <OverviewRow
-                    label="Pending"
-                    value={statusCounts.Pending}
-                    color="bg-purple-400"
-                  />
-                  <OverviewRow
-                    label="Accepted"
-                    value={statusCounts.Accepted}
-                    color="bg-green-400"
-                  />
-                  <OverviewRow
-                    label="Rejected"
-                    value={statusCounts.Rejected}
-                    color="bg-red-400"
-                  />
-                </div>
-              </AppCard>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                hasFilters={Boolean(searchTerm.trim()) || hasActiveFilters}
+                onClear={() => {
+                  setSearchTerm("");
+                  resetFilters();
+                }}
+                onBrowse={() => navigate("/internships")}
+              />
+            )}
 
-              <AppCard className="p-6">
-                <div className="mb-5 flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5 text-[color:var(--primary)]" />
-                  <h2 className="text-xl font-black text-[color:var(--ink)]">
-                    Upcoming Interviews
-                  </h2>
-                </div>
-
-                {upcomingInterviews.length > 0 ? (
-                  upcomingInterviews.map((interview) => (
-                    <InterviewCard
-                      key={interview.id}
-                      day={interview.day}
-                      month={interview.month}
-                      company={interview.company}
-                      role={interview.role}
-                      time={interview.time}
-                    />
-                  ))
-                ) : (
-                  <p className="text-sm font-semibold text-[color:var(--muted)]">
-                    No upcoming interviews yet.
-                  </p>
-                )}
-              </AppCard>
-
-              <AppCard className="p-6">
-                <div className="mb-5 flex items-center gap-2">
-                  <Bookmark className="h-5 w-5 text-[color:var(--primary)]" />
-                  <h2 className="text-xl font-black text-[color:var(--ink)]">
-                    Saved Internships
-                  </h2>
-                </div>
-
-                <div className="space-y-3">
-                  {savedApplications.length > 0 ? (
-                    savedApplications.map((item) => (
-                      <Link key={item.id} to={`/internships/${item.internshipId}`}>
-                        <div
-  className="
-    flex items-center justify-between
-    rounded-2xl
-    border border-[color:var(--border)]
-    bg-[color:var(--card)]
-    p-4
-    transition
-    hover:bg-[color:var(--card-hover)]
-  "
->
-                          <div>
-                            <p className="font-black text-[color:var(--ink)]">
-                              {item.title}
-                            </p>
-                            <p className="text-sm font-semibold text-[color:var(--muted)]">
-                              {item.company}
-                            </p>
-                          </div>
-
-                          <Bookmark className="h-4 w-4 fill-[color:var(--primary)] text-[color:var(--primary)]" />
-                        </div>
-                      </Link>
-                    ))
-                  ) : (
-                    <p className="text-sm font-semibold text-[color:var(--muted)]">
-                      No saved internships yet.
-                    </p>
-                  )}
-                </div>
-
-                <Link
-                  to="/internships"
-                  className="mt-5 inline-block text-sm font-black text-[color:var(--primary)]"
-                >
-                  View all saved →
-                </Link>
-              </AppCard>
-            </aside>
-          </div>
+            <Pagination
+              currentPage={safeCurrentPage}
+              totalPages={totalPages}
+              totalItems={filteredApplications.length}
+              pageStartIndex={pageStartIndex}
+              pageSize={ITEMS_PER_PAGE}
+              onPageChange={goToPage}
+              ariaLabel="Application results pagination"
+            />
+          </section>
         </div>
-      </main>
     </DashboardLayout>
   );
 }
 
-function Tab({ label, count, active, onClick }) {
+function ApplicationSurface({ application, onOpen }) {
+  const statusTone =
+    application.status === "Accepted"
+      ? {
+          label: "Accepted application",
+          accent: "text-[#9BD2AE]",
+          dot: "bg-[#9BD2AE]",
+          line: "bg-[#9BD2AE]",
+        }
+      : application.status === "Rejected"
+        ? {
+            label: "Closed application",
+            accent: "text-[#F0A8A8]",
+            dot: "bg-[#EFA0A0]",
+            line: "bg-[#EFA0A0]",
+          }
+        : application.status === "Nominated"
+          ? {
+              label: "Nominated",
+              accent: "text-[#E6C77B]",
+              dot: "bg-[#E6C77B]",
+              line: "bg-[#E6C77B]",
+            }
+          : application.status === "Shortlisted"
+            ? {
+                label: "Shortlisted",
+                accent: "text-[#A7D9FA]",
+                dot: "bg-[#A7D9FA]",
+                line: "bg-[#A7D9FA]",
+              }
+            : {
+                label: "Application in review",
+                accent: "text-[#E6C77B]",
+                dot: "bg-[#E6C77B]",
+                line: "bg-[#E6C77B]",
+              };
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`border-r border-[color:var(--primary)]/10 px-4 py-4 last:border-r-0 transition ${
-        active
-  ? "bg-[color:var(--accent)]/20 text-[color:var(--primary)]"
-  : "bg-[color:var(--surface)] text-[color:var(--muted)] hover:bg-[color:var(--surface-hover)]"
-      }`}
+    <article
+      className="group overflow-hidden rounded-[30px] border border-white bg-white/95 p-0 shadow-[0_22px_55px_rgba(53,88,114,0.13)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-[3px] hover:shadow-[0_30px_68px_rgba(53,88,114,0.18)] dark:border-[var(--card-border)] dark:bg-[var(--surface)]"
     >
-      {label}
-      <span className="ml-2 rounded-full bg-[color:var(--card)] px-2 py-0.5 text-xs text-[color:var(--ink)]">
-        {count}
-      </span>
-    </button>
-  );
-}
+      <div className="grid lg:grid-cols-[290px_minmax(0,1fr)]">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="relative flex min-h-[235px] flex-col overflow-hidden bg-[linear-gradient(145deg,#071D2C_0%,#102F45_52%,#1E4964_100%)] p-7 text-left text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#79B0E3]"
+        >
+          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(156,213,255,0.19),transparent_69%)]" />
+          <div className="pointer-events-none absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(230,199,123,0.11),transparent_70%)]" />
 
-function OverviewRow({ label, value, color }) {
-  return (
-    <div className="flex items-center justify-between text-sm font-bold">
-      <span className="flex items-center gap-2 text-[color:var(--muted)]">
-        <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
-        {label}
-      </span>
-      <span className="text-[color:var(--ink)]">{value}</span>
-    </div>
-  );
-}
+          <div className="relative">
+            <div className="flex items-center justify-between gap-3">
+              <p className={`text-[9px] font-black uppercase tracking-[0.18em] ${statusTone.accent}`}>
+                {statusTone.label}
+              </p>
 
-function InterviewCard({ day, month, company, role, time }) {
-  return (
-    <div
-  className="
-    mb-3
-    rounded-2xl
-    border border-[color:var(--border)]
-    bg-[color:var(--card)]
-    p-4
-    last:mb-0
-  "
->
-      <div className="flex gap-4">
-        <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[color:var(--accent)]/25 text-center">
-          <div>
-            <p className="text-xs font-black uppercase text-[color:var(--primary)]">
-              {month}
+              <span className={`h-2.5 w-2.5 rounded-full ${statusTone.dot}`} />
+            </div>
+
+            <span className={`mt-4 block h-[2px] w-10 rounded-full ${statusTone.line}`} />
+
+            <p className="mt-5 text-[11px] font-black uppercase tracking-[0.10em] text-[#8FC3E5]">
+              {application.company}
             </p>
-            <p className="text-lg font-black text-[color:var(--ink)]">{day}</p>
-          </div>
-        </div>
 
-        <div>
-          <p className="font-black text-[color:var(--ink)]">{company}</p>
-          <p className="text-sm font-semibold text-[color:var(--muted)]">
-            {role}
-          </p>
-          <p className="mt-1 text-xs font-bold text-[color:var(--primary)]">
-            {time}
-          </p>
+            <h3 className="mt-3 max-w-[220px] text-[28px] font-black leading-[1.02] tracking-[-0.045em] text-white">
+              {application.title}
+            </h3>
+          </div>
+
+          <div className="relative mt-auto border-t border-white/15 pt-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] font-black text-white/85">
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-[#A7D9FA]" />
+                {application.location}
+              </span>
+
+              <span className="inline-flex items-center gap-1.5">
+                <Clock3 className="h-3.5 w-3.5 text-[#A7D9FA]" />
+                {application.duration}
+              </span>
+            </div>
+          </div>
+        </button>
+
+        <div className="relative flex min-w-0 flex-col px-7 py-6 sm:px-8">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(156,213,255,0.10),transparent_70%)]" />
+
+          <div className="relative flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.17em] text-[#B89736]">
+                Next step
+              </p>
+
+              <h4 className="mt-1.5 text-[22px] font-black leading-tight tracking-[-0.03em] text-[color:var(--ink)]">
+                {application.nextStep}
+              </h4>
+
+              <p className="mt-2 max-w-3xl text-[13px] font-medium leading-6 text-[color:var(--muted)]">
+                {application.note}
+              </p>
+            </div>
+
+            <StatusBadge status={application.status} />
+          </div>
+
+          <div className="relative mt-6 flex flex-wrap items-end gap-x-6 gap-y-4">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                Applied
+              </p>
+              <p className="mt-1 text-[11px] font-black text-[#355872]">
+                {formatDisplayDate(application.dateApplied)}
+              </p>
+            </div>
+
+            <span className="hidden h-8 w-px bg-[#D3E1E9] sm:block" />
+
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                Company
+              </p>
+              <p className="mt-1 text-[11px] font-black text-[#355872]">
+                {application.company}
+              </p>
+            </div>
+
+            <span className="hidden h-8 w-px bg-[#D3E1E9] sm:block" />
+
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                Status
+              </p>
+              <p className="mt-1 text-[11px] font-black text-[#355872]">
+                {application.status}
+              </p>
+            </div>
+          </div>
+
+          
         </div>
       </div>
+    </article>
+  );
+}
+
+function EmptyState({ hasFilters, onClear, onBrowse }) {
+  return (
+    <div className="rounded-[26px] border border-[#C9DBE4] bg-[#FBFCFA] px-6 py-14 text-center shadow-[0_18px_42px_rgba(53,88,114,0.08)] dark:border-[var(--card-border)] dark:bg-[var(--surface)]">
+      <div className="mx-auto grid h-12 w-12 place-items-center rounded-[15px] border border-[#355872]/12 bg-white text-[#355872] dark:border-[var(--card-border)] dark:bg-[var(--surface-elevated)] dark:text-[var(--secondary)]">
+        <BriefcaseBusiness className="h-5 w-5" />
+      </div>
+
+      <p className="mt-5 text-xl font-black tracking-[-0.02em] text-[#183247] dark:text-[var(--ink)]">
+        {hasFilters
+          ? "No applications match these filters."
+          : "You haven't applied to any internships yet."}
+      </p>
+
+      <p className="mx-auto mt-2 max-w-xl text-sm font-semibold leading-6 text-[#708491] dark:text-[var(--muted)]">
+        {hasFilters
+          ? "Try widening your search or clearing the current filters."
+          : "Applications you submit from Internships will be tracked here."}
+      </p>
+
+      <button
+        type="button"
+        onClick={hasFilters ? onClear : onBrowse}
+        className="mt-5 h-10 rounded-[13px] border border-[#355872]/14 bg-white px-4 text-[11px] font-black text-[#355872] transition hover:bg-[#F5FAFC] dark:border-white/10 dark:bg-white/[0.04] dark:text-[#9CD5FF] dark:hover:bg-white/[0.07]"
+      >
+        {hasFilters ? "Clear filters" : "Explore internships"}
+      </button>
     </div>
   );
 }

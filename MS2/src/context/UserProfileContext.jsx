@@ -63,7 +63,10 @@ function normalizeRole(value) {
 }
 
 function buildProfile(currentUser) {
-  const storeUser = currentUser?.id ? getCurrentUser() || currentUser : currentUser;
+  // The authenticated session/store is the source of truth.
+  // App normally passes currentUser, but shared pages must not collapse to the
+  // student fallback if that prop is temporarily unavailable.
+  const storeUser = currentUser || getCurrentUser();
   const role = normalizeRole(
     storeUser?.accountRole || storeUser?.systemRole || storeUser?.role || storeUser?.userType
   );

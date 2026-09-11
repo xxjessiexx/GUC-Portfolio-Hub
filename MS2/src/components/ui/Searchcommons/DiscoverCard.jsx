@@ -13,106 +13,98 @@ export default function DiscoverCard({
     <AppCard
       onClick={onClick}
       className="
+        group
         cursor-pointer
-        p-5 sm:p-6
         rounded-[28px]
-        bg-[color:var(--card-bg-strong)]
         border border-[color:var(--card-border)]
+        bg-[color:var(--card-bg-strong)]
+        p-6
         shadow-[var(--shadow-card)]
-        hover:shadow-[var(--shadow-lifted)]
-        transition
-        min-h-[180px]
-        flex flex-col justify-between
-        text-[color:var(--ink)]
+        transition-all duration-200
 
         hover:-translate-y-1
-  hover:border-[var(--primary)]
+        hover:border-[var(--primary)]
+        hover:shadow-[var(--shadow-lifted)]
 
+        min-h-[310px]
+        text-[color:var(--ink)]
       "
     >
-      <div
-        className="
-          grid
-          grid-cols-[1fr_auto]
-          items-center
-          gap-6
-          h-full
-        "
-      >
-        {/* LEFT */}
-        <div>
-          {/* TOP ICON */}
+      <div className="grid h-full grid-cols-[minmax(0,1fr)_150px] gap-5">
+        {/* LEFT CONTENT */}
+        <div className="flex min-w-0 flex-col">
+          {/* ICON */}
           <div
             className="
-              w-12 h-12 sm:w-14 sm:h-14
+              flex h-12 w-12
+              items-center justify-center
               rounded-2xl
+              border border-[var(--border-blue)]
               bg-[var(--surface-elevated)]
-border border-[var(--border-blue)]
-              flex items-center justify-center
               text-[color:var(--secondary)]
-              mb-4
             "
           >
-            <Icon size={31} />
+            <Icon size={26} strokeWidth={2} />
           </div>
 
-          {/* TITLE */}
-          <h3
-            className="
-              text-xl sm:text-2xl
-              font-black
-              text-[color:var(--ink)]
-              leading-tight
-            "
-          >
-            {title}
-          </h3>
+          {/* TEXT */}
+          <div className="mt-5">
+            <h3
+              className="
+                text-[22px]
+                font-black
+                leading-[1.2]
+                tracking-tight
+                text-[color:var(--ink)]
+              "
+            >
+              {title}
+            </h3>
 
-          {/* DESCRIPTION */}
-          <p
-            className="
-              mt-3
-              text-[15px]
-              text-[color:var(--muted)]
-              leading-6
-              font-medium
-              max-w-[280px]
-            "
-          >
-            {description}
-          </p>
+            <p
+              className="
+                mt-3
+                max-w-[260px]
+                text-[15px]
+                font-medium
+                leading-6
+                text-[color:var(--muted)]
+              "
+            >
+              {description}
+            </p>
+          </div>
 
           {/* BUTTON */}
-          <div className="mt-8 whitespace-nowrap ">
+          <div className="mt-auto pt-6">
             <PrimaryActionButton text={buttonText} />
           </div>
         </div>
 
-        {/* RIGHT IMAGE */}
+        {/* ILLUSTRATION */}
         <div
-  className="
-    hidden md:flex
-    items-center
-    justify-center
-    self-center
-
-    rounded-3xl
-    p-5
-
-    bg-[var(--surface-soft)]
-    border border-[var(--card-border)]
-  "
->
+          className="
+            hidden
+            h-[180px]
+            self-center
+            items-center
+            justify-center
+            rounded-[24px]
+            bg-[var(--surface-soft)]
+            md:flex
+          "
+        >
           <img
-  src={image}
-  alt={title}
-  className="
-    w-36
-    xl:w-40
-    object-contain
-    opacity-90
-  "
-/>
+            src={image}
+            alt=""
+            className="
+              w-[120px]
+              object-contain
+              opacity-90
+              transition-transform duration-200
+              group-hover:scale-[1.03]
+            "
+          />
         </div>
       </div>
     </AppCard>

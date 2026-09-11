@@ -32,7 +32,17 @@ export default function ExploreProjectCard({
 
   return (
     <AppCard
+      role="link"
+      tabIndex={0}
+      onClick={openProject}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openProject();
+        }
+      }}
       className={`
+        group
         overflow-hidden
         rounded-3xl
         bg-[var(--card-bg)]
@@ -40,6 +50,10 @@ export default function ExploreProjectCard({
         shadow-[var(--shadow-card)]
         hover:shadow-[var(--shadow-lifted)]
         backdrop-blur-md
+        cursor-pointer
+        outline-none
+        focus-visible:ring-4
+        focus-visible:ring-[#7AAACE]/20
         transition-all
         duration-300
         hover:-translate-y-1
@@ -87,10 +101,7 @@ export default function ExploreProjectCard({
       <div className="p-5 flex-1">
         <div className="flex items-start justify-between">
           <div>
-            <h3
-              onClick={openProject}
-              className="text-lg font-black text-[color:var(--ink)] cursor-pointer hover:text-[color:var(--accent)] transition"
-            >
+            <h3 className="text-lg font-black text-[color:var(--ink)] transition group-hover:text-[color:var(--primary)]">
               {project.title}
             </h3>
 
@@ -102,9 +113,7 @@ export default function ExploreProjectCard({
             </p>
           </div>
 
-          <button type="button">
-            <MoreVertical size={18} className="text-[color:var(--muted)]" />
-          </button>
+         
         </div>
 
         <div className="mt-4 space-y-3 text-sm text-[color:var(--muted)]">

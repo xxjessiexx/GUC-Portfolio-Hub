@@ -1,327 +1,341 @@
-import DashboardLayout from "@/components/layout/DashboardLayout";
-import { AppCard } from "@/components/ui/AppCard";
-import ExploreProjectCard from "@/components/ui/Searchcommons/ExploreProjectCard";
-import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
-import FilterPanel from "@/components/common/FilterPanel";
-import FilterSelect from "@/components/common/FilterSelect";
-import Pannelforportfolios from "@/components/ui/Searchcommons/Pannelforportfolios";
-import PortfolioData from "@/data/portfoliosData";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
-
 import { FolderOpen, UserRound } from "lucide-react";
 
-/* IMPORT DATA */
-import ProjectNameData from "@/data/ProjectNameData";
-import Pannelforprojects from "@/components/ui/Searchcommons/Pannelforprojects";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import PageHeader from "@/components/common/PageHeader";
+import Pagination from "@/components/common/Pagination";
+import ExploreProjectCard from "@/components/ui/Searchcommons/ExploreProjectCard";
+import PortfolioCard from "@/components/ui/Searchcommons/PortfolioCard";
+
 import {
-  getAllProjects,
   getAllPortfolios,
-  toggleFavoriteProject,
+  getAllProjects,
   toggleFavoritePortfolio,
+  toggleFavoriteProject,
 } from "@/data/demoStore";
 
-import {
-  Search,
-  Grid2X2,
-  List,
-  SlidersHorizontal,
-} from "lucide-react";
+const ITEMS_PER_PAGE = 8;
 
-import { useState } from "react";
+function EmptyCollection({
+  icon: Icon,
+  title,
+  description,
+  actionLabel,
+  onAction,
+}) {
+  return (
+    <div
+      className="
+        flex min-h-[180px] items-center justify-center
+        rounded-[24px]
+        border border-dashed border-[var(--card-border)]
+        bg-[var(--card-bg)]
+        px-6 py-10 text-center
+        dark:border-white/10
+        dark:bg-white/[0.035]
+      "
+    >
+      <div>
+        <div
+          className="
+            mx-auto grid h-12 w-12 place-items-center
+            rounded-[16px]
+            bg-[var(--surface-soft)]
+            text-[var(--primary)]
+            dark:bg-white/[0.06]
+          "
+        >
+          <Icon className="h-5 w-5" />
+        </div>
+
+        <h3 className="mt-4 text-[18px] font-black text-[var(--ink)]">
+          {title}
+        </h3>
+
+        <p
+          className="
+            mx-auto mt-2 max-w-md
+            text-[13px] font-semibold leading-6
+            text-[var(--muted)]
+          "
+        >
+          {description}
+        </p>
+
+        <button
+          type="button"
+          onClick={onAction}
+          className="
+            mt-4 text-[13px] font-black
+            text-[var(--primary)]
+            transition hover:opacity-70
+          "
+        >
+          {actionLabel} →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CollectionHeader({ eyebrow, title, count }) {
+  return (
+    <div
+      className="
+        mb-6 max-w-[1180px]
+        border-b border-[var(--border-blue)]
+        pb-4
+      "
+    >
+      <p
+        className="
+          text-[10px] font-black uppercase tracking-[0.18em]
+          text-[#B89736]
+          dark:text-[var(--gold)]
+        "
+      >
+        {eyebrow}
+      </p>
+
+      <div className="mt-1 flex items-center gap-3">
+        <h2
+          className="
+            text-[26px] font-black tracking-[-0.03em]
+            text-[var(--ink)]
+          "
+        >
+          {title}
+        </h2>
+
+        <span
+          className="
+            inline-flex min-w-7 items-center justify-center
+            rounded-full
+            bg-[var(--surface-soft)]
+            px-2 py-1
+            text-[11px] font-black text-[var(--primary)]
+            dark:bg-white/[0.06]
+          "
+        >
+          {count}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export default function FavoriteList() {
- const [portfolios, setPortfolios] =
-  useState(getAllPortfolios());
-  /* STATE */
-  const [projects, setProjects] =
-  useState(getAllProjects());
-  const [view, setView] = useState("grid");
+  const navigate = useNavigate();
 
-  const [search, setSearch] = useState("");
+  const [projects, setProjects] = useState(() => getAllProjects());
+  const [portfolios, setPortfolios] = useState(() => getAllPortfolios());
 
-  const [selectedCourse, setSelectedCourse] =
-    useState("All Courses");
+  const [projectPage, setProjectPage] = useState(1);
+  const [portfolioPage, setPortfolioPage] = useState(1);
 
-  const [selectedInstructor, setSelectedInstructor] =
-    useState("All Instructors");
-
-  const [selectedDate, setSelectedDate] =
-    useState("Anytime");
-
-  const [selectedSort, setSelectedSort] =
-    useState("Newest");
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const projectSectionRef = useRef(null);
+  const portfolioSectionRef = useRef(null);
 
   useEffect(() => {
-  const refresh = () => {
+    const refresh = () => {
+      setProjects(getAllProjects());
+      setPortfolios(getAllPortfolios());
+    };
+
+    window.addEventListener("demo-db-change", refresh);
+    window.addEventListener("storage", refresh);
+
+    return () => {
+      window.removeEventListener("demo-db-change", refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, []);
+
+  const favoriteProjects = useMemo(
+    () => projects.filter((project) => project.favorite),
+    [projects]
+  );
+
+  const favoritePortfolios = useMemo(
+    () => portfolios.filter((portfolio) => portfolio.favorite),
+    [portfolios]
+  );
+
+  const projectTotalPages = Math.max(
+    1,
+    Math.ceil(favoriteProjects.length / ITEMS_PER_PAGE)
+  );
+
+  const portfolioTotalPages = Math.max(
+    1,
+    Math.ceil(favoritePortfolios.length / ITEMS_PER_PAGE)
+  );
+
+  const safeProjectPage = Math.min(projectPage, projectTotalPages);
+  const safePortfolioPage = Math.min(portfolioPage, portfolioTotalPages);
+
+  const projectStartIndex = (safeProjectPage - 1) * ITEMS_PER_PAGE;
+  const portfolioStartIndex = (safePortfolioPage - 1) * ITEMS_PER_PAGE;
+
+  const visibleProjects = favoriteProjects.slice(
+    projectStartIndex,
+    projectStartIndex + ITEMS_PER_PAGE
+  );
+
+  const visiblePortfolios = favoritePortfolios.slice(
+    portfolioStartIndex,
+    portfolioStartIndex + ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    if (projectPage > projectTotalPages) {
+      setProjectPage(projectTotalPages);
+    }
+  }, [projectPage, projectTotalPages]);
+
+  useEffect(() => {
+    if (portfolioPage > portfolioTotalPages) {
+      setPortfolioPage(portfolioTotalPages);
+    }
+  }, [portfolioPage, portfolioTotalPages]);
+
+  const goToProjectPage = (page) => {
+    setProjectPage(Math.min(Math.max(page, 1), projectTotalPages));
+
+    requestAnimationFrame(() => {
+      projectSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  const goToPortfolioPage = (page) => {
+    setPortfolioPage(Math.min(Math.max(page, 1), portfolioTotalPages));
+
+    requestAnimationFrame(() => {
+      portfolioSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  const handleProjectFavorite = (id) => {
+    toggleFavoriteProject(id);
     setProjects(getAllProjects());
+  };
+
+  const handlePortfolioFavorite = (id) => {
+    toggleFavoritePortfolio(id);
     setPortfolios(getAllPortfolios());
   };
 
-  window.addEventListener("demo-db-change", refresh);
-
-  return () => {
-    window.removeEventListener("demo-db-change", refresh);
-  };
-}, []);
-
-  /* FAVORITES */
-  const toggleFavorite = (id) => {
-  toggleFavoriteProject(id);
-
-  setProjects(getAllProjects());
-};
-
-  const togglePortfolioFavorite = (id) => {
-  toggleFavoritePortfolio(id);
-
-  setPortfolios(getAllPortfolios());
-};
-
-  /* FILTERS */
-  const filteredProjects = projects
-  .filter((project) => {
-
-    const matchesSearch =
-      project.title
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
-
-      project.tags?.some((tag) =>
-        tag
-          .toLowerCase()
-          .includes(search.toLowerCase())
-      );
-
-    const matchesCourse =
-      selectedCourse === "All Courses" ||
-
-      project.course === selectedCourse ||
-      project.courseName === selectedCourse ||
-
-      project.program === selectedCourse;
-
-    const matchesInstructor =
-      selectedInstructor === "All Instructors" ||
-      project.instructor
-  ?.toLowerCase()
-  .includes(
-    selectedInstructor.toLowerCase()
-  );
-
-    return (
-      matchesSearch &&
-      matchesCourse &&
-      matchesInstructor
-    );
-  })
-
-  .sort((a, b) => {
-
-  /* NEWEST */
-  if (selectedSort === "Newest") {
-    return new Date(b.date) - new Date(a.date);
-  }
-
-  /* OLDEST */
-  if (selectedSort === "Oldest") {
-    return new Date(a.date) - new Date(b.date);
-  }
-
-  /* A-Z */
-  if (selectedSort === "A-Z") {
-    return a.title.localeCompare(b.title);
-  }
-
-  /* HIGHEST RATED */
-  if (selectedSort === "Highest Rated") {
-    return b.rating - a.rating;
-  }
-
-  return 0;
-});
-const navigate = useNavigate();
   return (
     <DashboardLayout>
+      <div className="mx-auto w-full max-w-[1480px]">
+        <PageHeader
+          className="mb-10"
+          title="Favorites"
+          description="A saved collection of projects and student portfolios you want to come back to."
+        />
 
-      {/* MAIN */}
-      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+          <div className="space-y-12">
+            <section ref={projectSectionRef} className="scroll-mt-28">
+              <CollectionHeader
+                eyebrow="Saved work"
+                title="Favorite Projects"
+                count={favoriteProjects.length}
+              />
 
-        {/* HEADER */}
-        <div>
-          <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
-            Favorite List
-          </h1>
+              {favoriteProjects.length ? (
+                <>
+                  <div
+                    className="
+                      grid grid-cols-1 gap-5
+                      sm:grid-cols-2
+                      lg:grid-cols-3
+                      xl:grid-cols-4
+                    "
+                  >
+                    {visibleProjects.map((project) => (
+                      <ExploreProjectCard
+                        key={project.id}
+                        project={project}
+                        view="grid"
+                        toggleFavorite={handleProjectFavorite}
+                      />
+                    ))}
+                  </div>
 
-          <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
-            Your Favorite List from Portfolios and Projects
-          </p>
+                  <Pagination
+                    currentPage={safeProjectPage}
+                    totalPages={projectTotalPages}
+                    totalItems={favoriteProjects.length}
+                    pageStartIndex={projectStartIndex}
+                    pageSize={ITEMS_PER_PAGE}
+                    onPageChange={goToProjectPage}
+                  />
+                </>
+              ) : (
+                <EmptyCollection
+                  icon={FolderOpen}
+                  title="No favorite projects yet"
+                  description="Save projects from Explore Projects and they will appear here."
+                  actionLabel="Explore projects"
+                  onAction={() => navigate("/explore-projects")}
+                />
+              )}
+            </section>
+
+            <section ref={portfolioSectionRef} className="scroll-mt-28">
+              <CollectionHeader
+                eyebrow="Saved people"
+                title="Favorite Portfolios"
+                count={favoritePortfolios.length}
+              />
+
+              {favoritePortfolios.length ? (
+                <>
+                  <div
+                    className="
+                      grid grid-cols-1 gap-5
+                      md:grid-cols-2
+                      xl:grid-cols-3
+                    "
+                  >
+                    {visiblePortfolios.map((portfolio) => (
+                      <PortfolioCard
+                        key={portfolio.id}
+                        portfolio={portfolio}
+                        toggleFavorite={handlePortfolioFavorite}
+                        compactBadges
+                      />
+                    ))}
+                  </div>
+
+                  <Pagination
+                    currentPage={safePortfolioPage}
+                    totalPages={portfolioTotalPages}
+                    totalItems={favoritePortfolios.length}
+                    pageStartIndex={portfolioStartIndex}
+                    pageSize={ITEMS_PER_PAGE}
+                    onPageChange={goToPortfolioPage}
+                  />
+                </>
+              ) : (
+                <EmptyCollection
+                  icon={UserRound}
+                  title="No favorite portfolios yet"
+                  description="Save student portfolios while browsing and they will appear here."
+                  actionLabel="Explore portfolios"
+                  onAction={() => navigate("/explore-portfolio")}
+                />
+              )}
+            </section>
+          </div>
         </div>
-
-        {/* SEARCH + FILTERS */}
-          
-
-        {/* PROJECTS */}
-        {filteredProjects.filter(
-  (project) => project.favorite
-).length > 0 ? (
-
-  
-  <Pannelforprojects
-  projects={filteredProjects
-    .filter((project) => project.favorite)
-    .slice(0, 3)}
-  view={view}
-  toggleFavorite={toggleFavorite}
-  hideViewMore={
-    filteredProjects.filter(
-      (project) => project.favorite
-    ).length < 3
-  }
-/>
-
-) : (
-
-  <div
-  className="
-    flex items-center justify-center
-    gap-6
-    py-16
-    rounded-[32px]
-
-    bg-[var(--card-bg)]
-    border border-dashed border-[var(--card-border)]
-
-    shadow-[var(--shadow-card)]
-    backdrop-blur-md
-  "
->
-  <div
-    className="
-      w-20 h-20
-      rounded-full
-      border border-[var(--border-blue)]
-      bg-[var(--surface-soft)]
-
-      flex items-center justify-center
-    "
-  >
-    <FolderOpen
-      size={25}
-      className="text-[var(--primary)]"
-    />
-  </div>
-
-  <div>
-    <span
-      onClick={() => navigate("/explore-projects")}
-      className="
-        cursor-pointer
-        font-bold
-        text-2xl
-        text-[var(--primary)]
-        hover:text-[var(--accent)]
-      "
-    >
-      Explore more projects
-    </span>
-
-    <span
-      className="
-        ml-2
-        text-2xl
-        text-[var(--muted)]
-      "
-    >
-      to add to your favorite list!
-    </span>
-  </div>
-</div>
-
-)}
-
-{portfolios.filter(
-  (portfolio) => portfolio.favorite
-).length > 0 ? (
-
-  
-  <Pannelforportfolios
-  portfolios={portfolios
-    .filter((portfolio) => portfolio.favorite)
-    .slice(0, 3)}
-  view={view}
-  toggleFavorite={togglePortfolioFavorite}
-  hideViewMore={
-    portfolios.filter(
-      (portfolio) => portfolio.favorite
-    ).length < 3
-  }
-/>
-
-) : (
-
-  <div
-  className="
-    flex items-center justify-center
-    gap-6
-    py-16
-    rounded-[32px]
-
-    bg-[var(--card-bg)]
-    border border-dashed border-[var(--card-border)]
-
-    shadow-[var(--shadow-card)]
-    backdrop-blur-md
-  "
->
-  <div
-    className="
-      w-20 h-20
-      rounded-full
-      border border-[var(--border-blue)]
-      bg-[var(--surface-soft)]
-
-      flex items-center justify-center
-    "
-  >
-    <UserRound
-      size={20}
-      className="text-[var(--primary)]"
-    />
-  </div>
-
-  <div>
-    <span
-      onClick={() => navigate("/explore-portfolio")}
-      className="
-        cursor-pointer
-        font-bold
-        text-2xl
-        text-[var(--primary)]
-        hover:text-[var(--accent)]
-      "
-    >
-      Explore more portfolios
-    </span>
-
-    <span
-      className="
-        ml-2
-        text-2xl
-        text-[var(--muted)]
-      "
-    >
-      to add to your favorite list!
-    </span>
-  </div>
-</div>
-
-)}
-      </div>
-      </main>
     </DashboardLayout>
   );
 }

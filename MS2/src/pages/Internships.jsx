@@ -1,42 +1,42 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  ArrowRight,
+  ArrowUpRight,
   Bookmark,
-  Briefcase,
+  BriefcaseBusiness,
   CalendarDays,
-  Clock,
-  Eye,
-  Grid2X2,
-  List,
+  Clock3,
   MapPin,
-  Send,
-  Sparkles,
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import SideToast from "@/components/ui/SideToast";
-import { AppCard } from "@/components/ui/AppCard";
-import { AppButton } from "@/components/ui/AppButton";
-
-import AppModal from "@/components/common/AppModal";
 import FilterSelect from "@/components/common/FilterSelect";
-import StatusBadge from "@/components/common/StatusBadge";
-
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import PageHeader from "@/components/common/PageHeader";
+import Pagination from "@/components/common/Pagination";
 
 import {
-  getCurrentUser,
+  getApplicationsForStudent,
   getCollection,
-  applyToInternship,
+  getCurrentUser,
   toggleSavedInternship,
 } from "@/data/demoStore";
 
-function normalizeArray(value) {
-  if (!value) return [];
-  if (Array.isArray(value)) return value;
-  if (typeof value === "object") return Object.values(value);
-  return [];
+function getLocationLabel(value, fallback = "") {
+  if (!value) return fallback;
+  if (typeof value === "string") return value;
+
+  if (typeof value === "object") {
+    return (
+      value.label ||
+      value.name ||
+      value.address ||
+      value.city ||
+      fallback
+    );
+  }
+
+  return String(value);
 }
 
 function getEmployerName(internship, users) {
@@ -45,37 +45,29 @@ function getEmployerName(internship, users) {
 
   const employerId =
     internship.employerId || internship.companyId || internship.ownerId || "";
-
   const employer = users.find((user) => user.id === employerId);
 
   return employer?.companyName || employer?.name || "Unknown Company";
 }
 
-function getPostedNumber(postedAt = "") {
-  const match = String(postedAt).match(/\d+/);
-  return match ? Number(match[0]) : 0;
-}
-
 function formatPostedAt(value) {
   if (!value) return "Posted recently";
-
-  if (String(value).toLowerCase().includes("ago")) {
-    return value;
-  }
+  if (String(value).toLowerCase().includes("ago")) return value;
 
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
+  if (Number.isNaN(date.getTime())) return value;
 
   const diffMs = Date.now() - date.getTime();
   const diffDays = Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
 
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "1 day ago";
+  if (diffDays === 0) return "Posted today";
+  if (diffDays === 1) return "Posted yesterday";
+  return `Posted ${diffDays}d ago`;
+}
 
-  return `${diffDays} days ago`;
+function postedAge(value = "") {
+  const match = String(value).match(/\d+/);
+  return match ? Number(match[0]) : 0;
 }
 
 function normalizeInternship(internship, users) {
@@ -85,25 +77,6 @@ function normalizeInternship(internship, users) {
     internship.tags ||
     internship.technologies ||
     [];
-
-  const responsibilities =
-    internship.responsibilities ||
-    internship.tasks ||
-    internship.duties ||
-    [
-      "Contribute to team projects and product features.",
-      "Collaborate with mentors and teammates.",
-      "Document progress and communicate clearly.",
-    ];
-
-  const requirements =
-    internship.requirements ||
-    internship.qualifications ||
-    [
-      "Strong interest in the internship field.",
-      "Good communication and teamwork skills.",
-      "Ability to learn and work independently.",
-    ];
 
   const createdAt =
     internship.createdAt ||
@@ -117,7 +90,7 @@ function normalizeInternship(internship, users) {
     title:
       internship.title || internship.role || internship.position || "Internship",
     company: getEmployerName(internship, users),
-    location: internship.location || internship.workLocation || "Not specified",
+    location: getLocationLabel(internship.location || internship.workLocation, "Not specified"),
     duration: internship.duration || internship.period || "Not specified",
     workMode: internship.workMode || internship.mode || internship.type || "On-site",
     department: internship.department || internship.field || "General",
@@ -128,158 +101,59 @@ function normalizeInternship(internship, users) {
       internship.deadline ||
       internship.applicationDeadline ||
       internship.closesAt ||
-      "2026-06-30",
+      "Not specified",
     rating: Number(internship.rating || internship.companyRating || 4.5),
     overview:
       internship.overview ||
       internship.description ||
       internship.summary ||
-      "This internship provides hands-on experience, mentorship, and exposure to real project work.",
-    responsibilities,
-    requirements,
+      "Get hands-on experience, contribute to real work, and learn with support from the team.",
   };
-}
-
-function getStudentMatchValues(currentUser) {
-  return [
-    currentUser?.id,
-    currentUser?.email,
-    currentUser?.name,
-    currentUser?.studentId,
-  ]
-    .filter(Boolean)
-    .map((value) => String(value).toLowerCase());
-}
-
-function applicationBelongsToCurrentStudent(application, currentUser) {
-  const studentValues = getStudentMatchValues(currentUser);
-
-  const possibleApplicationValues = [
-    application?.studentId,
-    application?.applicantId,
-    application?.userId,
-    application?.ownerId,
-    application?.createdBy,
-    application?.studentEmail,
-    application?.applicantEmail,
-    application?.email,
-    application?.studentName,
-    application?.applicantName,
-    application?.name,
-  ]
-    .filter(Boolean)
-    .map((value) => String(value).toLowerCase());
-
-  return possibleApplicationValues.some((value) =>
-    studentValues.includes(value)
-  );
-}
-
-function getAppliedInternshipIdsForCurrentUser() {
-  const currentUser = getCurrentUser();
-
-  if (!currentUser?.id) return [];
-
-  const applications = [
-    ...(getCollection("applications") || []),
-    ...(getCollection("internshipApplications") || []),
-  ];
-
-  const internships = getCollection("internships") || [];
-
-  const topLevelAppliedIds = applications
-    .filter((application) =>
-      applicationBelongsToCurrentStudent(application, currentUser)
-    )
-    .map((application) => application.internshipId)
-    .filter(Boolean);
-
-  const nestedAppliedIds = internships.flatMap((internship) => {
-    const nestedApplications = [
-      ...normalizeArray(internship.applications),
-      ...normalizeArray(internship.applicants),
-      ...normalizeArray(internship.candidates),
-    ];
-
-    return nestedApplications
-      .map((application) => {
-        if (typeof application === "string") {
-          return {
-            internshipId: internship.id,
-            studentId: application,
-          };
-        }
-
-        return {
-          ...application,
-          internshipId: application.internshipId || internship.id,
-        };
-      })
-      .filter((application) =>
-        applicationBelongsToCurrentStudent(application, currentUser)
-      )
-      .map((application) => application.internshipId)
-      .filter(Boolean);
-  });
-
-  return [...new Set([...topLevelAppliedIds, ...nestedAppliedIds])];
 }
 
 function getSavedInternshipIdsForCurrentUser() {
   const currentUser = getCurrentUser();
-
   if (!currentUser?.id) return [];
 
   const internships = getCollection("internships") || [];
   const bookmarks = getCollection("bookmarks") || [];
 
-  const savedIdsFromUser = [
+  const fromUser = [
     ...(currentUser.savedInternshipIds || []),
     ...(currentUser.bookmarkedInternshipIds || []),
     ...(currentUser.savedInternships || []),
   ];
 
-  const savedIdsFromBookmarks = bookmarks
+  const fromBookmarks = bookmarks
     .filter((bookmark) => {
       const userId =
-        bookmark.userId ||
-        bookmark.studentId ||
-        bookmark.ownerId ||
-        bookmark.createdBy;
-
+        bookmark.userId || bookmark.studentId || bookmark.ownerId || bookmark.createdBy;
       const type = String(
         bookmark.type || bookmark.itemType || bookmark.collection || ""
       ).toLowerCase();
 
       return (
-        String(userId || "").toLowerCase() ===
-          String(currentUser.id).toLowerCase() &&
+        String(userId || "") === String(currentUser.id) &&
         (type === "internship" || bookmark.internshipId || bookmark.itemId)
       );
     })
     .map((bookmark) => bookmark.internshipId || bookmark.itemId);
 
-  const savedIdsFromInternships = internships
-    .filter((internship) => {
-      const savedBy = internship.savedBy || internship.bookmarkedBy || [];
-
-      return savedBy
-        .map((value) => String(value).toLowerCase())
-        .some((value) => getStudentMatchValues(currentUser).includes(value));
-    })
+  const fromInternships = internships
+    .filter((internship) =>
+      (internship.savedBy || internship.bookmarkedBy || [])
+        .map(String)
+        .includes(String(currentUser.id))
+    )
     .map((internship) => internship.id);
 
-  return [
-    ...new Set([
-      ...savedIdsFromUser,
-      ...savedIdsFromBookmarks,
-      ...savedIdsFromInternships,
-    ]),
-  ];
+  return [...new Set([...fromUser, ...fromBookmarks, ...fromInternships])].map(String);
 }
 
-
 export default function Internships() {
+  const navigate = useNavigate();
+  const currentUser = getCurrentUser();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("All Companies");
   const [selectedDuration, setSelectedDuration] = useState("All Durations");
@@ -287,23 +161,14 @@ export default function Internships() {
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [sortBy, setSortBy] = useState("Sort by: Newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [viewMode, setViewMode] = useState("grid");
-  const [visibleCount, setVisibleCount] = useState(6);
+  const [currentPage, setCurrentPage] = useState(1);
+  const resultsTopRef = useRef(null);
+  const ITEMS_PER_PAGE = 9;
 
   const [internships, setInternships] = useState([]);
   const [savedIds, setSavedIds] = useState([]);
   const [appliedIds, setAppliedIds] = useState([]);
 
-  const [previewInternship, setPreviewInternship] = useState(null);
-  const [applyInternship, setApplyInternship] = useState(null);
-  const [coverLetter, setCoverLetter] = useState("");
-
-  const [toast, setToast] = useState({
-  open: false,
-  title: "",
-  description: "",
-  type: "success",
-});
 
   const refreshInternships = () => {
     const users = getCollection("users") || [];
@@ -313,33 +178,43 @@ export default function Internships() {
       storeInternships.map((internship) => normalizeInternship(internship, users))
     );
     setSavedIds(getSavedInternshipIdsForCurrentUser());
-    setAppliedIds(getAppliedInternshipIdsForCurrentUser());
-    
+    setAppliedIds(
+      (getApplicationsForStudent(currentUser?.id) || [])
+        .map((application) => application.internshipId)
+        .filter(Boolean)
+        .map(String)
+    );
   };
 
   useEffect(() => {
     refreshInternships();
   }, []);
 
+  const appliedSet = useMemo(() => new Set(appliedIds), [appliedIds]);
+
+  // Explore is for discovery. Once a student applies, that role belongs in My Applications.
+  const availableInternships = useMemo(
+    () => internships.filter((internship) => !appliedSet.has(String(internship.id))),
+    [internships, appliedSet]
+  );
+
   const companies = [
     "All Companies",
-    ...new Set(internships.map((item) => item.company)),
+    ...new Set(availableInternships.map((item) => item.company)),
   ];
-
   const durations = [
     "All Durations",
-    ...new Set(internships.map((item) => item.duration)),
+    ...new Set(availableInternships.map((item) => item.duration)),
   ];
-
   const workModes = [
     "All Work Modes",
-    ...new Set(internships.map((item) => item.workMode)),
+    ...new Set(availableInternships.map((item) => item.workMode)),
   ];
 
-  const featuredInternships = internships.filter((item) => item.featured);
-
   const filteredInternships = useMemo(() => {
-    const filtered = internships.filter((internship) => {
+    const query = searchTerm.trim().toLowerCase();
+
+    const filtered = availableInternships.filter((internship) => {
       const searchableText = [
         internship.title,
         internship.company,
@@ -347,29 +222,22 @@ export default function Internships() {
         internship.department,
         internship.workMode,
         internship.duration,
+        internship.overview,
         ...internship.skills,
       ]
         .join(" ")
         .toLowerCase();
 
-      const matchesSearch = searchableText.includes(searchTerm.toLowerCase());
-
+      const matchesSearch = !query || searchableText.includes(query);
       const matchesCompany =
-        selectedCompany === "All Companies" ||
-        internship.company === selectedCompany;
-
+        selectedCompany === "All Companies" || internship.company === selectedCompany;
       const matchesDuration =
-        selectedDuration === "All Durations" ||
-        internship.duration === selectedDuration;
-
+        selectedDuration === "All Durations" || internship.duration === selectedDuration;
       const matchesWorkMode =
-        selectedWorkMode === "All Work Modes" ||
-        internship.workMode === selectedWorkMode;
-
+        selectedWorkMode === "All Work Modes" || internship.workMode === selectedWorkMode;
       const matchesStatus =
         selectedStatus === "All" ||
-        (selectedStatus === "Saved" && savedIds.includes(internship.id)) ||
-        (selectedStatus === "Applied" && appliedIds.includes(internship.id)) ||
+        (selectedStatus === "Saved" && savedIds.includes(String(internship.id))) ||
         (selectedStatus === "Featured" && internship.featured);
 
       return (
@@ -382,30 +250,17 @@ export default function Internships() {
     });
 
     return [...filtered].sort((a, b) => {
-      if (sortBy === "Sort by: Newest") {
-        return getPostedNumber(a.postedAt) - getPostedNumber(b.postedAt);
-      }
-
-      if (sortBy === "Sort by: Oldest") {
-        return getPostedNumber(b.postedAt) - getPostedNumber(a.postedAt);
-      }
-
+      if (sortBy === "Sort by: Newest") return postedAge(a.postedAt) - postedAge(b.postedAt);
+      if (sortBy === "Sort by: Oldest") return postedAge(b.postedAt) - postedAge(a.postedAt);
       if (sortBy === "Sort by: Deadline Soon") {
         return new Date(a.deadline) - new Date(b.deadline);
       }
-
-      if (sortBy === "Sort by: Highest Rating") {
-        return b.rating - a.rating;
-      }
-
-      if (sortBy === "Sort by: Company A-Z") {
-        return a.company.localeCompare(b.company);
-      }
-
+      if (sortBy === "Sort by: Highest Rating") return b.rating - a.rating;
+      if (sortBy === "Sort by: Company A-Z") return a.company.localeCompare(b.company);
       return 0;
     });
   }, [
-    internships,
+    availableInternships,
     searchTerm,
     selectedCompany,
     selectedDuration,
@@ -413,39 +268,69 @@ export default function Internships() {
     selectedStatus,
     sortBy,
     savedIds,
-    appliedIds,
   ]);
 
-  const visibleInternships = filteredInternships.slice(0, visibleCount);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredInternships.length / ITEMS_PER_PAGE)
+  );
 
-  const toggleSave = (id) => {
-    toggleSavedInternship(id);
-    refreshInternships();
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedInternships = filteredInternships.slice(
+    pageStartIndex,
+    pageStartIndex + ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const goToPage = (page) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(nextPage);
+
+    requestAnimationFrame(() => {
+      resultsTopRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   };
 
-  const openApplyModal = (internship) => {
-    setCoverLetter("");
-    setApplyInternship(internship);
+  const getVisiblePageNumbers = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (safeCurrentPage <= 4) {
+      return [1, 2, 3, 4, 5, "ellipsis-end", totalPages];
+    }
+
+    if (safeCurrentPage >= totalPages - 3) {
+      return [
+        1,
+        "ellipsis-start",
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ];
+    }
+
+    return [
+      1,
+      "ellipsis-start",
+      safeCurrentPage - 1,
+      safeCurrentPage,
+      safeCurrentPage + 1,
+      "ellipsis-end",
+      totalPages,
+    ];
   };
-
-  const confirmApply = () => {
-  if (!applyInternship) return;
-
-  const internshipTitle = applyInternship.title;
-
-  applyToInternship(applyInternship.id, coverLetter);
-
-  setApplyInternship(null);
-  setCoverLetter("");
-  refreshInternships();
-
-  setToast({
-    open: true,
-    title: "Application submitted!",
-    description: `You successfully applied for ${internshipTitle}.`,
-    type: "success",
-  });
-};
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -454,47 +339,37 @@ export default function Internships() {
     setSelectedWorkMode("All Work Modes");
     setSelectedStatus("All");
     setSortBy("Sort by: Newest");
-    setVisibleCount(6);
+    setCurrentPage(1);
   };
 
-  const hasFilters =
-    searchTerm ||
-    selectedCompany !== "All Companies" ||
-    selectedDuration !== "All Durations" ||
-    selectedWorkMode !== "All Work Modes" ||
-    selectedStatus !== "All" ||
-    sortBy !== "Sort by: Newest";
+  const toggleSave = (event, internshipId) => {
+    event.stopPropagation();
+    toggleSavedInternship(internshipId);
+    refreshInternships();
+  };
+
 
   return (
-    <DashboardLayout >
-      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <div>
-            
-
-            <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
-              Discover Internships
-              
-            </h1>
-
-            <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
-              Find opportunities, build experience, save roles, preview details,
-              and apply with an optional cover letter.
-            </p>
-          </div>
+    <DashboardLayout>
+      <div className="mx-auto w-full max-w-[1480px]">
+        <PageHeader
+          title="Discover Internships"
+          description="Find open roles that match the work you want to try next. Roles you apply to move to My Applications automatically."
+        />
 
           <SearchFilterToolbar
+            className="mt-7"
             searchValue={searchTerm}
             onSearchChange={(value) => {
               setSearchTerm(value);
-              setVisibleCount(6);
+              setCurrentPage(1);
             }}
-            searchPlaceholder="Search by internship title, company, skill, or location..."
+            searchPlaceholder="Search roles, companies, skills, or locations..."
             showSort
             sortValue={sortBy}
             onSortChange={(value) => {
               setSortBy(value);
-              setVisibleCount(6);
+              setCurrentPage(1);
             }}
             sortOptions={[
               "Sort by: Newest",
@@ -513,622 +388,187 @@ export default function Internships() {
               value={`Company: ${selectedCompany}`}
               onChange={(value) => {
                 setSelectedCompany(value.replace("Company: ", ""));
-                setVisibleCount(6);
+                setCurrentPage(1);
               }}
               options={companies.map((company) => `Company: ${company}`)}
             />
-
             <FilterSelect
               value={`Duration: ${selectedDuration}`}
               onChange={(value) => {
                 setSelectedDuration(value.replace("Duration: ", ""));
-                setVisibleCount(6);
+                setCurrentPage(1);
               }}
               options={durations.map((duration) => `Duration: ${duration}`)}
             />
-
             <FilterSelect
               value={`Work Mode: ${selectedWorkMode}`}
               onChange={(value) => {
                 setSelectedWorkMode(value.replace("Work Mode: ", ""));
-                setVisibleCount(6);
+                setCurrentPage(1);
               }}
               options={workModes.map((mode) => `Work Mode: ${mode}`)}
             />
-
             <FilterSelect
               value={`Status: ${selectedStatus}`}
               onChange={(value) => {
                 setSelectedStatus(value.replace("Status: ", ""));
-                setVisibleCount(6);
+                setCurrentPage(1);
               }}
-              options={[
-                "Status: All",
-                "Status: Featured",
-                "Status: Saved",
-                "Status: Applied",
-              ]}
+              options={["Status: All", "Status: Featured", "Status: Saved"]}
             />
           </SearchFilterToolbar>
 
-          <AppCard className="p-6">
-            <div className="mb-5 flex items-center justify-between gap-4">
+          <section ref={resultsTopRef} className="mt-8 scroll-mt-28">
+            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h2 className="text-2xl font-black text-[color:var(--ink)]">
-                  Featured Internships
-                  
-                </h2>
-
-                <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
-                  Handpicked opportunities from top organizations.
+                <p className="text-[10px] font-black uppercase tracking-[0.17em] text-[#B89736]">
+                  Explore open roles
                 </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedStatus("Featured");
-                  setVisibleCount(6);
-                  document.getElementById("all-internships")?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
-                }}
-                className="text-sm font-black text-[color:var(--primary)]"
-              >
-                View all featured →
-              </button>
-            </div>
-
-            <div className="grid gap-5 lg:grid-cols-2">
-              {featuredInternships.slice(0, 2).map((internship) => (
-                <FeaturedInternshipCard
-                  key={internship.id}
-                  internship={internship}
-                  isSaved={savedIds.includes(internship.id)}
-                  isApplied={appliedIds.includes(internship.id)}
-                  onSave={() => toggleSave(internship.id)}
-                  onPreview={() => setPreviewInternship(internship)}
-                  onApply={() => openApplyModal(internship)}
-                />
-              ))}
-            </div>
-          </AppCard>
-
-          <AppCard id="all-internships" className="p-6">
-            <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <div>
-                <h2 className="text-2xl font-black text-[color:var(--ink)]">
-                  All Internships
-                  <span className="ml-2 rounded-full bg-[color:var(--accent)]/25 px-3 py-1 text-sm font-black text-[color:var(--primary)]">
-                    {filteredInternships.length} results
-                  </span>
+                <h2 className="mt-1 text-[26px] font-black tracking-[-0.025em] text-[color:var(--ink)]">
+                  {filteredInternships.length} opportunities
                 </h2>
               </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("grid")}
-                  className={`grid h-11 w-11 place-items-center rounded-2xl border border-[color:var(--border)] ${
-  viewMode === "grid"
-    ? "bg-[color:var(--primary)] text-white"
-    : "bg-[color:var(--card)] text-[color:var(--primary)] hover:bg-[color:var(--card-hover)]"
-}`}
-                >
-                  <Grid2X2 className="h-4 w-4" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setViewMode("list")}
-                  className={`grid h-11 w-11 place-items-center rounded-2xl border border-[color:var(--border)] ${
-  viewMode === "list"
-    ? "bg-[color:var(--primary)] text-white"
-    : "bg-[color:var(--card)] text-[color:var(--primary)] hover:bg-[color:var(--card-hover)]"
-}`}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
+              <p className="text-[12px] font-semibold text-[color:var(--muted)]">
+                Applied roles are hidden from this page.
+              </p>
             </div>
 
-            {visibleInternships.length === 0 ? (
-              <EmptyState />
+            {paginatedInternships.length === 0 ? (
+              <EmptyState onClear={clearFilters} />
             ) : (
-              <div
-                className={
-                  viewMode === "grid"
-                    ? "grid gap-5 lg:grid-cols-3"
-                    : "space-y-4"
-                }
-              >
-                {visibleInternships.map((internship) => (
-                  <InternshipCard
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {paginatedInternships.map((internship) => (
+                  <InternshipSurface
                     key={internship.id}
                     internship={internship}
-                    viewMode={viewMode}
-                    isSaved={savedIds.includes(internship.id)}
-                    isApplied={appliedIds.includes(internship.id)}
-                    onSave={() => toggleSave(internship.id)}
-                    onPreview={() => setPreviewInternship(internship)}
-                    onApply={() => openApplyModal(internship)}
+                    saved={savedIds.includes(String(internship.id))}
+                    onOpen={() => navigate(`/internships/${internship.id}`)}
+                    onSave={(event) => toggleSave(event, internship.id)}
                   />
                 ))}
               </div>
             )}
 
-            {visibleCount < filteredInternships.length && (
-              <div className="mt-6 flex justify-center">
-                <AppButton
-                  type="button"
-                  onClick={() => setVisibleCount((count) => count + 6)}
-                 className="
-    rounded-2xl
-    border border-[color:var(--border)]
-    bg-[color:var(--card)]
-    px-6
-    font-black
-    text-[color:var(--primary)]
-    hover:bg-[color:var(--card-hover)]
-  "
-                >
-                  Load more internships
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </AppButton>
-              </div>
-            )}
-          </AppCard>
+            <Pagination
+              currentPage={safeCurrentPage}
+              totalPages={totalPages}
+              totalItems={filteredInternships.length}
+              pageStartIndex={pageStartIndex}
+              pageSize={ITEMS_PER_PAGE}
+              onPageChange={goToPage}
+              ariaLabel="Internship results pagination"
+            />
+          </section>
         </div>
-
-        {previewInternship && (
-          <PreviewModal
-            internship={previewInternship}
-            isSaved={savedIds.includes(previewInternship.id)}
-            isApplied={appliedIds.includes(previewInternship.id)}
-            onClose={() => setPreviewInternship(null)}
-            onSave={() => toggleSave(previewInternship.id)}
-            onApply={() => {
-              setPreviewInternship(null);
-              openApplyModal(previewInternship);
-            }}
-          />
-        )}
-
-                {applyInternship && (
-          <ApplyModal
-            internship={applyInternship}
-            coverLetter={coverLetter}
-            setCoverLetter={setCoverLetter}
-            isApplied={appliedIds.includes(applyInternship.id)}
-            onClose={() => setApplyInternship(null)}
-            onConfirm={confirmApply}
-          />
-        )}
-      </main>
-
-      <SideToast
-        open={toast.open}
-        title={toast.title}
-        description={toast.description}
-        type={toast.type}
-        onClose={() =>
-          setToast((current) => ({
-            ...current,
-            open: false,
-          }))
-        }
-      />
-
     </DashboardLayout>
   );
 }
 
-function FeaturedInternshipCard({
-  internship,
-  isSaved,
-  isApplied,
-  onSave,
-  onPreview,
-  onApply,
-}) {
+function InternshipSurface({ internship, saved, onOpen, onSave }) {
   return (
-    <AppCard className="p-5">
-      <div className="flex items-start justify-between gap-4">
-        <CompanyLogo company={internship.company} />
-
-        <button
-          type="button"
-          onClick={onSave}className="
-grid h-10 w-10 place-items-center
-rounded-2xl
-bg-[color:var(--card)]
-text-[color:var(--primary)]
-transition
-hover:bg-[color:var(--card-hover)]
-" 
-        >
-          <Bookmark
-            className={`h-5 w-5 ${
-              isSaved ? "fill-[color:var(--primary)]" : ""
-            }`}
-          />
-        </button>
-      </div>
-
-      <div className="mt-4">
-        <StatusBadge status="Featured" />
-
-        <h3 className="mt-3 text-2xl font-black text-[color:var(--ink)]">
-          {internship.title}
-        </h3>
-
-        <p className="mt-1 text-sm font-bold text-[color:var(--primary)]">
-          {internship.company}
-        </p>
-      </div>
-
-      <InfoRow internship={internship} />
-
-      <SkillList skills={internship.skills.slice(0, 4)} />
-
-      <div className="mt-5 flex flex-wrap gap-3">
-        <AppButton
-          type="button"
-          onClick={onPreview}
-          className="
-rounded-2xl
-border border-[color:var(--border)]
-bg-[color:var(--card)]
-px-5
-font-black
-text-[color:var(--primary)]
-hover:bg-[color:var(--card-hover)]
-"
-        >
-          <Eye className="mr-2 h-4 w-4" />
-          Preview
-        </AppButton>
-
-        <AppButton
-          type="button"
-          onClick={onApply}
-          disabled={isApplied}
-          className="rounded-2xl bg-[color:var(--primary)] px-5 font-black text-white hover:bg-[color:var(--dark)] disabled:opacity-60"
-        >
-          <Send className="mr-2 h-4 w-4" />
-          {isApplied ? "Applied" : "Apply"}
-        </AppButton>
-
-        <Link to={`/internships/${internship.id}`} className="ml-auto">
-          <AppButton className="rounded-2xl bg-[color:var(--primary)] px-5 font-black text-white hover:bg-[color:var(--dark)]">
-            View details
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </AppButton>
-        </Link>
-      </div>
-    </AppCard>
-  );
-}
-
-function InternshipCard({
-  internship,
-  viewMode,
-  isSaved,
-  isApplied,
-  onSave,
-  onPreview,
-  onApply,
-}) {
-  const isList = viewMode === "list";
-
-  return (
-    <AppCard
-      className={`p-5 ${isList ? "grid gap-4 lg:grid-cols-[1fr_auto]" : ""}`}
+    <article
+      role="link"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      className={`group relative min-h-[285px] cursor-pointer overflow-hidden rounded-[24px] border bg-[#FBFCFA] p-5 shadow-[0_16px_36px_rgba(53,88,114,0.09)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#7AAACE]/20 hover:-translate-y-[2px] hover:shadow-[0_22px_46px_rgba(53,88,114,0.13)] sm:p-6 ${
+        internship.featured
+          ? "border-[#DDC98E]"
+          : "border-[#C9DBE4]"
+      }`}
     >
-      <div>
-        <div className="flex items-start justify-between gap-4">
-          <CompanyLogo company={internship.company} />
-
-          <button
-            type="button"
-            onClick={onSave}
-           className="
-grid h-10 w-10 place-items-center
-rounded-2xl
-bg-[color:var(--card)]
-text-[color:var(--primary)]
-transition
-hover:bg-[color:var(--card-hover)]
-"
-          >
-            <Bookmark
-              className={`h-5 w-5 ${
-                isSaved ? "fill-[color:var(--primary)]" : ""
-              }`}
-            />
-          </button>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {internship.featured && <StatusBadge status="Featured" />}
-          {isApplied && <StatusBadge status="Applied" />}
-          {isSaved && <StatusBadge status="Saved" />}
-        </div>
-
-        <h3 className="mt-3 text-xl font-black text-[color:var(--ink)]">
-          {internship.title}
-        </h3>
-
-        <p className="mt-1 text-sm font-bold text-[color:var(--primary)]">
-          {internship.company}
-        </p>
-
-        <InfoRow internship={internship} />
-
-        <SkillList skills={internship.skills.slice(0, 3)} />
-      </div>
-
-      <div
-        className={`mt-5 flex flex-wrap gap-3 ${
-          isList ? "lg:mt-0 lg:flex-col lg:justify-center" : ""
-        }`}
-      >
-        <AppButton
-          type="button"
-          onClick={onPreview}
-          className="rounded-2xl border border-[color:var(--border)]
-bg-[color:var(--card)]
-hover:bg-[color:var(--card-hover)] px-4 font-black text-[color:var(--primary)] hover:bg-white/80"
-        >
-          <Eye className="mr-2 h-4 w-4" />
-          Preview
-        </AppButton>
-
-        <AppButton
-          type="button"
-          onClick={onApply}
-          disabled={isApplied}
-          className="rounded-2xl border border-[color:var(--border)]
-bg-[color:var(--card)]
-hover:bg-[color:var(--card-hover)] px-4 font-black text-[color:var(--primary)]  disabled:opacity-60"
-        >
-          <Send className="mr-2 h-4 w-4" />
-          {isApplied ? "Applied" : "Apply"}
-        </AppButton>
-
-        <Link to={`/internships/${internship.id}`}>
-          <AppButton className="rounded-2xl bg-[color:var(--primary)] px-4 font-black text-white hover:bg-[color:var(--dark)]">
-            View details
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </AppButton>
-        </Link>
-      </div>
-    </AppCard>
-  );
-}
-
-function PreviewModal({
-  internship,
-  isSaved,
-  isApplied,
-  onClose,
-  onSave,
-  onApply,
-}) {
-  return (
-    <AppModal
-      title="Internship Preview"
-      onClose={onClose}
-      maxWidth="max-w-3xl"
-    >
-      <div className="space-y-5">
-        <div className="flex items-start gap-4">
-          <CompanyLogo company={internship.company} />
-
-          <div>
-            <div className="flex flex-wrap gap-2">
-              {internship.featured && <StatusBadge status="Featured" />}
-              {isSaved && <StatusBadge status="Saved" />}
-              {isApplied && <StatusBadge status="Applied" />}
-            </div>
-
-            <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">
-              {internship.title}
-            </h2>
-
-            <p className="mt-1 font-bold text-[color:var(--primary)]">
+      <div className="flex items-start justify-between gap-5">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <p className="text-[11px] font-black uppercase tracking-[0.11em] text-[#355872]">
               {internship.company}
             </p>
+            {internship.featured ? (
+              <span className="text-[9px] font-black uppercase tracking-[0.14em] text-[#9A7620]">
+                Featured
+              </span>
+            ) : null}
           </div>
+
+          <h3 className="mt-2.5 text-[21px] font-black leading-[1.1] tracking-[-0.035em] text-[#183247] transition-colors group-hover:text-[#244D69]">
+            {internship.title}
+          </h3>
         </div>
-
-        <InfoRow internship={internship} />
-
-        <p className="text-sm font-semibold leading-7 text-[color:var(--muted)]">
-          {internship.overview}
-        </p>
-
-        <div>
-          <h3 className="font-black text-[color:var(--ink)]">Key Skills</h3>
-          <SkillList skills={internship.skills} />
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <MiniList
-            title="Responsibilities"
-            items={internship.responsibilities}
-          />
-          <MiniList title="Requirements" items={internship.requirements} />
-        </div>
-
-        <div className="flex flex-wrap justify-end gap-3 pt-2">
-          <AppButton
-            type="button"
-            onClick={onSave}
-            className="rounded-2xl border border-[color:var(--border)]
-bg-[color:var(--card)]
-hover:bg-[color:var(--card-hover)] px-5 font-black text-[color:var(--primary)]"
-          >
-            <Bookmark className="mr-2 h-4 w-4" />
-            {isSaved ? "Unsave" : "Save"}
-          </AppButton>
-
-          <AppButton
-            type="button"
-            onClick={onApply}
-            disabled={isApplied}
-            className="rounded-2xl bg-[color:var(--primary)] px-5 font-black text-white"
-          >
-            <Send className="mr-2 h-4 w-4" />
-            {isApplied ? "Already Applied" : "Apply Now"}
-          </AppButton>
-
-          <Link to={`/internships/${internship.id}`}>
-            <AppButton className="rounded-2xl bg-[color:var(--primary)] px-5 font-black text-white">
-              Full Details
-            </AppButton>
-          </Link>
-        </div>
-      </div>
-    </AppModal>
-  );
-}
-
-function ApplyModal({
-  internship,
-  coverLetter,
-  setCoverLetter,
-  isApplied,
-  onClose,
-  onConfirm,
-}) {
-  return (
-    <AppModal
-      title={`Apply — ${internship.title}`}
-      onClose={onClose}
-      maxWidth="max-w-2xl"
-    >
-      <p className="text-sm font-semibold leading-7 text-[color:var(--muted)]">
-        You can write a short cover letter, or leave it empty and apply directly.
-      </p>
-
-      <div className="mt-5 rounded-2xl border border-white/70 bg-white/55 p-4">
-        <p className="font-black text-[color:var(--ink)]">
-          {internship.company}
-        </p>
-        <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
-          {internship.duration} • {internship.workMode} • Deadline{" "}
-          {internship.deadline}
-        </p>
-      </div>
-
-      <textarea
-        value={coverLetter}
-        onChange={(event) => setCoverLetter(event.target.value)}
-        maxLength={700}
-        placeholder="Write a short message to the employer..."
-        className="mt-5 min-h-40 w-full resize-none rounded-2xl border border-[color:var(--primary)]/15 bg-white/70 p-4 text-sm font-semibold leading-7 text-[color:var(--ink)] outline-none focus:ring-4 focus:ring-[color:var(--accent)]/25"
-      />
-
-      <p className="mt-2 text-xs font-bold text-[color:var(--muted)]">
-        {coverLetter.length}/700 characters
-      </p>
-
-      <div className="mt-6 flex justify-end gap-3">
-        <button
-          type="button"
-          onClick={onClose}
-          className="h-12 rounded-2xl border border-white/70 bg-white px-6 font-black text-[color:var(--muted)]"
-        >
-          Cancel
-        </button>
 
         <button
           type="button"
-          onClick={onConfirm}
-          disabled={isApplied}
-          className="h-12 rounded-2xl bg-[color:var(--primary)] px-6 font-black text-white disabled:opacity-60"
+          aria-label={saved ? "Remove from saved internships" : "Save internship"}
+          onClick={onSave}
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-[13px] border border-[#355872]/12 bg-white text-[#355872] transition hover:border-[#7AAACE]/45 hover:bg-[#F5FAFC]"
         >
-          {isApplied ? "Already Applied" : "Submit Application"}
+          <Bookmark className={`h-[18px] w-[18px] ${saved ? "fill-current" : ""}`} />
         </button>
       </div>
-    </AppModal>
-  );
-}
 
-function CompanyLogo({ company }) {
-  return (
-    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--primary),var(--secondary))] text-xl font-black text-white shadow-[var(--shadow-soft)]">
-      {company.charAt(0)}
-    </div>
-  );
-}
+      <p className="mt-3.5 line-clamp-3 text-[12.5px] font-semibold leading-5 text-[#647A89]">
+        {internship.overview}
+      </p>
 
-function InfoRow({ internship }) {
-  return (
-    <div className="mt-4 flex flex-wrap gap-4 text-sm font-semibold text-[color:var(--muted)]">
-      <span className="flex items-center gap-2">
-        <Clock className="h-4 w-4" />
-        {internship.duration}
-      </span>
-
-      <span className="flex items-center gap-2">
-        <MapPin className="h-4 w-4" />
-        {internship.location}
-      </span>
-
-      <span className="flex items-center gap-2">
-        <Briefcase className="h-4 w-4" />
-        {internship.workMode}
-      </span>
-
-      <span className="flex items-center gap-2">
-        <CalendarDays className="h-4 w-4" />
-        {internship.postedAt}
-      </span>
-    </div>
-  );
-}
-
-function SkillList({ skills }) {
-  return (
-    <div className="mt-4 flex flex-wrap gap-2">
-      {skills.map((skill) => (
-        <span
-          key={skill}
-          className="rounded-full bg-[color:var(--accent)]/25 px-3 py-1 text-xs font-black text-[color:var(--primary)]"
-        >
-          {skill}
+      <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-y border-[#DCE7ED] py-3 text-[11px] font-bold text-[#627887]">
+        <span className="inline-flex items-center gap-1.5">
+          <MapPin className="h-3.5 w-3.5 text-[#456D87]" />
+          {getLocationLabel(internship.location, "Not specified")}
         </span>
-      ))}
-    </div>
+        <span className="inline-flex items-center gap-1.5">
+          <BriefcaseBusiness className="h-3.5 w-3.5 text-[#456D87]" />
+          {internship.workMode}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Clock3 className="h-3.5 w-3.5 text-[#456D87]" />
+          {internship.duration}
+        </span>
+      </div>
+
+      <div className="mt-4 flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            {internship.skills.slice(0, 3).map((skill) => (
+              <span
+                key={skill}
+                className="text-[11px] font-black text-[#45657A] before:mr-2 before:text-[#B89736] before:content-['·'] first:before:hidden"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+          <p className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#8A9AA4]">
+            <CalendarDays className="h-3.5 w-3.5" />
+            {internship.postedAt}
+          </p>
+        </div>
+      </div>
+
+      <ArrowUpRight className="pointer-events-none absolute bottom-5 right-5 h-4 w-4 text-[#355872] opacity-0 transition-opacity group-hover:opacity-25 sm:bottom-6 sm:right-6" />
+    </article>
   );
 }
 
-function MiniList({ title, items }) {
+function EmptyState({ onClear }) {
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/55 p-4">
-      <h4 className="font-black text-[color:var(--ink)]">{title}</h4>
-
-      <ul className="mt-3 list-disc space-y-1 pl-5 text-sm font-semibold leading-6 text-[color:var(--muted)]">
-        {items.slice(0, 4).map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="rounded-2xl border border-white/70 bg-white/55 p-10 text-center">
-      <h3 className="text-2xl font-black text-[color:var(--ink)]">
-        No internships found
-      </h3>
-      <p className="mt-2 text-sm font-semibold text-[color:var(--muted)]">
-        Try changing your search or filters.
+    <div className="rounded-[26px] border border-[#C9DBE4] bg-[#FBFCFA] px-6 py-14 text-center shadow-[0_18px_42px_rgba(53,88,114,0.08)]">
+      <p className="text-xl font-black tracking-[-0.02em] text-[#183247]">
+        No open internships match these filters.
       </p>
+      <p className="mx-auto mt-2 max-w-xl text-sm font-semibold leading-6 text-[#708491]">
+        Try widening the search. Roles you already applied to are intentionally kept in My Applications instead of Explore.
+      </p>
+      <button
+        type="button"
+        onClick={onClear}
+        className="mt-5 h-10 rounded-[13px] border border-[#355872]/14 bg-white px-4 text-[11px] font-black text-[#355872] transition hover:bg-[#F5FAFC]"
+      >
+        Clear filters
+      </button>
     </div>
   );
 }

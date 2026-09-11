@@ -14,10 +14,11 @@ import CourseBadge from "@/components/ui/CourseBadge";
 import PrimaryActionButton from "@/components/ui/Searchcommons/PrimaryActionButton";
 import {SectionHeader} from "@/components/ui/SectionHeader";
 import InstructorCard from "@/components/ui/Searchcommons/InsctructorCard";;
-import { useState } from "react";
-import Pagination from "@/components/ui/Searchcommons/Pagination";
+import { useEffect, useRef, useState } from "react";
 import { instructors } from "@/data/InstructorSearchdata";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import PageHeader from "@/components/common/PageHeader";
+import Pagination from "@/components/common/Pagination";
 import FilterSelect from "@/components/common/FilterSelect";
 import ViewInstructor from "@/pages/ViewInstructor";
 import { getAllInstructors } from "@/data/demoStore";
@@ -87,36 +88,84 @@ export default function ExploreInstructors() {
   }
 );
     const [currentPage, setCurrentPage] = useState(1);
-    const instructorsPerPage = 4;
+    const resultsTopRef = useRef(null);
+    const ITEMS_PER_PAGE = 9;
 
-const startIndex =
-  (currentPage - 1) * instructorsPerPage;
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedCourse]);
 
-const paginatedInstructors =
-  filteredInstructors.slice(
-    startIndex,
-    startIndex + instructorsPerPage
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredInstructors.length / ITEMS_PER_PAGE)
   );
 
-const totalPages = Math.ceil(
-  filteredInstructors.length /
-    instructorsPerPage
-);
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedInstructors = filteredInstructors.slice(
+    pageStartIndex,
+    pageStartIndex + ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const goToPage = (page) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(nextPage);
+
+    requestAnimationFrame(() => {
+      resultsTopRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  const getVisiblePageNumbers = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (safeCurrentPage <= 4) {
+      return [1, 2, 3, 4, 5, "ellipsis-end", totalPages];
+    }
+
+    if (safeCurrentPage >= totalPages - 3) {
+      return [
+        1,
+        "ellipsis-start",
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ];
+    }
+
+    return [
+      1,
+      "ellipsis-start",
+      safeCurrentPage - 1,
+      safeCurrentPage,
+      safeCurrentPage + 1,
+      "ellipsis-end",
+      totalPages,
+    ];
+  };
+
+
   return (
     <DashboardLayout>
-       <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-
-        {/* HEADER */}
-        <div>
-           <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
-            Find Instructors
-          </h1>
-
-           <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
-            Connect with expert instructors across the GUC community and explore their courses and specialties.
-          </p>
-        </div>
+      <div className="mx-auto w-full max-w-[1480px] space-y-6">
+        <PageHeader
+          title="Find Instructors"
+          description="Connect with expert instructors across the GUC community and explore their courses and specialties."
+        />
 
        {/* SEARCH + FILTERS */}
 <SearchFilterToolbar
@@ -159,7 +208,7 @@ const totalPages = Math.ceil(
 </SearchFilterToolbar>
 
 {/* TOP BAR */}
-<div className="flex items-center justify-between">
+<div ref={resultsTopRef} className="flex scroll-mt-28 items-center justify-between">
 
   <h2 className="font-bold text-[var(--ink)]">
     {filteredInstructors.length} instructors found
@@ -167,7 +216,7 @@ const totalPages = Math.ceil(
 
 </div>
         {/* INSTRUCTORS LIST */}
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paginatedInstructors.map((instructor) => (
             <InstructorCard
   key={instructor.id}
@@ -179,18 +228,16 @@ const totalPages = Math.ceil(
           ))}
         </div>
 
-        {/* FOOTER */}
-        <div className="flex items-center justify-between pt-2">
-  
-            <p className="text-sm font-medium text-[var(--muted)]">
-                Showing 1 to 4 of {filteredInstructors.length} instructors
-            </p>
         <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          totalItems={filteredInstructors.length}
+          pageStartIndex={pageStartIndex}
+          pageSize={ITEMS_PER_PAGE}
+          onPageChange={goToPage}
+          ariaLabel="Instructor results pagination"
         />
-      </div>
+
       </div>
       {selectedInstructor && (
   <ViewInstructor
@@ -200,7 +247,6 @@ const totalPages = Math.ceil(
     }
   />
 )}  
-</main>
     </DashboardLayout>
   );
 }

@@ -53,6 +53,12 @@ function inferWorkspace({ explicitWorkspace, pathname, profile }) {
   if (pathname.startsWith("/instructor-dashboard")) return "instructor";
   if (pathname.startsWith("/student-dashboard")) return "student";
 
+  // For cross-role pages (Chats, public portfolios, notifications, etc.),
+  // preserve the authenticated user's workspace. The session role is the
+  // authority; profile data is presentation data and may briefly be stale.
+  const storedRole = getStoredUserRole();
+  if (storedRole) return storedRole;
+
   const profileRole =
     normalizeWorkspace(profile?.accountRole) ||
     normalizeWorkspace(profile?.systemRole) ||
@@ -60,9 +66,6 @@ function inferWorkspace({ explicitWorkspace, pathname, profile }) {
     normalizeWorkspace(profile?.userType);
 
   if (profileRole) return profileRole;
-
-  const storedRole = getStoredUserRole();
-  if (storedRole) return storedRole;
 
   return "student";
 }
@@ -72,6 +75,7 @@ export default function DashboardLayout({
   workspace,
   workspaceLabel,
   sidebarProgress,
+  showFooter = true,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
@@ -138,7 +142,7 @@ export default function DashboardLayout({
         <div className="ml-[92px] w-[calc(100vw-92px)] overflow-x-hidden px-6 py-8">
           <div className="w-full max-w-none space-y-6">
             {children}
-            <DashboardFooter />
+            {showFooter && <DashboardFooter />}
           </div>
         </div>
       </div>

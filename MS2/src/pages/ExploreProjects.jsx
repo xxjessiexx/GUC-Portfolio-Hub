@@ -2,6 +2,8 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
 import ExploreProjectCard from "@/components/ui/Searchcommons/ExploreProjectCard";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import PageHeader from "@/components/common/PageHeader";
+import Pagination from "@/components/common/Pagination";
 import FilterPanel from "@/components/common/FilterPanel";
 import FilterSelect from "@/components/common/FilterSelect";
 import { AdminActionDialog }
@@ -23,13 +25,9 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
-import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 
 export default function ExploreProjects({showReport = false,}) {
-
-  const navigate = useNavigate();
-  const location = useLocation();
 
   /* STATE */
   const getDisplayCourse = (project) => {
@@ -112,6 +110,9 @@ const [reportReason, setReportReason] =
   const [selectedSort, setSelectedSort] =
     useState("Newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const resultsTopRef = useRef(null);
+  const ITEMS_PER_PAGE = 12;
   const [notification, setNotification] =
   useState(null);
 
@@ -218,20 +219,34 @@ const instructorOptions = [
       selectedInstructor.toLowerCase()
     );
 
-    const courseOptions = [
-  "Course: All Courses",
+    const matchesDate = (() => {
+      if (selectedDate === "Anytime") return true;
 
-  ...new Set(
-    projects.map(
-      (project) => `Course: ${getDisplayCourse(project)}`
-    )
-  ),
-];
+      const rawDate = project.date || project.createdAt || project.updatedAt;
+      const projectDate = rawDate ? new Date(rawDate) : null;
+      if (!projectDate || Number.isNaN(projectDate.getTime())) return false;
+
+      const now = new Date();
+      const cutoff = new Date(now);
+
+      if (selectedDate === "This Week") {
+        cutoff.setDate(now.getDate() - 7);
+        return projectDate >= cutoff && projectDate <= now;
+      }
+
+      if (selectedDate === "This Month") {
+        cutoff.setMonth(now.getMonth() - 1);
+        return projectDate >= cutoff && projectDate <= now;
+      }
+
+      return true;
+    })();
 
     return (
       matchesSearch &&
       matchesCourse &&
-      matchesInstructor
+      matchesInstructor &&
+      matchesDate
     );
   })
 
@@ -260,51 +275,92 @@ const instructorOptions = [
   return 0;
 });
 
-  const openProject = (project) => {
-    if (!project?.id) return;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredProjects.length / ITEMS_PER_PAGE)
+  );
 
-    const projectIds = filteredProjects.map((item) => String(item.id));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedProjects = filteredProjects.slice(
+    pageStartIndex,
+    pageStartIndex + ITEMS_PER_PAGE
+  );
 
-    navigate(`/project?projectId=${encodeURIComponent(project.id)}`, {
-      state: {
-        projectFlow: {
-          originPath: `${location.pathname}${location.search}`,
-          originLabel: "Explore Projects",
-          projectIds,
-        },
-      },
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const goToPage = (page) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(nextPage);
+
+    requestAnimationFrame(() => {
+      resultsTopRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     });
+  };
+
+  const getVisiblePageNumbers = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (safeCurrentPage <= 4) {
+      return [1, 2, 3, 4, 5, "ellipsis-end", totalPages];
+    }
+
+    if (safeCurrentPage >= totalPages - 3) {
+      return [
+        1,
+        "ellipsis-start",
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ];
+    }
+
+    return [
+      1,
+      "ellipsis-start",
+      safeCurrentPage - 1,
+      safeCurrentPage,
+      safeCurrentPage + 1,
+      "ellipsis-end",
+      totalPages,
+    ];
   };
 
   return (
     <DashboardLayout>
 
-      {/* MAIN */}
-      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-
-        {/* HEADER */}
-        <div>
-           <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
-            Explore Projects
-          </h1>
-
-           <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
-            Discover projects created by GUC students.
-          </p>
-        </div>
+      <div className="mx-auto w-full max-w-[1480px] space-y-6">
+        <PageHeader
+          title="Explore Projects"
+          description="Discover projects created by GUC students."
+        />
 
         {/* SEARCH + FILTERS */}
         
           <SearchFilterToolbar
             searchValue={search}
-            onSearchChange={setSearch}
+            onSearchChange={(value) => {
+              setSearch(value);
+              setCurrentPage(1);
+            }}
             searchPlaceholder="Search projects by title, keyword, or technology..."
             showSort
             sortValue={`Sort by: ${selectedSort}`}
-            onSortChange={(value) =>
-              setSelectedSort(value.replace("Sort by: ", ""))
-            }
+            onSortChange={(value) => {
+              setSelectedSort(value.replace("Sort by: ", ""));
+              setCurrentPage(1);
+            }}
             sortOptions={[
               "Sort by: Newest",
               "Sort by: Oldest",
@@ -321,35 +377,39 @@ const instructorOptions = [
               setSelectedCourse("All Courses");
               setSelectedInstructor("All Instructors");
               setSelectedDate("Anytime");
+              setCurrentPage(1);
             }}
           >
             <FilterSelect
               value={`Course: ${selectedCourse}`}
-              onChange={(value) =>
+              onChange={(value) => {
                 setSelectedCourse(
                   value.replace("Course: ", "")
-                )
-              }
+                );
+                setCurrentPage(1);
+              }}
               options={courseOptions}
             />
 
             <FilterSelect
               value={`Instructor: ${selectedInstructor}`}
-              onChange={(value) =>
+              onChange={(value) => {
                 setSelectedInstructor(
                   value.replace("Instructor: ", "")
-                )
-              }
+                );
+                setCurrentPage(1);
+              }}
               options={instructorOptions}
             />
 
             <FilterSelect
               value={`Date: ${selectedDate}`}
-              onChange={(value) =>
+              onChange={(value) => {
                 setSelectedDate(
                   value.replace("Date: ", "")
-                )
-              }
+                );
+                setCurrentPage(1);
+              }}
               options={[
                 "Date: Anytime",
                 "Date: This Week",
@@ -358,7 +418,7 @@ const instructorOptions = [
             />
           </SearchFilterToolbar>
         {/* TOP BAR */}
-        <div className="flex items-center justify-between">
+        <div ref={resultsTopRef} className="flex scroll-mt-28 items-center justify-between">
 
           <h2 className="font-bold text-[var(--ink)]">
             {filteredProjects.length} projects found
@@ -455,7 +515,7 @@ const instructorOptions = [
           }
         >
 
-          {filteredProjects.map((project) => (
+          {paginatedProjects.map((project) => (
             <ExploreProjectCard
             key={project.id}
             project={{
@@ -468,7 +528,6 @@ const instructorOptions = [
           }}
             view={view}
             toggleFavorite={toggleFavorite}
-            onOpenProject={openProject}
             showReport={showReport}
            onReport={(project) => {
           setSelectedProject(project);
@@ -478,6 +537,16 @@ const instructorOptions = [
           ))}
 
         </div>
+
+        <Pagination
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          totalItems={filteredProjects.length}
+          pageStartIndex={pageStartIndex}
+          pageSize={ITEMS_PER_PAGE}
+          onPageChange={goToPage}
+          ariaLabel="Project results pagination"
+        />
       </div>
 
       <AdminActionDialog
@@ -588,7 +657,6 @@ const instructorOptions = [
   title={notification?.title}
   description={notification?.text}
 />
-</main>
     </DashboardLayout>
   );
 }

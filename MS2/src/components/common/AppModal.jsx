@@ -1,11 +1,14 @@
 import { X } from "lucide-react";
 
 export default function AppModal({
+  open = true,
   title,
   children,
   onClose,
   maxWidth = "max-w-2xl",
 }) {
+  if (!open) return null;
+
   return (
     <div
       className="

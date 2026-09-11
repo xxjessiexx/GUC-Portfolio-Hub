@@ -1,901 +1,427 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Archive,
-  ArrowDownUp,
+  ArchiveRestore,
   BriefcaseBusiness,
-  CheckCircle2,
-  Edit,
+  Check,
+  CircleDot,
+  Copy,
+  Edit3,
   Eye,
+  FileText,
   MapPin,
   MoreHorizontal,
-  SlidersHorizontal,
   Plus,
   Trash2,
-  Rocket,
-  Search,
   Users,
+  X,
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { AppCard } from "@/components/ui/AppCard";
-import { AppButton } from "@/components/ui/AppButton";
-import { Input } from "@/components/ui/input";
-
-import MetricCard from "@/components/common/MetricCard";
+import PageHeader from "@/components/common/PageHeader";
+import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import FilterSelect from "@/components/common/FilterSelect";
-import InitialsAvatar from "@/components/common/InitialsAvatar";
-import StatusBadge from "@/components/common/StatusBadge";
-import AppModal from "@/components/common/AppModal";
-
-
+import Pagination from "@/components/common/Pagination";
 import {
+  createInternship,
+  deleteInternship as deleteInternshipFromStore,
   getCurrentUser,
   getInternshipsForEmployer,
+  updateInternship,
 } from "@/data/demoStore";
-import FilterPanel from "@/components/common/FilterPanel";
-import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 
-function isDeadlinePassed(deadline) {
+const ITEMS_PER_PAGE = 5;
+
+const STATUS_TABS = [
+  { id: "all", label: "All" },
+  { id: "active", label: "Active" },
+  { id: "draft", label: "Drafts" },
+  { id: "closed", label: "Closed" },
+  { id: "archived", label: "Archived" },
+];
+
+const STATUS_LABELS = {
+  all: "All Statuses",
+  active: "Active",
+  draft: "Draft",
+  closed: "Closed",
+  archived: "Archived",
+};
+
+
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest" },
+  { value: "deadline", label: "Deadline soonest" },
+  { value: "applicants", label: "Most applicants" },
+  { value: "title", label: "Title A–Z" },
+];
+
+function getLocationLabel(value, fallback = "") {
+  if (!value) return fallback;
+  if (typeof value === "string") return value;
+
+  if (typeof value === "object") {
+    return (
+      value.label ||
+      value.name ||
+      value.address ||
+      value.city ||
+      fallback
+    );
+  }
+
+  return String(value);
+}
+
+function safeDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isPastDeadline(value) {
+  const date = safeDate(value);
+  if (!date) return false;
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const deadlineDate = new Date(deadline);
-  deadlineDate.setHours(0, 0, 0, 0);
-
-  return deadlineDate < today;
+  date.setHours(0, 0, 0, 0);
+  return date < today;
 }
 
-export default function ManageInternships() {
-  const navigate = useNavigate();
+function getOperationalStatus(internship) {
+  const rawStatus = String(internship.status || "").trim().toLowerCase();
 
-  const [internships, setInternships] = useState(() =>
-  getInternshipsForEmployer(getCurrentUser()?.id)
-);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDepartment, setSelectedDepartment] =
-    useState("All Departments");
-  const [selectedStatus, setSelectedStatus] = useState("All Statuses");
-  const [selectedLocation, setSelectedLocation] = useState("All Locations");
-  const [sortBy, setSortBy] = useState("Newest");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const [message, setMessage] = useState("");
-  const [editingInternship, setEditingInternship] = useState(null);
-  const [showAllCandidates, setShowAllCandidates] = useState(false);
-  const [showAllActivity, setShowAllActivity] = useState(false);
+  if (
+    internship.isArchived ||
+    internship.archived ||
+    rawStatus.includes("archived")
+  ) {
+    return "archived";
+  }
 
-useEffect(() => {
-  const refresh = () => {
-    setInternships(getInternshipsForEmployer(getCurrentUser()?.id));
-  };
+  if (rawStatus.includes("draft")) {
+    return "draft";
+  }
 
-  window.addEventListener("demo-db-change", refresh);
-  window.addEventListener("demo-current-user-change", refresh);
+  if (
+    internship.isFilled ||
+    internship.positionFilled ||
+    rawStatus.includes("filled") ||
+    rawStatus.includes("closed") ||
+    rawStatus.includes("completed") ||
+    isPastDeadline(internship.deadline)
+  ) {
+    return "closed";
+  }
 
-  return () => {
-    window.removeEventListener("demo-db-change", refresh);
-    window.removeEventListener("demo-current-user-change", refresh);
-  };
-}, []);
+  return "active";
+}
 
-  const departments = useMemo(
-    () => [
-      "All Departments",
-      ...new Set(internships.map((item) => item.department)),
-    ],
-    [internships]
-  );
+function getApplicantCount(internship) {
+  if (Number.isFinite(Number(internship.applicants))) {
+    return Number(internship.applicants);
+  }
 
-  const locations = useMemo(
-    () => ["All Locations", ...new Set(internships.map((item) => item.location))],
-    [internships]
-  );
+  return Array.isArray(internship.applications)
+    ? internship.applications.length
+    : 0;
+}
 
-  const filteredInternships = useMemo(() => {
-    const filtered = internships.filter((internship) => {
-      const searchableText = [
-        internship.title,
-        internship.department,
-        internship.location,
-        internship.status,
-      ]
-        .join(" ")
-        .toLowerCase();
+function getNeedsReviewCount(internship) {
+  if (!Array.isArray(internship.applications)) return 0;
 
-      const matchesSearch = searchableText.includes(searchTerm.toLowerCase());
-
-      const matchesDepartment =
-        selectedDepartment === "All Departments" ||
-        internship.department === selectedDepartment;
-
-      const matchesStatus =
-        selectedStatus === "All Statuses" ||
-        internship.status === selectedStatus;
-
-      const matchesLocation =
-        selectedLocation === "All Locations" ||
-        internship.location === selectedLocation;
-
-      return (
-        matchesSearch && matchesDepartment && matchesStatus && matchesLocation
-      );
-    });
-
-    return [...filtered].sort((a, b) => {
-      if (sortBy === "Newest") {
-        return new Date(b.deadline) - new Date(a.deadline);
-      }
-
-      if (sortBy === "Oldest") {
-        return new Date(a.deadline) - new Date(b.deadline);
-      }
-
-      if (sortBy === "Most Applicants") {
-        return b.applicants - a.applicants;
-      }
-
-      if (sortBy === "Least Applicants") {
-        return a.applicants - b.applicants;
-      }
-
-      return 0;
-    });
-  }, [
-    internships,
-    searchTerm,
-    selectedDepartment,
-    selectedStatus,
-    selectedLocation,
-    sortBy,
-  ]);
-
-  const stats = {
-    active: internships.filter((item) => !item.isArchived).length,
-    applicants: internships.reduce((sum, item) => sum + item.applicants, 0),
-    filled: internships.filter((item) => item.isFilled).length,
-    archived: internships.filter((item) => item.isArchived).length,
-  };
-
-  const favoriteSkills = ["React", "Python", "Data Science", "UI/UX", "SQL"];
-
-  const candidates = [
-    {
-      name: "Mariam Khaled",
-      major: "Data Science • GUC",
-      skills: ["Python", "SQL", "Power BI"],
-      matchReason: "Matches your favorite Data Science and SQL profiles",
-      score: 96,
-    },
-    {
-      name: "Youssef Ashraf",
-      major: "Computer Science • GUC",
-      skills: ["React", "JavaScript", "Tailwind"],
-      matchReason: "Matches your favorite React frontend profiles",
-      score: 93,
-    },
-    {
-      name: "Nourhan Hany",
-      major: "Information Systems • GUC",
-      skills: ["UI/UX", "Figma", "Research"],
-      matchReason: "Matches your favorite UI/UX portfolios",
-      score: 91,
-    },
-    {
-      name: "Omar Tarek",
-      major: "Software Engineering • GUC",
-      skills: ["Python", "Django", "APIs"],
-      matchReason: "Matches your favorite backend portfolios",
-      score: 88,
-    },
-    {
-      name: "Farida Samir",
-      major: "Business Informatics • GUC",
-      skills: ["Research", "Analytics", "SQL"],
-      matchReason: "Matches your favorite analytics profiles",
-      score: 84,
-    },
-  ].sort((a, b) => b.score - a.score);
-
-  const activities = [
-    {
-      text: "48 new applications",
-      subtext: "Data Analyst Intern",
-      time: "1h ago",
-    },
-    {
-      text: "New saved candidate",
-      subtext: "Youssef Ashraf",
-      time: "2h ago",
-    },
-    {
-      text: "Interview scheduled",
-      subtext: "UI/UX Design Intern",
-      time: "3h ago",
-    },
-    {
-      text: "Internship filled",
-      subtext: "Marketing Intern",
-      time: "1d ago",
-    },
-    {
-      text: "Application withdrawn",
-      subtext: "Product Research Intern",
-      time: "2d ago",
-    },
-  ];
-  const monthlyStats = [
-  { month: "Jan", applications: 18 },
-  { month: "Feb", applications: 26 },
-  { month: "Mar", applications: 34 },
-  { month: "Apr", applications: 41 },
-  { month: "May", applications: 63 },
-];
-
-  const toggleFilledStatus = (id) => {
-    setInternships((current) =>
-      current.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              isFilled: !item.isFilled,
-              status: item.isFilled ? "Open" : "Filled",
-            }
-          : item
-      )
+  return internship.applications.filter((application) => {
+    const status = String(application.status || "").toLowerCase();
+    return (
+      !status ||
+      status === "pending" ||
+      status === "reviewing" ||
+      status === "submitted"
     );
+  }).length;
+}
 
-    setOpenMenuId(null);
-
-    setMessage(
-      internships.find((item) => item.id === id)?.isFilled
-        ? "Internship reopened for hiring."
-        : "Internship marked as filled."
-    );
-  };
-
-  const toggleArchiveStatus = (internship) => {
-    if (!internship.isArchived && !isDeadlinePassed(internship.deadline)) {
-      setMessage(
-        "You cannot archive this internship before the application deadline passes."
-      );
-
-      setOpenMenuId(null);
-      return;
-    }
-
-    setInternships((current) =>
-      current.map((item) =>
-        item.id === internship.id
-          ? {
-              ...item,
-              isArchived: !item.isArchived,
-              status: item.isArchived ? "Open" : "Archived",
-            }
-          : item
-      )
-    );
-
-    setOpenMenuId(null);
-
-    setMessage(
-      internship.isArchived
-        ? "Internship unarchived successfully."
-        : "Internship archived successfully."
-    );
-  };
-
-  
-
-  const [internshipToDelete, setInternshipToDelete] = useState(null);
-
-const deleteInternship = (id) => {
-  setInternshipToDelete(id);
-  setOpenMenuId(null);
-};
-
-const confirmDeleteInternship = () => {
-  setInternships((current) =>
-    current.filter((item) => item.id !== internshipToDelete)
-  );
-
-  setInternshipToDelete(null);
-
-  setMessage("Internship deleted successfully.");
-};
-
-  const viewEmployerInternship = (internship) => {
-    navigate(`/internships/${internship.id}`);
-  };
-
-  const saveEditedInternship = () => {
-    setInternships((current) =>
-      current.map((item) =>
-        item.id === editingInternship.id ? editingInternship : item
-      )
-    );
-
-    setEditingInternship(null);
-    setMessage("Internship details updated successfully.");
-  };
-
+function getCreatedTime(internship) {
   return (
-    <DashboardLayout >
-      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
-            <div>
-              <h1 className="text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
-                Manage Internships
-              </h1>
-
-              <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
-                Create, manage, archive, and track internship postings and
-                applications.
-              </p>
-            </div>
-
-            <AppButton
-              type="button"
-              onClick={() => navigate("/create-internship")}
-              className="min-h-12 rounded-2xl bg-[color:var(--primary)] px-6 font-black text-white hover:bg-[color:var(--dark)]"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create Internship
-            </AppButton>
-          </div>
-
-          <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            <MetricCard
-              title="Active Internships"
-              value={stats.active}
-              icon={BriefcaseBusiness}
-              helper="↗ 12% vs last month"
-            />
-
-            <MetricCard
-              title="Applications Received"
-              value={stats.applicants}
-              icon={Users}
-              helper="↗ 18% vs last month"
-            />
-
-            <MetricCard
-              title="Positions Filled"
-              value={stats.filled}
-              icon={CheckCircle2}
-              helper="↗ 30% vs last month"
-            />
-
-            <MetricCard
-              title="Archived Internships"
-              value={stats.archived}
-              icon={Archive}
-              helper="↗ 8% vs last month"
-            />
-          </section>
-          <AppCard className="p-6">
-            <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-              <div>
-                <h2 className="text-2xl font-black text-[color:var(--ink)]">
-                  Applications Over Time
-                </h2>
-
-                <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
-                  Monthly application growth across your internship postings.
-                </p>
-              </div>
-
-              <span className="rounded-2xl bg-green-100 px-4 py-2 text-sm font-black text-green-700">
-                ↗ +18% this month
-              </span>
-            </div>
-
-            <div className="flex h-64 items-end gap-4 rounded-[28px] bg-white/45 p-5">
-              {monthlyStats.map((item) => (
-                <div
-                  key={item.month}
-                  className="flex flex-1 flex-col items-center gap-3"
-                >
-                  <div className="flex h-44 w-full items-end rounded-2xl bg-white/60 p-2">
-                    <div
-                      className="w-full rounded-xl bg-[color:var(--primary)]"
-                      style={{ height: `${item.applications * 2}px` }}
-                    />
-                  </div>
-
-                  <div className="text-center">
-                    <p className="text-sm font-black text-[color:var(--ink)]">
-                      {item.applications}
-                    </p>
-
-                    <p className="text-xs font-bold text-[color:var(--muted)]">
-                      {item.month}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </AppCard>
-
-          {message && (
-            <AppCard className="p-4">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm font-black text-[color:var(--primary)]">
-                  {message}
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() => setMessage("")}
-                  className="text-sm font-black text-[color:var(--muted)] hover:text-[color:var(--primary)]"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </AppCard>
-          )}
-
-          <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
-            <div className="space-y-6">
-              <SearchFilterToolbar
-                searchPlaceholder="Search internships..."
-                searchValue={searchTerm}
-                onSearchChange={setSearchTerm}
-                showSort
-                sortValue={`Sort by: ${sortBy}`}
-                onSortChange={(value) => setSortBy(value.replace("Sort by: ", ""))}
-                sortOptions={[
-                  "Sort by: Newest",
-                  "Sort by: Oldest",
-                  "Sort by: Most Applicants",
-                  "Sort by: Least Applicants",
-                ]}
-                showFilters
-                filtersOpen={filtersOpen}
-                onToggleFilters={() => setFiltersOpen((current) => !current)}
-                filterTitle="Filter internships"
-                onClearFilters={() => {
-                  setSelectedDepartment("All Departments");
-                  setSelectedStatus("All Statuses");
-                  setSelectedLocation("All Locations");
-                }}
-              >
-                <FilterSelect
-                  value={`Department: ${selectedDepartment}`}
-                  onChange={(value) =>
-                    setSelectedDepartment(value.replace("Department: ", ""))
-                  }
-                  options={departments.map((department) => `Department: ${department}`)}
-                />
-
-                <FilterSelect
-                  value={`Status: ${selectedStatus}`}
-                  onChange={(value) =>
-                    setSelectedStatus(value.replace("Status: ", ""))
-                  }
-                  options={[
-                    "Status: All Statuses",
-                    "Status: Open",
-                    "Status: Filled",
-                    "Status: Archived",
-                  ]}
-                />
-
-                <FilterSelect
-                  value={`Location: ${selectedLocation}`}
-                  onChange={(value) =>
-                    setSelectedLocation(value.replace("Location: ", ""))
-                  }
-                  options={locations.map((location) => `Location: ${location}`)}
-                />
-              </SearchFilterToolbar>
-              <AppCard className="overflow-visible">
-                <div className="hidden grid-cols-[2.2fr_1.2fr_1.4fr_1fr_1fr_0.9fr_0.9fr_80px] border-b border-[color:var(--primary)]/10 px-8 py-4 text-sm font-black text-[color:var(--dark)] lg:grid lg:items-center lg:gap-4">
-                  <p>Internship</p>
-                  <p>Department</p>
-                  <p>Location</p>
-                  <p>Duration</p>
-                  <p>Deadline</p>
-                  <p>Applicants</p>
-                  <p>Status</p>
-                  <p></p>
-                </div>
-
-                {filteredInternships.map((internship, index) => {
-                  const canArchive = isDeadlinePassed(internship.deadline);
-                  const shouldOpenUp = index >= filteredInternships.length - 2;
-
-                  return (
-                    <div
-                      key={internship.id}
-                      className="relative grid gap-4 border-b border-[color:var(--primary)]/10 px-8 py-5 last:border-b-0 lg:grid-cols-[2.2fr_1.2fr_1.4fr_1fr_1fr_0.9fr_0.9fr_80px] lg:items-center"
-                    >
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => viewEmployerInternship(internship)}
-                          className="text-left"
-                        >
-                          <h2 className="font-black text-[color:var(--ink)] hover:text-[color:var(--primary)]">
-                            {internship.title}
-                          </h2>
-                        </button>
-
-                        <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">
-                          {internship.department}
-                        </p>
-                      </div>
-
-                      <p className="text-sm font-bold text-[color:var(--muted)]">
-                        {internship.department}
-                      </p>
-
-                      <p className="flex items-center gap-2 text-sm font-semibold text-[color:var(--muted)]">
-                        <MapPin className="h-4 w-4" />
-                        {internship.location}
-                      </p>
-
-                      <p className="text-sm font-semibold text-[color:var(--muted)]">
-                        {internship.duration}
-                      </p>
-
-                      <p className="text-sm font-semibold text-[color:var(--muted)]">
-                        {internship.deadline}
-                      </p>
-
-                      <p className="text-sm font-black text-[color:var(--ink)]">
-                        {internship.applicants}
-                      </p>
-
-                      <StatusBadge status={internship.status} />
-
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setOpenMenuId((current) =>
-                              current === internship.id ? null : internship.id
-                            );
-                          }}
-                          className="grid h-10 w-10 place-items-center rounded-2xl bg-white/60 text-[color:var(--primary)] transition hover:bg-white/80"
-                        >
-                          <MoreHorizontal className="h-5 w-5" />
-                        </button>
-
-                        {openMenuId === internship.id && (
-                          <div
-                            onClick={(event) => event.stopPropagation()}
-                            className={`absolute right-0 z-[9999] w-60 rounded-2xl border border-white/70 bg-white p-2 shadow-[0_24px_70px_rgba(53,88,114,0.18)] ${
-                              shouldOpenUp ? "bottom-12" : "top-12"
-                            }`}
-                          >
-                            <ActionItem
-                              icon={Eye}
-                              label="View details"
-                              onClick={() => viewEmployerInternship(internship)}
-                            />
-
-                            <ActionItem
-                              icon={Edit}
-                              label="Edit internship"
-                              onClick={() => {
-                                navigate(`/edit-internship/${internship.id}`);
-                                setOpenMenuId(null);
-                              }}
-                            />
-
-                            <ActionItem
-                              icon={Users}
-                              label="View applicants"
-                              onClick={() => {
-                                navigate(`/manage-applicants/${internship.id}`);
-                                setOpenMenuId(null);
-                              }}
-                            />
-
-                            <ActionItem
-                              icon={CheckCircle2}
-                              label={internship.isFilled ? "Reopen hiring" : "Mark as filled"}
-                              onClick={() => toggleFilledStatus(internship.id)}
-                            />
-
-                            <ActionItem
-                              icon={Archive}
-                              label={
-                                internship.isArchived
-                                  ? "Unarchive internship"
-                                  : canArchive
-                                  ? "Archive internship"
-                                  : "Archive disabled"
-                              }
-                              danger={canArchive || internship.isArchived}
-                              disabled={!canArchive && !internship.isArchived}
-                              onClick={() => toggleArchiveStatus(internship)}
-                            />
-                            <ActionItem
-                              icon={Trash2}
-                              label="Delete internship"
-                              danger
-                              onClick={() => deleteInternship(internship.id)}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </AppCard>
-            </div>
-
-            <aside className="space-y-6">
-              <AppCard className="p-6">
-                <div className="mb-5 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-black text-[color:var(--ink)]">
-                      Top Suggested Applications
-                    </h2>
-                    <p className="text-sm font-semibold text-[color:var(--muted)]">
-                      Based on your favorite portfolios
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowAllCandidates((prev) => !prev)}
-                    className="text-sm font-black text-[color:var(--primary)]"
-                  >
-                    View all
-                  </button>
-                </div>
-
-                {(showAllCandidates ? candidates : candidates.slice(0, 3)).map(
-                  (candidate) => (
-                    <Candidate
-                      key={candidate.name}
-                      name={candidate.name}
-                      major={candidate.major}
-                      onView={() =>
-                        setMessage(
-                          "Candidate profile page will be created later and linked from here."
-                        )
-                      }
-                    />
-                  )
-                )}
-              </AppCard>
-
-              <AppCard className="p-6">
-                <div className="mb-5 flex items-center justify-between">
-                  <h2 className="text-xl font-black text-[color:var(--ink)]">
-                    Recent Activity
-                  </h2>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowAllActivity((prev) => !prev)}
-                    className="text-sm font-black text-[color:var(--primary)]"
-                  >
-                    View all
-                  </button>
-                </div>
-
-                {(showAllActivity ? activities : activities.slice(0, 4)).map(
-                  (activity) => (
-                    <Activity
-                      key={`${activity.text}-${activity.time}`}
-                      text={activity.text}
-                      subtext={activity.subtext}
-                      time={activity.time}
-                    />
-                  )
-                )}
-              </AppCard>
-
-              <AppCard className="p-6">
-                <h2 className="text-xl font-black text-[color:var(--ink)]">
-                  Boost your visibility
-                </h2>
-
-                <p className="mt-2 text-sm font-semibold leading-6 text-[color:var(--muted)]">
-                  Promote your internship to reach more qualified candidates.
-                </p>
-
-                <AppButton
-                  type="button"
-                  onClick={() =>
-                    setMessage(
-                      "Promote Now is kept as a future employer visibility feature."
-                    )
-                  }
-                  className="mt-5 rounded-2xl bg-[color:var(--primary)] px-5 font-black text-white hover:bg-[color:var(--dark)]"
-                >
-                  <Rocket className="mr-2 h-4 w-4" />
-                  Promote Now
-                </AppButton>
-              </AppCard>
-            </aside>
-          </div>
-        </div>
-
-        {editingInternship && (
-          <EditInternshipModal
-            internship={editingInternship}
-            setInternship={setEditingInternship}
-            onClose={() => setEditingInternship(null)}
-            onSave={saveEditedInternship}
-          />
-        )}
-
-        {internshipToDelete && (
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-[32px] border border-white/40 bg-white p-8 shadow-2xl">
-              <div className="flex flex-col gap-6">
-                <div>
-                  <h2 className="text-2xl font-black text-[color:var(--ink)]">
-                    Delete internship?
-                  </h2>
-
-                  <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
-                    This action cannot be undone. The internship and all related data
-                    will be permanently removed.
-                  </p>
-                </div>
-
-                <div className="flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setInternshipToDelete(null)}
-                    className="rounded-2xl border border-slate-200 px-5 py-3 font-black text-slate-500 transition hover:bg-slate-100"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={confirmDeleteInternship}
-                    className="rounded-2xl bg-red-500 px-5 py-3 font-black text-white transition hover:bg-red-600"
-                  >
-                    Delete internship
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        </main>
-        </DashboardLayout>
+    safeDate(internship.updatedAt)?.getTime() ||
+    safeDate(internship.createdAt)?.getTime() ||
+    safeDate(internship.deadline)?.getTime() ||
+    0
   );
 }
 
-function EditInternshipModal({ internship, setInternship, onClose, onSave }) {
-  const updateField = (field, value) => {
-    setInternship((current) => ({ ...current, [field]: value }));
-  };
+function formatDate(value) {
+  const date = safeDate(value);
+  if (!date) return "No deadline";
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function StatusPill({ status }) {
+  const config = {
+    active: {
+      label: "Active",
+      dot: "bg-emerald-500",
+      shell: "border-emerald-200/80 bg-emerald-50/75 text-emerald-700",
+    },
+    draft: {
+      label: "Draft",
+      dot: "bg-[#D6B65F]",
+      shell: "border-[#E7D6A1] bg-[#FAF5E7] text-[#876E2F]",
+    },
+    closed: {
+      label: "Closed",
+      dot: "bg-[#7D8E99]",
+      shell: "border-[#CDD8DE] bg-[#F0F4F6] text-[#627480]",
+    },
+    archived: {
+      label: "Archived",
+      dot: "bg-[#A7B2B9]",
+      shell: "border-[#D4DDE1] bg-[#F6F8F9] text-[#768791]",
+    },
+  }[status];
 
   return (
-    <AppModal
-      title="Edit Internship"
-      onClose={onClose}
-      maxWidth="max-w-3xl"
+    <span
+      className={`inline-flex h-6 items-center gap-1.5 rounded-full border px-2.5 text-[10px] font-black ${config.shell}`}
     >
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field
-          label="Title"
-          value={internship.title}
-          onChange={(value) => updateField("title", value)}
-        />
-
-        <Field
-          label="Department"
-          value={internship.department}
-          onChange={(value) => updateField("department", value)}
-        />
-
-        <Field
-          label="Location"
-          value={internship.location}
-          onChange={(value) => updateField("location", value)}
-        />
-
-        <Field
-          label="Duration"
-          value={internship.duration}
-          onChange={(value) => updateField("duration", value)}
-        />
-
-        <Field
-          label="Deadline"
-          type="date"
-          value={internship.deadline}
-          onChange={(value) => updateField("deadline", value)}
-        />
-
-        <Field
-          label="Applicants"
-          type="number"
-          value={internship.applicants}
-          onChange={(value) => updateField("applicants", Number(value))}
-        />
-
-        <div>
-          <label className="mb-2 block text-sm font-black text-[color:var(--ink)]">
-            Status
-          </label>
-
-          <FilterSelect
-            value={internship.status}
-            onChange={(status) => {
-              setInternship((current) => ({
-                ...current,
-                status,
-                isFilled: status === "Filled",
-                isArchived: status === "Archived",
-              }));
-            }}
-            options={["Open", "Filled", "Archived"]}
-          />
-        </div>
-      </div>
-
-      <div className="mt-7 flex justify-end gap-3">
-        <button
-          type="button"
-          onClick={onClose}
-          className="h-12 rounded-2xl border border-gray-200 bg-white px-6 font-black text-[color:var(--muted)]"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          onClick={onSave}
-          className="h-12 rounded-2xl bg-[color:var(--primary)] px-6 font-black text-white"
-        >
-          Save Changes
-        </button>
-      </div>
-    </AppModal>
+      <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
+      {config.label}
+    </span>
   );
 }
 
-function Field({ label, value, onChange, type = "text" }) {
+function CountTab({ active, label, count, onClick }) {
   return (
-    <div>
-      <label className="mb-2 block text-sm font-black text-[color:var(--ink)]">
-        {label}
-      </label>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative inline-flex h-11 items-center gap-2 px-3 text-[12px] font-black transition ${
+        active
+          ? "text-[#17384E]"
+          : "text-[#7B8D98] hover:text-[#355872]"
+      }`}
+    >
+      {label}
+      <span
+        className={`min-w-5 rounded-full px-1.5 py-0.5 text-[10px] ${
+          active
+            ? "bg-[#F2E5B8] text-[#7A6327]"
+            : "bg-[#E9F0F3] text-[#7A8D99]"
+        }`}
+      >
+        {count}
+      </span>
 
-      <Input
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-12 rounded-2xl border border-[color:var(--primary)]/15 bg-white px-4 font-bold text-[color:var(--ink)]"
-      />
+      {active ? (
+        <span className="absolute inset-x-2 bottom-0 h-[3px] rounded-t-full bg-[#E6C77B]" />
+      ) : null}
+    </button>
+  );
+}
+
+function EmptyState({ hasFilters, onCreate, onClear }) {
+  return (
+    <div className="flex min-h-[360px] flex-col items-center justify-center px-6 text-center">
+      <div className="grid h-14 w-14 place-items-center rounded-[18px] border border-[#C9DBE4] bg-white/65 text-[#557C97] shadow-[0_10px_26px_rgba(53,88,114,0.07)]">
+        <BriefcaseBusiness className="h-6 w-6" />
+      </div>
+
+      <h2 className="mt-5 text-xl font-black tracking-[-0.025em] text-[#142A3A]">
+        {hasFilters ? "No internships match these filters" : "No internships yet"}
+      </h2>
+
+      <p className="mt-2 max-w-md text-[13px] font-semibold leading-6 text-[#718391]">
+        {hasFilters
+          ? "Try a different search or clear the current filters."
+          : "Create your first internship and it will appear here as part of your hiring workspace."}
+      </p>
+
+      <div className="mt-5 flex items-center gap-2.5">
+        {hasFilters ? (
+          <button
+            type="button"
+            onClick={onClear}
+            className="h-11 rounded-[14px] border border-[#C9DBE4] bg-white/65 px-4 text-[12px] font-black text-[#355872] transition hover:bg-white"
+          >
+            Clear filters
+          </button>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={onCreate}
+          className="inline-flex h-11 items-center gap-2 rounded-[14px] bg-[#355872] px-5 text-[12px] font-black text-white shadow-[0_10px_24px_rgba(53,88,114,0.16)] transition hover:bg-[#294A61]"
+        >
+          <Plus className="h-4 w-4" />
+          Create internship
+        </button>
+      </div>
     </div>
   );
 }
 
-function ActionItem({
-  icon: Icon,
-  label,
-  onClick,
-  danger = false,
-  disabled = false,
+function ConfirmDialog({ internship, onCancel, onConfirm }) {
+  if (!internship) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-[#102434]/30 px-4 backdrop-blur-[2px]">
+      <div className="w-full max-w-md rounded-[24px] border border-white/80 bg-[#F9FBFC] p-6 shadow-[0_28px_80px_rgba(17,42,59,0.24)]">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500">
+              Delete internship
+            </p>
+            <h2 className="mt-2 text-xl font-black tracking-[-0.025em] text-[#142A3A]">
+              Delete “{internship.title}”?
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            onClick={onCancel}
+            className="grid h-9 w-9 place-items-center rounded-full text-[#718391] transition hover:bg-[#EAF2F6]"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <p className="mt-3 text-[13px] font-semibold leading-6 text-[#718391]">
+          This removes the internship and its application data from the demo
+          store. This action cannot be undone.
+        </p>
+
+        <div className="mt-6 flex justify-end gap-2.5">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="h-11 rounded-[14px] px-4 text-[12px] font-black text-[#718391] transition hover:bg-[#EAF2F6]"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="inline-flex h-11 items-center gap-2 rounded-[14px] bg-red-500 px-5 text-[12px] font-black text-white transition hover:bg-red-600"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RowMenu({
+  internship,
+  status,
+  isOpen,
+  onToggle,
+  onView,
+  onApplicants,
+  onEdit,
+  onDuplicate,
+  onToggleClosed,
+  onToggleArchived,
+  onDelete,
 }) {
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePointer = (event) => {
+      if (!menuRef.current?.contains(event.target)) {
+        onToggle(false);
+      }
+    };
+
+    window.addEventListener("pointerdown", handlePointer);
+    return () => window.removeEventListener("pointerdown", handlePointer);
+  }, [isOpen, onToggle]);
+
+  return (
+    <div ref={menuRef} className="relative flex justify-end">
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onToggle(!isOpen);
+        }}
+        className={`grid h-9 w-9 place-items-center rounded-xl transition ${
+          isOpen
+            ? "bg-[#DFEAF0] text-[#294F69]"
+            : "text-[#718391] hover:bg-[#EAF2F6] hover:text-[#355872]"
+        }`}
+        aria-label={`Actions for ${internship.title}`}
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </button>
+
+      {isOpen ? (
+        <div
+          className="absolute right-0 top-11 z-40 w-52 overflow-hidden rounded-[16px] border border-[#C9DBE4] bg-[#FBFCFD] p-1.5 shadow-[0_18px_44px_rgba(17,42,59,0.18)]"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <MenuButton icon={Eye} label="View posting" onClick={onView} />
+          <MenuButton icon={Edit3} label="Edit" onClick={onEdit} />
+          <MenuButton icon={Copy} label="Duplicate as draft" onClick={onDuplicate} />
+
+          <div className="my-1 h-px bg-[#E0E8EC]" />
+
+          {status !== "archived" ? (
+            <MenuButton
+              icon={status === "closed" ? CircleDot : Check}
+              label={status === "closed" ? "Reopen internship" : "Close internship"}
+              onClick={onToggleClosed}
+              disabled={status === "draft"}
+            />
+          ) : null}
+
+          <MenuButton
+            icon={status === "archived" ? ArchiveRestore : Archive}
+            label={status === "archived" ? "Restore from archive" : "Archive"}
+            onClick={onToggleArchived}
+          />
+
+          <div className="my-1 h-px bg-[#E0E8EC]" />
+
+          <MenuButton
+            icon={Trash2}
+            label="Delete"
+            onClick={onDelete}
+            danger
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function MenuButton({ icon: Icon, label, onClick, disabled = false, danger = false }) {
   return (
     <button
       type="button"
+      onClick={() => {
+        if (!disabled) onClick();
+      }}
       disabled={disabled}
-      onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-black transition ${
-        disabled
-          ? "cursor-not-allowed text-[color:var(--muted)]/45"
-          : danger
+      className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[12px] font-black transition ${
+        danger
           ? "text-red-500 hover:bg-red-50"
-          : "text-[color:var(--ink)] hover:bg-[color:var(--accent)]/20"
+          : disabled
+            ? "cursor-not-allowed text-[#A8B4BB]"
+            : "text-[#355872] hover:bg-[#EAF2F6]"
       }`}
     >
       <Icon className="h-4 w-4" />
@@ -904,65 +430,725 @@ function ActionItem({
   );
 }
 
-function Candidate({ name, major, skills = [], matchReason, score, onView }) {
-  return (
-    <div className="mb-3 rounded-2xl border border-white/70 bg-white/55 p-4 last:mb-0">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <InitialsAvatar name={name} className="h-12 w-12" />
+export default function ManageInternships() {
+  const navigate = useNavigate();
 
-          <div>
-            <p className="font-black text-[color:var(--ink)]">{name}</p>
-            <p className="text-sm font-semibold text-[color:var(--muted)]">
-              {major}
-            </p>
-          </div>
-        </div>
-
-        <span className="rounded-xl bg-green-100 px-3 py-1 text-xs font-black text-green-700">
-          {score}% match
-        </span>
-      </div>
-
-      <p className="mt-3 text-xs font-bold leading-5 text-[color:var(--muted)]">
-        {matchReason}
-      </p>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        {skills.map((skill) => (
-          <span
-            key={skill}
-            className="rounded-full bg-[color:var(--accent)]/20 px-3 py-1 text-xs font-black text-[color:var(--primary)]"
-          >
-            {skill}
-          </span>
-        ))}
-      </div>
-
-      <button
-        type="button"
-        onClick={onView}
-        className="mt-4 w-full rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-sm font-black text-[color:var(--primary)] transition hover:bg-white"
-      >
-        View application
-      </button>
-    </div>
+  const [internships, setInternships] = useState(() =>
+    getInternshipsForEmployer(getCurrentUser()?.id)
   );
-}
+  const [activeStatus, setActiveStatus] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [department, setDepartment] = useState("all");
+  const [workMode, setWorkMode] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [feedback, setFeedback] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const resultsTopRef = useRef(null);
 
-function Activity({ text, subtext, time }) {
+  const refresh = () => {
+    setInternships(getInternshipsForEmployer(getCurrentUser()?.id));
+  };
+
+  useEffect(() => {
+    refresh();
+
+    window.addEventListener("demo-db-change", refresh);
+    window.addEventListener("demo-current-user-change", refresh);
+
+    return () => {
+      window.removeEventListener("demo-db-change", refresh);
+      window.removeEventListener("demo-current-user-change", refresh);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!feedback) return;
+
+    const timeout = window.setTimeout(() => setFeedback(""), 2800);
+    return () => window.clearTimeout(timeout);
+  }, [feedback]);
+
+  const statusCounts = useMemo(() => {
+    const counts = {
+      all: internships.length,
+      active: 0,
+      draft: 0,
+      closed: 0,
+      archived: 0,
+    };
+
+    internships.forEach((internship) => {
+      counts[getOperationalStatus(internship)] += 1;
+    });
+
+    return counts;
+  }, [internships]);
+
+  const departments = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          internships
+            .map((item) => String(item.department || "").trim())
+            .filter(Boolean)
+        )
+      ).sort((a, b) => a.localeCompare(b)),
+    [internships]
+  );
+
+  const workModes = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          internships
+            .map((item) => String(item.workMode || "").trim())
+            .filter(Boolean)
+        )
+      ).sort((a, b) => a.localeCompare(b)),
+    [internships]
+  );
+
+  const visibleInternships = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+
+    const filtered = internships.filter((internship) => {
+      const status = getOperationalStatus(internship);
+
+      const matchesStatus =
+        activeStatus === "all" || status === activeStatus;
+
+      const matchesSearch =
+        !query ||
+        [
+          internship.title,
+          internship.department,
+          getLocationLabel(internship.location),
+          internship.workMode,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
+
+      const matchesDepartment =
+        department === "all" || internship.department === department;
+
+      const matchesWorkMode =
+        workMode === "all" || internship.workMode === workMode;
+
+      return (
+        matchesStatus &&
+        matchesSearch &&
+        matchesDepartment &&
+        matchesWorkMode
+      );
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "deadline") {
+        const aTime = safeDate(a.deadline)?.getTime() || Number.MAX_SAFE_INTEGER;
+        const bTime = safeDate(b.deadline)?.getTime() || Number.MAX_SAFE_INTEGER;
+        return aTime - bTime;
+      }
+
+      if (sortBy === "applicants") {
+        return getApplicantCount(b) - getApplicantCount(a);
+      }
+
+      if (sortBy === "title") {
+        return String(a.title || "").localeCompare(String(b.title || ""));
+      }
+
+      return getCreatedTime(b) - getCreatedTime(a);
+    });
+  }, [
+    internships,
+    activeStatus,
+    searchTerm,
+    department,
+    workMode,
+    sortBy,
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(visibleInternships.length / ITEMS_PER_PAGE)
+  );
+
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+
+  const paginatedInternships = visibleInternships.slice(
+    pageStartIndex,
+    pageStartIndex + ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const goToPage = (page) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(nextPage);
+
+    requestAnimationFrame(() => {
+      resultsTopRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  const hasFilters =
+    Boolean(searchTerm.trim()) ||
+    department !== "all" ||
+    workMode !== "all" ||
+    activeStatus !== "all";
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setDepartment("all");
+    setWorkMode("all");
+    setActiveStatus("all");
+    setFiltersOpen(false);
+    setCurrentPage(1);
+  };
+
+  const runUpdate = (internship, updates, message) => {
+    updateInternship(internship.id, updates);
+    setOpenMenuId(null);
+    setFeedback(message);
+    refresh();
+  };
+
+  const toggleClosed = (internship) => {
+    const status = getOperationalStatus(internship);
+
+    if (status === "closed") {
+      const currentDeadline = safeDate(internship.deadline);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const needsNewDeadline =
+        !currentDeadline || currentDeadline.getTime() < today.getTime();
+
+      const reopenedDeadline = needsNewDeadline
+        ? (() => {
+            const nextDeadline = new Date(today);
+            nextDeadline.setDate(nextDeadline.getDate() + 30);
+            return nextDeadline.toISOString().slice(0, 10);
+          })()
+        : internship.deadline;
+
+      runUpdate(
+        internship,
+        {
+          status: "Active",
+          deadline: reopenedDeadline,
+          isFilled: false,
+          positionFilled: false,
+          isArchived: false,
+          archived: false,
+        },
+        needsNewDeadline
+          ? "Internship reopened. Deadline extended by 30 days."
+          : "Internship reopened."
+      );
+      return;
+    }
+
+    runUpdate(
+      internship,
+      {
+        status: "Closed",
+        isFilled: false,
+        positionFilled: false,
+      },
+      "Internship closed to new applications."
+    );
+  };
+
+  const toggleArchived = (internship) => {
+    const status = getOperationalStatus(internship);
+    const restoring = status === "archived";
+
+    runUpdate(
+      internship,
+      restoring
+        ? {
+            status: "Active",
+            isArchived: false,
+            archived: false,
+          }
+        : {
+            status: "Archived",
+            isArchived: true,
+            archived: true,
+          },
+      restoring ? "Internship restored from archive." : "Internship archived."
+    );
+  };
+
+  const duplicateInternship = (internship) => {
+    const {
+      id,
+      employer,
+      applications,
+      applicants,
+      reviews,
+      rating,
+      createdAt,
+      updatedAt,
+      isArchived,
+      archived,
+      isFilled,
+      positionFilled,
+      ...copy
+    } = internship;
+
+    createInternship({
+      ...copy,
+      title: `${internship.title} Copy`,
+      status: "draft",
+      applications: [],
+      applicants: 0,
+      isArchived: false,
+      archived: false,
+      isFilled: false,
+      positionFilled: false,
+    });
+
+    setOpenMenuId(null);
+    setFeedback("Draft duplicate created.");
+    setActiveStatus("draft");
+    refresh();
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+
+    deleteInternshipFromStore(deleteTarget.id);
+    setDeleteTarget(null);
+    setOpenMenuId(null);
+    setFeedback("Internship deleted.");
+    refresh();
+  };
+
   return (
-    <div className="mb-4 flex items-start justify-between gap-4 last:mb-0">
-      <div>
-        <p className="font-black text-[color:var(--ink)]">{text}</p>
-        <p className="text-sm font-semibold text-[color:var(--muted)]">
-          {subtext}
-        </p>
+    <DashboardLayout>
+      <div className="mx-auto w-full max-w-[1480px] space-y-6">
+        <PageHeader
+          title="Internships"
+          description="Manage your company’s internship opportunities, applicants, and hiring status."
+          action={
+            <button
+              type="button"
+              onClick={() => navigate("/create-internship")}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)] px-7 text-sm font-black text-white shadow-[0_12px_30px_rgba(53,88,114,.22)] transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_20px_40px_rgba(53,88,114,.30)]"
+            >
+              <Plus className="h-4 w-4" />
+              Create Internship
+            </button>
+          }
+        />
+
+        <SearchFilterToolbar
+          searchValue={searchTerm}
+          onSearchChange={(value) => {
+            setSearchTerm(value);
+            setCurrentPage(1);
+          }}
+          searchPlaceholder="Search internships by title, department, location, or work mode..."
+          showSort
+          sortValue={`Sort by: ${
+            SORT_OPTIONS.find((option) => option.value === sortBy)?.label ||
+            "Newest"
+          }`}
+          onSortChange={(value) => {
+            const label = value.replace("Sort by: ", "");
+            const option = SORT_OPTIONS.find((item) => item.label === label);
+            setSortBy(option?.value || "newest");
+            setCurrentPage(1);
+          }}
+          sortOptions={SORT_OPTIONS.map(
+            (option) => `Sort by: ${option.label}`
+          )}
+          showFilters
+          filtersOpen={filtersOpen}
+          onToggleFilters={() =>
+            setFiltersOpen((current) => !current)
+          }
+          filterTitle="Filter internships"
+          onClearFilters={hasFilters ? clearFilters : undefined}
+        >
+          <FilterSelect
+            value={`Status: ${STATUS_LABELS[activeStatus]}`}
+            onChange={(value) => {
+              const selected = value.replace("Status: ", "");
+              const statusEntry = Object.entries(STATUS_LABELS).find(
+                ([, label]) => label === selected
+              );
+              setActiveStatus(statusEntry?.[0] || "all");
+              setCurrentPage(1);
+            }}
+            options={Object.values(STATUS_LABELS).map(
+              (label) => `Status: ${label}`
+            )}
+          />
+
+          <FilterSelect
+            value={`Department: ${
+              department === "all" ? "All Departments" : department
+            }`}
+            onChange={(value) => {
+              const selected = value.replace("Department: ", "");
+              setDepartment(
+                selected === "All Departments" ? "all" : selected
+              );
+              setCurrentPage(1);
+            }}
+            options={[
+              "Department: All Departments",
+              ...departments.map((item) => `Department: ${item}`),
+            ]}
+          />
+
+          <FilterSelect
+            value={`Work mode: ${
+              workMode === "all" ? "All Modes" : workMode
+            }`}
+            onChange={(value) => {
+              const selected = value.replace("Work mode: ", "");
+              setWorkMode(selected === "All Modes" ? "all" : selected);
+              setCurrentPage(1);
+            }}
+            options={[
+              "Work mode: All Modes",
+              ...workModes.map((item) => `Work mode: ${item}`),
+            ]}
+          />
+        </SearchFilterToolbar>
+
+        <section ref={resultsTopRef} className="scroll-mt-28">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-bold text-[var(--ink)]">
+                {visibleInternships.length} internship
+                {visibleInternships.length === 1 ? "" : "s"} found
+              </h2>
+
+              <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+                {statusCounts.active} active · {statusCounts.draft} draft
+                {statusCounts.draft === 1 ? "" : "s"} · {statusCounts.closed} closed
+              </p>
+            </div>
+
+            {hasFilters ? (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-[12px] font-black text-[var(--primary)] transition hover:opacity-70"
+              >
+                Clear filters
+              </button>
+            ) : null}
+          </div>
+
+          {paginatedInternships.length ? (
+            <div className="space-y-4">
+              {paginatedInternships.map((internship) => {
+                const status = getOperationalStatus(internship);
+                const applicants = getApplicantCount(internship);
+                const needsReview = getNeedsReviewCount(internship);
+                const hasDescription = Boolean(
+                  internship.shortDescription || internship.description
+                );
+
+                return (
+                  <article
+                    key={internship.id}
+                    className="group overflow-hidden rounded-[30px] border border-white bg-white/95 p-0 shadow-[0_22px_55px_rgba(53,88,114,0.13)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-[3px] hover:shadow-[0_30px_68px_rgba(53,88,114,0.18)] dark:border-[var(--card-border)] dark:bg-[var(--surface)]"
+                  >
+                    <div className="grid lg:grid-cols-[290px_minmax(0,1fr)]">
+                      {/* LEFT FOCAL PANEL — same grammar as Project Invitations */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`/internships/${internship.id}`)
+                        }
+                        className="relative flex min-h-[235px] flex-col overflow-hidden bg-[linear-gradient(145deg,#071D2C_0%,#102F45_52%,#1E4964_100%)] p-7 text-left text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#79B0E3]"
+                      >
+                        <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(156,213,255,0.19),transparent_69%)]" />
+                        <div className="pointer-events-none absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(230,199,123,0.11),transparent_70%)]" />
+                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-[linear-gradient(180deg,transparent,rgba(4,18,28,0.14))]" />
+
+                        <div className="relative">
+                          <div className="flex items-center justify-between gap-3">
+                            <p
+                              className={`text-[9px] font-black uppercase tracking-[0.18em] ${
+                                status === "active"
+                                  ? "text-[#9BD2AE]"
+                                  : status === "draft"
+                                    ? "text-[#E6C77B]"
+                                    : "text-[#93C4E0]"
+                              }`}
+                            >
+                              {status === "active"
+                                ? "Active Internship"
+                                : status === "draft"
+                                  ? "Draft Internship"
+                                  : status === "archived"
+                                    ? "Archived Internship"
+                                    : "Closed Internship"}
+                            </p>
+
+                            <span
+                              className={`h-2.5 w-2.5 rounded-full ${
+                                status === "active"
+                                  ? "bg-[#9BD2AE]"
+                                  : status === "draft"
+                                    ? "bg-[#E6C77B]"
+                                    : "bg-[#9DB7C6]"
+                              }`}
+                            />
+                          </div>
+
+                          <div
+                            className={`mt-4 h-[2px] rounded-full ${
+                              status === "active" || status === "draft"
+                                ? "w-10 bg-[#E6C77B]"
+                                : "w-8 bg-[#7AAACE]/75"
+                            }`}
+                          />
+
+                          <p className="mt-5 text-[11px] font-black tracking-[0.075em] text-[#8FC3E5]">
+                            {internship.department || "INTERNSHIP"}
+                          </p>
+
+                          <h2 className="mt-3 max-w-[220px] text-[29px] font-black leading-[1.01] tracking-[-0.045em] text-white">
+                            {internship.title || "Untitled Internship"}
+                          </h2>
+                        </div>
+
+                        <div className="relative mt-auto pt-7">
+                          <div className="border-t border-white/12 pt-4">
+                            <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] font-black text-white/90">
+                              {internship.workMode ? (
+                                <span className="inline-flex items-center gap-1.5">
+                                  <CircleDot className="h-3.5 w-3.5 text-[#A7D9FA]" />
+                                  {internship.workMode}
+                                </span>
+                              ) : null}
+
+                              {getLocationLabel(internship.location) ? (
+                                <span className="inline-flex items-center gap-1.5">
+                                  <MapPin className="h-3.5 w-3.5 text-[#A7D9FA]" />
+                                  {getLocationLabel(internship.location)}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* RIGHT CONTENT — compact, focused hierarchy */}
+                      <div className="relative flex min-w-0 flex-col px-7 py-6 sm:px-8">
+                        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(156,213,255,0.10),transparent_70%)]" />
+
+                        <div className="relative flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.17em] text-[#B89736]">
+                              {status === "draft"
+                                ? "Publishing"
+                                : "Hiring Activity"}
+                            </p>
+
+                            {status === "draft" ? (
+                              <>
+                                <p className="mt-1.5 text-[22px] font-black leading-tight tracking-[-0.03em] text-[color:var(--ink)]">
+                                  Draft not published
+                                </p>
+                                <p className="mt-2 text-[13px] font-medium leading-6 text-[color:var(--muted)]">
+                                  Finish the internship before students can apply.
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <p className="mt-1.5 text-[22px] font-black leading-tight tracking-[-0.03em] text-[color:var(--ink)]">
+                                  {applicants} applicant
+                                  {applicants === 1 ? "" : "s"}
+                                </p>
+
+                                <p
+                                  className={`mt-2 text-[13px] leading-6 ${
+                                    needsReview > 0
+                                      ? "font-black text-[#B89736]"
+                                      : "font-medium text-[color:var(--muted)]"
+                                  }`}
+                                >
+                                  {needsReview > 0
+                                    ? `${needsReview} waiting for review`
+                                    : "Applicant review is up to date"}
+                                </p>
+                              </>
+                            )}
+                          </div>
+
+                          <RowMenu
+                            internship={internship}
+                            status={status}
+                            isOpen={openMenuId === internship.id}
+                            onToggle={(next) =>
+                              setOpenMenuId(next ? internship.id : null)
+                            }
+                            onView={() =>
+                              navigate(`/internships/${internship.id}`)
+                            }
+                            onApplicants={() =>
+                              navigate(
+                                `/manage-applicants/${internship.id}`
+                              )
+                            }
+                            onEdit={() =>
+                              navigate(
+                                `/edit-internship/${internship.id}`
+                              )
+                            }
+                            onDuplicate={() =>
+                              duplicateInternship(internship)
+                            }
+                            onToggleClosed={() =>
+                              toggleClosed(internship)
+                            }
+                            onToggleArchived={() =>
+                              toggleArchived(internship)
+                            }
+                            onDelete={() => {
+                              setOpenMenuId(null);
+                              setDeleteTarget(internship);
+                            }}
+                          />
+                        </div>
+
+                        <div className="relative mt-6 flex flex-wrap items-end gap-x-6 gap-y-4">
+                          <div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                              Deadline
+                            </p>
+                            <p className="mt-1 text-[11px] font-black text-[#355872]">
+                              {formatDate(internship.deadline)}
+                            </p>
+                          </div>
+
+                          <span className="hidden h-8 w-px bg-[#D3E1E9] sm:block" />
+
+                          <div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                              Duration
+                            </p>
+                            <p className="mt-1 text-[11px] font-black text-[#355872]">
+                              {internship.duration || "Not specified"}
+                            </p>
+                          </div>
+
+                          <span className="hidden h-8 w-px bg-[#D3E1E9] sm:block" />
+
+                          <div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                              Status
+                            </p>
+                            <div className="mt-1">
+                              <StatusPill status={status} />
+                            </div>
+                          </div>
+                        </div>
+
+                        {hasDescription ? (
+                          <p className="relative mt-5 max-w-3xl text-[13px] font-medium leading-6 text-[color:var(--muted)]">
+                            {internship.shortDescription ||
+                              internship.description}
+                          </p>
+                        ) : null}
+
+                        <div
+                          className="relative mt-6 border-t border-[#DAE6EC] pt-4"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          {status === "draft" ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                navigate(
+                                  `/edit-internship/${internship.id}`
+                                )
+                              }
+                              className="inline-flex h-10 items-center justify-center gap-2 rounded-[13px] bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)] px-5 text-[11px] font-black text-white shadow-[0_9px_20px_rgba(53,88,114,0.20)] transition-all hover:-translate-y-[1px] hover:brightness-105 hover:shadow-[0_12px_25px_rgba(53,88,114,0.24)]"
+                            >
+                              <Edit3 className="h-3.5 w-3.5" />
+                              Continue draft
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                navigate(
+                                  `/manage-applicants/${internship.id}`
+                                )
+                              }
+                              className="inline-flex h-10 items-center justify-center gap-2 rounded-[13px] bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)] px-5 text-[11px] font-black text-white shadow-[0_9px_20px_rgba(53,88,114,0.20)] transition-all hover:-translate-y-[1px] hover:brightness-105 hover:shadow-[0_12px_25px_rgba(53,88,114,0.24)]"
+                            >
+                              <Users className="h-3.5 w-3.5" />
+                              View applicants
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyState
+              hasFilters={hasFilters}
+              onClear={clearFilters}
+              onCreate={() => navigate("/create-internship")}
+            />
+          )}
+
+          <Pagination
+            currentPage={safeCurrentPage}
+            totalPages={totalPages}
+            totalItems={visibleInternships.length}
+            pageStartIndex={pageStartIndex}
+            pageSize={ITEMS_PER_PAGE}
+            onPageChange={goToPage}
+            ariaLabel="Internship management pagination"
+          />
+        </section>
       </div>
 
-      <span className="text-xs font-bold text-[color:var(--muted)]">
-        {time}
-      </span>
-    </div>
+      {feedback ? (
+        <div className="fixed bottom-6 right-6 z-[90] flex max-w-sm items-center gap-3 rounded-[16px] border border-[#C9DBE4] bg-[#FBFCFD] px-4 py-3 shadow-[0_18px_44px_rgba(17,42,59,0.16)]">
+          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#E8F1F5] text-[#355872]">
+            <Check className="h-4 w-4" />
+          </div>
+          <p className="text-[12px] font-black text-[#355872]">
+            {feedback}
+          </p>
+        </div>
+      ) : null}
+
+      <ConfirmDialog
+        internship={deleteTarget}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
+    </DashboardLayout>
   );
 }

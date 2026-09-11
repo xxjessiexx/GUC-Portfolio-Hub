@@ -4,6 +4,7 @@ import {
   BarChart3,
   BookOpen,
   Briefcase,
+  Archive,
   CheckCircle2,
   ClipboardCheck,
   FileWarning,
@@ -22,6 +23,7 @@ import {
   Users,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { clearCurrentUser } from "@/data/demoStore";
 import { student } from "@/data/studentDashboardData";
 import { useState } from "react";
 
@@ -49,12 +51,13 @@ const workspaceItems = {
   student: [
     { label: "Home", icon: Home, path: "/student-dashboard" },
     { label: "Explore", icon: SearchIcon, path: "/discover" },
+       { label: "Internships", icon: Briefcase, path: "/internships" },
+    { label: "Favorites", icon: Heart,  path: "/fav-list" },
     { label: "My Portfolio", icon: User, path: "/student-dashboard/portfolio" },
     { label: "My Projects", icon: FolderKanban, path: "/view-all-projects" },
     { label: "My Applications", icon: ClipboardList, path: "/my-applications" },
     { label: "Invitations", icon: ClipboardCheck, path: "/invitations" },
-    { label: "Internships", icon: Briefcase, path: "/internships" },
-    { label: "Favorites", icon: Heart,  path: "/fav-list" },
+ 
     { label: "Settings", icon: Settings, path: "/settings" },
   ],
 
@@ -69,13 +72,14 @@ const workspaceItems = {
   ],
 
   employer: [
-    { label: "Home", icon: Home, path: "/employer-dashboard" },
-    { label: "Explore", icon: SearchIcon, path: "/discover" },
-    { label: "Internships", icon: Briefcase, path: "/manage-internships" },
-    { label: "Applicants", icon: Users, path: "/manage-applicants/emp-int-1" },
-    { label: "Favorites", icon: Heart, path:"/fav-list" },
-    { label: "Settings", icon: Settings, path: "/settings" },
-  ],
+  { label: "Home", icon: Home, path: "/employer-dashboard" },
+  { label: "Explore", icon: SearchIcon, path: "/discover" },
+  { label: "Internships", icon: Briefcase, path: "/manage-internships" },
+  { label: "Favorite Portfolios", icon: User, path: "/favorite-portfolios" },
+  { label: "Favorite Projects", icon: FolderKanban, path: "/favorite-projects" },
+  { label: "Archive", icon: Archive, path: "/archived-internships" },
+  { label: "Settings", icon: Settings, path: "/settings" },
+],
 
   admin: [
     { label: "Home", icon: Home, path: "/admin-dashboard" },
@@ -123,10 +127,10 @@ const [logoutOpen, setLogoutOpen] = useState(false);
   const items = workspaceItems[activeWorkspace];
 
   const handleLogout = () => {
-  setLogoutOpen(false);
-  sessionStorage.removeItem("currentUser");
-  navigate("/", { replace: true });
-};
+    setLogoutOpen(false);
+    clearCurrentUser();
+    navigate("/", { replace: true });
+  };
 
   const handleNavigate = (path) => {
     if (!path) return;

@@ -1,122 +1,164 @@
-import { Mail, MapPin, Eye } from "lucide-react";
-import { AppCard } from "@/components/ui/AppCard";
-import CourseBadge from "@/components/ui/CourseBadge";
+// src/components/ui/Searchcommons/InsctructorCard.jsx
 
-export default function InstructorCard({ instructor,onView }) {
+import { Mail, MapPin } from "lucide-react";
+
+import { AppCard } from "@/components/ui/AppCard";
+
+function courseCode(course) {
+  if (!course) return "";
+
+  const text = String(course).trim();
+
+  if (text.includes(" - ")) {
+    return text.split(" - ")[0].trim();
+  }
+
+  const parts = text.split(/\s+/);
+
+  if (parts.length >= 2) {
+    return parts.slice(0, 2).join(" ");
+  }
+
+  return text;
+}
+
+export default function InstructorCard({ instructor, onView }) {
+  const courses = Array.isArray(instructor.courses)
+    ? instructor.courses
+    : [];
+
+  const visibleCourses = courses.slice(0, 3);
+  const remainingCourses = Math.max(courses.length - visibleCourses.length, 0);
+
   return (
     <AppCard
-  className="
-    p-6
-    rounded-[28px]
-
-    bg-[var(--card-bg)]
-    border border-[var(--card-border)]
-
-    shadow-[var(--shadow-card)]
-    hover:shadow-[var(--shadow-lifted)]
-
-    backdrop-blur-md
-    transition-all
-    duration-300
-
-    hover:-translate-y-1
-    hover:border-[var(--primary)]
-  "
->
+      role="link"
+      tabIndex={0}
+      onClick={onView}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onView?.();
+        }
+      }}
+      className="
+        group
+        w-full max-w-[320px]
+        overflow-hidden
+        rounded-3xl
+        border border-[var(--card-border)]
+        bg-[var(--card-bg)]
+        shadow-[var(--shadow-card)]
+        backdrop-blur-md
+        cursor-pointer
+        outline-none
+        transition-all duration-300
+        hover:-translate-y-1
+        hover:border-[var(--primary)]
+        hover:shadow-[var(--shadow-lifted)]
+        focus-visible:ring-4
+        focus-visible:ring-[#7AAACE]/20
+      "
+    >
+      {/* Visual zone — same footprint/rhythm as project cards */}
       <div
         className="
-          grid
-          grid-cols-1
-          xl:grid-cols-[1.2fr_0.9fr_1.3fr_auto]
-          gap-6
-          items-center
+          flex h-44 items-center justify-center
+          border-b border-[var(--card-border)]
+          bg-[linear-gradient(145deg,rgba(234,242,246,0.95),rgba(248,251,252,0.98))]
+          dark:bg-[linear-gradient(145deg,rgba(14,35,49,0.95),rgba(18,42,58,0.98))]
         "
       >
+        <img
+          src={instructor.image}
+          alt={instructor.name}
+          className="
+            h-[108px] w-[108px] rounded-full
+            border-[5px] border-white/85
+            object-cover
+            shadow-[0_18px_38px_rgba(53,88,114,0.18)]
+            dark:border-white/10
+          "
+        />
+      </div>
 
-        {/* LEFT */}
-        <div className="flex items-center gap-5">
-          <img
-            src={instructor.image}
-            alt={instructor.name}
-            className="w-24 h-24 rounded-full object-cover"
-          />
+      <div className="p-5">
+        <h3
+          className="
+            text-lg font-black
+            text-[color:var(--ink)]
+            transition
+            group-hover:text-[color:var(--primary)]
+          "
+        >
+          {instructor.name}
+        </h3>
 
-          <div>
-            <h2 className="text-2xl font-black text-[var(--ink)]">
-              {instructor.name}
-            </h2>
+        <p className="mt-1 text-sm font-medium text-gray-500 dark:text-[var(--muted)]">
+          {[instructor.role, instructor.department].filter(Boolean).join(" · ")}
+        </p>
 
-            <p className="mt-1 text-[var(--muted)] font-semibold">
-              {instructor.role}
-            </p>
-
-            <p className="mt-2 text-[var(--primary)] font-semibold">
-              {instructor.department}
-            </p>
+        <div
+          className="
+            mt-4 space-y-2.5
+            text-[12px] font-semibold
+            text-[var(--muted)]
+          "
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <Mail className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+            <span className="truncate">{instructor.email}</span>
           </div>
+
+          {instructor.office ? (
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+              <span>{instructor.office}</span>
+            </div>
+          ) : null}
         </div>
 
-        {/* CENTER */}
-        <div className="space-y-4 xl:border-l
-xl:border-r
-border-[var(--card-border)] xl:px-6">
+        {courses.length ? (
+          <div className="mt-4 border-t border-[var(--border-blue)] pt-3.5">
+            <div className="flex items-center justify-between gap-3">
+              <p
+                className="
+                  text-[9.5px] font-black uppercase tracking-[0.14em]
+                  text-[#6F8391]
+                  dark:text-[#8FA5B4]
+                "
+              >
+                Teaching
+              </p>
 
-          <div className="flex items-center gap-3 text-[var(--muted)]">
-            <Mail size={18} />
-            <span>{instructor.email}</span>
+              <span className="text-[9.5px] font-black text-[var(--muted)]">
+                {courses.length} {courses.length === 1 ? "course" : "courses"}
+              </span>
+            </div>
+
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+              {visibleCourses.map((course, index) => (
+                <span
+                  key={`${course}-${index}`}
+                  className="text-[11px] font-black text-[var(--primary)]"
+                >
+                  {courseCode(course)}
+                  {index < visibleCourses.length - 1 ? (
+                    <span className="ml-2.5 text-[#B89736] dark:text-[var(--gold)]">
+                      ·
+                    </span>
+                  ) : null}
+                </span>
+              ))}
+            </div>
+
+            {remainingCourses > 0 ? (
+              <p className="mt-2 text-[10.5px] font-black text-[var(--primary)]">
+                + {remainingCourses} more {remainingCourses === 1 ? "course" : "courses"}
+              </p>
+            ) : null}
           </div>
-
-          <div className="flex items-center gap-3 text-[var(--muted)]">
-            <MapPin size={18} />
-            <span>{instructor.office}</span>
-          </div>
-        </div>
-
-        {/* COURSES */}
-        <div>
-          <h3 className="font-black text-[var(--ink)] mb-3">
-            Courses Taught
-          </h3>
-
-          <div className="flex flex-wrap gap-2">
-            {instructor.courses.map((course) => (
-              <CourseBadge
-                key={course}
-                course={course}
-                className="mt-0"
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* BUTTON */}
-        <div className="flex justify-end">
-          <button
-  onClick={onView}
-  className="
-h-12
-px-6
-rounded-full
-
-border border-[var(--border-blue)]
-bg-[var(--surface)]
-
-text-[var(--primary)]
-font-semibold
-
-flex items-center gap-2
-
-transition-all
-
-hover:bg-[var(--surface-elevated)]
-hover:border-[var(--primary)]
-"
->
-  <Eye size={18} />
-  View Profile
-</button>
-        </div>
-
+        ) : null}
       </div>
     </AppCard>
   );

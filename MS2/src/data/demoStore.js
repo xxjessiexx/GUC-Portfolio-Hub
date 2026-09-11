@@ -218,7 +218,7 @@ function freshDb() {
     version: DEMO_DATA_VERSION,
   };
 
-  return clone(ensureBachelorLinks(mergedSeed));
+  return clone(ensureStudentGraduationYears(ensureBachelorLinks(mergedSeed)));
 }
 export function normalizeRole(value) {
   const role = String(value || "").trim().toLowerCase();
@@ -226,6 +226,43 @@ export function normalizeRole(value) {
   if (role.includes("instructor")) return "instructor";
   if (role.includes("employer") || role.includes("company")) return "employer";
   return "student";
+}
+
+function inferExpectedGraduationYear(semester) {
+  const normalizedSemester = Math.min(
+    10,
+    Math.max(1, Number.parseInt(String(semester || "1"), 10) || 1)
+  );
+
+  // The demo data models a 10-semester program in the 2026 academic year.
+  return String(2026 + Math.ceil((10 - normalizedSemester) / 2));
+}
+
+function ensureStudentGraduationYears(db = {}) {
+  const users = Array.isArray(db.users) ? db.users : [];
+
+  return {
+    ...db,
+    users: users.map((user) => {
+      if (
+        normalizeRole(user.role || user.accountRole || user.systemRole) !==
+        "student"
+      ) {
+        return user;
+      }
+
+      const expectedGraduation =
+        user.expectedGraduation ||
+        user.graduationYear ||
+        inferExpectedGraduationYear(user.semester);
+
+      return {
+        ...user,
+        expectedGraduation: String(expectedGraduation),
+        graduationYear: String(expectedGraduation),
+      };
+    }),
+  };
 }
 
 function makeId(prefix, label) {
@@ -242,6 +279,15 @@ function makeId(prefix, label) {
 export function normalizeUserForStore(user = {}) {
   const role = normalizeRole(user.role || user.accountRole || user.systemRole || user.userType);
   const email = String(user.email || "").trim().toLowerCase();
+  const expectedGraduation =
+    role === "student"
+      ? String(
+          user.expectedGraduation ||
+            user.graduationYear ||
+            inferExpectedGraduationYear(user.semester)
+        )
+      : "";
+
   return {
     id: user.id || makeId(role, email || user.name || user.companyName),
     isDemo: Boolean(user.isDemo),
@@ -256,6 +302,12 @@ export function normalizeUserForStore(user = {}) {
     favoritePortfolioIds: user.favoritePortfolioIds || [],
     savedInternshipIds: user.savedInternshipIds || [],
     skills: user.skills || [],
+    ...(role === "student"
+      ? {
+          expectedGraduation,
+          graduationYear: expectedGraduation,
+        }
+      : {}),
     createdAt: user.createdAt || new Date().toISOString(),
   };
 }
@@ -361,7 +413,7 @@ export function initializeDemoStore({ force = false } = {}) {
       return updatedDb;
     }
 
-    const migratedStored = ensureBachelorLinks(stored);
+    const migratedStored = ensureStudentGraduationYears(ensureBachelorLinks(stored));
     demoDbCache = migratedStored;
     compatibilitySyncedForUserId = null;
 
@@ -393,7 +445,7 @@ export function getDemoDb() {
 }
 
 export function setDemoDb(nextDb) {
-  const normalized = ensureBachelorLinks({ ...nextDb, version: DEMO_DATA_VERSION });
+  const normalized = ensureStudentGraduationYears(ensureBachelorLinks({ ...nextDb, version: DEMO_DATA_VERSION }));
 
   demoDbCache = normalized;
   compatibilitySyncedForUserId = null;
@@ -541,11 +593,11 @@ export function getEmployerDashboardSnapshot(employerId = getCurrentUser()?.id) 
 
 export function clearCurrentUser() {
   if (typeof window === "undefined") return;
+
+  // Logging out must only end the authenticated session. Project, internship,
+  // application, and favorite compatibility caches represent persisted demo
+  // data and should not be destroyed just because a user signs out.
   sessionStorage.removeItem(CURRENT_USER_KEY);
-  writeLocal(PROJECTS_STORAGE_KEY, []);
-  writeLocal(INTERNSHIPS_STORAGE_KEY, []);
-  writeLocal(APPLIED_INTERNSHIPS_KEY, []);
-  writeLocal(SAVED_INTERNSHIPS_KEY, []);
   dispatchUserChange();
 }
 
@@ -1237,6 +1289,9 @@ export function getPortfolioForUser(userId) {
     name: user.name,
     email: user.email,
     major: user.major || user.faculty || "Media Engineering and Technology",
+    semester: user.semester || "",
+    expectedGraduation: user.expectedGraduation || user.graduationYear || "",
+    graduationYear: user.graduationYear || user.expectedGraduation || "",
     level: user.level || (user.semester ? `Semester ${user.semester}` : "Student"),
     bio: user.bio || "Student portfolio.",
     skills: user.skills || [],

@@ -10,11 +10,12 @@ import {AppCard} from "@/components/ui/AppCard";
 import PrimaryActionButton from "@/components/ui/Searchcommons/PrimaryActionButton";
 import FavoriteButton from "@/components/ui/Searchcommons/FavoriteButton";
 import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import PageHeader from "@/components/common/PageHeader";
+import Pagination from "@/components/common/Pagination";
 import FilterSelect from "@/components/common/FilterSelect";
 import { useLocation } from "react-router-dom";
 import { useNavigate }
 from "react-router-dom";
-import Pagination from "@/components/ui/Searchcommons/Pagination";
 
 import {
   FolderOpen,
@@ -22,7 +23,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import portfoliosData from "@/data/portfoliosData";
 
@@ -31,7 +32,6 @@ import {
   toggleFavoritePortfolio,
 } from "@/data/demoStore";
 
-import { useEffect } from "react";
 
 
 
@@ -43,7 +43,8 @@ export default function ExplorePortfolios({showReport = false}) {
 const [selectedPortfolio, setSelectedPortfolio] =
   useState(null);
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 8;
+const resultsTopRef = useRef(null);
 
 const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -102,16 +103,6 @@ const [currentPage, setCurrentPage] = useState(1);
         portfolio.skills.includes(selectedSkill);
 
 
-        useEffect(() => {
-  setCurrentPage(1);
-}, [
-  search,
-  selectedMajor,
-  selectedSkill,
-  selectedSort,
-]);
-
-
       return (
         matchesSearch &&
         matchesMajor &&
@@ -132,32 +123,83 @@ const [currentPage, setCurrentPage] = useState(1);
       return 0;
     });
 
-    const totalPages = Math.ceil(
-  filteredPortfolios.length / ITEMS_PER_PAGE
-);
 
-const paginatedPortfolios =
-  filteredPortfolios.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedMajor, selectedSkill, selectedSort]);
+
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredPortfolios.length / ITEMS_PER_PAGE)
   );
+
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedPortfolios = filteredPortfolios.slice(
+    pageStartIndex,
+    pageStartIndex + ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const goToPage = (page) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(nextPage);
+
+    requestAnimationFrame(() => {
+      resultsTopRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  const getVisiblePageNumbers = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (safeCurrentPage <= 4) {
+      return [1, 2, 3, 4, 5, "ellipsis-end", totalPages];
+    }
+
+    if (safeCurrentPage >= totalPages - 3) {
+      return [
+        1,
+        "ellipsis-start",
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ];
+    }
+
+    return [
+      1,
+      "ellipsis-start",
+      safeCurrentPage - 1,
+      safeCurrentPage,
+      safeCurrentPage + 1,
+      "ellipsis-end",
+      totalPages,
+    ];
+  };
+
 
   return (
     <DashboardLayout>
 
-      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-
-        {/* HEADER */}
-        <div>
-           <h1 className="mt-3 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
-            Explore Portfolios
-          </h1>
-
-           <p className="mt-3 text-base font-semibold text-[color:var(--muted)]">
-            Discover and get inspired by portfolios from talented GUC students across all majors and interests.
-          </p>
-        </div>
+      <div className="mx-auto w-full max-w-[1480px] space-y-6">
+        <PageHeader
+          title="Explore Portfolios"
+          description="Discover and get inspired by portfolios from talented GUC students across all majors and interests."
+        />
 
         <div className="space-y-5">
 
@@ -244,7 +286,7 @@ const paginatedPortfolios =
 
             {/* PORTFOLIOS */}
             {/* PORTFOLIOS */}
-<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+<div ref={resultsTopRef} className="grid scroll-mt-28 grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 
   {paginatedPortfolios.map((portfolio) => (
     <PortfolioCard
@@ -261,15 +303,17 @@ const paginatedPortfolios =
 
 </div>
 
-{totalPages > 1 && (
-  <div className="mt-8 flex justify-center">
-    <Pagination
-      currentPage={currentPage}
-      totalPages={totalPages}
-      onPageChange={setCurrentPage}
-    />
-  </div>
-)}
+
+        <Pagination
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          totalItems={filteredPortfolios.length}
+          pageStartIndex={pageStartIndex}
+          pageSize={ITEMS_PER_PAGE}
+          onPageChange={goToPage}
+          ariaLabel="Portfolio results pagination"
+        />
+
         
 
           {/* RIGHT SIDEBAR */}
@@ -296,7 +340,6 @@ const paginatedPortfolios =
         </AppModal>
       )}
       </div>
-      </main>
     </DashboardLayout>
   );
 }

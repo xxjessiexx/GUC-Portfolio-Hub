@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Briefcase,
   CalendarDays,
+  ClipboardList,
   CheckCircle2,
   Eye,
   FileText,
@@ -27,12 +28,13 @@ import FilterSelect from "@/components/common/FilterSelect";
 import StatusBadge from "@/components/common/StatusBadge";
 import SideToast from "@/components/ui/SideToast";
 
-import { internshipsData } from "@/data/internshipsData";
-
-const INTERNSHIPS_STORAGE_KEY = "guc-portfolio-internships";
+import {
+  getInternshipById,
+  updateInternship,
+} from "@/data/demoStore";
 
 const inputStyles =
-  "min-h-12 rounded-2xl border border-white/70 bg-[var(--input-bg)] px-4 text-sm font-semibold text-[color:var(--ink)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] placeholder:text-[color:var(--muted)]/65 transition focus-visible:border-[color:var(--accent)] focus-visible:ring-2 focus-visible:ring-[color:var(--ring-soft)]";
+  "min-h-[52px] rounded-[14px] border border-[#C7D7E0] bg-[rgba(247,250,252,0.84)] px-4 text-[14px] font-extrabold text-[#183247] shadow-[inset_0_1px_0_rgba(255,255,255,0.66)] placeholder:text-[#8798A4] transition hover:border-[#9AB3C1] focus-visible:border-[#557C97] focus-visible:bg-white/95 focus-visible:ring-4 focus-visible:ring-[#7AAACE]/10";
 
 const initialInternshipData = {
   title: "",
@@ -54,14 +56,6 @@ const initialInternshipData = {
   positionFilled: false,
 };
 
-function getStoredInternships() {
-  try {
-    const stored = localStorage.getItem(INTERNSHIPS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
 
 
 
@@ -103,10 +97,56 @@ function validateInternshipField(field, data) {
   }
 }
 
+
+function InternshipEditorTabs({ active, onChange }) {
+  const items = [
+    { id: "basics", label: "Basics", icon: Briefcase },
+    { id: "role", label: "Role details", icon: FileText },
+    { id: "requirements", label: "Requirements", icon: Languages },
+    { id: "settings", label: "Settings", icon: ClipboardList },
+  ];
+
+  return (
+    <nav
+      className="mt-5 flex items-center gap-1 border-b border-[#BFD1DC]/85"
+      aria-label="Internship editor sections"
+    >
+      {items.map((item) => {
+        const Icon = item.icon;
+        const selected = active === item.id;
+
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onChange(item.id)}
+            className={`relative inline-flex h-12 items-center gap-2.5 px-4 text-[13px] font-black transition ${
+              selected
+                ? "text-[#17384E]"
+                : "text-[#7A8D99] hover:text-[#355872]"
+            }`}
+          >
+            <Icon
+              className={`h-4 w-4 ${
+                selected ? "text-[#355872]" : "text-[#8EA0AA]"
+              }`}
+            />
+            {item.label}
+            {selected ? (
+              <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-full bg-[#E6C77B]" />
+            ) : null}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
 export default function EditInternship() {
   const navigate = useNavigate();
   const { internshipId } = useParams();
   const [formData, setFormData] = useState(initialInternshipData);
+  const [activeSection, setActiveSection] = useState("basics");
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -119,49 +159,52 @@ export default function EditInternship() {
   type: "success",
 });
   useEffect(() => {
-  const storedInternships = getStoredInternships();
+    const foundInternship = getInternshipById(internshipId);
 
-  const baseInternship = internshipsData.find((item) => item.id === internshipId);
-  const storedInternship = storedInternships.find((item) => item.id === internshipId);
+    if (!foundInternship) {
+      setToast({
+        open: true,
+        title: "Internship not found",
+        description: "This internship could not be loaded.",
+        type: "error",
+      });
+      return;
+    }
 
-  const foundInternship = {
-    ...baseInternship,
-    ...storedInternship,
-    duration: storedInternship?.duration || baseInternship?.duration || "",
-    workMode: storedInternship?.workMode || baseInternship?.workMode || "Hybrid",
-  };
-
-  if (!foundInternship) return;
-
-  setFormData({
-    title: foundInternship.title || "",
-    department: foundInternship.department || "",
-    workMode: foundInternship.workMode || "Hybrid",
-    duration: foundInternship.duration || "",
-    startDate: foundInternship.startDate || "",
-    deadline: foundInternship.deadline || "",
-    description:
-      foundInternship.description ||
-      foundInternship.details ||
-      "Update internship description here.",
-    responsibilities: Array.isArray(foundInternship.responsibilities)
-      ? foundInternship.responsibilities.join("\n")
-      : foundInternship.responsibilities || "",
-    requirements: Array.isArray(foundInternship.requirements)
-      ? foundInternship.requirements.join("\n")
-      : foundInternship.requirements || "",
-    skills: foundInternship.skills || [],
-    skillInput: "",
-    languages: foundInternship.languages || [],
-    languageInput: "",
-    openings: foundInternship.openings || 1,
-    stipend: foundInternship.stipend || "",
-    hiringActive:
-      foundInternship.hiringActive ?? foundInternship.status !== "Filled",
-    positionFilled:
-      foundInternship.positionFilled ?? foundInternship.status === "Filled",
-  });
-}, [internshipId]);
+    setFormData({
+      title: foundInternship.title || "",
+      department: foundInternship.department || "",
+      workMode: foundInternship.workMode || "Hybrid",
+      duration: foundInternship.duration || "",
+      startDate: foundInternship.startDate || "",
+      deadline: foundInternship.deadline || "",
+      description:
+        foundInternship.description ||
+        foundInternship.overview ||
+        foundInternship.details ||
+        "",
+      responsibilities: Array.isArray(foundInternship.responsibilities)
+        ? foundInternship.responsibilities.join("\n")
+        : foundInternship.responsibilities || "",
+      requirements: Array.isArray(foundInternship.requirements)
+        ? foundInternship.requirements.join("\n")
+        : foundInternship.requirements || "",
+      skills: foundInternship.skills || [],
+      skillInput: "",
+      languages: foundInternship.languages || [],
+      languageInput: "",
+      openings: foundInternship.openings || 1,
+      stipend: foundInternship.stipend || "",
+      hiringActive:
+        foundInternship.hiringActive ??
+        !["closed", "filled", "archived"].includes(
+          String(foundInternship.status || "").toLowerCase()
+        ),
+      positionFilled:
+        foundInternship.positionFilled ??
+        String(foundInternship.status || "").toLowerCase().includes("filled"),
+    });
+  }, [internshipId]);
 
   const responsibilitiesList = useMemo(() => {
     return formData.responsibilities
@@ -259,71 +302,126 @@ export default function EditInternship() {
     return Object.values(nextErrors).every((value) => !value);
   };
 
-  const buildStoredInternship = (status) => {
-    const now = new Date().toISOString();
+  const buildInternshipPayload = (status) => ({
+    title: formData.title.trim(),
+    department: formData.department.trim(),
+    workMode: formData.workMode,
+    duration: formData.duration,
+    startDate: formData.startDate,
+    deadline: formData.deadline,
+    description: formData.description.trim(),
+    overview: formData.description.trim(),
+    responsibilities: responsibilitiesList,
+    requirements: requirementsList,
+    skills: formData.skills,
+    languages: formData.languages,
+    openings: formData.openings,
+    stipend: formData.stipend.trim(),
+    hiringActive: formData.hiringActive,
+    positionFilled: formData.positionFilled,
+    status,
+  });
 
-    return {
-      id: internshipId,
-      title: formData.title.trim(),
-      department: formData.department.trim(),
-      workMode: formData.workMode,
-      duration: formData.duration,
-      startDate: formData.startDate,
-      deadline: formData.deadline,
-      description: formData.description.trim(),
-      responsibilities: responsibilitiesList,
-      requirements: requirementsList,
-      skills: formData.skills,
-      languages: formData.languages,
-      openings: formData.openings,
-      stipend: formData.stipend.trim(),
-      hiringActive: formData.hiringActive,
-      positionFilled: formData.positionFilled,
-      status,
-      createdAt: now,
-      updatedAt: now,
-    };
+  const persistChanges = (status) => {
+    const updated = updateInternship(
+      internshipId,
+      buildInternshipPayload(status)
+    );
+
+    if (!updated) {
+      throw new Error("This internship could not be found.");
+    }
+
+    return updated;
   };
 
   const handleSaveDraft = () => {
-  const draft = buildStoredInternship("draft");
-  updateStoredInternship(draft);
+    try {
+      persistChanges("draft");
 
-  setToast({
-    open: true,
-    title: "Draft saved successfully",
-    description: "Your internship draft changes have been saved.",
-    type: "success",
-  });
-};
+      setToast({
+        open: true,
+        title: "Draft saved successfully",
+        description: "Your internship draft changes have been saved.",
+        type: "success",
+      });
+    } catch (error) {
+      setToast({
+        open: true,
+        title: "Could not save draft",
+        description:
+          error?.message || "The internship draft could not be saved.",
+        type: "error",
+      });
+    }
+  };
+
   const handlePublish = (event) => {
     event.preventDefault();
 
     if (!validateAllFields()) {
-  setToast({
-    open: true,
-    title: "Unable to save changes",
-    description: "Please check the highlighted fields and try again.",
-    type: "error",
-  });
+      const nextErrors = {
+        title: validateInternshipField("title", formData),
+        department: validateInternshipField("department", formData),
+        duration: validateInternshipField("duration", formData),
+        deadline: validateInternshipField("deadline", formData),
+        description: validateInternshipField("description", formData),
+        responsibilities: validateInternshipField("responsibilities", formData),
+        requirements: validateInternshipField("requirements", formData),
+      };
 
-  return;
-}
+      if (
+        nextErrors.title ||
+        nextErrors.department ||
+        nextErrors.duration ||
+        nextErrors.deadline
+      ) {
+        setActiveSection("basics");
+      } else if (nextErrors.description || nextErrors.responsibilities) {
+        setActiveSection("role");
+      } else if (nextErrors.requirements) {
+        setActiveSection("requirements");
+      }
 
-    const published = buildStoredInternship("published");
-    updateStoredInternship(published);
+      setToast({
+        open: true,
+        title: "Unable to save changes",
+        description: "Please check the highlighted fields and try again.",
+        type: "error",
+      });
 
-    setToast({
-  open: true,
-  title: "Internship updated successfully",
-  description: "Your internship changes have been saved.",
-  type: "success",
-});
+      return;
+    }
 
-setTimeout(() => {
-  navigate("/manage-internships");
-}, 1200);
-    };
+    try {
+      persistChanges(
+        formData.positionFilled
+          ? "Filled"
+          : formData.hiringActive
+            ? "Active"
+            : "Closed"
+      );
+
+      setToast({
+        open: true,
+        title: "Internship updated successfully",
+        description: "Your internship changes have been saved.",
+        type: "success",
+      });
+
+      setTimeout(() => {
+        navigate("/manage-internships");
+      }, 1200);
+    } catch (error) {
+      setToast({
+        open: true,
+        title: "Could not save changes",
+        description:
+          error?.message || "The internship changes could not be saved.",
+        type: "error",
+      });
+    }
+  };
 
   const resetForm = () => {
   setFormData(initialInternshipData);
@@ -339,7 +437,7 @@ setTimeout(() => {
   });
 };
   return (
-    <DashboardLayout >
+    <DashboardLayout showFooter={false}>
 
       <SideToast
       open={toast.open}
@@ -353,36 +451,66 @@ setTimeout(() => {
         }))
       }
     />
-      <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8">
-        <form onSubmit={handlePublish} className="mx-auto max-w-7xl space-y-6">
-          <AppCard className="p-6 sm:p-8">
-            <div className="flex flex-col justify-between gap-5 md:flex-row md:items-start">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--primary)]">
-                  Internship Workspace
-                </p>
-
-                <h1 className="mt-4 text-4xl font-black tracking-tight text-[color:var(--ink)] sm:text-5xl">
+      <main className="h-[calc(100vh-9rem)] min-h-0">
+        <form
+          onSubmit={handlePublish}
+          className="mx-auto flex h-full min-h-0 w-full max-w-[1480px] flex-col"
+        >
+          <div className="shrink-0 border-b border-[#BFD1DC]/75 pb-4">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <span className="h-[3px] w-9 rounded-full bg-[#E6C77B]" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#5C8199]">
+                    Internship editor
+                  </p>
+                </div>
+                <h1 className="mt-3 text-[40px] font-black leading-none tracking-[-0.045em] text-[#112A3B] sm:text-[46px]">
                   Edit Internship
                 </h1>
-
-                <p className="mt-4 max-w-3xl text-base font-semibold leading-7 text-[color:var(--muted)]">
-                  Add internship details, responsibilities, skills, duration,
-                  deadline, openings, stipend, and programming languages.
+                <p className="mt-3 max-w-2xl text-[14px] font-semibold leading-6 text-[#718391]">
+                  Build the internship listing in one focused workspace.
                 </p>
               </div>
 
-              <AppButton
-                type="button"
-                onClick={handleSaveDraft}
-                className="min-h-12 rounded-2xl border border-white/70 bg-[var(--surface-strong)] px-6 font-black text-[color:var(--primary)]"
-              >
-                Save Draft Changes
-              </AppButton>
+              <div className="flex shrink-0 flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleSaveDraft}
+                  className="h-11 rounded-[14px] border border-[#C4D6E0] bg-[#F7FAFC] px-4 text-[12px] font-black text-[#355872] shadow-[0_6px_16px_rgba(53,88,114,0.06)] transition hover:bg-white"
+                >
+                  Save draft changes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(true)}
+                  className="h-11 rounded-[14px] px-4 text-[12px] font-black text-[#718391] transition hover:bg-[#EAF2F6] hover:text-[#355872]"
+                >
+                  Preview
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-[14px] bg-[#355872] px-6 text-[12px] font-black text-white shadow-[0_10px_24px_rgba(53,88,114,0.18)] transition hover:bg-[#294A61]"
+                >
+                  <Send className="h-4 w-4" />
+                  Save changes
+                </button>
+              </div>
             </div>
-          </AppCard>
+          </div>
 
-          <FormSection number="1" title="Basic Information" icon={Briefcase}>
+          <div className="shrink-0">
+            <InternshipEditorTabs
+              active={activeSection}
+              onChange={setActiveSection}
+            />
+          </div>
+
+          <div className="mt-4 min-h-0 flex-1 overflow-hidden rounded-[24px] border border-[#C9DBE4]/80 bg-[rgba(249,252,253,0.70)] shadow-[0_16px_36px_rgba(53,88,114,0.065)] backdrop-blur-xl">
+            <div className="h-full overflow-y-auto px-6 py-6 pr-5 sm:px-9 sm:pr-7 [scrollbar-gutter:stable] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#9AAAB4]/35 hover:[&::-webkit-scrollbar-thumb]:bg-[#8799A5]/50">
+              <div className="h-full">
+          {activeSection === "basics" ? (
+            <FormSection number="1" title="Basic Information" icon={Briefcase}>
             <div className="grid gap-5 lg:grid-cols-3">
               <FieldShell label="Internship Title" required icon={Sparkles}>
                 <Input
@@ -462,12 +590,14 @@ setTimeout(() => {
               </FieldShell>
             </div>
           </FormSection>
+          ) : null}
 
-          <FormSection number="2" title="About the Internship" icon={FileText}>
+          {activeSection === "role" ? (
+            <FormSection number="2" title="About the Internship" icon={FileText}>
             <div className="grid gap-5 lg:grid-cols-2">
               <FieldShell label="Short Description" required icon={FileText}>
                 <textarea
-                  className="min-h-40 w-full resize-none rounded-[1.5rem] border border-white/70 bg-[var(--input-bg)] px-4 py-4 text-sm font-semibold leading-7 text-[color:var(--ink)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] outline-none placeholder:text-[color:var(--muted)]/65 transition focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--ring-soft)]"
+                  className="min-h-36 w-full resize-none rounded-[14px] border border-[#C7D7E0] bg-[rgba(247,250,252,0.84)] px-4 py-3 text-[14px] font-semibold leading-6 text-[#183247] outline-none placeholder:text-[#8798A4] transition hover:border-[#9AB3C1] focus:border-[#557C97] focus:bg-white/95 focus:ring-4 focus:ring-[#7AAACE]/10"
                   placeholder="Describe the internship and what the candidate will learn."
                   value={formData.description}
                   onChange={(event) =>
@@ -484,7 +614,7 @@ setTimeout(() => {
                 icon={CheckCircle2}
               >
                 <textarea
-                  className="min-h-40 w-full resize-none rounded-[1.5rem] border border-white/70 bg-[var(--input-bg)] px-4 py-4 text-sm font-semibold leading-7 text-[color:var(--ink)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] outline-none placeholder:text-[color:var(--muted)]/65 transition focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--ring-soft)]"
+                  className="min-h-36 w-full resize-none rounded-[14px] border border-[#C7D7E0] bg-[rgba(247,250,252,0.84)] px-4 py-3 text-[14px] font-semibold leading-6 text-[#183247] outline-none placeholder:text-[#8798A4] transition hover:border-[#9AB3C1] focus:border-[#557C97] focus:bg-white/95 focus:ring-4 focus:ring-[#7AAACE]/10"
                   placeholder={`Write each responsibility on a new line.\nExample:\nBuild reusable UI components\nCollaborate with the product team`}
                   value={formData.responsibilities}
                   onChange={(event) =>
@@ -496,12 +626,14 @@ setTimeout(() => {
               </FieldShell>
             </div>
           </FormSection>
+          ) : null}
 
-          <FormSection number="3" title="Requirements & Details" icon={Languages}>
+          {activeSection === "requirements" ? (
+            <FormSection number="3" title="Requirements & Details" icon={Languages}>
             <div className="grid gap-5 xl:grid-cols-3">
               <FieldShell label="Requirements" required icon={FileText}>
                 <textarea
-                  className="min-h-40 w-full resize-none rounded-[1.5rem] border border-white/70 bg-[var(--input-bg)] px-4 py-4 text-sm font-semibold leading-7 text-[color:var(--ink)] shadow-[0_10px_28px_rgba(53,88,114,0.06)] outline-none placeholder:text-[color:var(--muted)]/65 transition focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--ring-soft)]"
+                  className="min-h-36 w-full resize-none rounded-[14px] border border-[#C7D7E0] bg-[rgba(247,250,252,0.84)] px-4 py-3 text-[14px] font-semibold leading-6 text-[#183247] outline-none placeholder:text-[#8798A4] transition hover:border-[#9AB3C1] focus:border-[#557C97] focus:bg-white/95 focus:ring-4 focus:ring-[#7AAACE]/10"
                   placeholder={`Write each requirement on a new line.\nExample:\nGood React basics\nStrong communication skills`}
                   value={formData.requirements}
                   onChange={(event) =>
@@ -587,8 +719,10 @@ setTimeout(() => {
               </div>
             </div>
           </FormSection>
+          ) : null}
 
-          <FormSection number="4" title="Additional Settings" icon={Briefcase}>
+          {activeSection === "settings" ? (
+            <FormSection number="4" title="Additional Settings" icon={Briefcase}>
             <div className="grid gap-5 md:grid-cols-2">
               <ToggleCard
                 title="Hiring Status"
@@ -609,46 +743,23 @@ setTimeout(() => {
               />
             </div>
           </FormSection>
+          ) : null}
 
-          <AppCard className="sticky bottom-4 z-20 p-4 sm:p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs font-bold leading-5 text-[color:var(--muted)]">
-                  You can preview before publishing.
-                </p>
-
-               
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+{activeSection === "settings" ? (
+              <div className="flex justify-end border-t border-[#C9DBE4]/70 pt-5">
                 <AppButton
                   type="button"
                   onClick={resetForm}
-                  className="min-h-12 rounded-2xl border border-white/70 bg-[var(--surface-strong)] px-6 font-black text-red-500 transition hover:bg-red-50"
+                  className="min-h-11 rounded-[14px] border border-[#C9DBE4] bg-white/55 px-5 font-black text-red-500 transition hover:bg-red-50"
                 >
                   <Trash2 className="mr-2 size-4" />
-                  Clear
-                </AppButton>
-
-                <AppButton
-                  type="button"
-                  onClick={() => setPreviewOpen(true)}
-                  className="min-h-12 rounded-2xl border border-white/70 bg-[var(--surface-strong)] px-6 font-black text-[color:var(--primary)] transition hover:bg-[var(--surface-elevated)]"
-                >
-                  <Eye className="mr-2 size-4" />
-                  Preview
-                </AppButton>
-
-                <AppButton
-                  type="submit"
-                  className="min-h-12 rounded-2xl bg-[var(--primary)] px-8 font-black text-white shadow-[var(--shadow-brand)] transition hover:bg-[var(--dark)]"
-                >
-                  <Send className="mr-2 size-4" />
-                  Save Changes
+                  Clear form
                 </AppButton>
               </div>
+              ) : null}
+              </div>
             </div>
-          </AppCard>
+          </div>
         </form>
       </main>
 
@@ -930,22 +1041,23 @@ function FieldShell({ label, required, icon: Icon, children }) {
 
 function FormSection({ number, title, icon: Icon, children }) {
   return (
-    <AppCard className="p-6 sm:p-7">
-      <div className="mb-6 flex items-center gap-3">
-        <AppIconFrame>
-          <span className="text-sm font-black">{number}</span>
-        </AppIconFrame>
-
+    <section className="w-full">
+      <div className="mb-7 flex items-start gap-3">
+        <span className="mt-2 h-[2px] w-8 shrink-0 rounded-full bg-[#E6C77B]" />
         <div>
-          <h2 className="text-2xl font-black tracking-tight text-[color:var(--ink)]">
-            {title}
-          </h2>
-          {Icon && <Icon className="mt-1 size-4 text-[color:var(--primary)]" />}
+          <div className="flex items-center gap-2">
+            {Icon && <Icon className="size-4 text-[#557C97]" />}
+            <h2 className="text-[20px] font-black tracking-[-0.025em] text-[#142A3A]">
+              {title}
+            </h2>
+            <span className="text-[10px] font-black uppercase tracking-[0.14em] text-[#8A9AA5]">
+              {number}
+            </span>
+          </div>
         </div>
       </div>
-
       {children}
-    </AppCard>
+    </section>
   );
 }
 
@@ -1002,20 +1114,6 @@ function ChipInput({
     </div>
   );
 }
-function updateStoredInternship(updatedInternship) {
-  const existing = getStoredInternships();
-
-  const exists = existing.some((item) => item.id === updatedInternship.id);
-
-  const updated = exists
-    ? existing.map((item) =>
-        item.id === updatedInternship.id ? updatedInternship : item
-      )
-    : [updatedInternship, ...existing];
-
-  localStorage.setItem(INTERNSHIPS_STORAGE_KEY, JSON.stringify(updated));
-}
-
 function ToggleCard({ title, description, checked, onCheckedChange }) {
   return (
     <div className="rounded-[1.5rem] border border-white/70 bg-[var(--surface-soft)] p-5">

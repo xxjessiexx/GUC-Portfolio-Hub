@@ -6,6 +6,23 @@ import AppBadge from "@/components/ui/AppBadge";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { AppButton } from "@/components/ui/AppButton";
 
+function getLocationLabel(value, fallback = "") {
+  if (!value) return fallback;
+  if (typeof value === "string") return value;
+
+  if (typeof value === "object") {
+    return (
+      value.label ||
+      value.name ||
+      value.address ||
+      value.city ||
+      fallback
+    );
+  }
+
+  return String(value);
+}
+
 export function EmployerHero({ employer }) {
   const navigate = useNavigate();
 
@@ -48,7 +65,7 @@ export function EmployerHero({ employer }) {
               <div className="mt-5 flex flex-wrap gap-3">
                 <AppBadge tone="blue">{employer.industry}</AppBadge>
                 <AppBadge tone="gold">{employer.verificationStatus}</AppBadge>
-                <AppBadge tone="muted">{employer.location}</AppBadge>
+                <AppBadge tone="muted">{getLocationLabel(employer.location, "Location not specified")}</AppBadge>
               </div>
             </div>
           </div>
@@ -77,9 +94,9 @@ export function EmployerHero({ employer }) {
             <AppButton
               type="button"
               variant="navDark"
-              onClick={() => navigate("/manage-applicants/emp-int-1")}
+              onClick={() => navigate("/manage-internships")}
             >
-              View Applicants
+              View Internships
             </AppButton>
           </div>
         </div>

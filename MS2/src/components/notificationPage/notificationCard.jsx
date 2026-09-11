@@ -77,11 +77,15 @@ export default function NotificationCard({
   title,
   description,
   unread,
+  attention = false,
   time,
   type,
   invitationStatus,
+  onOpen,
   onDelete,
   onMarkAsRead,
+  onAcceptInvite,
+  onRejectInvite,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -92,9 +96,25 @@ export default function NotificationCard({
   const isProjectInvite = type === "project-invite" || type === "invite";
   const displayTime = formatNotificationTime(time);
 
+  const cardSurfaceClass = attention
+    ? "border-[color:var(--gold)]/80 bg-[linear-gradient(105deg,rgba(230,199,123,0.40)_0%,rgba(248,235,194,0.90)_22%,rgba(255,251,235,0.99)_54%,rgba(255,255,255,0.97)_100%)] shadow-[0_18px_42px_rgba(124,96,35,0.19)] hover:-translate-y-0.5 hover:shadow-[0_22px_48px_rgba(124,96,35,0.24)]"
+    : unread
+      ? "border-[color:var(--gold)]/60 bg-[linear-gradient(105deg,rgba(230,199,123,0.30)_0%,rgba(247,235,198,0.82)_18%,rgba(255,252,242,0.98)_48%,rgba(255,255,255,0.96)_100%)] shadow-[0_16px_38px_rgba(124,96,35,0.15)] hover:-translate-y-0.5 hover:border-[color:var(--gold)]/75 hover:shadow-[0_20px_44px_rgba(124,96,35,0.20)] dark:bg-[linear-gradient(105deg,rgba(230,199,123,0.16),rgba(255,255,255,0.055))]"
+      : "border-[color:var(--border-soft)] bg-[rgba(255,255,255,0.88)] shadow-[0_8px_24px_rgba(53,88,114,0.06)] hover:-translate-y-0.5 hover:border-[color:var(--accent)]/30 hover:bg-[rgba(255,255,255,0.96)] hover:shadow-[0_14px_32px_rgba(53,88,114,0.09)] dark:bg-white/[0.035] dark:hover:bg-white/[0.055]";
+
   const handleCardClick = () => {
     if (unread) {
-      onMarkAsRead(id);
+      onMarkAsRead?.(id);
+    }
+    onOpen?.();
+  };
+
+  const handleCardKeyDown = (event) => {
+    if (!onOpen || event.target !== event.currentTarget) return;
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleCardClick();
     }
   };
 
@@ -165,25 +185,42 @@ export default function NotificationCard({
       >
         <AppCard
           onClick={handleCardClick}
+          onKeyDown={handleCardKeyDown}
+          role={onOpen ? "button" : undefined}
+          tabIndex={onOpen ? 0 : undefined}
           className={cn(
-            "relative group w-full cursor-pointer overflow-visible rounded-[28px] px-5 py-[18px] text-left transition-all duration-300",
-            unread
-              ? "border-[color:var(--gold)]/35 bg-[linear-gradient(135deg,rgba(230,199,123,0.18),var(--surface))] shadow-[0_18px_45px_rgba(230,199,123,0.12)]"
-              : "border-[color:var(--border-soft)] bg-[var(--surface)] hover:bg-[var(--surface-strong)]"
+            "relative group w-full overflow-visible rounded-[24px] border px-5 py-4 text-left transition-all duration-200",
+            onOpen &&
+              "cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--gold)]/20",
+            cardSurfaceClass
           )}
         >
-          {unread && (
-            <span className="absolute left-0 top-5 h-12 w-1 rounded-r-full bg-[color:var(--gold)]" />
+          {(unread || attention) && (
+            <span
+              className={cn(
+                "absolute left-0 rounded-r-full bg-[color:var(--gold)]",
+                attention
+                  ? "top-3 h-12 w-[5px] shadow-[0_0_20px_rgba(230,199,123,0.58)]"
+                  : "top-4 h-10 w-[4px] shadow-[0_0_16px_rgba(230,199,123,0.45)]"
+              )}
+            />
           )}
 
           <div className="flex gap-4">
             <div className="relative shrink-0 self-start">
-              <div className="grid h-[52px] w-[52px] place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--dark),var(--primary))] text-white shadow-[var(--shadow-soft)]">
+              <div
+                className={cn(
+                  "grid place-items-center bg-[linear-gradient(135deg,var(--dark),var(--primary))] text-white transition-all",
+                  attention
+                    ? "h-12 w-12 rounded-2xl shadow-[0_10px_24px_rgba(24,50,71,0.20)]"
+                    : "h-11 w-11 rounded-[14px] shadow-[0_7px_18px_rgba(24,50,71,0.14)]"
+                )}
+              >
                 {icon || <Bell className="h-5 w-5" />}
               </div>
 
               {unread && (
-                <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[color:var(--surface)] bg-[color:var(--gold)]" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-[color:var(--gold)] shadow-[0_0_12px_rgba(230,199,123,0.55)]" />
               )}
             </div>
 
@@ -252,6 +289,31 @@ export default function NotificationCard({
                   </div>
                 </div>
               </div>
+
+              {isProjectInvite && invitationStatus === "pending" && (
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onAcceptInvite?.(id);
+                    }}
+                    className="inline-flex h-9 items-center justify-center rounded-[12px] bg-[color:var(--primary)] px-4 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-[0_8px_18px_rgba(53,88,114,0.18)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--gold)]/20"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onRejectInvite?.(id);
+                    }}
+                    className="inline-flex h-9 items-center justify-center rounded-[12px] border border-[color:var(--border-soft)] bg-white/55 px-4 text-xs font-black text-[color:var(--primary)] transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--gold)]/20 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]"
+                  >
+                    Decline
+                  </button>
+                </div>
+              )}
 
               {isProjectInvite &&
                 invitationStatus &&
