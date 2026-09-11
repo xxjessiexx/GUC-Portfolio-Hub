@@ -94,9 +94,9 @@ export function EmployerHero({ employer }) {
             <AppButton
               type="button"
               variant="navDark"
-              onClick={() => navigate("/manage-applicants/emp-int-1")}
+              onClick={() => navigate("/manage-internships")}
             >
-              View Applicants
+              View Internships
             </AppButton>
           </div>
         </div>

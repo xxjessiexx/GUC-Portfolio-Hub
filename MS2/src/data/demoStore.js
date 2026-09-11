@@ -218,7 +218,7 @@ function freshDb() {
     version: DEMO_DATA_VERSION,
   };
 
-  return clone(ensureBachelorLinks(mergedSeed));
+  return clone(ensureStudentGraduationYears(ensureBachelorLinks(mergedSeed)));
 }
 export function normalizeRole(value) {
   const role = String(value || "").trim().toLowerCase();
@@ -226,6 +226,43 @@ export function normalizeRole(value) {
   if (role.includes("instructor")) return "instructor";
   if (role.includes("employer") || role.includes("company")) return "employer";
   return "student";
+}
+
+function inferExpectedGraduationYear(semester) {
+  const normalizedSemester = Math.min(
+    10,
+    Math.max(1, Number.parseInt(String(semester || "1"), 10) || 1)
+  );
+
+  // The demo data models a 10-semester program in the 2026 academic year.
+  return String(2026 + Math.ceil((10 - normalizedSemester) / 2));
+}
+
+function ensureStudentGraduationYears(db = {}) {
+  const users = Array.isArray(db.users) ? db.users : [];
+
+  return {
+    ...db,
+    users: users.map((user) => {
+      if (
+        normalizeRole(user.role || user.accountRole || user.systemRole) !==
+        "student"
+      ) {
+        return user;
+      }
+
+      const expectedGraduation =
+        user.expectedGraduation ||
+        user.graduationYear ||
+        inferExpectedGraduationYear(user.semester);
+
+      return {
+        ...user,
+        expectedGraduation: String(expectedGraduation),
+        graduationYear: String(expectedGraduation),
+      };
+    }),
+  };
 }
 
 function makeId(prefix, label) {
@@ -242,6 +279,15 @@ function makeId(prefix, label) {
 export function normalizeUserForStore(user = {}) {
   const role = normalizeRole(user.role || user.accountRole || user.systemRole || user.userType);
   const email = String(user.email || "").trim().toLowerCase();
+  const expectedGraduation =
+    role === "student"
+      ? String(
+          user.expectedGraduation ||
+            user.graduationYear ||
+            inferExpectedGraduationYear(user.semester)
+        )
+      : "";
+
   return {
     id: user.id || makeId(role, email || user.name || user.companyName),
     isDemo: Boolean(user.isDemo),
@@ -256,6 +302,12 @@ export function normalizeUserForStore(user = {}) {
     favoritePortfolioIds: user.favoritePortfolioIds || [],
     savedInternshipIds: user.savedInternshipIds || [],
     skills: user.skills || [],
+    ...(role === "student"
+      ? {
+          expectedGraduation,
+          graduationYear: expectedGraduation,
+        }
+      : {}),
     createdAt: user.createdAt || new Date().toISOString(),
   };
 }
@@ -361,7 +413,7 @@ export function initializeDemoStore({ force = false } = {}) {
       return updatedDb;
     }
 
-    const migratedStored = ensureBachelorLinks(stored);
+    const migratedStored = ensureStudentGraduationYears(ensureBachelorLinks(stored));
     demoDbCache = migratedStored;
     compatibilitySyncedForUserId = null;
 
@@ -393,7 +445,7 @@ export function getDemoDb() {
 }
 
 export function setDemoDb(nextDb) {
-  const normalized = ensureBachelorLinks({ ...nextDb, version: DEMO_DATA_VERSION });
+  const normalized = ensureStudentGraduationYears(ensureBachelorLinks({ ...nextDb, version: DEMO_DATA_VERSION }));
 
   demoDbCache = normalized;
   compatibilitySyncedForUserId = null;
@@ -968,6 +1020,7 @@ export function normalizeProjectInput(input = {}, owner = getCurrentUser()) {
     image: input.image || "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop",
     createdAt: input.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    ...input,
   };
 }
 
@@ -1236,6 +1289,9 @@ export function getPortfolioForUser(userId) {
     name: user.name,
     email: user.email,
     major: user.major || user.faculty || "Media Engineering and Technology",
+    semester: user.semester || "",
+    expectedGraduation: user.expectedGraduation || user.graduationYear || "",
+    graduationYear: user.graduationYear || user.expectedGraduation || "",
     level: user.level || (user.semester ? `Semester ${user.semester}` : "Student"),
     bio: user.bio || "Student portfolio.",
     skills: user.skills || [],
@@ -1280,32 +1336,11 @@ export function getAllInstructors() {
   });
 }
 
-function normalizeLocationText(value, fallback = "Cairo, Egypt") {
-  if (!value) return fallback;
-  if (typeof value === "string") return value;
-
-  if (typeof value === "object") {
-    return (
-      value.label ||
-      value.name ||
-      value.address ||
-      value.city ||
-      fallback
-    );
-  }
-
-  return String(value);
-}
-
 function hydrateInternshipFromDb(db) {
   return (internship) => {
     const employer = (db.users || []).find((user) => user.id === internship.employerId) || null;
     return {
       ...internship,
-      location: normalizeLocationText(
-        internship.location || employer?.location,
-        "Cairo, Egypt"
-      ),
       employer,
       company: internship.company || internship.companyName || employer?.companyName || employer?.name || "Company",
       companyName: internship.companyName || internship.company || employer?.companyName || employer?.name || "Company",
@@ -1338,18 +1373,6 @@ export function getInternshipsForEmployer(employerId = getCurrentUser()?.id) {
   return getInternships().filter((item) => item.employerId === employerId);
 }
 
-function getApplicationStatusLabel(status) {
-  const normalized = String(status || "pending").trim().toLowerCase();
-
-  if (normalized === "accepted" || normalized === "approved") return "Accepted";
-  if (normalized === "rejected" || normalized === "declined") return "Rejected";
-  if (normalized === "shortlisted") return "Shortlisted";
-  if (normalized === "nominated") return "Nominated";
-  if (normalized === "reviewing" || normalized === "under review") return "Reviewing";
-
-  return "Reviewing";
-}
-
 function getApplicationsForStudentFromDb(db, studentId) {
   return (db.internships || []).flatMap((internship) =>
     (internship.applications || [])
@@ -1359,15 +1382,11 @@ function getApplicationsForStudentFromDb(db, studentId) {
         internshipId: internship.id,
         title: internship.title,
         company: internship.companyName || internship.company,
-        location: normalizeLocationText(
-          internship.location,
-          "Location not specified"
-        ),
+        location: internship.location,
         duration: internship.duration,
         dateApplied: application.appliedAt,
-        displayDate:
-          application.displayDate || displayDate(application.appliedAt),
-        status: getApplicationStatusLabel(application.status),
+        displayDate: application.displayDate || displayDate(application.appliedAt),
+        status: application.status === "accepted" ? "Accepted" : application.status === "rejected" ? "Rejected" : "Pending",
       }))
   );
 }
@@ -1376,171 +1395,41 @@ export function getApplicationsForStudent(studentId = getCurrentUser()?.id) {
   return getApplicationsForStudentFromDb(getDemoDb(), studentId);
 }
 
-export function applyToInternship(
-  internshipId,
-  coverLetter = "",
-  studentId = getCurrentUser()?.id
-) {
+export function applyToInternship(internshipId, coverLetter = "", studentId = getCurrentUser()?.id) {
   if (!studentId) return null;
-
   const db = getDemoDb();
-  const now = new Date().toISOString();
-  const appliedDate = now.slice(0, 10);
-  const student = (db.users || []).find(
-    (user) => String(user.id) === String(studentId)
-  );
-
   let createdApplication = null;
-  let targetInternship = null;
-
   const nextInternships = db.internships.map((internship) => {
-    if (String(internship.id) !== String(internshipId)) return internship;
-
-    targetInternship = internship;
-
-    const apps = (internship.applications || []).filter(
-      (app) => String(app.studentId) !== String(studentId)
-    );
-
+    if (internship.id !== internshipId) return internship;
+    const apps = (internship.applications || []).filter((app) => app.studentId !== studentId);
     createdApplication = {
       id: makeId("application", `${internshipId}-${studentId}`),
       internshipId,
       studentId,
       status: "pending",
       coverLetter,
-      appliedAt: appliedDate,
-      createdAt: now,
-      updatedAt: now,
+      appliedAt: new Date().toISOString().slice(0, 10),
     };
-
     return {
       ...internship,
       applications: [...apps, createdApplication],
-      updatedAt: now,
     };
   });
-
-  if (!createdApplication || !targetInternship) return null;
-
-  const employerNotification = targetInternship.employerId
-    ? {
-        id: `application-${internshipId}-${studentId}-${Date.now()}`,
-        userId: targetInternship.employerId,
-        type: "application",
-        title: `New application for ${targetInternship.title || "your internship"}`,
-        body: `${
-          student?.name ||
-          student?.fullName ||
-          student?.email ||
-          "A student"
-        } applied to ${targetInternship.title || "your internship"}.`,
-        message: `${
-          student?.name ||
-          student?.fullName ||
-          student?.email ||
-          "A student"
-        } applied to ${targetInternship.title || "your internship"}.`,
-        internshipId: targetInternship.id,
-        relatedUserId: studentId,
-        unread: true,
-        createdAt: now,
-        time: now,
-      }
-    : null;
-
-  setDemoDb({
-    ...db,
-    internships: nextInternships,
-    notifications: employerNotification
-      ? [...(db.notifications || []), employerNotification]
-      : db.notifications || [],
-  });
-
+  setDemoDb({ ...db, internships: nextInternships });
   const letters = readLocal(COVER_LETTERS_KEY, {});
-  writeLocal(COVER_LETTERS_KEY, {
-    ...letters,
-    [internshipId]: coverLetter,
-  });
-
+  writeLocal(COVER_LETTERS_KEY, { ...letters, [internshipId]: coverLetter });
   return createdApplication;
 }
 
 export function setApplicantStatus(internshipId, studentId, status) {
   const db = getDemoDb();
-  const normalizedStatus = String(status || "pending").trim().toLowerCase();
-  const now = new Date().toISOString();
-
-  const internship = (db.internships || []).find(
-    (item) => String(item.id) === String(internshipId)
-  );
-
-  if (!internship) return null;
-
-  let updatedApplication = null;
-
-  const nextInternships = (db.internships || []).map((item) => {
-    if (String(item.id) !== String(internshipId)) return item;
-
-    return {
-      ...item,
-      applications: (item.applications || []).map((app) => {
-        if (String(app.studentId) !== String(studentId)) return app;
-
-        updatedApplication = {
-          ...app,
-          status: normalizedStatus,
-          updatedAt: now,
-        };
-
-        return updatedApplication;
-      }),
-      updatedAt: now,
-    };
-  });
-
-  if (!updatedApplication) return null;
-
-  const statusLabel = getApplicationStatusLabel(normalizedStatus);
-
-  const studentNotification = {
-    id: `application-status-${internshipId}-${studentId}-${normalizedStatus}-${Date.now()}`,
-    userId: studentId,
-    type: "application",
-    title: `${internship.title || "Internship"} application update`,
-    body:
-      statusLabel === "Accepted"
-        ? `Your application to ${internship.title || "this internship"} was accepted.`
-        : statusLabel === "Rejected"
-          ? `Your application to ${internship.title || "this internship"} was not selected.`
-          : statusLabel === "Shortlisted"
-            ? `You were shortlisted for ${internship.title || "this internship"}.`
-            : statusLabel === "Nominated"
-              ? `You were nominated for ${internship.title || "this internship"}.`
-              : `Your application to ${internship.title || "this internship"} is now under review.`,
-    message:
-      statusLabel === "Accepted"
-        ? `Your application to ${internship.title || "this internship"} was accepted.`
-        : statusLabel === "Rejected"
-          ? `Your application to ${internship.title || "this internship"} was not selected.`
-          : statusLabel === "Shortlisted"
-            ? `You were shortlisted for ${internship.title || "this internship"}.`
-            : statusLabel === "Nominated"
-              ? `You were nominated for ${internship.title || "this internship"}.`
-              : `Your application to ${internship.title || "this internship"} is now under review.`,
-    internshipId: internship.id,
-    relatedUserId: internship.employerId,
-    unread: true,
-    createdAt: now,
-    time: now,
-  };
-
   setDemoDb({
     ...db,
-    internships: nextInternships,
-    notifications: [...(db.notifications || []), studentNotification],
+    internships: db.internships.map((internship) => internship.id !== internshipId ? internship : {
+      ...internship,
+      applications: (internship.applications || []).map((app) => app.studentId === studentId ? { ...app, status } : app),
+    }),
   });
-
-  return updatedApplication;
 }
 
 export function toggleSavedInternship(internshipId, userId = getCurrentUser()?.id) {
@@ -1558,7 +1447,6 @@ export function createInternship(input = {}) {
   const employer = getCurrentUser();
   if (!employer || employer.role !== "employer") throw new Error("You must be logged in as an employer.");
   const internship = {
-    ...input,
     id: input.id || makeId("internship", input.title),
     isDemo: false,
     employerId: input.employerId || employer.id,
@@ -1566,10 +1454,7 @@ export function createInternship(input = {}) {
     company: input.company || input.companyName || employer.companyName || employer.name,
     title: input.title || "Untitled Internship",
     department: input.department || "Engineering",
-    location: normalizeLocationText(
-      input.location || employer.location,
-      "Cairo, Egypt"
-    ),
+    location: input.location || employer.location || "Cairo, Egypt",
     duration: input.duration || "3 months",
     workMode: input.workMode || "Hybrid",
     deadline: input.deadline || new Date().toISOString().slice(0, 10),
@@ -1596,23 +1481,7 @@ export function updateInternship(internshipId, updates) {
   const db = getDemoDb();
   const existing = db.internships.find((item) => String(item.id) === String(internshipId));
   if (!existing) return null;
-
-  const normalizedUpdates = {
-    ...updates,
-    ...(Object.prototype.hasOwnProperty.call(updates || {}, "location")
-      ? { location: normalizeLocationText(updates.location, existing.location || "Cairo, Egypt") }
-      : {}),
-  };
-
-  const updated = {
-    ...existing,
-    ...normalizedUpdates,
-    location: normalizeLocationText(
-      normalizedUpdates.location ?? existing.location,
-      "Cairo, Egypt"
-    ),
-    updatedAt: new Date().toISOString(),
-  };
+  const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
   setDemoDb({ ...db, internships: db.internships.map((item) => item.id === existing.id ? updated : item) });
   return hydrateInternship(updated);
 }

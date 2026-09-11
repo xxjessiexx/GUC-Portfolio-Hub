@@ -104,6 +104,11 @@ const semesterOptions = Array.from({ length: 10 }, (_, index) =>
   String(index + 1)
 );
 
+const graduationYearOptions = Array.from(
+  { length: 10 },
+  (_, index) => String(new Date().getFullYear() + index)
+);
+
 const engineeringMajors = new Set([
   "MET",
   "DMET",
@@ -614,6 +619,9 @@ export default function Settings() {
       profile?.faculty
     ),
     semester: String(profile?.semester || "1"),
+    expectedGraduation: String(
+      profile?.expectedGraduation || profile?.graduationYear || ""
+    ),
     skills: profile?.skills || [],
     links: {
       linkedin: profile?.links?.linkedin || "",
@@ -648,6 +656,9 @@ export default function Settings() {
         profile?.faculty
       ),
       semester: String(profile?.semester || "1"),
+      expectedGraduation: String(
+        profile?.expectedGraduation || profile?.graduationYear || ""
+      ),
       skills: profile?.skills || [],
       links: {
         linkedin: profile?.links?.linkedin || "",
@@ -723,6 +734,8 @@ export default function Settings() {
         faculty: normalizedFaculty,
         major: draft.major,
         semester: draft.semester,
+        expectedGraduation: draft.expectedGraduation,
+        graduationYear: draft.expectedGraduation,
         skills: draft.skills,
         links: draft.links,
         role: `${draft.major} Student`,
@@ -974,11 +987,11 @@ export default function Settings() {
           <div className="border-b border-[#D2E0E7] px-6 py-5 dark:border-white/10">
             <SectionTitle
               title="Academic information"
-              description="Faculty, major, and current semester."
+              description="Faculty, major, semester, and expected graduation."
               status={profileSaveStates.academic}
             />
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <label>
                 <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
                   Faculty
@@ -1035,6 +1048,27 @@ export default function Settings() {
                       (current) => ({
                         ...current,
                         semester: value,
+                      }),
+                      "academic",
+                      true
+                    )
+                  }
+                />
+              </label>
+
+              <label>
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
+                  Expected graduation
+                </span>
+                <AppSelect
+                  value={profileDraft.expectedGraduation}
+                  options={graduationYearOptions}
+                  placeholder="Select year"
+                  onValueChange={(value) =>
+                    changeProfileDraft(
+                      (current) => ({
+                        ...current,
+                        expectedGraduation: value,
                       }),
                       "academic",
                       true
@@ -1476,10 +1510,10 @@ export default function Settings() {
   };
 
   return (
-    <DashboardLayout showFooter={false}>
-      <main className="h-[calc(100vh-144px)] overflow-hidden px-4 py-5 sm:px-6 lg:px-7 xl:px-8">
-        <div className="mx-auto flex h-full w-full max-w-[1480px] min-h-0 flex-col">
-          <header className="mb-5 shrink-0">
+    <DashboardLayout>
+      <main className="px-4 py-5 pb-16 sm:px-6 lg:px-7 xl:px-8">
+        <div className="mx-auto w-full max-w-[1480px]">
+          <header className="mb-5">
             <div className="mb-3 h-[3px] w-10 rounded-full bg-[var(--gold)]" />
             <h1 className="text-[44px] font-black leading-none tracking-[-0.045em] text-[color:var(--ink)] sm:text-[50px]">
               Settings
@@ -1491,7 +1525,7 @@ export default function Settings() {
 
           <div
             className="
-              min-h-0 flex-1 overflow-hidden rounded-[22px]
+              overflow-hidden rounded-[22px]
               border border-[#C9DBE4]
               bg-[#EEF4F7]
               shadow-[0_12px_30px_rgba(53,88,114,0.065)]
@@ -1500,10 +1534,9 @@ export default function Settings() {
               dark:shadow-[0_16px_36px_rgba(0,0,0,0.22)]
             "
           >
-            <div className="grid h-full min-h-0 lg:grid-cols-[236px_minmax(0,1fr)]">
+            <div className="grid lg:grid-cols-[236px_minmax(0,1fr)]">
               <aside
                 className="
-                  shrink-0 overflow-hidden
                   border-b border-[#D2E0E7]
                   bg-[#EEF4F7]
                   p-4
@@ -1556,7 +1589,7 @@ export default function Settings() {
               <section
                 aria-label={`${activeMeta.label} settings`}
                 className="
-                  min-h-0 min-w-0 overflow-y-auto overscroll-contain
+                  min-w-0
                   bg-[#F3F7F9]
                   dark:bg-[#0D2130]
                 "
