@@ -1998,6 +1998,13 @@ function InternshipsGrid({
   pageStartIndex = 0,
   onPageChange,
 }) {
+  const navigate = useNavigate();
+
+  const openInternship = (internship) => {
+    if (!internship?.id) return;
+    navigate(`/internships/${internship.id}`);
+  };
+
   return (
     <AppCard className="p-5">
       <div className="mb-4 flex items-center gap-2">
@@ -2011,112 +2018,183 @@ function InternshipsGrid({
       {internships.length > 0 ? (
         <>
           <div className="space-y-4">
-            {internships.map((internship) => (
-              <motion.article
-                key={internship.id}
-                whileHover={{ y: -3 }}
-                transition={{ duration: 0.18 }}
-                className="group cursor-pointer overflow-hidden rounded-[1.65rem] border border-white/70 bg-white/74 shadow-[0_18px_44px_rgba(53,88,114,0.09)] dark:border-white/10 dark:bg-white/[0.045]"
-              >
-                <div className="grid min-h-[210px] lg:grid-cols-[260px_1fr]">
-                  <div className="relative overflow-hidden bg-[#071C2C] dark:bg-[#071521]">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(122,170,206,0.18),transparent_32%),radial-gradient(circle_at_82%_82%,rgba(230,199,123,0.08),transparent_34%)]" />
+            {internships.map((internship) => {
+              const title =
+                internship.title || internship.role || "Internship";
+              const company = internship.company || "Company";
+              const location =
+                internship.location || "Location not added";
+              const duration =
+                internship.duration || "Duration not added";
+              const status =
+                String(internship.status || "Completed").toLowerCase() === "filled"
+                  ? "Completed"
+                  : internship.status || "Completed";
 
-                    <div className="absolute left-4 top-4 z-10">
-                      <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 text-xs font-black text-[#9CD5FF] backdrop-blur-md">
-                        <Briefcase className="h-3.5 w-3.5" />
-                        Internship
-                      </span>
-                    </div>
+              const dateLabel = internship.updatedAt
+                ? formatDate(internship.updatedAt)
+                : internship.deadline
+                  ? formatDate(internship.deadline)
+                  : internship.postedAt || "Date not added";
 
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
-                        {internship.company || "Company"}
-                      </p>
+              return (
+                <motion.article
+                  key={internship.id}
+                  whileHover={{ y: -3 }}
+                  transition={{ duration: 0.18 }}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openInternship(internship)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openInternship(internship);
+                    }
+                  }}
+                  className="
+                    group cursor-pointer overflow-hidden
+                    rounded-[1.65rem]
+                    border border-white/70
+                    bg-white/74
+                    shadow-[0_18px_44px_rgba(53,88,114,0.09)]
+                    outline-none
+                    transition-[box-shadow,border-color]
+                    hover:border-[#D8CC98]
+                    hover:shadow-[0_22px_48px_rgba(53,88,114,0.12)]
+                    focus-visible:border-[#D7B54D]/55
+                    dark:border-white/10
+                    dark:bg-white/[0.045]
+                    dark:hover:border-[#E6C77B]/18
+                    dark:hover:shadow-[0_24px_52px_rgba(0,0,0,0.26)]
+                  "
+                >
+                  <div className="grid min-h-[220px] lg:grid-cols-[260px_1fr]">
+                    {/* Match the project-card identity grammar without repeating the role. */}
+                    <div className="relative overflow-hidden bg-[#071C2C] dark:bg-[#071521]">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(122,170,206,0.18),transparent_32%),radial-gradient(circle_at_82%_82%,rgba(230,199,123,0.08),transparent_34%)]" />
 
-                      <h3 className="mt-2 line-clamp-2 text-[1.7rem] font-black leading-tight text-white">
-                        {internship.title || internship.role || "Internship"}
-                      </h3>
-                    </div>
-                  </div>
+                      <div className="absolute left-4 top-4 z-10">
+                        <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 text-xs font-black text-[#9CD5FF] backdrop-blur-md">
+                          <Briefcase className="h-3.5 w-3.5" />
+                          Internship
+                        </span>
+                      </div>
 
-                  <div className="flex h-full flex-col p-5">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-lg font-black text-[color:var(--ink)]">
-                          {internship.title || internship.role || "Internship"}
+                      <div className="absolute bottom-5 left-4 right-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/45">
+                          Employer
                         </p>
 
-                        <p className="mt-1 text-xs font-bold text-[color:var(--muted)]">
-                          {internship.company || "Company not added"} •{" "}
-                          {internship.location || "Location not added"}
+                        <p className="mt-2 text-[1.35rem] font-extrabold leading-tight text-white">
+                          {company}
+                        </p>
+
+                        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[#E6C77B]/16 bg-[#E6C77B]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#F0CF78]">
+                          <Briefcase className="h-3 w-3" />
+                          Completed
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex h-full min-w-0 flex-col p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="line-clamp-1 text-[1.08rem] font-black leading-tight tracking-[-0.02em] text-[color:var(--ink)]">
+                            {title}
+                          </h3>
+
+                          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold text-[color:var(--muted)]">
+                            <span className="font-black text-[#5B7382] dark:text-[#AFC1CB]">
+                              {company}
+                            </span>
+
+                            <span className="text-[#C7D2D8] dark:text-white/16">•</span>
+
+                            <span>{location}</span>
+
+                            <span className="text-[#C7D2D8] dark:text-white/16">•</span>
+
+                            <span>{duration}</span>
+                          </div>
+                        </div>
+
+                        {internship.rating ? (
+                          <span
+                            className="
+                              inline-flex shrink-0 items-center gap-1.5
+                              rounded-full
+                              border border-[#E6C77B]/22
+                              bg-[#FFF8E7]
+                              px-2.5 py-1
+                              text-[10px] font-black text-[#9A7618]
+                              dark:border-[#E6C77B]/14
+                              dark:bg-[#E6C77B]/8
+                              dark:text-[#E6C77B]
+                            "
+                            title="Internship rating"
+                          >
+                            <Star className="h-3 w-3 fill-current" />
+                            {internship.rating}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-4 px-1 py-1">
+                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#355872] dark:text-[#9CD5FF]">
+                          Internship Summary
+                        </p>
+
+                        <p className="mt-2 line-clamp-2 text-xs font-semibold leading-6 text-[color:var(--muted)]">
+                          {internship.overview ||
+                            internship.details ||
+                            internship.description ||
+                            internship.summary ||
+                            "No internship description added yet."}
                         </p>
                       </div>
 
-                      <ScoreBadge rating={internship.rating || "4.8"} />
-                    </div>
+                      {/* One evidence line instead of four dashboard metric boxes. */}
+                      <div
+                        className="
+                          mt-auto flex flex-wrap items-center gap-x-2.5 gap-y-1
+                          border-t border-[#E3EAED] pt-4
+                          text-[11px] font-semibold text-[#788B96]
+                          dark:border-white/8 dark:text-[#8296A2]
+                        "
+                      >
+                        <span className="font-black text-[#8D6D18] dark:text-[#DCC77F]">
+                          {status}
+                        </span>
 
-                    <div className="mt-4 px-1 py-1">
-                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#355872] dark:text-[#9CD5FF]">
-                        Internship Summary
-                      </p>
+                        <span className="text-[#C7D2D8] dark:text-white/16">•</span>
 
-                      <p className="mt-2 line-clamp-2 text-xs font-semibold leading-6 text-[color:var(--muted)]">
-                        {internship.overview ||
-                          internship.details ||
-                          internship.description ||
-                          internship.summary ||
-                          "No internship description added yet."}
-                      </p>
-                    </div>
+                        <span>{duration}</span>
 
-                    <div className="mt-4 grid gap-2 sm:grid-cols-4">
-                      <MiniMetric
-                        label="Type"
-                        value={internship.type || "Internship"}
-                        tone="navy"
-                      />
+                        <span className="text-[#C7D2D8] dark:text-white/16">•</span>
 
-                      <MiniMetric
-                        label="Duration"
-                        value={internship.duration || "Not added"}
-                        tone="soft"
-                      />
+                        <span>
+                          Updated{" "}
+                          <span className="font-black text-[#415E70] dark:text-[#BCCDD5]">
+                            {dateLabel}
+                          </span>
+                        </span>
 
-                      <MiniMetric
-                        label="Status"
-                        value={internship.status || "Completed"}
-                        tone="blue"
-                      />
-
-                      <MiniMetric
-                        label="Updated"
-                        value={
-                          internship.updatedAt
-                            ? formatDate(internship.updatedAt)
-                            : internship.deadline
-                            ? `Deadline ${formatDate(internship.deadline)}`
-                            : internship.postedAt || "Unknown"
-                        }
-                        tone="soft"
-                      />
-                    </div>
-
-                    <div className="mt-auto flex flex-wrap gap-3 pt-4">
-                      {internship.link ? (
-                        <SoftButton
-                          href={normalizeUrl(internship.link)}
-                          className="h-10 px-4 text-xs"
-                        >
-                          View Internship
-                          <ExternalLink className="h-4 w-4" />
-                        </SoftButton>
-                      ) : null}
+                        <ChevronRight
+                          className="
+                            ml-auto h-4 w-4 -translate-x-1
+                            text-[#9FB0BA] opacity-0
+                            transition-all duration-200
+                            group-hover:translate-x-0 group-hover:opacity-100
+                            group-focus-visible:translate-x-0 group-focus-visible:opacity-100
+                            dark:text-[#7F949F]
+                          "
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.article>
-            ))}
+                </motion.article>
+              );
+            })}
           </div>
 
           <Pagination
@@ -2138,6 +2216,7 @@ function InternshipsGrid({
     </AppCard>
   );
 }
+
 
 function ProjectsGrid({
   title,
