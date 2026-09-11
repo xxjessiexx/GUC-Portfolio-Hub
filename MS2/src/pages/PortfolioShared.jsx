@@ -6,6 +6,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { motion } from "framer-motion";
+import { createPortal } from "react-dom";
 import {
   ArrowUpDown,
   BookOpen,
@@ -62,8 +63,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const PROJECTS_PAGE_SIZE = 4;
-const INTERNSHIPS_PAGE_SIZE = 3;
+const PORTFOLIO_WORK_PAGE_SIZE = 3;
 
 function normalizeUrl(value) {
   if (!value) return "";
@@ -181,11 +181,11 @@ function SocialActionLink({ href, label, icon: Icon }) {
       rel="noreferrer"
       aria-label={`Open ${label}`}
       className="
-        group flex min-w-0 items-center justify-between
+        group flex h-12 min-w-0 items-center justify-between
         rounded-[14px]
         border border-[#D8E2E7]
         bg-[#FFFDF8]
-        px-4 py-3
+        px-4
         text-[#24323B]
         shadow-[0_5px_14px_rgba(53,88,114,0.04)]
         transition-all duration-200
@@ -686,7 +686,7 @@ function PortfolioTopCard({
         {/* Identity */}
         <div
           className="
-            flex flex-col items-center justify-center
+            flex h-full flex-col items-center
             border-b border-[#D8E3E8] pb-6 text-center
             xl:border-b-0 xl:border-r xl:pb-0 xl:pr-7
             dark:border-white/10
@@ -756,7 +756,8 @@ function PortfolioTopCard({
     type="button"
     onClick={openChat}
     className="
-      mt-5 inline-flex h-12 w-full max-w-[250px]
+      mt-auto inline-flex h-12 w-full max-w-[250px]
+      translate-y-0
       items-center justify-center gap-2.5
       rounded-[13px]
       border border-[#D5AE35]/75
@@ -798,7 +799,7 @@ function PortfolioTopCard({
         </div>
 
         {/* Academic identity */}
-        <div className="flex min-w-0 flex-col justify-center xl:px-2">
+        <div className="flex h-full min-w-0 flex-col xl:px-2">
           <p className="text-[10px] font-black uppercase tracking-[0.17em] text-[#708795] dark:text-[#91A8B6]">
             Academic information
           </p>
@@ -882,12 +883,13 @@ function PortfolioTopCard({
                 </span>
               )}
             </div>
+          </div>
 
-            <div className="mt-5 border-t border-[#D8E3E8] pt-5 dark:border-white/10">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.17em] text-[#708795] dark:text-[#91A8B6]">
-                  Professional Profiles
-                </p>
+          <div className="mt-auto border-t border-[#D8E3E8] pt-5 dark:border-white/10">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.17em] text-[#708795] dark:text-[#91A8B6]">
+                Professional Profiles
+              </p>
 
                 <span className="hidden text-[10px] font-bold text-[#A8A18D] dark:text-[#777567] sm:block">
                   External profiles
@@ -913,8 +915,6 @@ function PortfolioTopCard({
                   icon={FaBehance}
                 />
               </div>
-            </div>
-
           </div>
         </div>
 
@@ -953,6 +953,8 @@ function PortfolioTopCard({
 
 function SortDropdown({ sortBy, setSortBy }) {
   const [open, setOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+  const buttonRef = useRef(null);
 
   const options = [
     { value: "date", label: "Updated" },
@@ -963,11 +965,45 @@ function SortDropdown({ sortBy, setSortBy }) {
 
   const selected = options.find((option) => option.value === sortBy);
 
+  const updateMenuPosition = () => {
+    const button = buttonRef.current;
+    if (!button) return;
+
+    const rect = button.getBoundingClientRect();
+
+    setMenuPosition({
+      top: rect.bottom + 8,
+      right: Math.max(16, window.innerWidth - rect.right),
+    });
+  };
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    updateMenuPosition();
+
+    const handlePositionChange = () => updateMenuPosition();
+
+    window.addEventListener("resize", handlePositionChange);
+    window.addEventListener("scroll", handlePositionChange, true);
+
+    return () => {
+      window.removeEventListener("resize", handlePositionChange);
+      window.removeEventListener("scroll", handlePositionChange, true);
+    };
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => {
+          updateMenuPosition();
+          setOpen((current) => !current);
+        }}
         className="
           inline-flex h-9 items-center gap-2
           px-0
@@ -981,69 +1017,84 @@ function SortDropdown({ sortBy, setSortBy }) {
         <ArrowUpDown className="h-3.5 w-3.5" />
 
         <span>
-          Sort: <span className="text-[#334E60] dark:text-[#C9D7DE]">{selected?.label}</span>
+          Sort:{" "}
+          <span className="text-[#334E60] dark:text-[#C9D7DE]">
+            {selected?.label}
+          </span>
         </span>
 
         <ChevronDown
-          className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
         />
       </button>
 
-      {open ? (
-        <>
-          <button
-            type="button"
-            aria-label="Close sort menu"
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-40 cursor-default"
-          />
+      {open && typeof document !== "undefined"
+        ? createPortal(
+            <>
+              <button
+                type="button"
+                aria-label="Close sort menu"
+                onClick={() => setOpen(false)}
+                className="fixed inset-0 z-[80] cursor-default"
+              />
 
-          <div
-            className="
-              absolute right-0 top-10 z-50 w-[210px]
-              overflow-hidden rounded-[16px]
-              border border-[#DDE5E9]
-              bg-white/96 p-1.5
-              shadow-[0_18px_44px_rgba(53,88,114,0.16)]
-              backdrop-blur-xl
-              dark:border-white/10
-              dark:bg-[#10202A]/96
-            "
-          >
-            {options.map((option) => {
-              const active = option.value === sortBy;
+              <div
+                role="menu"
+                style={{
+                  top: menuPosition.top,
+                  right: menuPosition.right,
+                }}
+                className="
+                  fixed z-[90] w-[210px]
+                  overflow-hidden rounded-[16px]
+                  border border-[#DDE5E9]
+                  bg-white/96 p-1.5
+                  shadow-[0_18px_44px_rgba(53,88,114,0.16)]
+                  backdrop-blur-xl
+                  dark:border-white/10
+                  dark:bg-[#10202A]/96
+                "
+              >
+                {options.map((option) => {
+                  const active = option.value === sortBy;
 
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => {
-                    setSortBy(option.value);
-                    setOpen(false);
-                  }}
-                  className={`
-                    flex w-full items-center justify-between
-                    rounded-[11px] px-3 py-2.5
-                    text-left text-[12px] font-black
-                    transition
-                    ${
-                      active
-                        ? "bg-[#FFF8E7] text-[#8D6D18] dark:bg-[#E6C77B]/10 dark:text-[#E6C77B]"
-                        : "text-[#708591] hover:bg-[#F5F8FA] hover:text-[#355872] dark:text-[#8FA2AD] dark:hover:bg-white/[0.05] dark:hover:text-[#DCE6EA]"
-                    }
-                  `}
-                >
-                  {option.label}
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={active}
+                      onClick={() => {
+                        setSortBy(option.value);
+                        setOpen(false);
+                      }}
+                      className={`
+                        flex w-full items-center justify-between
+                        rounded-[11px] px-3 py-2.5
+                        text-left text-[12px] font-black
+                        transition
+                        ${
+                          active
+                            ? "bg-[#FFF8E7] text-[#8D6D18] dark:bg-[#E6C77B]/10 dark:text-[#E6C77B]"
+                            : "text-[#708591] hover:bg-[#F5F8FA] hover:text-[#355872] dark:text-[#8FA2AD] dark:hover:bg-white/[0.05] dark:hover:text-[#DCE6EA]"
+                        }
+                      `}
+                    >
+                      {option.label}
 
-                  {active ? (
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#D7B54D]" />
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-        </>
-      ) : null}
+                      {active ? (
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#D7B54D]" />
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </>,
+            document.body
+          )
+        : null}
     </div>
   );
 }
@@ -1306,6 +1357,7 @@ function MoreMenu({ project, onEditProject, onDeleteRequest }) {
 function ProjectHeader({
   project,
   compact = false,
+  softenTitle = false,
   page,
   onTogglePin,
   onEditProject,
@@ -1363,8 +1415,12 @@ function ProjectHeader({
         </p>
 
         <h3
-          className={`mt-2 line-clamp-2 font-black leading-tight text-white ${
-            compact ? "text-[1.55rem]" : "text-[1.7rem]"
+          className={`mt-2 line-clamp-2 leading-tight text-white ${
+            softenTitle
+              ? "text-[1.45rem] font-extrabold"
+              : compact
+                ? "text-[1.55rem] font-black"
+                : "text-[1.7rem] font-black"
           }`}
         >
           {project.title}
@@ -1385,6 +1441,13 @@ function PinnedProjectCard({
     ? project.technologies
     : [];
   const isBachelor = getProjectBucket(project) === "bachelor";
+
+  const rawCourse = String(project?.course || "").trim();
+  const isPortfolioProject = rawCourse.toLowerCase().startsWith("portfolio");
+
+  const secondaryContext = isPortfolioProject
+    ? "Portfolio Project"
+    : rawCourse || (isBachelor ? "Bachelor Project" : "Course Project");
   const courseCode = String(project?.course || "")
     .split("-")[0]
     .trim();
@@ -1543,64 +1606,24 @@ function PinnedProjectsCarousel({
 
   return (
     <AppCard className="overflow-hidden px-5 pb-6 pt-5">
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Pin className="h-5 w-5 text-[#B89736] dark:text-[#E6C77B]" />
+      <div className="mb-3 flex items-center gap-2.5">
+        <Pin className="h-[18px] w-[18px] text-[#B89736] dark:text-[#E6C77B]" />
 
-            <h2 className="text-2xl font-black text-[color:var(--ink)]">
-              Pinned Projects
-            </h2>
-          </div>
+        <h2 className="text-[1.25rem] font-black tracking-[-0.02em] text-[color:var(--ink)]">
+          Pinned Projects
+        </h2>
 
-          <p className="mt-1.5 text-[12px] font-semibold text-[color:var(--muted)]">
-            Featured work selected by the student.
-          </p>
-        </div>
-
-        {projects.length > 1 ? (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => scrollByCard(-1)}
-              aria-label="Previous pinned projects"
-              className="
-                grid h-9 w-9 place-items-center rounded-[11px]
-                border border-[#DCE4E8] bg-white/80 text-[#355872]
-                shadow-[0_5px_14px_rgba(53,88,114,0.05)]
-                transition
-                hover:border-[#D7B54D] hover:bg-[#FFF8E7] hover:text-[#9C7617]
-                dark:border-white/9 dark:bg-white/[0.04] dark:text-[#B7CAD4]
-                dark:hover:border-[#E6C77B]/28 dark:hover:bg-[#E6C77B]/7 dark:hover:text-[#E6C77B]
-              "
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => scrollByCard(1)}
-              aria-label="Next pinned projects"
-              className="
-                grid h-9 w-9 place-items-center rounded-[11px]
-                border border-[#DCE4E8] bg-white/80 text-[#355872]
-                shadow-[0_5px_14px_rgba(53,88,114,0.05)]
-                transition
-                hover:border-[#D7B54D] hover:bg-[#FFF8E7] hover:text-[#9C7617]
-                dark:border-white/9 dark:bg-white/[0.04] dark:text-[#B7CAD4]
-                dark:hover:border-[#E6C77B]/28 dark:hover:bg-[#E6C77B]/7 dark:hover:text-[#E6C77B]
-              "
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
+        {projects.length > 0 ? (
+          <span className="text-[11px] font-bold text-[color:var(--muted)]">
+            {projects.length} selected
+          </span>
         ) : null}
       </div>
 
       {projects.length > 0 ? (
         <div
           className="
-            relative overflow-hidden rounded-[28px]
+            group/carousel relative overflow-hidden rounded-[28px]
             border border-[#DFE8EC]
             bg-[linear-gradient(145deg,rgba(239,247,250,0.86),rgba(251,249,243,0.76))]
             shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_16px_38px_rgba(53,88,114,0.045)]
@@ -1616,6 +1639,70 @@ function PinnedProjectsCarousel({
               dark:bg-[radial-gradient(circle_at_48%_42%,rgba(66,129,161,0.12),transparent_35%),radial-gradient(circle_at_72%_76%,rgba(230,199,123,0.035),transparent_34%)]
             "
           />
+
+          {projects.length > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={() => scrollByCard(-1)}
+                aria-label="Previous pinned projects"
+                className="
+                  absolute left-3 top-1/2 z-20
+                  grid h-10 w-10 -translate-y-1/2 place-items-center
+                  rounded-full
+                  border border-white/70
+                  bg-white/78 text-[#355872]
+                  shadow-[0_10px_28px_rgba(53,88,114,0.12)]
+                  backdrop-blur-xl
+                  opacity-65
+                  transition-all duration-200
+                  hover:border-[#D7B54D]
+                  hover:bg-[#FFF8E7]
+                  hover:text-[#9C7617]
+                  hover:opacity-100
+                  group-hover/carousel:opacity-100
+                  dark:border-white/10
+                  dark:bg-[#0B1D28]/76
+                  dark:text-[#BFD0D9]
+                  dark:hover:border-[#E6C77B]/28
+                  dark:hover:bg-[#E6C77B]/10
+                  dark:hover:text-[#E6C77B]
+                "
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => scrollByCard(1)}
+                aria-label="Next pinned projects"
+                className="
+                  absolute right-3 top-1/2 z-20
+                  grid h-10 w-10 -translate-y-1/2 place-items-center
+                  rounded-full
+                  border border-white/70
+                  bg-white/78 text-[#355872]
+                  shadow-[0_10px_28px_rgba(53,88,114,0.12)]
+                  backdrop-blur-xl
+                  opacity-65
+                  transition-all duration-200
+                  hover:border-[#D7B54D]
+                  hover:bg-[#FFF8E7]
+                  hover:text-[#9C7617]
+                  hover:opacity-100
+                  group-hover/carousel:opacity-100
+                  dark:border-white/10
+                  dark:bg-[#0B1D28]/76
+                  dark:text-[#BFD0D9]
+                  dark:hover:border-[#E6C77B]/28
+                  dark:hover:bg-[#E6C77B]/10
+                  dark:hover:text-[#E6C77B]
+                "
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </>
+          ) : null}
 
           <div
             ref={trackRef}
@@ -1680,144 +1767,74 @@ function HorizontalProjectCard({
   onEditProject,
   onDeleteRequest,
 }) {
-  const isBachelor = getProjectBucket(project) === "bachelor";
   const collaboratorCount = project.collaborators?.length || 0;
   const instructorCount = project.instructors?.length || 0;
   const technologies = Array.isArray(project?.technologies)
     ? project.technologies
     : [];
+  const isBachelor = getProjectBucket(project) === "bachelor";
 
-  const openProject = () => onOpenProject(project);
+  const rawCourse = String(project?.course || "").trim();
+  const isPortfolioProject = rawCourse.toLowerCase().startsWith("portfolio");
+
+  const secondaryContext = isPortfolioProject
+    ? "Portfolio Project"
+    : rawCourse || (isBachelor ? "Bachelor Project" : "Course Project");
 
   return (
-    <article
-      role="button"
-      tabIndex={0}
-      onClick={openProject}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          openProject();
-        }
-      }}
+    <motion.article
+      whileHover={{ y: -3 }}
+      transition={{ duration: 0.18 }}
+      onClick={() => onOpenProject(project)}
       className="
-        group relative cursor-pointer
-        px-1 py-5
-        outline-none
-        transition-colors duration-200
-        hover:bg-[#FAFCFD]/70
-        focus-visible:bg-[#FAFCFD]/80
-        dark:hover:bg-white/[0.022]
-        dark:focus-visible:bg-white/[0.03]
+        group cursor-pointer overflow-hidden
+        rounded-[1.65rem]
+        border border-white/70
+        bg-white/74
+        shadow-[0_18px_44px_rgba(53,88,114,0.09)]
+        transition-[box-shadow,border-color]
+        hover:border-[#D8CC98]
+        hover:shadow-[0_22px_48px_rgba(53,88,114,0.12)]
+        dark:border-white/10
+        dark:bg-white/[0.045]
+        dark:hover:border-[#E6C77B]/18
+        dark:hover:shadow-[0_24px_52px_rgba(0,0,0,0.26)]
       "
     >
-      {/* Gold only appears as a subtle interaction cue. */}
-      <span
-        className="
-          absolute bottom-4 left-0 top-4 w-[3px] rounded-full
-          bg-[#D7B54D]
-          opacity-0
-          transition-opacity duration-200
-          group-hover:opacity-100
-          group-focus-visible:opacity-100
-        "
-      />
+      <div className="grid min-h-[232px] lg:grid-cols-[260px_1fr]">
+        {/* Preserve the original strong visual identity panel. */}
+        <ProjectHeader
+          project={project}
+          softenTitle
+          page={page}
+          onTogglePin={onTogglePin}
+          onEditProject={onEditProject}
+          onDeleteRequest={onDeleteRequest}
+        />
 
-      <div className="flex min-w-0 gap-4 pl-4 pr-2">
-        {/* Small project marker, not a competing visual panel. */}
-        <div
-          className="
-            mt-0.5 grid h-10 w-10 shrink-0 place-items-center
-            rounded-[12px]
-            border border-[#D6E3E8]
-            bg-[#EDF4F8]
-            text-[#355872]
-            dark:border-white/10
-            dark:bg-white/[0.055]
-            dark:text-[#9CC7DA]
-          "
-        >
-          <FolderKanban className="h-[18px] w-[18px]" />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          {/* Primary scan line */}
-          <div className="flex min-w-0 items-start justify-between gap-5">
-            <div className="min-w-0">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <h3
-                  className="
-                    min-w-0 text-[1.04rem] font-black
-                    leading-tight tracking-[-0.02em]
-                    text-[color:var(--ink)]
-                  "
-                >
-                  {project.title}
-                </h3>
-
-                {project.pinned ? (
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-
-                      if (page === "manage") {
-                        onTogglePin(project);
-                      }
-                    }}
-                    className="
-                      inline-flex h-6 shrink-0 items-center gap-1
-                      rounded-full
-                      border border-[#E5DAB7]
-                      bg-[#FFF9E9]
-                      px-2
-                      text-[9px] font-black text-[#96731B]
-                      transition
-                      hover:bg-[#FFF1C4]
-                      dark:border-[#E6C77B]/14
-                      dark:bg-[#E6C77B]/8
-                      dark:text-[#DCC77F]
-                      dark:hover:bg-[#E6C77B]/12
-                    "
-                    title={page === "manage" ? "Unpin project" : "Pinned project"}
-                  >
-                    <Pin className="h-3 w-3" />
-                    Pinned
-                  </button>
-                ) : page === "manage" ? (
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onTogglePin(project);
-                    }}
-                    className="
-                      grid h-6 w-6 place-items-center rounded-full
-                      text-[#91A2AC]
-                      transition
-                      hover:bg-[#FFF8E7] hover:text-[#A57D18]
-                      dark:text-[#728894]
-                      dark:hover:bg-[#E6C77B]/8
-                      dark:hover:text-[#DCC77F]
-                    "
-                    title="Pin project"
-                  >
-                    <Pin className="h-3.5 w-3.5" />
-                  </button>
-                ) : null}
-              </div>
+        <div className="flex h-full min-w-0 flex-col p-5">
+          {/* Project is always the primary information hierarchy. */}
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h3
+                className="
+                  line-clamp-1
+                  text-[1.08rem] font-black leading-tight
+                  tracking-[-0.02em]
+                  text-[color:var(--ink)]
+                "
+              >
+                {project.title}
+              </h3>
 
               <div
                 className="
-                  mt-1.5 flex flex-wrap items-center
-                  gap-x-2 gap-y-1
-                  text-[10.5px] font-semibold
-                  text-[color:var(--muted)]
+                  mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1
+                  text-[11px] font-semibold text-[color:var(--muted)]
                 "
               >
                 <span className="font-black text-[#5B7382] dark:text-[#AFC1CB]">
-                  {project.course ||
-                    (isBachelor ? "Bachelor Project" : "Course Project")}
+{secondaryContext}
                 </span>
 
                 <span className="text-[#C7D2D8] dark:text-white/16">•</span>
@@ -1831,125 +1848,111 @@ function HorizontalProjectCard({
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              {project.rating ? (
-                <span
-                  className="
-                    inline-flex items-center gap-1.5
-                    rounded-full
-                    border border-[#E6C77B]/20
-                    bg-[#FFF8E7]
-                    px-2.5 py-1
-                    text-[10px] font-black text-[#9A7618]
-                    dark:border-[#E6C77B]/14
-                    dark:bg-[#E6C77B]/8
-                    dark:text-[#E6C77B]
-                  "
-                  title="Instructor score"
-                >
-                  <Star className="h-3 w-3 fill-current" />
-                  {project.rating}
-                </span>
-              ) : null}
-
-              {page === "manage" ? (
-                <MoreMenu
-                  project={project}
-                  onEditProject={onEditProject}
-                  onDeleteRequest={onDeleteRequest}
-                />
-              ) : null}
-            </div>
-          </div>
-
-          {/* Enough context to decide whether the project is worth opening. */}
-          <p
-            className="
-              mt-3 line-clamp-2 max-w-[1120px]
-              text-[12px] font-semibold leading-5.5
-              text-[color:var(--muted)]
-            "
-          >
-            {project.description || "No project summary added yet."}
-          </p>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {technologies.slice(0, 3).map((technology) => (
-              <span
-                key={technology}
-                className="
-                  inline-flex items-center rounded-full
-                  border border-[#C9DCE6]
-                  bg-[#EDF4F8]
-                  px-3 py-1.5
-                  text-[10px] font-black text-[#355872]
-                  dark:border-white/10
-                  dark:bg-white/[0.055]
-                  dark:text-[#BFD7E3]
-                "
-              >
-                {technology}
-              </span>
-            ))}
-
-            {technologies.length > 3 ? (
+            {project.rating ? (
               <span
                 className="
-                  inline-flex items-center rounded-full
-                  border border-[#E3D8B4]
+                  inline-flex shrink-0 items-center gap-1.5
+                  rounded-full
+                  border border-[#E6C77B]/22
                   bg-[#FFF8E7]
-                  px-3 py-1.5
+                  px-2.5 py-1
                   text-[10px] font-black text-[#9A7618]
                   dark:border-[#E6C77B]/14
                   dark:bg-[#E6C77B]/8
-                  dark:text-[#DCC77F]
+                  dark:text-[#E6C77B]
                 "
+                title="Instructor score"
               >
-                +{technologies.length - 3}
+                <Star className="h-3 w-3 fill-current" />
+                {project.rating}
               </span>
             ) : null}
           </div>
 
-          <div className="mt-3 flex items-center justify-between gap-4">
-            <div
-              className="
-                flex flex-wrap items-center gap-x-2.5 gap-y-1
-                text-[10.5px] font-semibold
-                text-[#788B96]
-                dark:text-[#8296A2]
-              "
-            >
-              <span>
-                <span className="font-black text-[#415E70] dark:text-[#BCCDD5]">
-                  {collaboratorCount}
-                </span>{" "}
-                collaborator{collaboratorCount === 1 ? "" : "s"}
-              </span>
+          <div className="mt-4 px-1 py-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#355872] dark:text-[#9CD5FF]">
+              Project Summary
+            </p>
 
-              <span className="text-[#C7D2D8] dark:text-white/16">•</span>
+            <p className="mt-2 line-clamp-2 text-xs font-semibold leading-6 text-[color:var(--muted)]">
+              {project.description}
+            </p>
+          </div>
 
-              <span>
-                <span className="font-black text-[#415E70] dark:text-[#BCCDD5]">
-                  {instructorCount}
-                </span>{" "}
-                instructor{instructorCount === 1 ? "" : "s"}
-              </span>
+          {/* Reuse the softer tag language already used elsewhere in the portfolio. */}
+          <div className="mt-3.5 flex flex-wrap items-center gap-3 pb-3">
+            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#607B8B] dark:text-[#8FA6B3]">
+              <Code2 className="h-3.5 w-3.5" />
+              Tech
+            </span>
+
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              {technologies.slice(0, 4).map((technology) => (
+                <span
+                  key={technology}
+                  className="
+                    inline-flex items-center rounded-full
+                    border border-[#C9DCE6]
+                    bg-[#EDF4F8]
+                    px-3 py-1.5
+                    text-[10px] font-black text-[#355872]
+                    dark:border-white/10
+                    dark:bg-white/[0.055]
+                    dark:text-[#BFD7E3]
+                  "
+                >
+                  {technology}
+                </span>
+              ))}
+
+              {technologies.length > 4 ? (
+                <span
+                  className="
+                    inline-flex items-center rounded-full
+                    border border-[#E3D8B4]
+                    bg-[#FFF8E7]
+                    px-3 py-1.5
+                    text-[10px] font-black text-[#9A7618]
+                    dark:border-[#E6C77B]/14
+                    dark:bg-[#E6C77B]/8
+                    dark:text-[#DCC77F]
+                  "
+                >
+                  +{technologies.length - 4}
+                </span>
+              ) : null}
             </div>
+          </div>
 
-            <ChevronRight
-              className="
-                h-4 w-4 shrink-0 -translate-x-1
-                text-[#9FB0BA] opacity-0
-                transition-all duration-200
-                group-hover:translate-x-0 group-hover:opacity-100
-                group-focus-visible:translate-x-0 group-focus-visible:opacity-100
-                dark:text-[#7F949F]
-              "
-            />
+          {/* Keep evidence quiet and useful; no dashboard metric boxes. */}
+          <div
+            className="
+              mt-auto flex flex-wrap items-center gap-x-2.5 gap-y-1
+              border-t border-[#E3EAED] pt-4
+              text-[11px] font-semibold text-[#788B96]
+              dark:border-white/8 dark:text-[#8296A2]
+            "
+          >
+            <span>
+              <span className="font-black text-[#415E70] dark:text-[#BCCDD5]">
+                {collaboratorCount}
+              </span>{" "}
+              collaborator{collaboratorCount === 1 ? "" : "s"}
+            </span>
+
+            <span className="text-[#C7D2D8] dark:text-white/16">•</span>
+
+            <span>
+              <span className="font-black text-[#415E70] dark:text-[#BCCDD5]">
+                {instructorCount}
+              </span>{" "}
+              instructor{instructorCount === 1 ? "" : "s"}
+            </span>
+
           </div>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
@@ -2121,7 +2124,7 @@ function InternshipsGrid({
             totalPages={totalPages}
             totalItems={totalItems}
             pageStartIndex={pageStartIndex}
-            pageSize={INTERNSHIPS_PAGE_SIZE}
+            pageSize={PORTFOLIO_WORK_PAGE_SIZE}
             onPageChange={onPageChange}
             ariaLabel="Completed internships pagination"
           />
@@ -2162,7 +2165,7 @@ function ProjectsGrid({
 
       {projects.length > 0 ? (
         <>
-          <div className="divide-y divide-[#E1E9ED] dark:divide-white/8">
+          <div className="space-y-4">
             {projects.map((project) => (
               <HorizontalProjectCard
                 key={project.id}
@@ -2181,7 +2184,7 @@ function ProjectsGrid({
             totalPages={totalPages}
             totalItems={totalItems}
             pageStartIndex={pageStartIndex}
-            pageSize={PROJECTS_PAGE_SIZE}
+            pageSize={PORTFOLIO_WORK_PAGE_SIZE}
             onPageChange={onPageChange}
             ariaLabel="Public projects pagination"
           />
@@ -2845,26 +2848,26 @@ useEffect(() => {
 
   const projectTotalPages = Math.max(
     1,
-    Math.ceil(filteredProjects.length / PROJECTS_PAGE_SIZE)
+    Math.ceil(filteredProjects.length / PORTFOLIO_WORK_PAGE_SIZE)
   );
   const safeProjectPage = Math.min(projectPage, projectTotalPages);
   const projectStartIndex =
-    (safeProjectPage - 1) * PROJECTS_PAGE_SIZE;
+    (safeProjectPage - 1) * PORTFOLIO_WORK_PAGE_SIZE;
   const paginatedProjects = filteredProjects.slice(
     projectStartIndex,
-    projectStartIndex + PROJECTS_PAGE_SIZE
+    projectStartIndex + PORTFOLIO_WORK_PAGE_SIZE
   );
 
   const internshipTotalPages = Math.max(
     1,
-    Math.ceil(filteredInternships.length / INTERNSHIPS_PAGE_SIZE)
+    Math.ceil(filteredInternships.length / PORTFOLIO_WORK_PAGE_SIZE)
   );
   const safeInternshipPage = Math.min(internshipPage, internshipTotalPages);
   const internshipStartIndex =
-    (safeInternshipPage - 1) * INTERNSHIPS_PAGE_SIZE;
+    (safeInternshipPage - 1) * PORTFOLIO_WORK_PAGE_SIZE;
   const paginatedInternships = filteredInternships.slice(
     internshipStartIndex,
-    internshipStartIndex + INTERNSHIPS_PAGE_SIZE
+    internshipStartIndex + PORTFOLIO_WORK_PAGE_SIZE
   );
 
   const updateDraftOverride = (projectId, patch) => {
