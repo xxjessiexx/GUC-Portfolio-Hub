@@ -375,70 +375,72 @@ export default function InstructorMyCourses() {
 
           </section>
 
-          <div
-            className="flex flex-wrap items-center gap-3 border-b border-[#D9E4E9] dark:border-white/10"
-            role="tablist"
-            aria-label="Filter my courses"
-          >
-            {[
-              { id: "all", label: "All", count: courses.length },
-              {
-                id: "attention",
-                label: "Needs attention",
-                count: courseOverview.coursesNeedingAttention,
-              },
-              {
-                id: "unrated",
-                label: "Unrated",
-                count: courseOverview.coursesWithUnrated,
-              },
-              {
-                id: "pending",
-                label: "Pending",
-                count: courseOverview.pendingCourses,
-              },
-            ].map((filter) => {
-              const selected = activeFilter === filter.id;
+          <div className="flex flex-col gap-3 border-b border-[#D9E4E9] pb-2 dark:border-white/10 lg:flex-row lg:items-end lg:justify-between">
+            <div
+              className="flex flex-wrap items-center gap-3"
+              role="tablist"
+              aria-label="Filter my courses"
+            >
+              {[
+                { id: "all", label: "All", count: courses.length },
+                {
+                  id: "attention",
+                  label: "Needs attention",
+                  count: courseOverview.coursesNeedingAttention,
+                },
+                {
+                  id: "unrated",
+                  label: "Unrated",
+                  count: courseOverview.coursesWithUnrated,
+                },
+                {
+                  id: "pending",
+                  label: "Pending",
+                  count: courseOverview.pendingCourses,
+                },
+              ].map((filter) => {
+                const selected = activeFilter === filter.id;
 
-              return (
-                <button
-                  key={filter.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  onClick={() => setActiveFilter(filter.id)}
-                  className={`relative inline-flex h-11 items-center gap-2.5 px-3.5 text-[13px] font-black transition ${
-                    selected
-                      ? "text-[#17384E] dark:text-white"
-                      : "text-[#7B8D98] hover:text-[#355872] dark:text-[#8298A6] dark:hover:text-[#C7D8E1]"
-                  }`}
-                >
-                  {filter.label}
-                  <span
-                    className={`min-w-5 rounded-full px-1.5 py-0.5 text-[10px] ${
+                return (
+                  <button
+                    key={filter.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => setActiveFilter(filter.id)}
+                    className={`relative inline-flex h-11 items-center gap-2.5 px-3.5 text-[13px] font-black transition ${
                       selected
-                        ? "bg-[color:var(--gold)]/42 text-[#6F581D] shadow-[0_3px_10px_rgba(230,199,123,0.16)] dark:bg-[color:var(--gold)]/14 dark:text-[color:var(--gold)]"
-                        : "bg-[#E9F0F3] text-[#7A8D99] dark:bg-white/[0.05] dark:text-[#8599A5]"
+                        ? "text-[#17384E] dark:text-white"
+                        : "text-[#7B8D98] hover:text-[#355872] dark:text-[#8298A6] dark:hover:text-[#C7D8E1]"
                     }`}
                   >
-                    {filter.count}
-                  </span>
+                    {filter.label}
+                    <span
+                      className={`min-w-5 rounded-full px-1.5 py-0.5 text-[10px] ${
+                        selected
+                          ? "bg-[color:var(--gold)]/42 text-[#6F581D] shadow-[0_3px_10px_rgba(230,199,123,0.16)] dark:bg-[color:var(--gold)]/14 dark:text-[color:var(--gold)]"
+                          : "bg-[#E9F0F3] text-[#7A8D99] dark:bg-white/[0.05] dark:text-[#8599A5]"
+                      }`}
+                    >
+                      {filter.count}
+                    </span>
 
-                  {selected ? (
-                    <span className="absolute inset-x-1.5 bottom-0 h-[3px] rounded-t-full bg-[color:var(--gold)] shadow-[0_-2px_8px_rgba(230,199,123,0.24)]" />
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
+                    {selected ? (
+                      <span className="absolute inset-x-1.5 bottom-[-9px] h-[3px] rounded-t-full bg-[color:var(--gold)] shadow-[0_-2px_8px_rgba(230,199,123,0.24)]" />
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
 
-          <div className="w-full max-w-[520px]">
-            <SearchFilterToolbar
-              searchValue={search}
-              onSearchChange={setSearch}
-              searchPlaceholder="Search linked courses..."
-              className="[&>div:first-child]:min-h-[46px] [&>div:first-child]:rounded-[16px] [&>div:first-child]:shadow-[0_8px_22px_rgba(53,88,114,0.055)] [&_input]:min-h-[46px] [&_input]:text-[13px]"
-            />
+            <div className="w-full lg:w-[360px] xl:w-[420px]">
+              <SearchFilterToolbar
+                searchValue={search}
+                onSearchChange={setSearch}
+                searchPlaceholder="Search linked courses..."
+                className="[&>div:first-child]:min-h-[42px] [&>div:first-child]:rounded-[14px] [&>div:first-child]:shadow-none [&_input]:min-h-[42px] [&_input]:text-[13px]"
+              />
+            </div>
           </div>
 
           {visibleCourses.length ? (

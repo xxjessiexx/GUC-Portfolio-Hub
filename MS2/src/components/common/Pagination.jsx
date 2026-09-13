@@ -49,7 +49,7 @@ export default function Pagination({
 
   return (
     <nav
-      className="mt-8 flex flex-col gap-3 border-t border-[#355872]/10 pt-6 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"
+      className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
       aria-label={ariaLabel}
     >
       <p className="text-[12px] font-semibold text-[color:var(--muted)]">
