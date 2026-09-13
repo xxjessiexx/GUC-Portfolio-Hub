@@ -33,6 +33,7 @@ import {
   updateProject,
   deleteProject as deleteProjectFromStore,
 } from "@/data/demoStore";
+import { formatProjectRating } from "@/lib/projectRating";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -154,7 +155,7 @@ function ScoreBadge({ rating }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(230,199,123,0.22)] px-3 py-1.5 text-xs font-black text-[#B89736] dark:bg-[rgba(230,199,123,0.18)] dark:text-[#E6C77B]">
       <Star className="h-3.5 w-3.5 fill-current" />
-      Instructor Score {rating}
+      Instructor Score {formatProjectRating(rating)}
     </span>
   );
 }

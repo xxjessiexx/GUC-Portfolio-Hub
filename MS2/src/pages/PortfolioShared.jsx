@@ -62,6 +62,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { formatProjectRating } from "@/lib/projectRating";
 
 const PORTFOLIO_WORK_PAGE_SIZE = 3;
 
@@ -388,7 +389,7 @@ function ScoreBadge({ rating }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(230,199,123,0.22)] px-3 py-1.5 text-xs font-black text-[#B89736] dark:bg-[rgba(230,199,123,0.18)] dark:text-[#E6C77B]">
       <Star className="h-3.5 w-3.5 fill-current" />
-      Instructor Score {rating}
+      Instructor Score {formatProjectRating(rating)}
     </span>
   );
 }
@@ -1494,7 +1495,7 @@ function PinnedProjectCard({
         {project?.rating ? (
           <div className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-[#0A1C27]/60 px-3 py-1.5 text-[11px] font-black text-[#F0CF78] backdrop-blur-md dark:border-white/14 dark:bg-[#07141D]/56">
             <Star className="h-3.5 w-3.5 fill-current" />
-            {project.rating}
+            {formatProjectRating(project.rating)}
           </div>
         ) : null}
 
@@ -1864,7 +1865,7 @@ function HorizontalProjectCard({
                 title="Instructor score"
               >
                 <Star className="h-3 w-3 fill-current" />
-                {project.rating}
+                {formatProjectRating(project.rating)}
               </span>
             ) : null}
           </div>
@@ -2566,7 +2567,7 @@ function normalizeStoreProject(project, courses, users) {
         ? "Public"
         : "Private",
     status: project.status || "Draft",
-    rating: Number(project.rating || project.averageRating || 4.5),
+    rating: Number(project.rating || project.averageRating || 0),
     technologies,
     collaborators,
     instructors,

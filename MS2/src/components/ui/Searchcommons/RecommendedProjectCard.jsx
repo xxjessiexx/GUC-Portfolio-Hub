@@ -4,6 +4,7 @@ import {
   Users,
   GitBranch,
 } from "lucide-react";
+import { formatProjectRating } from "@/lib/projectRating";
 
 export default function RecommendedProjectCard({
   project,
@@ -103,7 +104,7 @@ border border-[var(--border-blue)] text-xs font-semibold">
 >
   <div className="flex items-center gap-1">
     <Star size={15} className="text-yellow-500" />
-    {project.rating}
+    {formatProjectRating(project.rating)}
   </div>
 
   <div className="flex items-center gap-1">

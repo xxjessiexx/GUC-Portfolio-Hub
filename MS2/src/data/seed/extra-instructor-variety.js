@@ -1,0 +1,777 @@
+// Rich instructor-focused demo data used to stress-test course and review flows.
+// The records deliberately vary project counts, rating states/classifications, team size,
+// visibility, technologies, optional task/project feedback, and bachelor thesis activity.
+
+const STUDENTS = [
+  "student-demo-1",
+  "student-farida",
+  "student-salma",
+  "student-mai",
+  "student-yasmine",
+  "student-noor",
+];
+
+const IMAGE_POOL = [
+  "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?q=80&w=1200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1535223289827-42f1e9919769?q=80&w=1200&auto=format&fit=crop",
+];
+
+const makeFeedback = (id, message, date = "2026-09-05T12:00:00.000Z") => [
+  {
+    id: `feedback-${id}`,
+    authorId: "instructor-demo-1",
+    message,
+    createdAt: date,
+  },
+];
+
+const reviewedTask = (id, title, assigneeId) => ({
+  id: `task-${id}`,
+  title,
+  assigneeId,
+  status: "completed",
+  deadline: "2026-09-20",
+  feedback: [
+    {
+      id: `task-feedback-${id}`,
+      authorId: "instructor-demo-1",
+      message: "Reviewed. The implementation is clear and the evidence is sufficient.",
+      createdAt: "2026-09-07T10:30:00.000Z",
+    },
+  ],
+});
+
+const pendingTask = (id, title, assigneeId, deadline = "2026-09-24") => ({
+  id: `task-${id}`,
+  title,
+  assigneeId,
+  status: "pending",
+  deadline,
+  feedback: [],
+});
+
+const project = ({
+  id,
+  title,
+  courseId,
+  courseCode,
+  courseName,
+  ownerIndex,
+  collaborators = 1,
+  description,
+  technologies,
+  rating = 0,
+  visibility = "public",
+  updatedAt,
+  review = "none",
+  taskMode = "none",
+  bachelor = false,
+  thesisMode = "none",
+  imageIndex = 0,
+}) => {
+  const ownerId = STUDENTS[ownerIndex % STUDENTS.length];
+  const collaboratorIds = STUDENTS.filter((studentId) => studentId !== ownerId).slice(
+    0,
+    Math.max(0, collaborators - 1)
+  );
+
+  const feedback =
+    review === "reviewed"
+      ? makeFeedback(
+          id,
+          bachelor
+            ? "Strong research direction. Keep the methodology and evaluation criteria explicit in the next revision."
+            : "Good progress. The project is coherent and the latest iteration addresses the main review points."
+        )
+      : [];
+
+  const tasks =
+    taskMode === "pending"
+      ? [pendingTask(`${id}-1`, "Submit milestone evidence", ownerId)]
+      : taskMode === "mixed"
+      ? [
+          reviewedTask(`${id}-1`, "Complete implementation milestone", ownerId),
+          pendingTask(`${id}-2`, "Prepare evaluation summary", collaboratorIds[0] || ownerId),
+        ]
+      : taskMode === "reviewed"
+      ? [reviewedTask(`${id}-1`, "Complete implementation milestone", ownerId)]
+      : [];
+
+  const thesisDrafts = bachelor
+    ? thesisMode === "pending"
+      ? [
+          {
+            id: `thesis-${id}-final`,
+            title: "Final Thesis Draft",
+            fileName: `${title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-final.pdf`,
+            isFinal: true,
+            visibility: "private",
+            uploadedAt: updatedAt,
+            feedback: [],
+          },
+        ]
+      : thesisMode === "reviewed"
+      ? [
+          {
+            id: `thesis-${id}-final`,
+            title: "Final Thesis Draft",
+            fileName: `${title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-final.pdf`,
+            isFinal: true,
+            visibility: "private",
+            uploadedAt: updatedAt,
+            feedback: [
+              {
+                id: `thesis-feedback-${id}`,
+                authorId: "instructor-demo-1",
+                message: "Final draft reviewed. Only minor formatting changes remain.",
+                createdAt: "2026-09-08T16:00:00.000Z",
+              },
+            ],
+          },
+        ]
+      : []
+    : [];
+
+  const reviewMode = ownerIndex % 4;
+  const hasPreviousReview = review === "reviewed" || rating > 0;
+  const lastReviewedAt = hasPreviousReview
+    ? reviewMode === 1
+      ? updatedAt
+      : reviewMode === 3
+      ? "2026-09-11T15:00:00.000Z"
+      : "2026-09-05T12:00:00.000Z"
+    : null;
+  const workflowStatus = reviewMode === 2
+    ? "waiting-on-student"
+    : reviewMode === 3
+    ? "follow-up"
+    : "reviewed";
+
+  const latestActivity = thesisMode === "pending"
+    ? {
+        type: "thesis-draft-added",
+        label: "New thesis draft uploaded",
+        detail: "The student uploaded a new final thesis draft.",
+        tab: "bachelor thesis",
+        targetId: `thesis-${id}-final`,
+      }
+    : taskMode === "pending" || taskMode === "mixed"
+    ? {
+        type: "task-updated",
+        label: "Task updated",
+        detail: "A project milestone task was changed.",
+        tab: "tasks",
+        targetId: `task-${id}-1`,
+      }
+    : {
+        type: "project-description-updated",
+        label: "Project description updated",
+        detail: "The student revised the project summary and implementation notes.",
+        tab: "overview",
+        targetId: "",
+      };
+
+  return {
+    id,
+    isDemo: true,
+    title,
+    type: bachelor ? "Bachelor Project" : "Course Project",
+    courseId,
+    courseCode,
+    courseName,
+    ownerId,
+    collaboratorIds,
+    instructorIds: ["instructor-demo-1"],
+    visibility,
+    status: "approved",
+    pinned: false,
+    featured: false,
+    rating,
+    ratings: rating > 0
+      ? [
+          {
+            instructorId: "instructor-demo-1",
+            instructorName: "Dr. Mervat Abuelkheir",
+            value: rating,
+            createdAt: lastReviewedAt || updatedAt,
+            updatedAt: lastReviewedAt || updatedAt,
+          },
+        ]
+      : [],
+    createdAt: "2026-08-12T10:00:00.000Z",
+    updatedAt,
+    contentUpdatedAt: updatedAt,
+    reviewStates: lastReviewedAt
+      ? [{
+          instructorId: "instructor-demo-1",
+          lastReviewedAt,
+          workflowStatus,
+          workflowUpdatedAt: lastReviewedAt,
+        }]
+      : [],
+    activityHistory: [
+      {
+        id: `activity-${id}-created`,
+        kind: "content",
+        type: "project-created",
+        label: "Project created",
+        detail: "The student created the project workspace.",
+        tab: "overview",
+        actorId: ownerId,
+        actorName: "Student",
+        actorRole: "student",
+        createdAt: "2026-08-12T10:00:00.000Z",
+      },
+      ...(lastReviewedAt
+        ? [{
+            id: `activity-${id}-review`,
+            kind: "review",
+            type: "marked-reviewed",
+            label: "Instructor review completed",
+            detail: rating > 0 ? `Project rated ${rating} / 5.` : "Project reviewed.",
+            tab: "feedback",
+            actorId: "instructor-demo-1",
+            actorName: "Dr. Mervat Abuelkheir",
+            actorRole: "instructor",
+            createdAt: lastReviewedAt,
+          }]
+        : []),
+      {
+        id: `activity-${id}-latest`,
+        kind: "content",
+        ...latestActivity,
+        actorId: ownerId,
+        actorName: "Student",
+        actorRole: "student",
+        createdAt: updatedAt,
+      },
+    ],
+    languages: technologies.slice(0, 3),
+    technologies,
+    tags: technologies.slice(0, 4),
+    github: `https://github.com/guc-demo/${id}`,
+    demoUrl: visibility === "public" ? `https://${id}.demo.guc.dev` : "",
+    description,
+    image: IMAGE_POOL[imageIndex % IMAGE_POOL.length],
+    tasks,
+    feedback,
+    thesisDrafts,
+    invitationStatuses: [
+      { userId: ownerId, status: "accepted" },
+      ...collaboratorIds.map((userId) => ({ userId, status: "accepted" })),
+      { userId: "instructor-demo-1", status: "accepted" },
+    ],
+    comments: feedback.map((item, index) => ({
+      id: `comment-${id}-${index + 1}`,
+      userId: item.authorId,
+      text: item.message,
+      createdAt: item.createdAt,
+    })),
+  };
+};
+
+export const extraInstructorCourses = [
+  {
+    id: "course-csen501",
+    code: "CSEN 501",
+    name: "Databases I",
+    type: "Core Course",
+    instructorIds: ["instructor-demo-1"],
+    linkedProjectIds: [],
+    status: "active",
+    description: "Relational modeling, SQL, normalization, transactions, and database application design.",
+  },
+  {
+    id: "course-csen503",
+    code: "CSEN 503",
+    name: "Computer Networks",
+    type: "Core Course",
+    instructorIds: ["instructor-demo-1"],
+    linkedProjectIds: [],
+    status: "active",
+    description: "Network architecture, protocols, sockets, routing, and distributed web applications.",
+  },
+  {
+    id: "course-dmet501",
+    code: "DMET 501",
+    name: "Introduction to Media Engineering",
+    type: "Media Engineering",
+    instructorIds: ["instructor-demo-1"],
+    linkedProjectIds: [],
+    status: "active",
+    description: "Foundations of digital media, signal representation, interaction, and media systems.",
+  },
+  {
+    id: "course-csen702",
+    code: "CSEN 702",
+    name: "Distributed Systems",
+    type: "Advanced Course",
+    instructorIds: ["instructor-demo-1"],
+    linkedProjectIds: [],
+    status: "active",
+    description: "Distributed coordination, replication, consistency, messaging, and resilient services.",
+  },
+  {
+    id: "course-csen704",
+    code: "CSEN 704",
+    name: "Human Computer Interaction",
+    type: "Advanced Course",
+    instructorIds: ["instructor-demo-1"],
+    linkedProjectIds: [],
+    status: "active",
+    description: "User research, prototyping, usability evaluation, interaction design, and accessible products.",
+  },
+  {
+    id: "course-csen705",
+    code: "CSEN 705",
+    name: "Information Security",
+    type: "Advanced Course",
+    instructorIds: ["instructor-aya"],
+    linkedProjectIds: [],
+    status: "active",
+    description: "Secure software, authentication, cryptography, access control, and threat modeling.",
+  },
+  {
+    id: "course-csen706",
+    code: "CSEN 706",
+    name: "Cloud Computing",
+    type: "Advanced Course",
+    instructorIds: ["instructor-catherine"],
+    linkedProjectIds: [],
+    status: "active",
+    description: "Cloud-native architecture, containers, infrastructure, scaling, and managed services.",
+  },
+  {
+    id: "course-csen707",
+    code: "CSEN 707",
+    name: "Machine Learning",
+    type: "Advanced Course",
+    instructorIds: ["instructor-slim"],
+    linkedProjectIds: [],
+    status: "active",
+    description: "Supervised learning, evaluation, feature engineering, and applied predictive modeling.",
+  },
+  {
+    id: "course-csen708",
+    code: "CSEN 708",
+    name: "DevOps & Software Delivery",
+    type: "Elective",
+    instructorIds: [],
+    linkedProjectIds: [],
+    status: "active",
+    description: "CI/CD, observability, infrastructure automation, release engineering, and deployment workflows.",
+  },
+];
+
+export const extraInstructorProjects = [
+  // CSEN 501 — mixed review states, team sizes, and visibility.
+  project({
+    id: "project-db-library-reservation",
+    title: "Smart Library Reservation Platform",
+    courseId: "course-csen501",
+    courseCode: "CSEN 501",
+    courseName: "Databases I",
+    ownerIndex: 1,
+    collaborators: 4,
+    description: "A normalized relational system for study-room reservations, waitlists, penalties, and usage analytics with transaction-safe booking workflows.",
+    technologies: ["SQL Server", "T-SQL", "ASP.NET", "EERD", "Stored Procedures"],
+    rating: 4.7,
+    review: "reviewed",
+    taskMode: "reviewed",
+    updatedAt: "2026-09-10T14:20:00.000Z",
+    imageIndex: 0,
+  }),
+  project({
+    id: "project-db-clinic-flow",
+    title: "Clinic Queue & Records System",
+    courseId: "course-csen501",
+    courseCode: "CSEN 501",
+    courseName: "Databases I",
+    ownerIndex: 2,
+    collaborators: 3,
+    description: "Patient records, appointment scheduling, queue prioritization, audit logs, and role-based access modeled in a transactional relational database.",
+    technologies: ["PostgreSQL", "SQL", "Node.js", "Express", "ER Modeling"],
+    review: "none",
+    taskMode: "pending",
+    updatedAt: "2026-09-12T08:40:00.000Z",
+    imageIndex: 1,
+  }),
+  project({
+    id: "project-db-campus-market",
+    title: "Campus Marketplace Data Platform",
+    courseId: "course-csen501",
+    courseCode: "CSEN 501",
+    courseName: "Databases I",
+    ownerIndex: 3,
+    collaborators: 2,
+    description: "A marketplace schema covering listings, payments, moderation, saved items, seller ratings, and analytical reporting.",
+    technologies: ["MySQL", "SQL", "Normalization", "Views", "Triggers"],
+    rating: 3.7,
+    review: "reviewed",
+    updatedAt: "2026-09-06T17:10:00.000Z",
+    imageIndex: 2,
+  }),
+  project({
+    id: "project-db-event-ticketing",
+    title: "University Event Ticketing Database",
+    courseId: "course-csen501",
+    courseCode: "CSEN 501",
+    courseName: "Databases I",
+    ownerIndex: 4,
+    collaborators: 5,
+    description: "Event capacity, ticket allocation, check-in, refunds, clubs, sponsors, and attendance reports with concurrency-aware booking logic.",
+    technologies: ["SQL Server", "T-SQL", "Transactions", "Functions", "Views"],
+    review: "none",
+    taskMode: "mixed",
+    updatedAt: "2026-09-11T19:15:00.000Z",
+    imageIndex: 3,
+  }),
+  project({
+    id: "project-db-hostel-management",
+    title: "Student Housing Management System",
+    courseId: "course-csen501",
+    courseCode: "CSEN 501",
+    courseName: "Databases I",
+    ownerIndex: 5,
+    collaborators: 1,
+    description: "Room assignment, maintenance requests, payments, occupancy tracking, and resident history in a compact single-student project.",
+    technologies: ["SQLite", "Python", "SQLAlchemy", "Database Design"],
+    rating: 2.8,
+    review: "reviewed",
+    visibility: "private",
+    updatedAt: "2026-09-03T11:30:00.000Z",
+    imageIndex: 4,
+  }),
+
+  // CSEN 503 — network-heavy projects.
+  project({
+    id: "project-net-travel-platform",
+    title: "Distributed Travel Discovery Platform",
+    courseId: "course-csen503",
+    courseCode: "CSEN 503",
+    courseName: "Computer Networks",
+    ownerIndex: 0,
+    collaborators: 4,
+    description: "A session-based travel web application with client-server communication, persistent preferences, search, and network-aware API integration.",
+    technologies: ["Node.js", "Express", "MongoDB", "EJS", "HTTP"],
+    rating: 4.8,
+    review: "reviewed",
+    taskMode: "reviewed",
+    updatedAt: "2026-09-09T16:00:00.000Z",
+    imageIndex: 5,
+  }),
+  project({
+    id: "project-net-chat-relay",
+    title: "Resilient Campus Chat Relay",
+    courseId: "course-csen503",
+    courseCode: "CSEN 503",
+    courseName: "Computer Networks",
+    ownerIndex: 1,
+    collaborators: 3,
+    description: "A TCP-based messaging relay with reconnect behavior, presence state, message acknowledgements, and multi-client concurrency.",
+    technologies: ["Python", "TCP", "Sockets", "Threads", "Wireshark"],
+    review: "none",
+    taskMode: "pending",
+    updatedAt: "2026-09-12T18:10:00.000Z",
+    imageIndex: 0,
+  }),
+  project({
+    id: "project-net-routing-visualizer",
+    title: "Routing Algorithm Visualizer",
+    courseId: "course-csen503",
+    courseCode: "CSEN 503",
+    courseName: "Computer Networks",
+    ownerIndex: 4,
+    collaborators: 2,
+    description: "Interactive visualization of distance-vector and link-state routing with simulated failures and convergence timing.",
+    technologies: ["React", "JavaScript", "Graph Algorithms", "Dijkstra", "Networking"],
+    rating: 4.5,
+    review: "reviewed",
+    updatedAt: "2026-09-04T09:45:00.000Z",
+    imageIndex: 1,
+  }),
+  project({
+    id: "project-net-iot-monitor",
+    title: "IoT Sensor Monitoring Gateway",
+    courseId: "course-csen503",
+    courseCode: "CSEN 503",
+    courseName: "Computer Networks",
+    ownerIndex: 5,
+    collaborators: 5,
+    description: "Gateway service that aggregates simulated sensor streams, handles intermittent connectivity, and exposes live status to a browser dashboard.",
+    technologies: ["MQTT", "Node.js", "WebSockets", "Raspberry Pi", "Docker"],
+    review: "none",
+    taskMode: "mixed",
+    updatedAt: "2026-09-11T12:20:00.000Z",
+    imageIndex: 2,
+  }),
+
+  // DMET 501 — smaller, media-oriented work.
+  project({
+    id: "project-media-audio-story",
+    title: "Interactive Audio Story Engine",
+    courseId: "course-dmet501",
+    courseCode: "DMET 501",
+    courseName: "Introduction to Media Engineering",
+    ownerIndex: 2,
+    collaborators: 2,
+    description: "Branching audio narrative prototype with adaptive playback, scene transitions, and simple listener interaction tracking.",
+    technologies: ["JavaScript", "Web Audio API", "HTML", "CSS"],
+    rating: 3.4,
+    review: "reviewed",
+    updatedAt: "2026-09-02T13:00:00.000Z",
+    imageIndex: 3,
+  }),
+  project({
+    id: "project-media-image-lab",
+    title: "Digital Image Processing Playground",
+    courseId: "course-dmet501",
+    courseCode: "DMET 501",
+    courseName: "Introduction to Media Engineering",
+    ownerIndex: 3,
+    collaborators: 1,
+    description: "A compact image-processing lab for histogram operations, filtering, edge detection, and side-by-side visual comparison.",
+    technologies: ["Python", "OpenCV", "NumPy", "Matplotlib"],
+    review: "none",
+    updatedAt: "2026-09-12T07:35:00.000Z",
+    imageIndex: 4,
+  }),
+  project({
+    id: "project-media-accessibility",
+    title: "Accessible Media Player Prototype",
+    courseId: "course-dmet501",
+    courseCode: "DMET 501",
+    courseName: "Introduction to Media Engineering",
+    ownerIndex: 4,
+    collaborators: 3,
+    description: "Media-player concept emphasizing keyboard navigation, caption controls, readable contrast, and low-friction playback settings.",
+    technologies: ["React", "Accessibility", "ARIA", "CSS", "Video API"],
+    review: "none",
+    taskMode: "pending",
+    updatedAt: "2026-09-10T21:05:00.000Z",
+    imageIndex: 5,
+  }),
+
+  // CSEN 702 — mature systems work.
+  project({
+    id: "project-dist-order-service",
+    title: "Fault-Tolerant Order Processing Service",
+    courseId: "course-csen702",
+    courseCode: "CSEN 702",
+    courseName: "Distributed Systems",
+    ownerIndex: 5,
+    collaborators: 4,
+    description: "Event-driven order pipeline with retries, idempotency, dead-letter handling, and service-health visibility.",
+    technologies: ["Java", "Kafka", "Docker", "Redis", "PostgreSQL"],
+    rating: 4.9,
+    review: "reviewed",
+    taskMode: "reviewed",
+    updatedAt: "2026-09-08T15:40:00.000Z",
+    imageIndex: 0,
+  }),
+  project({
+    id: "project-dist-collab-editor",
+    title: "Collaborative Document Synchronization",
+    courseId: "course-csen702",
+    courseCode: "CSEN 702",
+    courseName: "Distributed Systems",
+    ownerIndex: 1,
+    collaborators: 5,
+    description: "Prototype collaborative editor exploring conflict resolution, optimistic updates, synchronization, and transient offline behavior.",
+    technologies: ["TypeScript", "WebSockets", "CRDT", "Node.js", "Redis"],
+    review: "none",
+    taskMode: "mixed",
+    updatedAt: "2026-09-12T10:15:00.000Z",
+    imageIndex: 1,
+  }),
+
+  // CSEN 704 — UX-heavy projects, useful for visually different content lengths.
+  project({
+    id: "project-hci-campus-nav",
+    title: "Inclusive Campus Navigation Experience",
+    courseId: "course-csen704",
+    courseCode: "CSEN 704",
+    courseName: "Human Computer Interaction",
+    ownerIndex: 0,
+    collaborators: 4,
+    description: "Research-led navigation concept for students with mobility and visual-access needs, including route preferences and contextual accessibility notes.",
+    technologies: ["Figma", "User Research", "Accessibility", "Prototyping", "Usability Testing"],
+    rating: 4.8,
+    review: "reviewed",
+    updatedAt: "2026-09-07T12:00:00.000Z",
+    imageIndex: 2,
+  }),
+  project({
+    id: "project-hci-study-planner",
+    title: "Low-Stress Study Planner",
+    courseId: "course-csen704",
+    courseCode: "CSEN 704",
+    courseName: "Human Computer Interaction",
+    ownerIndex: 2,
+    collaborators: 3,
+    description: "Planner prototype focused on reducing cognitive load through progressive disclosure, flexible task grouping, and gentle deadline awareness.",
+    technologies: ["React", "Figma", "Design System", "UX Research"],
+    review: "none",
+    taskMode: "pending",
+    updatedAt: "2026-09-12T20:00:00.000Z",
+    imageIndex: 3,
+  }),
+  project({
+    id: "project-hci-lab-dashboard",
+    title: "Research Lab Equipment Dashboard",
+    courseId: "course-csen704",
+    courseCode: "CSEN 704",
+    courseName: "Human Computer Interaction",
+    ownerIndex: 3,
+    collaborators: 2,
+    description: "Desktop dashboard concept for booking shared lab equipment, surfacing conflicts, and reducing administrative back-and-forth.",
+    technologies: ["Figma", "Information Architecture", "Usability Testing", "React"],
+    rating: 2.4,
+    review: "reviewed",
+    updatedAt: "2026-09-01T09:20:00.000Z",
+    imageIndex: 4,
+  }),
+  project({
+    id: "project-hci-finance-literacy",
+    title: "Student Financial Literacy Companion",
+    courseId: "course-csen704",
+    courseCode: "CSEN 704",
+    courseName: "Human Computer Interaction",
+    ownerIndex: 4,
+    collaborators: 5,
+    description: "A guided financial-literacy experience tested with students, using scenario-based learning, budgeting simulations, and confidence check-ins.",
+    technologies: ["UX Research", "Figma", "React", "Data Visualization"],
+    review: "none",
+    updatedAt: "2026-09-10T18:35:00.000Z",
+    imageIndex: 5,
+  }),
+  project({
+    id: "project-hci-library-wayfinding",
+    title: "Library Wayfinding Kiosk",
+    courseId: "course-csen704",
+    courseCode: "CSEN 704",
+    courseName: "Human Computer Interaction",
+    ownerIndex: 5,
+    collaborators: 1,
+    description: "Single-student kiosk prototype designed for fast shelf discovery, room directions, and accessible touch targets in a busy library environment.",
+    technologies: ["Figma", "Interaction Design", "Accessibility"],
+    rating: 1.7,
+    review: "reviewed",
+    visibility: "private",
+    updatedAt: "2026-08-30T11:05:00.000Z",
+    imageIndex: 0,
+  }),
+
+  // Bachelor projects — thesis state varies deliberately.
+  project({
+    id: "project-bachelor-smart-mobility",
+    title: "Adaptive Smart Mobility Assistant",
+    courseId: "course-bachelor",
+    courseCode: "BACHELOR",
+    courseName: "Bachelor Project",
+    ownerIndex: 1,
+    collaborators: 1,
+    description: "Bachelor research project combining route prediction, accessibility preferences, and context-aware mobility recommendations.",
+    technologies: ["Python", "FastAPI", "PostgreSQL", "Machine Learning", "React"],
+    review: "none",
+    bachelor: true,
+    thesisMode: "pending",
+    updatedAt: "2026-09-12T22:00:00.000Z",
+    imageIndex: 1,
+  }),
+  project({
+    id: "project-bachelor-ar-lab",
+    title: "Augmented Reality Engineering Lab Guide",
+    courseId: "course-bachelor",
+    courseCode: "BACHELOR",
+    courseName: "Bachelor Project",
+    ownerIndex: 2,
+    collaborators: 1,
+    description: "AR guidance system for lab procedures with contextual safety prompts, equipment identification, and experiment sequencing.",
+    technologies: ["Unity", "C#", "AR Foundation", "Computer Vision"],
+    rating: 4.6,
+    review: "reviewed",
+    bachelor: true,
+    thesisMode: "reviewed",
+    updatedAt: "2026-09-08T14:10:00.000Z",
+    imageIndex: 2,
+  }),
+  project({
+    id: "project-bachelor-code-review-ai",
+    title: "Explainable AI for Student Code Review",
+    courseId: "course-bachelor",
+    courseCode: "BACHELOR",
+    courseName: "Bachelor Project",
+    ownerIndex: 3,
+    collaborators: 1,
+    description: "Research prototype that analyzes student code submissions and generates explainable feedback cues for common programming mistakes.",
+    technologies: ["Python", "NLP", "LLM", "Static Analysis", "FastAPI"],
+    review: "none",
+    bachelor: true,
+    thesisMode: "pending",
+    updatedAt: "2026-09-11T17:45:00.000Z",
+    imageIndex: 3,
+  }),
+  project({
+    id: "project-bachelor-energy-forecast",
+    title: "Campus Energy Forecasting System",
+    courseId: "course-bachelor",
+    courseCode: "BACHELOR",
+    courseName: "Bachelor Project",
+    ownerIndex: 4,
+    collaborators: 1,
+    description: "Forecasting and monitoring platform for campus energy demand using historical consumption, weather features, and interpretable trend analysis.",
+    technologies: ["Python", "Pandas", "XGBoost", "React", "Time Series"],
+    rating: 4.7,
+    review: "reviewed",
+    bachelor: true,
+    thesisMode: "reviewed",
+    updatedAt: "2026-09-06T10:20:00.000Z",
+    imageIndex: 4,
+  }),
+  project({
+    id: "project-bachelor-robot-navigation",
+    title: "Vision-Based Indoor Robot Navigation",
+    courseId: "course-bachelor",
+    courseCode: "BACHELOR",
+    courseName: "Bachelor Project",
+    ownerIndex: 5,
+    collaborators: 1,
+    description: "Indoor navigation research using visual localization, obstacle detection, and a lightweight planning pipeline for low-cost robotics hardware.",
+    technologies: ["ROS 2", "OpenCV", "Python", "SLAM", "Raspberry Pi"],
+    review: "none",
+    taskMode: "mixed",
+    bachelor: true,
+    updatedAt: "2026-09-10T15:30:00.000Z",
+    imageIndex: 5,
+  }),
+];
+
+export const extraInstructorLinkRequests = [
+  {
+    id: "link-request-csen707-mervat",
+    instructorId: "instructor-demo-1",
+    courseId: "course-csen707",
+    action: "link",
+    type: "link",
+    status: "pending",
+    reason: "Teaching Machine Learning this term and requesting access to the course workspace.",
+    createdAt: "2026-09-09T11:30:00.000Z",
+    submittedAt: "2026-09-09T11:30:00.000Z",
+  },
+  {
+    id: "link-request-csen403-mervat-unlink",
+    instructorId: "instructor-demo-1",
+    courseId: "course-csen403",
+    action: "unlink",
+    type: "unlink",
+    status: "pending",
+    reason: "Handing Web & Mobile Computing supervision to another instructor next cycle.",
+    createdAt: "2026-09-10T08:15:00.000Z",
+    submittedAt: "2026-09-10T08:15:00.000Z",
+  },
+];

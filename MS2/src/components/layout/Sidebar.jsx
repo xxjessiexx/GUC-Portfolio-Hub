@@ -63,10 +63,9 @@ const workspaceItems = {
 
   instructor: [
     { label: "Home", icon: Home, path: "/instructor-dashboard" },
-    { label: "Explore", icon: SearchIcon, path: "/discover" },
-    { label: "Projects", icon: FolderKanban, path: "/instructor/projects" },
     { label: "My Courses", icon: BookCheckIcon, path: "/instructor/my-courses" },
-    { label: "Courses", icon: BookOpen, path: "/instructor/courses" },
+    { label: "All Courses", icon: BookOpen, path: "/instructor/courses" },
+    { label: "Explore", icon: SearchIcon, path: "/discover" },
     { label: "Invitations", icon: ClipboardCheck, path: "/invitations" },
     { label: "Settings", icon: Settings, path: "/settings" },
   ],
@@ -105,13 +104,34 @@ function isItemActive(item, location, workspace) {
 
   if (!path) return false;
 
+  const pathname = location.pathname;
   const workspaceHome = dashboardRoutes[workspace] || dashboardRoutes.student;
 
   if (label === "Home") {
-    return location.pathname === workspaceHome;
+    return pathname === workspaceHome;
   }
 
-  return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  // Instructor course workspaces are part of My Courses, not the All Courses catalog.
+  // The catalog route shares the /instructor/courses prefix, so generic prefix
+  // matching would otherwise highlight All Courses while reviewing a linked course.
+  if (workspace === "instructor") {
+    const isCourseWorkspace = /^\/instructor\/my-courses\/[^/]+\/projects(?:\/.*)?$/.test(pathname);
+    const projectOriginPath = String(location.state?.projectFlow?.originPath || "");
+    const isProjectFromMyCourses =
+      pathname === "/project" &&
+      (projectOriginPath === "/instructor/my-courses" ||
+        /^\/instructor\/my-courses\/[^/]+\/projects(?:\/.*)?$/.test(projectOriginPath));
+
+    if (label === "My Courses") {
+      return pathname === "/instructor/my-courses" || isCourseWorkspace || isProjectFromMyCourses;
+    }
+
+    if (label === "All Courses") {
+      return pathname === "/instructor/courses";
+    }
+  }
+
+  return pathname === path || pathname.startsWith(`${path}/`);
 }
 
 export default function Sidebar({

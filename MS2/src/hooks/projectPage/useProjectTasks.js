@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useToast } from "@/context/ToastContext";
 import { updateProject } from "@/data/demoStore";
@@ -42,7 +42,25 @@ export function useProjectTasks({
     status: "pending",
   });
 
-  const [taskFeedbackDrafts, setTaskFeedbackDrafts] = useState({});
+  const taskDraftKey = project?.id && loggedInUser?.id
+    ? `guc-task-feedback-drafts:${project.id}:${loggedInUser.id}`
+    : "";
+  const [taskFeedbackDrafts, setTaskFeedbackDrafts] = useState(() => {
+    if (typeof window === "undefined" || !taskDraftKey) return {};
+    try { return JSON.parse(localStorage.getItem(taskDraftKey) || "{}"); } catch { return {}; }
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !taskDraftKey) return;
+    const hasDrafts = Object.values(taskFeedbackDrafts).some((value) => String(value || "").trim());
+    if (hasDrafts) localStorage.setItem(taskDraftKey, JSON.stringify(taskFeedbackDrafts));
+    else localStorage.removeItem(taskDraftKey);
+  }, [taskDraftKey, taskFeedbackDrafts]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !taskDraftKey) return;
+    try { setTaskFeedbackDrafts(JSON.parse(localStorage.getItem(taskDraftKey) || "{}")); } catch { setTaskFeedbackDrafts({}); }
+  }, [taskDraftKey]);
 
   const canUpdateThisTaskStatus = (task) => {
     if (!task || !loggedInUser?.id) return false;
@@ -112,7 +130,9 @@ export function useProjectTasks({
 
     persistTasksWithoutOwnerOnlyCheck(
       tasks.map((task) =>
-        sameId(task.id, id) ? { ...task, status: newStatus } : task
+        sameId(task.id, id)
+          ? { ...task, status: newStatus, updatedAt: new Date().toISOString() }
+          : task
       )
     );
   };
@@ -163,6 +183,8 @@ export function useProjectTasks({
       status: newTask.status || "pending",
       feedback: [],
       order: tasks.length,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     storeTasks([...tasks, nextTask]);
@@ -237,6 +259,7 @@ export function useProjectTasks({
           ? {
               ...editingTask,
               assignee: selectedMember?.name || editingTask.assignee,
+              updatedAt: new Date().toISOString(),
             }
           : task
       )

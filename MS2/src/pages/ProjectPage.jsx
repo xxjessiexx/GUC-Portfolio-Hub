@@ -14,6 +14,7 @@ import ProjectPageVideo from "@/components/projectPage/ProjectPageVideo";
 import ProjectInvitationBanner from "@/components/projectPage/ProjectInvitationBanner";
 import ProjectOverviewTab from "@/components/projectPage/ProjectOverviewTab";
 import ProjectPageTabs from "@/components/projectPage/ProjectPageTabs";
+import ProjectChangesPopover from "@/components/projectPage/ProjectChangesPopover";
 import ProjectTasksTab from "@/components/projectPage/ProjectTasksTab";
 import ProjectBachelorThesisTab from "@/components/projectPage/ProjectBachelorThesisTab";
 import ProjectFeedbackTab from "@/components/projectPage/ProjectFeedbackTab";
@@ -25,6 +26,7 @@ import { useProjectTasks } from "@/hooks/projectPage/useProjectTasks";
 import { useProjectFeedback } from "@/hooks/projectPage/useProjectFeedback";
 
 import {
+  formatProjectDate,
   getDisplayName,
   makeId,
   normalizeRole,
@@ -42,6 +44,8 @@ import {
   getProjectById,
   updateProject,
 } from "@/data/demoStore";
+import { formatProjectRating } from "@/lib/projectRating";
+import { getInstructorProjectReviewState, getProjectChangeSummary } from "@/lib/projectReview";
 
 
 const LIGHT_WORKSPACE_THEME = {
@@ -151,6 +155,7 @@ function getActiveTabCopy(tab) {
   };
 }
 
+
 function SequenceDestination({
   label,
   project,
@@ -185,13 +190,14 @@ function SequenceDestination({
 }
 
 export default function ProjectPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const params = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
   const projectId =
     searchParams.get("projectId") || params.projectId || params.id;
+  const focusTargetId = searchParams.get("focus") || "";
 
   const [project, setProject] = useState(null);
   const [projectMissing, setProjectMissing] = useState(false);
@@ -325,6 +331,18 @@ export default function ProjectPage() {
     return tabs;
   }, [canViewComments, isBachelorProject]);
 
+  useEffect(() => {
+    const requestedTab = searchParams.get("tab");
+
+    if (!requestedTab) return;
+
+    const normalizedTab = requestedTab.toLowerCase();
+
+    if (visibleTabs.includes(normalizedTab)) {
+      setActiveTab(normalizedTab);
+    }
+  }, [searchParams, visibleTabs]);
+
   const safeActiveTab = visibleTabs.includes(activeTab)
     ? activeTab
     : "overview";
@@ -403,6 +421,13 @@ export default function ProjectPage() {
 
   useEffect(() => {
     refreshProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, loggedInUser?.id]);
+
+  useEffect(() => {
+    const handleStoreChange = () => refreshProject();
+    window.addEventListener("demo-db-change", handleStoreChange);
+    return () => window.removeEventListener("demo-db-change", handleStoreChange);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, loggedInUser?.id]);
 
@@ -486,6 +511,31 @@ export default function ProjectPage() {
     persistProject,
     makeNotification,
   });
+
+  const hasDraftWork = Boolean(
+    String(projectFeedback.projectFeedbackDraft || "").trim() ||
+    Object.values(projectTasks.taskFeedbackDrafts || {}).some((value) => String(value || "").trim()) ||
+    Object.values(thesisDrafts.draftFeedbackDrafts || {}).some((value) => String(value || "").trim())
+  );
+
+  useEffect(() => {
+    if (!hasDraftWork) return undefined;
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasDraftWork]);
+
+  useEffect(() => {
+    if (!focusTargetId) return;
+    const timer = window.setTimeout(() => {
+      const target = document.getElementById(`task-${focusTargetId}`) || document.getElementById(`thesis-${focusTargetId}`);
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [focusTargetId, safeActiveTab]);
 
   const toggleVisibility = () => {
     if (!canManageProject) return;
@@ -593,8 +643,11 @@ export default function ProjectPage() {
   const previousProject = getSequenceProject(projectFlow.previousId);
   const nextProject = getSequenceProject(projectFlow.nextId);
 
+  const confirmLeavingDrafts = () =>
+    !hasDraftWork || window.confirm("You have feedback drafts saved privately. Leave this project now? Your drafts will remain saved.");
+
   const openFlowProject = (id) => {
-    if (!id) return;
+    if (!id || !confirmLeavingDrafts()) return;
 
     navigate(`/project?projectId=${encodeURIComponent(id)}`, {
       state: {
@@ -610,10 +663,37 @@ export default function ProjectPage() {
   };
 
   const returnToOrigin = () => {
+    if (!confirmLeavingDrafts()) return;
     navigate(projectFlow.originPath || "/explore-projects");
   };
 
   const activeTabCopy = getActiveTabCopy(safeActiveTab);
+
+  const instructorReviewState = canAddInstructorFeedback
+    ? getInstructorProjectReviewState(project?.raw || project, currentUserId)
+    : null;
+
+  const instructorChanges =
+    canAddInstructorFeedback && instructorReviewState?.status === "updated"
+      ? getProjectChangeSummary(project?.raw || project, currentUserId, { limit: 8 })
+      : [];
+
+  const changeCountsByTab = instructorChanges.reduce((counts, change) => {
+    const tab = visibleTabs.includes(change?.tab) ? change.tab : "overview";
+    counts[tab] = (counts[tab] || 0) + 1;
+    return counts;
+  }, {});
+
+  const openReviewChange = (change) => {
+    const requestedTab = visibleTabs.includes(change?.tab) ? change.tab : "overview";
+    setActiveTab(requestedTab);
+
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", requestedTab);
+    if (change?.targetId) next.set("focus", change.targetId);
+    else next.delete("focus");
+    setSearchParams(next, { replace: true });
+  };
 
   return (
     <DashboardLayout showFooter={false}>
@@ -654,38 +734,41 @@ export default function ProjectPage() {
 
                   <div className="mt-5 border-y border-[#D4E1E8] bg-white/20 py-4">
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] font-bold text-[#61798A]">
-                      <span>Updated {project.updatedAt}</span>
+                      <span>
+                        {canAddInstructorFeedback ? "Content updated" : "Updated"}{" "}
+                        {canAddInstructorFeedback
+                          ? formatProjectDate(instructorReviewState?.contentUpdatedAt)
+                          : project.updatedAt}
+                      </span>
                       <span className="inline-flex items-center gap-1.5">
                         <Users className="h-4 w-4 text-[#6F94AA]" />
                         {project.collaborators} collaborators
                       </span>
                       <span className="inline-flex items-center gap-1.5">
                         <Star className="h-4 w-4 text-[#D3AE45]" />
-                        {project.rating || 0} / 5
+                        {formatProjectRating(project.rating)}
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={toggleVisibility}
-                      disabled={!canManageProject}
-                      className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-black transition ${
-                        isPublic
-                          ? "border-[#7AAACE]/25 bg-[#EAF5FB] text-[#355872]"
-                          : "border-[#D9C174]/35 bg-[#FFF8E3] text-[#7B6326]"
-                      } ${
-                        canManageProject
-                          ? "hover:-translate-y-0.5"
-                          : "cursor-default"
-                      }`}
-                    >
-                      {isPublic ? (
-                        <Eye className="h-3.5 w-3.5" />
-                      ) : (
-                        <EyeOff className="h-3.5 w-3.5" />
-                      )}
-                      {project.visibility}
-                    </button>
+                    {canManageProject ? (
+                      <button
+                        type="button"
+                        onClick={toggleVisibility}
+                        className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-black transition hover:-translate-y-0.5 ${
+                          isPublic
+                            ? "border-[#7AAACE]/25 bg-[#EAF5FB] text-[#355872]"
+                            : "border-[#D9C174]/35 bg-[#FFF8E3] text-[#7B6326]"
+                        }`}
+                      >
+                        {isPublic ? (
+                          <Eye className="h-3.5 w-3.5" />
+                        ) : (
+                          <EyeOff className="h-3.5 w-3.5" />
+                        )}
+                        {project.visibility}
+                      </button>
+                    ) : null}
+
                   </div>
 
                   <ProjectInvitationBanner
@@ -693,6 +776,7 @@ export default function ProjectPage() {
                     onAccept={() => respondToInvitation("accepted")}
                     onReject={() => respondToInvitation("rejected")}
                   />
+
 
                   <div className="mt-5">
                     <p className="mb-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#5F849B]">
@@ -750,7 +834,7 @@ export default function ProjectPage() {
               ================================================= */}
               <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-[#FCFDFE] xl:h-full">
                 <div className="shrink-0 border-b border-[#C9D8E1] bg-[#FCFDFE] px-7 pt-6 sm:px-9">
-                  <div className="mb-4 flex items-start justify-between gap-6 pr-12 sm:pr-16">
+                  <div className="mb-4 pr-12 sm:pr-16">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="h-[2px] w-7 rounded-full bg-[#E6C77B]" />
@@ -774,6 +858,15 @@ export default function ProjectPage() {
                     visibleTabs={visibleTabs}
                     activeTab={safeActiveTab}
                     setActiveTab={setActiveTab}
+                    tabIndicators={changeCountsByTab}
+                    rightSlot={
+                      instructorChanges.length ? (
+                        <ProjectChangesPopover
+                          changes={instructorChanges}
+                          onSelectChange={openReviewChange}
+                        />
+                      ) : null
+                    }
                   />
                 </div>
 
@@ -861,6 +954,7 @@ export default function ProjectPage() {
                       onAddDraftFeedback={thesisDrafts.addDraftFeedback}
                       onEditDraftFeedback={thesisDrafts.editDraftFeedback}
                       onDeleteDraftFeedback={thesisDrafts.deleteDraftFeedback}
+                      instructorLastReviewedAt={instructorReviewState?.lastReviewedAt || null}
                     />
                   )}
                 </div>

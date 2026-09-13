@@ -43,6 +43,7 @@ export default function ProjectBachelorThesisTab({
   onAddDraftFeedback,
   onEditDraftFeedback,
   onDeleteDraftFeedback,
+  instructorLastReviewedAt = null,
 }) {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [feedbackModal, setFeedbackModal] = useState(null);
@@ -128,10 +129,16 @@ export default function ProjectBachelorThesisTab({
             }
           />
         ) : (
-          visibleDrafts.map((draft) => (
+          visibleDrafts.map((draft, index) => {
+            const uploadedAfterReview =
+              instructorLastReviewedAt &&
+              new Date(draft.uploadedAt || 0).getTime() > new Date(instructorLastReviewedAt).getTime();
+
+            return (
             <article
+              id={`thesis-${draft.id}`}
               key={draft.id}
-              className="rounded-[28px] border border-[color:var(--primary)]/10 bg-white/80 p-5 shadow-sm"
+              className="scroll-mt-28 rounded-[28px] border border-[color:var(--primary)]/10 bg-white/80 p-5 shadow-sm"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -140,9 +147,14 @@ export default function ProjectBachelorThesisTab({
                   </p>
 
                   <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
-                    {draft.fileName || draft.file?.name || "PDF draft"} • Uploaded{" "}
+                    Draft v{draft.version || index + 1} · {draft.fileName || draft.file?.name || "PDF draft"} • Uploaded{" "}
                     {formatProjectDate(draft.uploadedAt)}
                   </p>
+                  {instructorLastReviewedAt ? (
+                    <p className={`mt-1 text-[10px] font-black ${uploadedAfterReview ? "text-[#9A7618]" : "text-[#7A8D98]"}`}>
+                      {uploadedAfterReview ? "Uploaded after your last review" : "Available during your last review"}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -243,7 +255,8 @@ export default function ProjectBachelorThesisTab({
                 </div>
               )}
             </article>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -309,6 +322,9 @@ export default function ProjectBachelorThesisTab({
             placeholder="Write thesis draft feedback..."
             className="min-h-32 w-full resize-none rounded-2xl border border-slate-200 bg-white p-4 text-sm font-bold text-[var(--ink)] outline-none transition focus:border-[var(--primary)]"
           />
+          <p className="mt-2 text-[10px] font-semibold text-[#7A8D98]">
+            Draft autosaves privately. Published thesis feedback is visible only to project members and assigned instructors.
+          </p>
 
           <div className="mt-6 flex justify-end gap-3">
             <ModalButton variant="ghost" onClick={() => setFeedbackModal(null)}>

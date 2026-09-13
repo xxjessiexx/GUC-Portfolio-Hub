@@ -795,6 +795,40 @@ function InvitationCard({
                   Accept invitation
                 </button>
               </div>
+            ) : status === "accepted" ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpen(invitation);
+                }}
+                className="
+                  inline-flex
+                  h-10
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-[13px]
+                  border
+                  border-[#CDD9E0]
+                  bg-[#FDFEFE]
+                  px-4
+                  text-[11px]
+                  font-black
+                  text-[#355872]
+                  shadow-[0_4px_10px_rgba(53,88,114,0.04)]
+                  transition-all
+                  hover:border-[#B5C6CF]
+                  hover:bg-white
+                  dark:border-white/10
+                  dark:bg-white/[0.04]
+                  dark:text-[#A9C5D4]
+                  dark:hover:bg-white/[0.07]
+                "
+              >
+                Open project
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
             ) : (
               <p
                 className="
@@ -803,9 +837,7 @@ function InvitationCard({
                   text-[color:var(--muted)]
                 "
               >
-                {status === "accepted"
-                  ? "You joined this project."
-                  : "You declined this invitation."}
+                You declined this invitation.
               </p>
             )}
           </div>

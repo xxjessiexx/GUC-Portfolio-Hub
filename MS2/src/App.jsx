@@ -15,7 +15,6 @@ import InstructorDashboard from "./pages/InstructorDashboard";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ForgotPassword from "./pages/forgot-password";
-import EditInstructorProfile from "./pages/EditInstructorProfile";
 import EditEmployerProfile from "./pages/EditEmployerProfile";
 import FloatingCTA from "./components/ui/FloatingCTA";
 import CreateNewProject from "./pages/CreateNewProject";
@@ -231,10 +230,18 @@ export default function App() {
   }
 />
 <Route
-  path="/instructor/projects"
+  path="/instructor/my-courses/:courseId/projects"
   element={
     <ProtectedRoute allowedRoles={["instructor"]}>
       <InstructorProjects />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/instructor/projects"
+  element={
+    <ProtectedRoute allowedRoles={["instructor"]}>
+      <Navigate to="/instructor/my-courses" replace />
     </ProtectedRoute>
   }
 />
@@ -262,14 +269,6 @@ export default function App() {
   element={
     <ProtectedRoute allowedRoles={["instructor"]}>
       <InstructorMyCourses />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/instructor/projects"
-  element={
-    <ProtectedRoute allowedRoles={["instructor"]}>
-      <InstructorProjects />
     </ProtectedRoute>
   }
 />
@@ -522,7 +521,7 @@ export default function App() {
               path="/edit-instructor-profile"
               element={
                 <ProtectedRoute allowedRoles={["instructor"]}>
-                  <EditInstructorProfile />
+                  <Navigate to="/settings?tab=profile" replace />
                 </ProtectedRoute>
               }
             />
