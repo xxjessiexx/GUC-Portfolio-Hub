@@ -7,7 +7,7 @@ import {
 } from "./extra-demo-internships-50"
 
 
-export const DEMO_DATA_VERSION = "ms2-linked-demo-v8-applicants-2026-08-29";
+export const DEMO_DATA_VERSION = "ms2-linked-demo-v10-rating-model-2026-09-13";
 
 export const usersSeed = [
   {

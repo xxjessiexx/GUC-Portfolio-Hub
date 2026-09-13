@@ -10,6 +10,7 @@ import { AppCard } from "../AppCard";
 import { useNavigate } from "react-router-dom";
 import FavoriteButton from "@/components/ui/Searchcommons/FavoriteButton";
 import CourseBadge from "@/components/ui/CourseBadge";
+import { formatProjectRating } from "@/lib/projectRating";
 
 export default function ExploreProjectCard({
   project,
@@ -130,7 +131,7 @@ export default function ExploreProjectCard({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1 text-yellow-500">
               <Star size={15} />
-              {project.rating}
+              {formatProjectRating(project.rating)}
             </div>
 
             <div className="flex items-center gap-1 text-[color:var(--muted)]">

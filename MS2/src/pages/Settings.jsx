@@ -622,6 +622,13 @@ export default function Settings() {
     expectedGraduation: String(
       profile?.expectedGraduation || profile?.graduationYear || ""
     ),
+    department: profile?.department || "Computer Science and Engineering",
+    title: profile?.title || "Course Instructor",
+    office: profile?.office || "",
+    officeHours: profile?.officeHours || "",
+    researchText: Array.isArray(profile?.research)
+      ? profile.research.join(", ")
+      : "",
     skills: profile?.skills || [],
     links: {
       linkedin: profile?.links?.linkedin || "",
@@ -634,6 +641,7 @@ export default function Settings() {
     photo: "idle",
     bio: "idle",
     academic: "idle",
+    instructorDetails: "idle",
     skills: "idle",
     links: "idle",
   });
@@ -659,6 +667,13 @@ export default function Settings() {
       expectedGraduation: String(
         profile?.expectedGraduation || profile?.graduationYear || ""
       ),
+      department: profile?.department || "Computer Science and Engineering",
+      title: profile?.title || "Course Instructor",
+      office: profile?.office || "",
+      officeHours: profile?.officeHours || "",
+      researchText: Array.isArray(profile?.research)
+        ? profile.research.join(", ")
+        : "",
       skills: profile?.skills || [],
       links: {
         linkedin: profile?.links?.linkedin || "",
@@ -723,30 +738,51 @@ export default function Settings() {
   };
 
   const persistProfileDraft = (draft, group) => {
-    const normalizedFaculty = resolveFaculty(
-      draft.major,
-      draft.faculty
-    );
-
     try {
-      updateProfile({
+      let payload = {
         bio: draft.bio,
-        faculty: normalizedFaculty,
-        major: draft.major,
-        semester: draft.semester,
-        expectedGraduation: draft.expectedGraduation,
-        graduationYear: draft.expectedGraduation,
         skills: draft.skills,
         links: draft.links,
-        role: `${draft.major} Student`,
-      });
+      };
 
-      if (draft.faculty !== normalizedFaculty) {
-        setProfileDraft((current) => ({
-          ...current,
+      if (role === "student") {
+        const normalizedFaculty = resolveFaculty(
+          draft.major,
+          draft.faculty
+        );
+
+        payload = {
+          ...payload,
           faculty: normalizedFaculty,
-        }));
+          major: draft.major,
+          semester: draft.semester,
+          expectedGraduation: draft.expectedGraduation,
+          graduationYear: draft.expectedGraduation,
+        };
+
+        if (draft.faculty !== normalizedFaculty) {
+          setProfileDraft((current) => ({
+            ...current,
+            faculty: normalizedFaculty,
+          }));
+        }
       }
+
+      if (role === "instructor") {
+        payload = {
+          ...payload,
+          department: draft.department,
+          title: draft.title || "Course Instructor",
+          office: draft.office,
+          officeHours: draft.officeHours,
+          research: String(draft.researchText || "")
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean),
+        };
+      }
+
+      updateProfile(payload);
 
       setProfileGroupState(group, "saved");
       settleProfileGroup(group);
@@ -1080,11 +1116,112 @@ export default function Settings() {
           </div>
         ) : null}
 
+        {role === "instructor" ? (
+          <div className="border-b border-[#D2E0E7] px-6 py-5 dark:border-white/10">
+            <SectionTitle
+              title="Instructor information"
+              description="Teaching identity and academic details shown across your instructor profile."
+              status={profileSaveStates.instructorDetails}
+            />
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <label>
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
+                  Department
+                </span>
+                <TextInput
+                  value={profileDraft.department}
+                  onChange={(value) =>
+                    changeProfileDraft(
+                      (current) => ({ ...current, department: value }),
+                      "instructorDetails"
+                    )
+                  }
+                  placeholder="Computer Science and Engineering"
+                />
+              </label>
+
+              <label>
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
+                  Academic title
+                </span>
+                <TextInput
+                  value={profileDraft.title}
+                  onChange={(value) =>
+                    changeProfileDraft(
+                      (current) => ({ ...current, title: value }),
+                      "instructorDetails"
+                    )
+                  }
+                  placeholder="Course Instructor"
+                />
+              </label>
+
+              <label>
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
+                  Office
+                </span>
+                <TextInput
+                  value={profileDraft.office}
+                  onChange={(value) =>
+                    changeProfileDraft(
+                      (current) => ({ ...current, office: value }),
+                      "instructorDetails"
+                    )
+                  }
+                  placeholder="e.g. C7.214"
+                />
+              </label>
+
+              <label>
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
+                  Office hours
+                </span>
+                <TextInput
+                  value={profileDraft.officeHours}
+                  onChange={(value) =>
+                    changeProfileDraft(
+                      (current) => ({ ...current, officeHours: value }),
+                      "instructorDetails"
+                    )
+                  }
+                  placeholder="e.g. Sun, Tue 10:00 AM – 12:00 PM"
+                />
+              </label>
+            </div>
+
+            <div className="mt-4">
+              <label>
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-[0.14em] text-[#6E8290] dark:text-[#91A6B4]">
+                  Research interests
+                </span>
+                <TextArea
+                  value={profileDraft.researchText}
+                  onChange={(value) =>
+                    changeProfileDraft(
+                      (current) => ({ ...current, researchText: value }),
+                      "instructorDetails"
+                    )
+                  }
+                  placeholder="Software Engineering, Databases, Artificial Intelligence"
+                />
+                <p className="mt-2 text-[10.5px] font-semibold text-[#7D909C] dark:text-[#8297A4]">
+                  Separate research areas with commas.
+                </p>
+              </label>
+            </div>
+          </div>
+        ) : null}
+
         <div className="border-b border-[#D2E0E7] px-6 py-5 dark:border-white/10">
           <div className="grid gap-4 md:grid-cols-[170px_minmax(0,1fr)]">
             <SectionTitle
               title="Skills"
-              description="Keep this focused on the skills you want to showcase."
+              description={
+                role === "instructor"
+                  ? "Highlight your teaching, technical, and research expertise."
+                  : "Keep this focused on the skills you want to showcase."
+              }
               status={profileSaveStates.skills}
             />
 
@@ -1106,8 +1243,12 @@ export default function Settings() {
             <Link2 className="mt-0.5 h-4 w-4 text-[#55758B] dark:text-[#9CD5FF]" />
             <div className="min-w-0 flex-1">
               <SectionTitle
-                title="Portfolio links"
-                description="Add the profiles you want visitors to reach."
+                title={role === "instructor" ? "Professional links" : "Portfolio links"}
+                description={
+                  role === "instructor"
+                    ? "Add the professional profiles students and colleagues can reach."
+                    : "Add the profiles you want visitors to reach."
+                }
                 status={profileSaveStates.links}
               />
             </div>

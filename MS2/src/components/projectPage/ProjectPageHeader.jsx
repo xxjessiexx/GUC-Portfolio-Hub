@@ -1,4 +1,5 @@
 import { Eye, EyeOff, Star, Users } from "lucide-react";
+import { formatProjectRating } from "@/lib/projectRating";
 
 export default function ProjectPageHeader({
   project,
@@ -52,7 +53,7 @@ export default function ProjectPageHeader({
 
         <span className="flex items-center gap-1">
           <Star className="h-4 w-4" />
-          {project.rating || 0} / 5
+          {formatProjectRating(project.rating)}
         </span>
 
         <button

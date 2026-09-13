@@ -5,7 +5,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, Eye, EyeOff, Star, Users } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Eye, EyeOff, RefreshCcw, Star, Users } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
@@ -25,6 +25,7 @@ import { useProjectTasks } from "@/hooks/projectPage/useProjectTasks";
 import { useProjectFeedback } from "@/hooks/projectPage/useProjectFeedback";
 
 import {
+  formatProjectDate,
   getDisplayName,
   makeId,
   normalizeRole,
@@ -40,8 +41,11 @@ import {
   getCollection,
   getCurrentUser,
   getProjectById,
+  markProjectReviewed,
   updateProject,
 } from "@/data/demoStore";
+import { formatProjectRating } from "@/lib/projectRating";
+import { getInstructorProjectReviewState } from "@/lib/projectReview";
 
 
 const LIGHT_WORKSPACE_THEME = {
@@ -325,6 +329,18 @@ export default function ProjectPage() {
     return tabs;
   }, [canViewComments, isBachelorProject]);
 
+  useEffect(() => {
+    const requestedTab = searchParams.get("tab");
+
+    if (!requestedTab) return;
+
+    const normalizedTab = requestedTab.toLowerCase();
+
+    if (visibleTabs.includes(normalizedTab)) {
+      setActiveTab(normalizedTab);
+    }
+  }, [searchParams, visibleTabs]);
+
   const safeActiveTab = visibleTabs.includes(activeTab)
     ? activeTab
     : "overview";
@@ -403,6 +419,13 @@ export default function ProjectPage() {
 
   useEffect(() => {
     refreshProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, loggedInUser?.id]);
+
+  useEffect(() => {
+    const handleStoreChange = () => refreshProject();
+    window.addEventListener("demo-db-change", handleStoreChange);
+    return () => window.removeEventListener("demo-db-change", handleStoreChange);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, loggedInUser?.id]);
 
@@ -615,6 +638,15 @@ export default function ProjectPage() {
 
   const activeTabCopy = getActiveTabCopy(safeActiveTab);
 
+  const instructorReviewState = canAddInstructorFeedback
+    ? getInstructorProjectReviewState(project?.raw || project, currentUserId)
+    : null;
+
+  const handleMarkReviewed = () => {
+    if (!project?.id || !currentUserId || !canAddInstructorFeedback) return;
+    markProjectReviewed(project.id, currentUserId);
+  };
+
   return (
     <DashboardLayout showFooter={false}>
       <main className="h-[calc(100vh-144px)] min-h-0">
@@ -654,14 +686,19 @@ export default function ProjectPage() {
 
                   <div className="mt-5 border-y border-[#D4E1E8] bg-white/20 py-4">
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] font-bold text-[#61798A]">
-                      <span>Updated {project.updatedAt}</span>
+                      <span>
+                        {canAddInstructorFeedback ? "Content updated" : "Updated"}{" "}
+                        {canAddInstructorFeedback
+                          ? formatProjectDate(instructorReviewState?.contentUpdatedAt)
+                          : project.updatedAt}
+                      </span>
                       <span className="inline-flex items-center gap-1.5">
                         <Users className="h-4 w-4 text-[#6F94AA]" />
                         {project.collaborators} collaborators
                       </span>
                       <span className="inline-flex items-center gap-1.5">
                         <Star className="h-4 w-4 text-[#D3AE45]" />
-                        {project.rating || 0} / 5
+                        {formatProjectRating(project.rating)}
                       </span>
                     </div>
 
@@ -768,6 +805,37 @@ export default function ProjectPage() {
                       </p>
                     </div>
 
+                    {instructorReviewState ? (
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        {instructorReviewState.status === "updated" ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E3D6AD] bg-[#FFF8E7] px-3 py-1.5 text-[10px] font-black text-[#8A6A18]">
+                            <RefreshCcw className="h-3.5 w-3.5" />
+                            Updated since your review
+                          </span>
+                        ) : instructorReviewState.status === "never-reviewed" ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C8DCE8] bg-[#EEF6FA] px-3 py-1.5 text-[10px] font-black text-[#55758B]">
+                            <Eye className="h-3.5 w-3.5" />
+                            Never reviewed
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-[#718690]">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Up to date
+                          </span>
+                        )}
+
+                        {instructorReviewState.status !== "up-to-date" ? (
+                          <button
+                            type="button"
+                            onClick={handleMarkReviewed}
+                            className="inline-flex h-9 items-center gap-2 rounded-[12px] border border-[#C9DBE4] bg-white px-3 text-[10px] font-black text-[#355872] transition hover:border-[#B6CBD5] hover:bg-[#F8FBFD]"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Mark as reviewed
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
 
                   <ProjectPageTabs

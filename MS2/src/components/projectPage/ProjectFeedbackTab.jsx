@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { FaRegStar, FaStar } from "react-icons/fa";
+import { formatProjectRating, getProjectRatingClassification } from "@/lib/projectRating";
 
 import AppModal from "@/components/common/AppModal";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
@@ -150,6 +151,12 @@ export default function ProjectFeedbackTab({
 
   const projectRating = Number(project.rating) || 0;
   const loggedInInstructorRating = getInstructorRating(project, loggedInUser?.id);
+  const displayedRating = canAddInstructorFeedback
+    ? Number(loggedInInstructorRating) || 0
+    : projectRating;
+  const ratingLabel = canAddInstructorFeedback
+    ? "Your project rating"
+    : "Overall project rating";
 
   const selectedFeedbackToDelete = useMemo(
     () =>
@@ -178,6 +185,7 @@ export default function ProjectFeedbackTab({
   };
 
   const handleSaveRating = () => {
+    if (Number(ratingDraft) <= 0) return;
     onSaveRating();
     setEditingRating(false);
   };
@@ -206,11 +214,16 @@ export default function ProjectFeedbackTab({
 
           {!editingRating && (
             <div className="flex flex-wrap items-center gap-3">
+              <span className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--muted)]">
+                {ratingLabel}
+              </span>
               <div className="flex items-center gap-3 rounded-full border border-amber-200 bg-amber-50 px-4 py-2">
-                <RatingStars value={projectRating} readonly />
+                <RatingStars value={displayedRating} readonly />
 
                 <span className="text-sm font-black text-amber-700">
-                  {projectRating.toFixed(1)} / 5
+                  {displayedRating > 0
+                    ? formatProjectRating(displayedRating)
+                    : "Not Rated"}
                 </span>
               </div>
 
@@ -235,13 +248,18 @@ export default function ProjectFeedbackTab({
               />
 
               <span className="text-sm font-black text-amber-700">
-                {(Number(ratingDraft) || 0).toFixed(1)} / 5
+                {Number(ratingDraft) > 0
+                  ? `${Number(ratingDraft).toFixed(1)} / 5 · ${getProjectRatingClassification(
+                      ratingDraft
+                    )}`
+                  : "Not Rated"}
               </span>
 
               <button
                 type="button"
                 onClick={handleSaveRating}
-                className="rounded-full bg-amber-500 px-4 py-1.5 text-xs font-black text-white transition hover:bg-amber-600"
+                disabled={Number(ratingDraft) <= 0}
+                className="rounded-full bg-amber-500 px-4 py-1.5 text-xs font-black text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-45"
               >
                 Save
               </button>

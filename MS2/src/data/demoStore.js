@@ -3,6 +3,7 @@
 // Goal: no page should own random/static data. Seed lives in localStorage; writes go through this file.
 
 import { DEMO_DATA_VERSION, demoSeed } from "@/data/seed";
+import { withInstructorReviewState } from "@/lib/projectReview";
 import {
   extraDemoEmployerUsers,
   extraDemoInternships,
@@ -13,6 +14,12 @@ import {
   extraPortfolioProjectUsers,
   extraPortfolioProjects50,
 } from "@/data/seed/extra-ms2-projects-50";
+
+import {
+  extraInstructorCourses,
+  extraInstructorProjects,
+  extraInstructorLinkRequests,
+} from "@/data/seed/extra-instructor-variety";
 
 
 const DB_KEY = "guc_demo_database_v11";
@@ -160,6 +167,7 @@ function freshDb() {
   const existingUsers = demoSeed.users || [];
   const existingInternships = demoSeed.internships || [];
   const existingProjects = demoSeed.projects || [];
+  const existingCourses = demoSeed.courses || [];
 
   const existingUserIds = new Set(existingUsers.map((user) => String(user.id)));
   const existingInternshipIds = new Set(
@@ -168,11 +176,24 @@ function freshDb() {
   const existingProjectIds = new Set(
     existingProjects.map((project) => String(project.id))
   );
+  const existingCourseIds = new Set(
+    existingCourses.map((course) => String(course.id))
+  );
 
   const allProjects = [
     ...existingProjects,
     ...extraPortfolioProjects50.filter(
       (project) => !existingProjectIds.has(String(project.id))
+    ),
+    ...extraInstructorProjects.filter(
+      (project) => !existingProjectIds.has(String(project.id))
+    ),
+  ];
+
+  const allCourses = [
+    ...existingCourses,
+    ...extraInstructorCourses.filter(
+      (course) => !existingCourseIds.has(String(course.id))
     ),
   ];
   const projectIdsByCourse = allProjects.reduce((map, project) => {
@@ -196,7 +217,7 @@ function freshDb() {
       ),
     ],
 
-    courses: (demoSeed.courses || []).map((course) => ({
+    courses: allCourses.map((course) => ({
       ...course,
       linkedProjectIds: Array.from(
         new Set([
@@ -212,6 +233,16 @@ function freshDb() {
       ...existingInternships,
       ...extraDemoInternships.filter(
         (internship) => !existingInternshipIds.has(String(internship.id))
+      ),
+    ],
+
+    linkRequests: [
+      ...(demoSeed.linkRequests || []),
+      ...extraInstructorLinkRequests.filter(
+        (request) =>
+          !(demoSeed.linkRequests || []).some(
+            (existing) => String(existing.id) === String(request.id)
+          )
       ),
     ],
 
@@ -985,6 +1016,79 @@ export function getProjectsForUser(userId, { includePrivate = true } = {}) {
     .map(hydrateProjectFromDb(db));
 }
 
+export function reportProject(projectId, reason) {
+  const db = getDemoDb();
+  const reporter = getCurrentUser();
+  const project = (db.projects || []).find(
+    (item) => String(item.id) === String(projectId)
+  );
+
+  if (!reporter?.id) {
+    throw new Error("You must be signed in to report a project.");
+  }
+
+  if (!project) {
+    throw new Error("Project not found.");
+  }
+
+  const normalizedReason = String(reason || "").trim();
+
+  if (!normalizedReason) {
+    throw new Error("Please provide a reason for the report.");
+  }
+
+  const now = new Date().toISOString();
+
+  const existingActive = (db.reports || []).find(
+    (report) =>
+      String(report.projectId) === String(projectId) &&
+      String(report.reportedById) === String(reporter.id) &&
+      report.active !== false &&
+      String(report.status || "").toLowerCase() !== "resolved"
+  );
+
+  if (existingActive) {
+    throw new Error("You already reported this project.");
+  }
+
+  const report = {
+    id: `report-${projectId}-${reporter.id}-${Date.now()}`,
+    projectId,
+    reportedById: reporter.id,
+    reason: normalizedReason,
+    status: "pending",
+    active: true,
+    createdAt: now,
+  };
+
+  const adminNotifications = getAdminUsersFromDb(db).map((admin) => ({
+    id: `notif-project-report-${admin.id}-${report.id}`,
+    userId: admin.id,
+    type: "project-report",
+    title: "Project reported",
+    text: `${reporter.name || "An instructor"} reported ${
+      project.title || "a project"
+    } for admin review.`,
+    body: `${reporter.name || "An instructor"} reported ${
+      project.title || "a project"
+    } for admin review.`,
+    unread: true,
+    createdAt: now,
+    time: new Date(now).toLocaleString(),
+    projectId,
+    reportId: report.id,
+    relatedUserId: reporter.id,
+  }));
+
+  setDemoDb({
+    ...db,
+    reports: [report, ...(db.reports || [])],
+    notifications: [...(db.notifications || []), ...adminNotifications],
+  });
+
+  return report;
+}
+
 export function getOwnedProjectsForUser(userId, options) {
   const db = getDemoDb();
   return (db.projects || [])
@@ -997,6 +1101,9 @@ export function normalizeProjectInput(input = {}, owner = getCurrentUser()) {
   const course = getCourseForProjectInput(input);
   const visibility = input.visibility === true ? "public" : input.visibility === false ? "private" : String(input.visibility || "private").toLowerCase();
   const tags = input.tags || input.technologies || input.languages || [];
+  const now = new Date().toISOString();
+  const createdAt = input.createdAt || now;
+
   return {
     id: input.id || makeId("project", input.title),
     isDemo: Boolean(input.isDemo),
@@ -1018,8 +1125,10 @@ export function normalizeProjectInput(input = {}, owner = getCurrentUser()) {
     github: input.github || "",
     demoUrl: input.demoUrl || input.demo || "",
     image: input.image || "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop",
-    createdAt: input.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt,
+    updatedAt: input.updatedAt || now,
+    contentUpdatedAt:
+      input.contentUpdatedAt || input.updatedAt || createdAt,
     ...input,
   };
 }
@@ -1036,9 +1145,65 @@ export function updateProject(projectId, updates) {
   const db = getDemoDb();
   const existing = (db.projects || []).find((project) => String(project.id) === String(projectId));
   if (!existing) return null;
-  const updated = normalizeProjectInput({ ...existing, ...updates, id: existing.id, createdAt: existing.createdAt, updatedAt: new Date().toISOString() }, getCurrentUser());
-  setDemoDb({ ...db, projects: db.projects.map((project) => (project.id === existing.id ? updated : project)) });
+
+  const now = new Date().toISOString();
+  const actor = getCurrentUser();
+  const actorRole = String(actor?.role || "").trim().toLowerCase();
+  const isInstructorWrite = actorRole.includes("instructor");
+
+  const contentUpdatedAt = isInstructorWrite
+    ? existing.contentUpdatedAt || existing.updatedAt || existing.createdAt || now
+    : now;
+
+  let merged = {
+    ...existing,
+    ...updates,
+    id: existing.id,
+    createdAt: existing.createdAt,
+    updatedAt: now,
+    contentUpdatedAt,
+  };
+
+  // Feedback/rating edits are meaningful review actions, but they should not make
+  // the student's project look newly modified. Track the instructor review separately.
+  if (isInstructorWrite && actor?.id) {
+    merged = withInstructorReviewState(merged, actor.id, now);
+  }
+
+  const updated = normalizeProjectInput(merged, actor);
+  setDemoDb({
+    ...db,
+    projects: db.projects.map((project) =>
+      project.id === existing.id ? updated : project
+    ),
+  });
   return hydrateProject(updated);
+}
+
+export function markProjectReviewed(projectId, instructorId = getCurrentUser()?.id) {
+  if (!projectId || !instructorId) return null;
+
+  const db = getDemoDb();
+  const existing = (db.projects || []).find(
+    (project) => String(project.id) === String(projectId)
+  );
+
+  if (!existing) return null;
+
+  const reviewed = withInstructorReviewState(
+    existing,
+    instructorId,
+    new Date().toISOString()
+  );
+
+  setDemoDb({
+    ...db,
+    projects: db.projects.map((project) =>
+      String(project.id) === String(projectId) ? reviewed : project
+    ),
+  });
+
+  return hydrateProject(reviewed);
 }
 
 function getProjectInvitationRecord(project, userId) {
