@@ -120,7 +120,7 @@ function CourseCard({ course, projects, instructorId, onOpen, onUnlink }) {
         }
       }}
       className={`
-        group relative flex min-h-[276px] cursor-pointer flex-col overflow-hidden rounded-[26px]
+        group relative flex min-h-[238px] cursor-pointer flex-col overflow-hidden rounded-[26px]
         border bg-[rgba(255,255,255,0.94)]
         p-5 transition duration-200
         hover:-translate-y-1 focus:outline-none
@@ -211,8 +211,8 @@ function CourseCard({ course, projects, instructorId, onOpen, onUnlink }) {
         </button>
       </div>
 
-      <div className="mt-3.5 flex min-h-[56px] flex-1 flex-col justify-between gap-2.5">
-        <div className="min-h-[30px]">
+      <div className="mt-3.5 flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <p className="flex items-center gap-2 text-[11px] font-extrabold text-[#5F7785] dark:text-[#93A7B1]">
             {updated > 0 ? (
               <span
@@ -232,26 +232,24 @@ function CourseCard({ course, projects, instructorId, onOpen, onUnlink }) {
           ) : null}
         </div>
 
-        <div className="flex min-h-9 items-center justify-end">
-          {!course.isBachelorProject ? (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onUnlink(course);
-              }}
-              disabled={course.requestStatus === "pending"}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[12px] px-2.5 text-[10px] font-black text-[#81929C] transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-75 dark:text-[#8297A3] dark:hover:bg-red-400/10 dark:hover:text-red-300"
-            >
-              <Unlink className="h-3.5 w-3.5" />
-              {course.requestStatus === "pending" ? "Pending" : "Unlink"}
-            </button>
-          ) : (
-            <span className="inline-flex h-9 items-center text-[10px] font-black text-[color:var(--muted)] opacity-65">
-              Required course
-            </span>
-          )}
-        </div>
+        {!course.isBachelorProject ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onUnlink(course);
+            }}
+            disabled={course.requestStatus === "pending"}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[12px] px-2.5 text-[10px] font-black text-[#81929C] transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-75 dark:text-[#8297A3] dark:hover:bg-red-400/10 dark:hover:text-red-300"
+          >
+            <Unlink className="h-3.5 w-3.5" />
+            {course.requestStatus === "pending" ? "Pending" : "Unlink"}
+          </button>
+        ) : (
+          <span className="inline-flex h-8 shrink-0 items-center text-[10px] font-black text-[color:var(--muted)] opacity-65">
+            Required course
+          </span>
+        )}
       </div>
     </article>
   );
