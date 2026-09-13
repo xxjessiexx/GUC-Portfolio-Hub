@@ -291,8 +291,8 @@ export default function NotificationsTabs({ notifications }) {
       navigate(destination, {
         state: {
           projectFlow: {
-            originPath: `/instructor/courses/${encodeURIComponent(notification.courseId)}/projects`,
-            originLabel: "Course Projects",
+            originPath: "/instructor/my-courses",
+            originLabel: "My Courses",
             projectIds: [notification.projectId || notification.relatedProjectId].filter(Boolean),
           },
         },

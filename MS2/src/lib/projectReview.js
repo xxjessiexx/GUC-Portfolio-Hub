@@ -88,14 +88,95 @@ export function getProjectChangesSinceReview(project, instructorId) {
   const lastReviewedAt = getInstructorLastReviewedAt(project, instructorId);
   const reviewedTime = parseTimestamp(lastReviewedAt);
 
-  return getProjectActivity(project)
+  // “Since your review” only makes sense after an instructor has reviewed once.
+  if (reviewedTime === null) return [];
+
+  const source = getSourceProject(project);
+  const activityChanges = getProjectActivity(project)
     .filter((event) => event?.kind === "content")
     .filter((event) => {
       const eventTime = parseTimestamp(event.createdAt);
       if (eventTime === null) return false;
-      return reviewedTime === null || eventTime > reviewedTime;
+      return eventTime > reviewedTime;
     })
     .sort((a, b) => (parseTimestamp(b.createdAt) || 0) - (parseTimestamp(a.createdAt) || 0));
+
+  // Task timestamps provide a second source of truth. This makes task additions/edits
+  // visible even if an older mutation path failed to append a granular activity event.
+  const activityTaskIds = new Set(
+    activityChanges
+      .filter((event) => String(event?.type || "").startsWith("task-"))
+      .map((event) => String(event?.targetId || ""))
+      .filter(Boolean)
+  );
+
+  const derivedTaskChanges = (Array.isArray(source.tasks) ? source.tasks : [])
+    .flatMap((task) => {
+      const taskId = String(task?.id || "");
+      if (!taskId || activityTaskIds.has(taskId)) return [];
+
+      const createdTime = parseTimestamp(task?.createdAt);
+      const updatedTime = parseTimestamp(task?.updatedAt);
+
+      if (createdTime !== null && createdTime > reviewedTime) {
+        return [{
+          id: `derived-task-added-${taskId}`,
+          kind: "content",
+          type: "task-added",
+          label: "New task added",
+          detail: task?.title || "A new task was added.",
+          tab: "tasks",
+          targetId: taskId,
+          createdAt: task.createdAt,
+          derived: true,
+        }];
+      }
+
+      if (updatedTime !== null && updatedTime > reviewedTime) {
+        return [{
+          id: `derived-task-updated-${taskId}`,
+          kind: "content",
+          type: "task-updated",
+          label: "Task updated",
+          detail: task?.title || "Task details changed.",
+          tab: "tasks",
+          targetId: taskId,
+          createdAt: task.updatedAt,
+          derived: true,
+        }];
+      }
+
+      return [];
+    });
+
+  const combined = [...activityChanges, ...derivedTaskChanges]
+    .sort((a, b) => (parseTimestamp(b.createdAt) || 0) - (parseTimestamp(a.createdAt) || 0));
+
+  if (combined.length) return combined;
+
+  // Older demo projects may have a reliable contentUpdatedAt timestamp but no
+  // granular activityHistory yet. Preserve the instructor workflow by surfacing
+  // one honest overview-level change instead of showing an empty indicator.
+  const contentUpdatedAt = getProjectContentUpdatedAt(project);
+  const contentTime = parseTimestamp(contentUpdatedAt);
+
+  if (contentTime !== null && contentTime > reviewedTime) {
+    return [
+      {
+        id: `derived-content-update-${String(source?.id || "project")}`,
+        kind: "content",
+        type: "project-update",
+        label: "Project content updated",
+        detail: "Project content changed after your last review.",
+        tab: "overview",
+        targetId: "",
+        createdAt: contentUpdatedAt,
+        derived: true,
+      },
+    ];
+  }
+
+  return [];
 }
 
 export function getProjectChangeSummary(project, instructorId, { limit = 3 } = {}) {

@@ -5,7 +5,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { Activity, ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Eye, EyeOff, FileText, MessageSquareText, RefreshCcw, Star, Users } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Eye, EyeOff, Star, Users } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
@@ -14,6 +14,7 @@ import ProjectPageVideo from "@/components/projectPage/ProjectPageVideo";
 import ProjectInvitationBanner from "@/components/projectPage/ProjectInvitationBanner";
 import ProjectOverviewTab from "@/components/projectPage/ProjectOverviewTab";
 import ProjectPageTabs from "@/components/projectPage/ProjectPageTabs";
+import ProjectChangesPopover from "@/components/projectPage/ProjectChangesPopover";
 import ProjectTasksTab from "@/components/projectPage/ProjectTasksTab";
 import ProjectBachelorThesisTab from "@/components/projectPage/ProjectBachelorThesisTab";
 import ProjectFeedbackTab from "@/components/projectPage/ProjectFeedbackTab";
@@ -41,12 +42,10 @@ import {
   getCollection,
   getCurrentUser,
   getProjectById,
-  markProjectReviewed,
-  setInstructorProjectWorkflowStatus,
   updateProject,
 } from "@/data/demoStore";
 import { formatProjectRating } from "@/lib/projectRating";
-import { getInstructorProjectReviewState, getProjectActivity, getProjectChangeSummary } from "@/lib/projectReview";
+import { getInstructorProjectReviewState, getProjectChangeSummary } from "@/lib/projectReview";
 
 
 const LIGHT_WORKSPACE_THEME = {
@@ -156,47 +155,6 @@ function getActiveTabCopy(tab) {
   };
 }
 
-
-function ProjectReviewActivity({ events = [] }) {
-  if (!events.length) return null;
-
-  const iconFor = (event) => {
-    if (String(event?.tab || "") === "tasks") return MessageSquareText;
-    if (String(event?.tab || "") === "bachelor thesis") return FileText;
-    return Activity;
-  };
-
-  return (
-    <div className="mt-5 rounded-[18px] border border-[#D5E2E8] bg-white/46 px-4 py-3.5">
-      <div className="flex items-center gap-2">
-        <Activity className="h-3.5 w-3.5 text-[#5E87A0]" />
-        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-[#5F849B]">
-          Review activity
-        </p>
-      </div>
-
-      <div className="mt-3 space-y-3">
-        {events.slice(0, 5).map((event) => {
-          const Icon = iconFor(event);
-          return (
-            <div key={event.id || `${event.type}-${event.createdAt}`} className="flex gap-2.5">
-              <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#EDF5F9] text-[#557C97]">
-                <Icon className="h-3 w-3" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10.5px] font-black text-[#294A61]">{event.label}</p>
-                <p className="mt-0.5 line-clamp-1 text-[9.5px] font-semibold text-[#7A8D98]">
-                  {event.detail || event.actorName || "Project activity"}
-                  {event.createdAt ? ` · ${formatProjectDate(event.createdAt)}` : ""}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 function SequenceDestination({
   label,
@@ -714,31 +672,27 @@ export default function ProjectPage() {
   const instructorReviewState = canAddInstructorFeedback
     ? getInstructorProjectReviewState(project?.raw || project, currentUserId)
     : null;
-  const instructorChanges = canAddInstructorFeedback
-    ? getProjectChangeSummary(project?.raw || project, currentUserId, { limit: 4 })
-    : [];
-  const activityEvents = getProjectActivity(project?.raw || project)
-    .slice()
-    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+  const instructorChanges =
+    canAddInstructorFeedback && instructorReviewState?.status === "updated"
+      ? getProjectChangeSummary(project?.raw || project, currentUserId, { limit: 8 })
+      : [];
+
+  const changeCountsByTab = instructorChanges.reduce((counts, change) => {
+    const tab = visibleTabs.includes(change?.tab) ? change.tab : "overview";
+    counts[tab] = (counts[tab] || 0) + 1;
+    return counts;
+  }, {});
 
   const openReviewChange = (change) => {
-    const tab = change?.tab || "overview";
-    setActiveTab(tab);
+    const requestedTab = visibleTabs.includes(change?.tab) ? change.tab : "overview";
+    setActiveTab(requestedTab);
+
     const next = new URLSearchParams(searchParams);
-    next.set("tab", tab);
+    next.set("tab", requestedTab);
     if (change?.targetId) next.set("focus", change.targetId);
     else next.delete("focus");
     setSearchParams(next, { replace: true });
-  };
-
-  const handleWorkflowStatus = (workflowStatus) => {
-    if (!project?.id || !currentUserId || !canAddInstructorFeedback) return;
-    setInstructorProjectWorkflowStatus(project.id, workflowStatus, currentUserId);
-  };
-
-  const handleMarkReviewed = () => {
-    if (!project?.id || !currentUserId || !canAddInstructorFeedback) return;
-    markProjectReviewed(project.id, currentUserId);
   };
 
   return (
@@ -796,27 +750,25 @@ export default function ProjectPage() {
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={toggleVisibility}
-                      disabled={!canManageProject}
-                      className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-black transition ${
-                        isPublic
-                          ? "border-[#7AAACE]/25 bg-[#EAF5FB] text-[#355872]"
-                          : "border-[#D9C174]/35 bg-[#FFF8E3] text-[#7B6326]"
-                      } ${
-                        canManageProject
-                          ? "hover:-translate-y-0.5"
-                          : "cursor-default"
-                      }`}
-                    >
-                      {isPublic ? (
-                        <Eye className="h-3.5 w-3.5" />
-                      ) : (
-                        <EyeOff className="h-3.5 w-3.5" />
-                      )}
-                      {project.visibility}
-                    </button>
+                    {canManageProject ? (
+                      <button
+                        type="button"
+                        onClick={toggleVisibility}
+                        className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-black transition hover:-translate-y-0.5 ${
+                          isPublic
+                            ? "border-[#7AAACE]/25 bg-[#EAF5FB] text-[#355872]"
+                            : "border-[#D9C174]/35 bg-[#FFF8E3] text-[#7B6326]"
+                        }`}
+                      >
+                        {isPublic ? (
+                          <Eye className="h-3.5 w-3.5" />
+                        ) : (
+                          <EyeOff className="h-3.5 w-3.5" />
+                        )}
+                        {project.visibility}
+                      </button>
+                    ) : null}
+
                   </div>
 
                   <ProjectInvitationBanner
@@ -825,31 +777,6 @@ export default function ProjectPage() {
                     onReject={() => respondToInvitation("rejected")}
                   />
 
-                  {canAddInstructorFeedback && instructorChanges.length ? (
-                    <div className="mt-5 rounded-[18px] border border-[#E2D7B5] bg-[#FFF9EA]/80 px-4 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <RefreshCcw className="h-3.5 w-3.5 text-[#9A7618]" />
-                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-[#8A6A18]">
-                          Since your last review
-                        </p>
-                      </div>
-                      <div className="mt-2.5 space-y-1.5">
-                        {instructorChanges.map((change) => (
-                          <button
-                            key={`${change.type}-${change.targetId}-${change.createdAt}`}
-                            type="button"
-                            onClick={() => openReviewChange(change)}
-                            className="flex w-full items-center justify-between gap-3 rounded-[11px] px-2 py-1.5 text-left transition hover:bg-white/60"
-                          >
-                            <span className="line-clamp-1 text-[10px] font-black text-[#765E22]">{change.label}</span>
-                            <ChevronRight className="h-3 w-3 shrink-0 text-[#A78B43]" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {canAddInstructorFeedback ? <ProjectReviewActivity events={activityEvents} /> : null}
 
                   <div className="mt-5">
                     <p className="mb-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#5F849B]">
@@ -907,7 +834,7 @@ export default function ProjectPage() {
               ================================================= */}
               <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-[#FCFDFE] xl:h-full">
                 <div className="shrink-0 border-b border-[#C9D8E1] bg-[#FCFDFE] px-7 pt-6 sm:px-9">
-                  <div className="mb-4 flex items-start justify-between gap-6 pr-12 sm:pr-16">
+                  <div className="mb-4 pr-12 sm:pr-16">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="h-[2px] w-7 rounded-full bg-[#E6C77B]" />
@@ -925,57 +852,21 @@ export default function ProjectPage() {
                       </p>
                     </div>
 
-                    {instructorReviewState ? (
-                      <div className="flex shrink-0 flex-col items-end gap-2">
-                        {instructorReviewState.status === "updated" ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E3D6AD] bg-[#FFF8E7] px-3 py-1.5 text-[10px] font-black text-[#8A6A18]">
-                            <RefreshCcw className="h-3.5 w-3.5" />
-                            Updated since your review
-                          </span>
-                        ) : instructorReviewState.status === "never-reviewed" ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C8DCE8] bg-[#EEF6FA] px-3 py-1.5 text-[10px] font-black text-[#55758B]">
-                            <Eye className="h-3.5 w-3.5" />
-                            Never reviewed
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-[#718690]">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Up to date
-                          </span>
-                        )}
-
-                        {instructorReviewState.status !== "up-to-date" ? (
-                          <button
-                            type="button"
-                            onClick={handleMarkReviewed}
-                            className="inline-flex h-9 items-center gap-2 rounded-[12px] border border-[#C9DBE4] bg-white px-3 text-[10px] font-black text-[#355872] transition hover:border-[#B6CBD5] hover:bg-[#F8FBFD]"
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Mark as reviewed
-                          </button>
-                        ) : null}
-
-                        <label className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.1em] text-[#78909D]">
-                          <Clock3 className="h-3.5 w-3.5" />
-                          Review status
-                          <select
-                            value={instructorReviewState.workflowStatus === "revision-submitted" ? "waiting-on-student" : instructorReviewState.workflowStatus === "not-started" ? "reviewed" : instructorReviewState.workflowStatus}
-                            onChange={(event) => handleWorkflowStatus(event.target.value)}
-                            className="h-8 rounded-[10px] border border-[#C9DBE4] bg-white px-2 text-[10px] font-black normal-case tracking-normal text-[#355872] outline-none"
-                          >
-                            <option value="reviewed">Reviewed</option>
-                            <option value="follow-up">Follow-up</option>
-                            <option value="waiting-on-student">Waiting on student</option>
-                          </select>
-                        </label>
-                      </div>
-                    ) : null}
                   </div>
 
                   <ProjectPageTabs
                     visibleTabs={visibleTabs}
                     activeTab={safeActiveTab}
                     setActiveTab={setActiveTab}
+                    tabIndicators={changeCountsByTab}
+                    rightSlot={
+                      instructorChanges.length ? (
+                        <ProjectChangesPopover
+                          changes={instructorChanges}
+                          onSelectChange={openReviewChange}
+                        />
+                      ) : null
+                    }
                   />
                 </div>
 

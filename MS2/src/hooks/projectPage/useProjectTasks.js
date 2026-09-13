@@ -130,7 +130,9 @@ export function useProjectTasks({
 
     persistTasksWithoutOwnerOnlyCheck(
       tasks.map((task) =>
-        sameId(task.id, id) ? { ...task, status: newStatus } : task
+        sameId(task.id, id)
+          ? { ...task, status: newStatus, updatedAt: new Date().toISOString() }
+          : task
       )
     );
   };
@@ -181,6 +183,8 @@ export function useProjectTasks({
       status: newTask.status || "pending",
       feedback: [],
       order: tasks.length,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     storeTasks([...tasks, nextTask]);
@@ -255,6 +259,7 @@ export function useProjectTasks({
           ? {
               ...editingTask,
               assignee: selectedMember?.name || editingTask.assignee,
+              updatedAt: new Date().toISOString(),
             }
           : task
       )

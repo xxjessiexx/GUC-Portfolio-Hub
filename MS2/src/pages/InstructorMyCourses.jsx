@@ -11,9 +11,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import DashboardLayout from "@/components/layout/DashboardLayout";
-import PageHeader from "@/components/common/PageHeader";
-import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
+import InstructorWorkspaceShell from "@/components/instructorWorkspace/InstructorWorkspaceShell";
+import InstructorWorkspaceHeader from "@/components/instructorWorkspace/InstructorWorkspaceHeader";
+import InstructorWorkspaceTabs from "@/components/instructorWorkspace/InstructorWorkspaceTabs";
+import InstructorControlBar from "@/components/instructorWorkspace/InstructorControlBar";
+import InstructorSearchField from "@/components/instructorWorkspace/InstructorSearchField";
 import Pagination from "@/components/common/Pagination";
 import {
   getAllProjects,
@@ -430,140 +432,83 @@ export default function InstructorMyCourses() {
     }
   };
 
+  const filterItems = [
+    { id: "all", label: "All", count: courses.length },
+    { id: "modified", label: "Modified", count: courseOverview.modifiedCourses },
+    { id: "unrated", label: "Unrated", count: courseOverview.coursesWithUnrated },
+    { id: "never-reviewed", label: "Never reviewed", count: courseOverview.neverReviewedCourses },
+  ];
+
   return (
-    <DashboardLayout workspace="instructor" workspaceLabel="Instructor Workspace">
-      <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-[1480px] space-y-5">
-          <section className="relative isolate pb-1 pt-0 sm:pb-2">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -left-20 -top-14 h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(122,174,205,0.14),transparent_68%)] blur-xl"
-            />
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute right-[5%] top-5 h-28 w-56 rotate-[-8deg] rounded-full bg-[radial-gradient(ellipse,rgba(230,199,123,0.10),transparent_70%)] blur-2xl"
-            />
+    <InstructorWorkspaceShell contentClassName="space-y-5">
+      <InstructorWorkspaceHeader
+        eyebrow="Teaching workspace"
+        title="My Courses"
+        description="Your active teaching responsibilities. Open a course to review the student projects attached to it."
+      />
 
-            <PageHeader
-              eyebrow="Teaching workspace"
-              title="My Courses"
-              description="Your active teaching responsibilities. Enter a course to review the student projects attached to it."
-            />
-
-          </section>
-
-          <div className="flex flex-col gap-3 border-b border-[#D9E4E9] pb-2 dark:border-white/10 lg:flex-row lg:flex-nowrap lg:items-end lg:gap-7">
-            <div
-              className="flex shrink-0 flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-              role="tablist"
-              aria-label="Filter my courses"
-            >
-              {[
-                { id: "all", label: "All", count: courses.length },
-                {
-                  id: "modified",
-                  label: "Modified",
-                  count: courseOverview.modifiedCourses,
-                },
-                {
-                  id: "unrated",
-                  label: "Unrated",
-                  count: courseOverview.coursesWithUnrated,
-                },
-                {
-                  id: "never-reviewed",
-                  label: "Never reviewed",
-                  count: courseOverview.neverReviewedCourses,
-                },
-              ].map((filter) => {
-                const selected = activeFilter === filter.id;
-
-                return (
-                  <button
-                    key={filter.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={selected}
-                    onClick={() => setActiveFilter(filter.id)}
-                    className={`relative inline-flex h-11 items-center gap-2.5 px-3.5 text-[13px] font-black transition ${
-                      selected
-                        ? "text-[#17384E] dark:text-white"
-                        : "text-[#7B8D98] hover:text-[#355872] dark:text-[#8298A6] dark:hover:text-[#C7D8E1]"
-                    }`}
-                  >
-                    {filter.label}
-                    <span
-                      className={`min-w-5 rounded-full px-1.5 py-0.5 text-[10px] ${
-                        selected
-                          ? "bg-[color:var(--gold)]/42 text-[#6F581D] shadow-[0_3px_10px_rgba(230,199,123,0.16)] dark:bg-[color:var(--gold)]/14 dark:text-[color:var(--gold)]"
-                          : "bg-[#E9F0F3] text-[#7A8D99] dark:bg-white/[0.05] dark:text-[#8599A5]"
-                      }`}
-                    >
-                      {filter.count}
-                    </span>
-
-                    {selected ? (
-                      <span className="absolute inset-x-1.5 bottom-[-9px] h-[3px] rounded-t-full bg-[color:var(--gold)] shadow-[0_-2px_8px_rgba(230,199,123,0.24)]" />
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="w-full min-w-0 lg:flex-1">
-              <SearchFilterToolbar
-                searchValue={search}
-                onSearchChange={setSearch}
-                searchPlaceholder="Search linked courses..."
-                className="[&>div:first-child]:!min-h-[56px] [&>div:first-child]:!rounded-[17px] [&>div:first-child]:!border-[#C4D8E3] [&>div:first-child]:!bg-white [&>div:first-child]:shadow-[0_10px_26px_rgba(53,88,114,0.09)] [&_input]:!min-h-[56px] [&_input]:!pl-[3.15rem] [&_input]:text-[13.5px] [&_input]:font-bold"
-              />
-            </div>
-          </div>
-
-          {visibleCourses.length ? (
-            <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
-              {visibleCourses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  projects={projects}
-                  instructorId={instructorId}
-                  onOpen={(selectedCourse, view = "all") =>
-                    navigate(
-                      `/instructor/courses/${encodeURIComponent(
-                        selectedCourse.id
-                      )}/projects${view !== "all" ? `?view=${encodeURIComponent(view)}` : ""}`
-                    )
-                  }
-                  onUnlink={handleUnlink}
-                  pinned={pinnedSet.has(String(course.id))}
-                  onTogglePin={handleTogglePin}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-[28px] border border-dashed border-[#C9DBE4] bg-white/55 px-6 py-16 text-center dark:border-white/10 dark:bg-white/[0.03]">
-              <BookCheck className="mx-auto h-7 w-7 text-[#55758B] dark:text-[#9CD5FF]" />
-              <h2 className="mt-4 text-xl font-black text-[color:var(--ink)]">
-                No linked courses match your search
-              </h2>
-              <p className="mx-auto mt-2 max-w-lg text-[13px] font-semibold leading-6 text-[color:var(--muted)]">
-                Clear the search or selected filter to see your linked courses.
-              </p>
-            </div>
-          )}
-
-          <Pagination
-            currentPage={safePage}
-            totalPages={totalPages}
-            totalItems={filtered.length}
-            pageStartIndex={start}
-            pageSize={ITEMS_PER_PAGE}
-            onPageChange={setPage}
-            ariaLabel="My courses pagination"
+      <InstructorControlBar
+        tabs={
+          <InstructorWorkspaceTabs
+            items={filterItems}
+            value={activeFilter}
+            onChange={setActiveFilter}
+            ariaLabel="Filter my courses"
           />
+        }
+        controls={
+          <InstructorSearchField
+            value={search}
+            onChange={setSearch}
+            placeholder="Search linked courses..."
+            className="w-full sm:w-[420px] xl:w-[460px]"
+          />
+        }
+      />
+
+      {visibleCourses.length ? (
+        <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
+          {visibleCourses.map((course) => (
+            <CourseCard
+              key={course.id}
+              course={course}
+              projects={projects}
+              instructorId={instructorId}
+              onOpen={(selectedCourse, view = "all") =>
+                navigate(
+                  `/instructor/my-courses/${encodeURIComponent(
+                    selectedCourse.id
+                  )}/projects${view !== "all" ? `?view=${encodeURIComponent(view)}` : ""}`
+                )
+              }
+              onUnlink={handleUnlink}
+              pinned={pinnedSet.has(String(course.id))}
+              onTogglePin={handleTogglePin}
+            />
+          ))}
         </div>
-      </main>
-    </DashboardLayout>
+      ) : (
+        <div className="rounded-[28px] border border-dashed border-[#C9DBE4] bg-white/70 px-6 py-16 text-center dark:border-white/10 dark:bg-white/[0.03]">
+          <BookCheck className="mx-auto h-7 w-7 text-[#55758B] dark:text-[#9CD5FF]" />
+          <h2 className="mt-4 text-xl font-black text-[color:var(--ink)]">
+            No linked courses match your search
+          </h2>
+          <p className="mx-auto mt-2 max-w-lg text-[13px] font-semibold leading-6 text-[color:var(--muted)]">
+            Clear the search or selected filter to see your linked courses.
+          </p>
+        </div>
+      )}
+
+      <Pagination
+        currentPage={safePage}
+        totalPages={totalPages}
+        totalItems={filtered.length}
+        pageStartIndex={start}
+        pageSize={ITEMS_PER_PAGE}
+        onPageChange={setPage}
+        ariaLabel="My courses pagination"
+      />
+    </InstructorWorkspaceShell>
   );
 }
+

@@ -230,7 +230,7 @@ export default function App() {
   }
 />
 <Route
-  path="/instructor/courses/:courseId/projects"
+  path="/instructor/my-courses/:courseId/projects"
   element={
     <ProtectedRoute allowedRoles={["instructor"]}>
       <InstructorProjects />
