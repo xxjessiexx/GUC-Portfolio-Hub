@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock3,
   GraduationCap,
+  Pin,
   Unlink,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +25,27 @@ import { getInstructorProjectRating } from "@/lib/projectRating";
 import { getInstructorProjectReviewState } from "@/lib/projectReview";
 
 const ITEMS_PER_PAGE = 6;
+
+function getPinnedStorageKey(instructorId) {
+  return `guc-instructor-pinned-courses:${String(instructorId || "guest")}`;
+}
+
+function readPinnedCourseIds(instructorId) {
+  try {
+    const raw = localStorage.getItem(getPinnedStorageKey(instructorId));
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePinnedCourseIds(instructorId, ids) {
+  localStorage.setItem(
+    getPinnedStorageKey(instructorId),
+    JSON.stringify(ids.map(String))
+  );
+}
 
 function sameId(a, b) {
   return String(a || "") === String(b || "");
@@ -91,7 +113,7 @@ function CourseState({ course }) {
   );
 }
 
-function CourseCard({ course, projects, instructorId, onOpen, onUnlink }) {
+function CourseCard({ course, projects, instructorId, onOpen, onUnlink, pinned, onTogglePin }) {
   const {
     scopedProjects,
     unrated,
@@ -121,14 +143,14 @@ function CourseCard({ course, projects, instructorId, onOpen, onUnlink }) {
       }}
       className={`
         group relative flex min-h-[238px] cursor-pointer flex-col overflow-hidden rounded-[26px]
-        border bg-[rgba(255,255,255,0.94)]
+        border bg-[rgba(255,255,255,0.975)]
         p-5 transition duration-200
         hover:-translate-y-1 focus:outline-none
         focus-visible:ring-2 focus-visible:ring-[color:var(--secondary)]/45
-        dark:bg-[rgba(10,25,38,0.94)]
+        dark:bg-[rgba(10,25,38,0.95)]
         ${updated > 0
-          ? "border-[color:var(--gold)]/22 shadow-[0_20px_48px_rgba(53,88,114,0.095)] hover:border-[color:var(--gold)]/40 hover:shadow-[0_28px_58px_rgba(53,88,114,0.15)]"
-          : "border-white/90 shadow-[0_18px_44px_rgba(53,88,114,0.07)] hover:border-[color:var(--secondary)]/32 hover:shadow-[0_24px_52px_rgba(53,88,114,0.11)] dark:border-white/10"}
+          ? "border-[color:var(--gold)]/22 shadow-[0_18px_46px_rgba(186,145,56,0.10)] hover:border-[color:var(--gold)]/42 hover:shadow-[0_26px_56px_rgba(186,145,56,0.15)]"
+          : "border-[color:var(--primary)]/10 shadow-[0_18px_44px_rgba(53,88,114,0.085)] hover:border-[color:var(--secondary)]/34 hover:shadow-[0_24px_52px_rgba(53,88,114,0.13)] dark:border-white/10"}
       `}
     >
       <div
@@ -136,8 +158,8 @@ function CourseCard({ course, projects, instructorId, onOpen, onUnlink }) {
         className="pointer-events-none absolute inset-0"
         style={{
           background: updated > 0
-            ? "linear-gradient(145deg, color-mix(in srgb, var(--gold) 5%, transparent) 0%, transparent 46%)"
-            : "linear-gradient(145deg, color-mix(in srgb, var(--primary) 3.5%, transparent) 0%, transparent 48%)",
+            ? "radial-gradient(ellipse 62% 58% at 9% 2%, color-mix(in srgb, var(--gold) 12%, transparent) 0%, color-mix(in srgb, var(--gold) 5%, transparent) 34%, transparent 67%)"
+            : "radial-gradient(ellipse 62% 58% at 9% 2%, color-mix(in srgb, var(--primary) 8%, transparent) 0%, color-mix(in srgb, var(--primary) 3%, transparent) 34%, transparent 67%)",
         }}
       />
 
@@ -151,7 +173,14 @@ function CourseCard({ course, projects, instructorId, onOpen, onUnlink }) {
 
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-4">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-[#092433] text-[#9CD5FF] shadow-[0_10px_22px_rgba(9,36,51,0.16)] dark:bg-[#071923]">
+          <div
+            className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-[#092433] text-[#9CD5FF] dark:bg-[#071923]"
+            style={{
+              boxShadow: updated > 0
+                ? "0 10px 24px color-mix(in srgb, var(--gold) 20%, rgba(9,36,51,0.12))"
+                : "0 10px 24px color-mix(in srgb, var(--primary) 16%, rgba(9,36,51,0.12))",
+            }}
+          >
             <BookCheck className="h-5 w-5" />
           </div>
 
@@ -173,10 +202,29 @@ function CourseCard({ course, projects, instructorId, onOpen, onUnlink }) {
           </div>
         </div>
 
-        <span className="inline-flex shrink-0 items-center gap-1.5 pt-0.5 text-[10px] font-black text-[color:var(--muted)] opacity-72 transition duration-200 group-hover:text-[color:var(--primary)] group-hover:opacity-100">
-          Open course
-          <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-        </span>
+        <div className="flex shrink-0 items-center gap-2 pt-0.5">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onTogglePin(course);
+            }}
+            className={`grid h-7 w-7 place-items-center rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--gold)]/45 ${
+              pinned
+                ? "bg-[color:var(--gold)]/14 text-[color:var(--gold)] opacity-100"
+                : "text-[color:var(--muted)] opacity-30 hover:bg-[color:var(--primary)]/7 hover:text-[color:var(--primary)] hover:opacity-100 group-hover:opacity-70"
+            }`}
+            aria-label={pinned ? `Unpin ${course.name}` : `Pin ${course.name}`}
+            title={pinned ? "Unpin course" : "Pin course"}
+          >
+            <Pin className={`h-3.5 w-3.5 transition-transform duration-200 ${pinned ? "rotate-[-10deg]" : ""}`} />
+          </button>
+
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-[color:var(--muted)] opacity-72 transition duration-200 group-hover:text-[color:var(--primary)] group-hover:opacity-100">
+            Open course
+            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+          </span>
+        </div>
       </div>
 
       <div className="mt-5 grid grid-cols-3 border-y border-[#DCE6EA]/65 py-3.5 dark:border-white/8">
@@ -269,6 +317,9 @@ export default function InstructorMyCourses() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [pinnedCourseIds, setPinnedCourseIds] = useState(() =>
+    readPinnedCourseIds(instructorId)
+  );
 
   const refresh = () => {
     setCourses(getLinkedCoursesForInstructor(instructorId));
@@ -286,29 +337,33 @@ export default function InstructorMyCourses() {
     };
   }, [instructorId]);
 
+  useEffect(() => {
+    setPinnedCourseIds(readPinnedCourseIds(instructorId));
+  }, [instructorId]);
+
   const courseOverview = useMemo(() => {
     const metricsByCourse = new Map();
-    let coursesNeedingAttention = 0;
+    let modifiedCourses = 0;
     let unratedProjects = 0;
     let coursesWithUnrated = 0;
-    let pendingCourses = 0;
+    let neverReviewedCourses = 0;
 
     courses.forEach((course) => {
       const metrics = getCourseMetrics(course, projects, instructorId);
       metricsByCourse.set(String(course.id), metrics);
 
-      if (metrics.updated > 0) coursesNeedingAttention += 1;
+      if (metrics.updated > 0) modifiedCourses += 1;
       unratedProjects += metrics.unrated;
       if (metrics.unrated > 0) coursesWithUnrated += 1;
-      if (course.requestStatus === "pending") pendingCourses += 1;
+      if (metrics.neverReviewed > 0) neverReviewedCourses += 1;
     });
 
     return {
       metricsByCourse,
-      coursesNeedingAttention,
+      modifiedCourses,
       unratedProjects,
       coursesWithUnrated,
-      pendingCourses,
+      neverReviewedCourses,
     };
   }, [courses, projects, instructorId]);
 
@@ -324,9 +379,9 @@ export default function InstructorMyCourses() {
 
       if (!matchesSearch) return false;
 
-      if (activeFilter === "attention") return (metrics?.updated || 0) > 0;
+      if (activeFilter === "modified") return (metrics?.updated || 0) > 0;
       if (activeFilter === "unrated") return (metrics?.unrated || 0) > 0;
-      if (activeFilter === "pending") return course.requestStatus === "pending";
+      if (activeFilter === "never-reviewed") return (metrics?.neverReviewed || 0) > 0;
 
       return true;
     });
@@ -337,7 +392,31 @@ export default function InstructorMyCourses() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const safePage = Math.min(page, totalPages);
   const start = (safePage - 1) * ITEMS_PER_PAGE;
-  const visibleCourses = filtered.slice(start, start + ITEMS_PER_PAGE);
+  const pageCourses = filtered.slice(start, start + ITEMS_PER_PAGE);
+  const pinnedSet = useMemo(
+    () => new Set(pinnedCourseIds.map(String)),
+    [pinnedCourseIds]
+  );
+  const visibleCourses = useMemo(
+    () => [...pageCourses].sort((a, b) => {
+      const aPinned = pinnedSet.has(String(a.id)) ? 1 : 0;
+      const bPinned = pinnedSet.has(String(b.id)) ? 1 : 0;
+      return bPinned - aPinned;
+    }),
+    [pageCourses, pinnedSet]
+  );
+
+  const handleTogglePin = (course) => {
+    const courseId = String(course.id);
+    const isPinned = pinnedCourseIds.includes(courseId);
+    const nextPinnedIds = isPinned
+      ? pinnedCourseIds.filter((id) => id !== courseId)
+      : [...pinnedCourseIds, courseId];
+
+    setPinnedCourseIds(nextPinnedIds);
+    writePinnedCourseIds(instructorId, nextPinnedIds);
+
+  };
 
   const handleUnlink = (course) => {
     try {
@@ -373,18 +452,18 @@ export default function InstructorMyCourses() {
 
           </section>
 
-          <div className="flex flex-col gap-3 border-b border-[#D9E4E9] pb-2 dark:border-white/10 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-3 border-b border-[#D9E4E9] pb-2 dark:border-white/10 lg:flex-row lg:flex-nowrap lg:items-end lg:gap-7">
             <div
-              className="flex flex-wrap items-center gap-3"
+              className="flex shrink-0 flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               role="tablist"
               aria-label="Filter my courses"
             >
               {[
                 { id: "all", label: "All", count: courses.length },
                 {
-                  id: "attention",
-                  label: "Needs attention",
-                  count: courseOverview.coursesNeedingAttention,
+                  id: "modified",
+                  label: "Modified",
+                  count: courseOverview.modifiedCourses,
                 },
                 {
                   id: "unrated",
@@ -392,9 +471,9 @@ export default function InstructorMyCourses() {
                   count: courseOverview.coursesWithUnrated,
                 },
                 {
-                  id: "pending",
-                  label: "Pending",
-                  count: courseOverview.pendingCourses,
+                  id: "never-reviewed",
+                  label: "Never reviewed",
+                  count: courseOverview.neverReviewedCourses,
                 },
               ].map((filter) => {
                 const selected = activeFilter === filter.id;
@@ -431,12 +510,12 @@ export default function InstructorMyCourses() {
               })}
             </div>
 
-            <div className="w-full lg:w-[360px] xl:w-[420px]">
+            <div className="w-full min-w-0 lg:flex-1">
               <SearchFilterToolbar
                 searchValue={search}
                 onSearchChange={setSearch}
                 searchPlaceholder="Search linked courses..."
-                className="[&>div:first-child]:min-h-[42px] [&>div:first-child]:rounded-[14px] [&>div:first-child]:shadow-none [&_input]:min-h-[42px] [&_input]:text-[13px]"
+                className="[&>div:first-child]:!min-h-[56px] [&>div:first-child]:!rounded-[17px] [&>div:first-child]:!border-[#C4D8E3] [&>div:first-child]:!bg-white [&>div:first-child]:shadow-[0_10px_26px_rgba(53,88,114,0.09)] [&_input]:!min-h-[56px] [&_input]:!pl-[3.15rem] [&_input]:text-[13.5px] [&_input]:font-bold"
               />
             </div>
           </div>
@@ -457,6 +536,8 @@ export default function InstructorMyCourses() {
                     )
                   }
                   onUnlink={handleUnlink}
+                  pinned={pinnedSet.has(String(course.id))}
+                  onTogglePin={handleTogglePin}
                 />
               ))}
             </div>

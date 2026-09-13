@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
   CheckCircle2,
@@ -6,12 +6,14 @@ import {
   GraduationCap,
   Link2,
   Unlink,
+  Search,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import PageHeader from "@/components/common/PageHeader";
-import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import Pagination from "@/components/common/Pagination";
 import {
   getAllCoursesForInstructorView,
@@ -26,6 +28,15 @@ const STATUS_TABS = [
   { id: "available", label: "Available" },
   { id: "pending", label: "Pending" },
 ];
+
+const SORT_OPTIONS = ["Code A–Z", "Course A–Z", "Most projects"];
+
+function getCourseVisualState(course) {
+  if (course.isBachelorProject) return "auto";
+  if (course.requestStatus === "pending") return "pending";
+  if (course.linked) return "linked";
+  return "available";
+}
 
 function CourseStatus({ course }) {
   if (course.isBachelorProject) {
@@ -115,6 +126,8 @@ export default function InstructorCourses() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [sort, setSort] = useState("Code A–Z");
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef(null);
   const [page, setPage] = useState(1);
 
   const refresh = () => setCourses(getAllCoursesForInstructorView());
@@ -130,6 +143,15 @@ export default function InstructorCourses() {
     };
   }, []);
 
+  useEffect(() => {
+    const onPointerDown = (event) => {
+      if (!sortRef.current?.contains(event.target)) setSortOpen(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, []);
+
   const counts = useMemo(
     () => ({
       all: courses.length,
@@ -137,7 +159,9 @@ export default function InstructorCourses() {
       available: courses.filter(
         (course) => !course.linked && course.requestStatus !== "pending"
       ).length,
-      pending: courses.filter((course) => course.requestStatus === "pending").length,
+      pending: courses.filter(
+        (course) => !course.isBachelorProject && course.requestStatus === "pending"
+      ).length,
     }),
     [courses]
   );
@@ -159,7 +183,9 @@ export default function InstructorCourses() {
           (status === "available" &&
             !course.linked &&
             course.requestStatus !== "pending") ||
-          (status === "pending" && course.requestStatus === "pending");
+          (status === "pending" &&
+            !course.isBachelorProject &&
+            course.requestStatus === "pending");
 
         return matchesSearch && matchesStatus;
       })
@@ -187,64 +213,140 @@ export default function InstructorCourses() {
             description="Browse the full academic catalog and request access to the courses you teach. Your active teaching responsibilities stay in My Courses."
           />
 
-          <div className="flex flex-wrap items-center gap-2 border-b border-[#D9E4E9] dark:border-white/10">
-            {STATUS_TABS.map((tab) => {
-              const active = status === tab.id;
+          <div className="flex flex-col gap-3 border-b border-[#D9E4E9] pb-3 dark:border-white/10 xl:flex-row xl:items-end xl:gap-7">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              {STATUS_TABS.map((tab) => {
+                const active = status === tab.id;
 
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setStatus(tab.id)}
-                  className={`relative inline-flex h-11 items-center gap-2 px-3 text-[12px] font-black transition ${
-                    active
-                      ? "text-[#17384E] dark:text-white"
-                      : "text-[#7B8D98] hover:text-[#355872] dark:text-[#8298A6] dark:hover:text-[#C7D8E1]"
-                  }`}
-                >
-                  {tab.label}
-                  <span
-                    className={`min-w-5 rounded-full px-1.5 py-0.5 text-[10px] ${
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setStatus(tab.id)}
+                    className={`relative inline-flex h-11 items-center gap-2 px-3 text-[12px] font-black transition ${
                       active
-                        ? "bg-[#F2E5B8] text-[#7A6327] dark:bg-[#E6C77B]/12 dark:text-[#E6C77B]"
-                        : "bg-[#E9F0F3] text-[#7A8D99] dark:bg-white/[0.05] dark:text-[#8599A5]"
+                        ? "text-[#17384E] dark:text-white"
+                        : "text-[#7B8D98] hover:text-[#355872] dark:text-[#8298A6] dark:hover:text-[#C7D8E1]"
                     }`}
                   >
-                    {counts[tab.id]}
-                  </span>
+                    {tab.label}
+                    <span
+                      className={`min-w-5 rounded-full px-1.5 py-0.5 text-[10px] ${
+                        active
+                          ? "bg-[color:var(--gold)]/24 text-[#765F20] dark:bg-[color:var(--gold)]/14 dark:text-[color:var(--gold)]"
+                          : "bg-[#E8F0F4] text-[#718693] dark:bg-white/[0.06] dark:text-[#8DA1AD]"
+                      }`}
+                    >
+                      {counts[tab.id]}
+                    </span>
 
-                  {active ? (
-                    <span className="absolute inset-x-2 bottom-0 h-[3px] rounded-t-full bg-[#E6C77B]" />
-                  ) : null}
+                    {active ? (
+                      <span className="absolute inset-x-2 bottom-0 h-[3px] rounded-t-full bg-[color:var(--gold)]" />
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row xl:flex-1">
+              <label className="relative block w-full min-w-0 xl:flex-1">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6F8695] dark:text-[#9CB2C1]" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search course code, title, or instructor..."
+                  className="h-[52px] w-full rounded-[17px] border border-[#C4D8E3] bg-white pl-11 pr-4 text-[13px] font-semibold text-[color:var(--ink)] shadow-[0_9px_24px_rgba(53,88,114,0.09)] outline-none transition placeholder:text-[#80939F] focus:border-[color:var(--primary)]/45 focus:ring-4 focus:ring-[color:var(--primary)]/10 dark:border-white/12 dark:bg-[#102638] dark:placeholder:text-[#8FA6B6]"
+                />
+              </label>
+
+              <div ref={sortRef} className="relative w-full sm:w-[220px] sm:shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setSortOpen((open) => !open)}
+                  aria-haspopup="listbox"
+                  aria-expanded={sortOpen}
+                  className={`flex h-[52px] w-full items-center justify-between rounded-[17px] border px-4 text-left shadow-[0_9px_24px_rgba(53,88,114,0.10)] outline-none transition ${
+                    sortOpen
+                      ? "border-[color:var(--primary)]/45 bg-[color:var(--primary)]/[0.075] ring-4 ring-[color:var(--primary)]/10"
+                      : "border-[#C6D9E3] bg-[#F8FBFD] hover:border-[color:var(--primary)]/30 hover:bg-white"
+                  } dark:border-white/12 dark:bg-[#102638]/95`}
+                >
+                  <span className="min-w-0">
+                    <span className="block text-[9px] font-black uppercase tracking-[0.14em] text-[#7B8E9A] dark:text-[#7F98A8]">
+                      Sort by
+                    </span>
+                    <span className="mt-0.5 block truncate text-[12px] font-black text-[color:var(--ink)]">
+                      {sort}
+                    </span>
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-[#55758B] transition-transform ${sortOpen ? "rotate-180" : ""}`}
+                  />
                 </button>
-              );
-            })}
+
+                {sortOpen ? (
+                  <div
+                    role="listbox"
+                    aria-label="Sort courses"
+                    className="absolute right-0 top-[58px] z-30 w-full overflow-hidden rounded-[17px] border border-[#C9DBE4] bg-white p-1.5 shadow-[0_18px_44px_rgba(29,63,84,0.20)] dark:border-white/12 dark:bg-[#102638]"
+                  >
+                    {SORT_OPTIONS.map((option) => {
+                      const selected = sort === option;
+
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          role="option"
+                          aria-selected={selected}
+                          onClick={() => {
+                            setSort(option);
+                            setSortOpen(false);
+                          }}
+                          className={`flex w-full items-center justify-between rounded-[12px] px-3 py-2.5 text-left text-[12px] font-bold transition ${
+                            selected
+                              ? "bg-[color:var(--primary)] text-white"
+                              : "text-[color:var(--ink)] hover:bg-[color:var(--primary)]/[0.075]"
+                          }`}
+                        >
+                          {option}
+                          {selected ? <Check className="h-3.5 w-3.5" /> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            </div>
           </div>
 
-          <SearchFilterToolbar
-            searchValue={search}
-            onSearchChange={setSearch}
-            searchPlaceholder="Search course code, title, or instructor..."
-            showSort
-            sortValue={`Sort by: ${sort}`}
-            onSortChange={(value) => setSort(value.replace("Sort by: ", ""))}
-            sortOptions={[
-              "Sort by: Code A–Z",
-              "Sort by: Course A–Z",
-              "Sort by: Most projects",
-            ]}
-          />
-
-          <section className="overflow-hidden rounded-[28px] border border-white/75 bg-white/58 shadow-[0_18px_48px_rgba(53,88,114,0.07)] dark:border-white/10 dark:bg-white/[0.035]">
+          <section className="overflow-hidden rounded-[28px] border border-[#C9DCE5] bg-white shadow-[0_22px_54px_rgba(53,88,114,0.11)] dark:border-white/10 dark:bg-[#0E2232]/90">
             {visibleCourses.length ? (
               <div className="divide-y divide-[#DDE7EB] dark:divide-white/8">
-                {visibleCourses.map((course) => (
+                {visibleCourses.map((course) => {
+                  const visualState = getCourseVisualState(course);
+                  const rowTone = {
+                    auto: "border-l-[4px] border-l-[color:var(--gold)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--gold)_10%,white)_0%,rgba(255,255,255,0.96)_24%,rgba(255,255,255,0.90)_100%)] hover:bg-[linear-gradient(90deg,color-mix(in_srgb,var(--gold)_14%,white)_0%,white_28%,rgba(255,255,255,0.96)_100%)]",
+                    pending: "border-l-[4px] border-l-[color:var(--gold)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--gold)_8%,white)_0%,rgba(255,255,255,0.95)_24%,rgba(255,255,255,0.90)_100%)] hover:bg-[linear-gradient(90deg,color-mix(in_srgb,var(--gold)_12%,white)_0%,white_28%,rgba(255,255,255,0.96)_100%)]",
+                    linked: "border-l-[4px] border-l-[color:var(--primary)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--primary)_8%,white)_0%,rgba(255,255,255,0.95)_24%,rgba(255,255,255,0.90)_100%)] hover:bg-[linear-gradient(90deg,color-mix(in_srgb,var(--primary)_12%,white)_0%,white_28%,rgba(255,255,255,0.96)_100%)]",
+                    available: "border-l-[4px] border-l-[#8DB5CB] bg-[linear-gradient(90deg,#EEF7FB_0%,rgba(255,255,255,0.95)_24%,rgba(255,255,255,0.90)_100%)] hover:bg-[linear-gradient(90deg,#E6F3F9_0%,white_28%,rgba(255,255,255,0.96)_100%)]",
+                  }[visualState];
+
+                  const codeTone = {
+                    auto: "border-[color:var(--gold)]/35 bg-[color:var(--gold)]/12 text-[#7B6220]",
+                    pending: "border-[color:var(--gold)]/28 bg-[color:var(--gold)]/10 text-[#80671F]",
+                    linked: "border-[color:var(--primary)]/28 bg-[color:var(--primary)]/10 text-[color:var(--primary)]",
+                    available: "border-[#BFD8E5] bg-[#EAF5FA] text-[#3E6A83]",
+                  }[visualState];
+
+                  return (
                   <article
                     key={course.id}
-                    className="grid gap-4 px-5 py-5 transition hover:bg-white/55 md:grid-cols-[150px_minmax(0,1fr)_auto] md:items-center dark:hover:bg-white/[0.025]"
+                    className={`grid gap-4 px-5 py-5 transition md:grid-cols-[150px_minmax(0,1fr)_auto] md:items-center ${rowTone} dark:bg-transparent dark:hover:bg-white/[0.035]`}
                   >
                     <div>
-                      <div className="inline-flex min-w-[104px] items-center gap-2 rounded-[14px] border border-[#D3E1E8] bg-[#EEF5F8] px-3 py-2.5 text-[#355872] dark:border-white/10 dark:bg-white/[0.045] dark:text-[#9CD5FF]">
+                      <div className={`inline-flex min-w-[104px] items-center gap-2 rounded-[14px] border px-3 py-2.5 shadow-[0_6px_16px_rgba(53,88,114,0.06)] ${codeTone} dark:border-white/10 dark:bg-white/[0.045] dark:text-[#9CD5FF]`}>
                         <BookOpen className="h-4 w-4" />
                         <span className="text-[12px] font-black">
                           {course.isBachelorProject ? "Bachelor" : course.code}
@@ -273,7 +375,8 @@ export default function InstructorCourses() {
                       <CourseAction course={course} onRequested={refresh} />
                     </div>
                   </article>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="px-6 py-16 text-center">

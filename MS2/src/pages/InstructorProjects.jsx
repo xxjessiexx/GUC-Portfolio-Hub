@@ -14,10 +14,12 @@ import {
   MessageSquareText,
   FileText,
   Clock3,
+  ChevronDown,
+  SlidersHorizontal,
+  Search,
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import SearchFilterToolbar from "@/components/common/SearchFilterToolbar";
 import Pagination from "@/components/common/Pagination";
 import { AdminActionDialog } from "@/components/adminModule/AdminActionDialog";
 import SideToast from "@/components/ui/SideToast";
@@ -214,15 +216,15 @@ function ProjectRow({ project, bachelorCourse, instructorId, onOpen, onReport })
     <article
       onClick={() => onOpen(project, "overview")}
       className={`
-        group relative cursor-pointer overflow-hidden rounded-[22px]
-        border bg-white/68 px-5 py-5
-        shadow-[0_12px_34px_rgba(53,88,114,0.055)]
+        group relative cursor-pointer overflow-hidden rounded-[20px]
+        border bg-white/92 px-5 py-4
+        shadow-[0_10px_28px_rgba(53,88,114,0.05)]
         transition duration-200
-        hover:-translate-y-[1px] hover:shadow-[0_18px_42px_rgba(53,88,114,0.09)]
-        dark:bg-white/[0.04]
+        hover:-translate-y-[1px] hover:shadow-[0_16px_36px_rgba(53,88,114,0.085)]
+        dark:bg-white/[0.045]
         ${
           isUpdated
-            ? "border-[#DDD1AA] dark:border-[#E6C77B]/16"
+            ? "border-[#DEC984] bg-[linear-gradient(90deg,rgba(255,248,225,0.72)_0%,rgba(255,255,255,0.94)_34%,rgba(255,255,255,0.94)_100%)] dark:border-[#E6C77B]/20"
             : isNeverReviewed
             ? "border-[#CCDCE5] dark:border-[#9CD5FF]/12"
             : "border-white/80 dark:border-white/9"
@@ -235,7 +237,7 @@ function ProjectRow({ project, bachelorCourse, instructorId, onOpen, onReport })
         <span className="absolute inset-y-0 left-0 w-[3px] bg-[#7AAACE]" />
       ) : null}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2.5">
             <ReviewFreshnessBadge reviewState={reviewState} />
@@ -257,7 +259,7 @@ function ProjectRow({ project, bachelorCourse, instructorId, onOpen, onReport })
             </span>
           </div>
 
-          <h2 className="mt-3 line-clamp-1 text-[1.05rem] font-black tracking-[-0.02em] text-[color:var(--ink)]">
+          <h2 className="mt-2.5 line-clamp-1 text-[1.05rem] font-black tracking-[-0.02em] text-[color:var(--ink)]">
             {project.title}
           </h2>
 
@@ -279,7 +281,7 @@ function ProjectRow({ project, bachelorCourse, instructorId, onOpen, onReport })
           </div>
 
           {changeSummary.length ? (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
               <span className="text-[9px] font-black uppercase tracking-[0.12em] text-[#8A6A18] dark:text-[#E6C77B]">
                 What changed
               </span>
@@ -300,12 +302,12 @@ function ProjectRow({ project, bachelorCourse, instructorId, onOpen, onReport })
             </div>
           ) : null}
 
-          <p className="mt-3 line-clamp-2 max-w-[900px] text-[11.5px] font-semibold leading-5.5 text-[#71838E] dark:text-[#8599A5]">
+          <p className="mt-2.5 line-clamp-1 max-w-[900px] text-[11.5px] font-semibold leading-5 text-[#71838E] dark:text-[#8599A5]">
             {project.description || "No project summary has been added yet."}
           </p>
 
           {technologies.length ? (
-            <div className="mt-3 flex flex-wrap gap-1.5">
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
               {technologies.slice(0, 4).map((technology) => (
                 <span
                   key={technology}
@@ -324,7 +326,7 @@ function ProjectRow({ project, bachelorCourse, instructorId, onOpen, onReport })
           ) : null}
         </div>
 
-        <div className="flex items-center gap-2 lg:pl-5">
+        <div className="flex items-center gap-2 lg:pl-4">
           <button
             type="button"
             onClick={(event) => {
@@ -379,6 +381,8 @@ export default function InstructorProjects() {
   );
   const [selectedSort, setSelectedSort] = useState("Review status");
   const [page, setPage] = useState(1);
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
 
   const [reportOpen, setReportOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -580,7 +584,7 @@ export default function InstructorProjects() {
     <DashboardLayout workspace="instructor" workspaceLabel="Instructor Workspace">
       <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-[1480px] space-y-6">
-          <div>
+          <div className="space-y-4">
             <button
               type="button"
               onClick={() => navigate("/instructor/my-courses")}
@@ -590,171 +594,154 @@ export default function InstructorProjects() {
               My Courses
             </button>
 
-            <div className="mt-4 overflow-hidden rounded-[30px] border border-white/75 bg-white/65 shadow-[0_22px_58px_rgba(53,88,114,0.085)] dark:border-white/10 dark:bg-white/[0.04]">
-              <div className="grid lg:grid-cols-[220px_minmax(0,1fr)]">
-                <div className="relative overflow-hidden bg-[#092433] px-6 py-7 text-white dark:bg-[#071923]">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,rgba(122,174,205,0.22),transparent_35%),radial-gradient(circle_at_90%_90%,rgba(230,199,123,0.10),transparent_32%)]" />
+            <section className="relative overflow-hidden rounded-[24px] border border-white/80 bg-white/86 px-6 py-5 shadow-[0_16px_42px_rgba(53,88,114,0.07)] dark:border-white/10 dark:bg-white/[0.04]">
+              <div className="pointer-events-none absolute -left-12 -top-14 h-36 w-36 rounded-full bg-[#9CD5FF]/14 blur-3xl" />
+              <div className="pointer-events-none absolute right-10 top-0 h-28 w-28 rounded-full bg-[#E6C77B]/10 blur-3xl" />
 
-                  <div className="relative flex h-full min-h-[150px] flex-col">
-                    {bachelorCourse ? (
-                      <GraduationCap className="h-5 w-5 text-[#F0CF78]" />
-                    ) : (
-                      <BookCheck className="h-5 w-5 text-[#9CD5FF]" />
-                    )}
-
-                    <div className="mt-auto">
-                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
-                        Course workspace
+              <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-[12px] bg-[#0B2A3A] text-[#9CD5FF] shadow-[0_8px_18px_rgba(9,36,51,0.10)]">
+                      {bachelorCourse ? <GraduationCap className="h-4 w-4" /> : <BookCheck className="h-4 w-4" />}
+                    </span>
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#6F8490] dark:text-[#8298A5]">
+                        {course.code || course.type || "Course"}
                       </p>
-                      <p className="mt-2 text-[1.85rem] font-black tracking-[-0.04em]">
-                        {bachelorCourse ? "Bachelor" : course.code}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="px-6 py-7 sm:px-7">
-                  <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#6F8490] dark:text-[#8298A5]">
-                        {course.type || "Academic course"}
-                      </p>
-
-                      <h1 className="mt-2 text-[clamp(1.55rem,2.7vw,2.35rem)] font-black tracking-[-0.035em] text-[color:var(--ink)]">
+                      <h1 className="mt-1 text-[clamp(1.55rem,2.4vw,2.15rem)] font-black tracking-[-0.035em] text-[color:var(--ink)]">
                         {course.name}
                       </h1>
-
-                      <p className="mt-2 max-w-3xl text-[12px] font-semibold leading-6 text-[color:var(--muted)]">
-                        Review the student projects attached to this course. Projects changed after your last review are surfaced first.
-                      </p>
                     </div>
+                  </div>
+                  <p className="mt-3 max-w-3xl text-[12px] font-semibold leading-5.5 text-[color:var(--muted)]">
+                    Review student work, surface recent changes, and continue feedback where you left off.
+                  </p>
+                </div>
 
-                    <div className="flex shrink-0 flex-wrap items-end gap-7 border-t border-[#DCE6EA] pt-4 xl:border-l xl:border-t-0 xl:pl-7 xl:pt-0 dark:border-white/8">
-                      <div>
-                        <p className="text-[1.65rem] font-black tracking-[-0.035em] text-[color:var(--ink)]">
-                          {counts.all}
-                        </p>
-                        <p className="text-[10px] font-bold text-[color:var(--muted)]">
-                          Projects
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-[1.65rem] font-black tracking-[-0.035em] text-[#A77E18] dark:text-[#E6C77B]">
-                          {counts.updated}
-                        </p>
-                        <p className="text-[10px] font-bold text-[color:var(--muted)]">
-                          Updated
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-[1.65rem] font-black tracking-[-0.035em] text-[color:var(--ink)]">
-                          {counts.unrated}
-                        </p>
-                        <p className="text-[10px] font-bold text-[color:var(--muted)]">
-                          Unrated
-                        </p>
-                      </div>
-                    </div>
+                <div className="flex shrink-0 items-center gap-6 rounded-[18px] border border-[#DDE8ED] bg-white/72 px-5 py-3 dark:border-white/8 dark:bg-white/[0.035]">
+                  <div>
+                    <p className="text-[1.4rem] font-black tracking-[-0.035em] text-[color:var(--ink)]">{counts.all}</p>
+                    <p className="text-[9px] font-bold text-[color:var(--muted)]">Projects</p>
+                  </div>
+                  <div className="h-8 w-px bg-[#DFE8EC] dark:bg-white/8" />
+                  <div>
+                    <p className="text-[1.4rem] font-black tracking-[-0.035em] text-[#A77E18] dark:text-[#E6C77B]">{counts.updated}</p>
+                    <p className="text-[9px] font-bold text-[color:var(--muted)]">Modified</p>
+                  </div>
+                  <div className="h-8 w-px bg-[#DFE8EC] dark:bg-white/8" />
+                  <div>
+                    <p className="text-[1.4rem] font-black tracking-[-0.035em] text-[color:var(--ink)]">{counts.unrated}</p>
+                    <p className="text-[9px] font-bold text-[color:var(--muted)]">Unrated</p>
                   </div>
                 </div>
               </div>
+            </section>
+          </div>
+
+          <div className="flex flex-col gap-3 border-b border-[#D9E4E9] pb-3 xl:flex-row xl:items-end xl:justify-between dark:border-white/10">
+            <div className="flex min-w-0 flex-wrap items-center gap-1">
+              {REVIEW_TABS.map((tab) => {
+                const active = reviewFilter === tab.id;
+                const label = tab.id === "updated" ? "Modified" : tab.id === "all" ? "All" : tab.label;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      setReviewFilter(tab.id);
+                      if (tab.id !== "all") {
+                        setWorkFilter("all");
+                        const next = new URLSearchParams(searchParams);
+                        next.set("view", tab.id);
+                        setSearchParams(next, { replace: true });
+                      } else if (workFilter === "all") {
+                        const next = new URLSearchParams(searchParams);
+                        next.delete("view");
+                        setSearchParams(next, { replace: true });
+                      }
+                    }}
+                    className={`relative inline-flex h-10 items-center gap-2 px-3 text-[11px] font-black transition ${active ? "text-[#17384E] dark:text-white" : "text-[#7B8D98] hover:text-[#355872] dark:text-[#8298A6] dark:hover:text-[#C7D8E1]"}`}
+                  >
+                    {label}
+                    <span className={`min-w-5 rounded-full px-1.5 py-0.5 text-[9px] ${active ? "bg-[#F2E5B8] text-[#7A6327] dark:bg-[#E6C77B]/12 dark:text-[#E6C77B]" : "bg-[#E9F0F3] text-[#7A8D99] dark:bg-white/[0.05] dark:text-[#8599A5]"}`}>
+                      {counts[tab.id]}
+                    </span>
+                    {active ? <span className="absolute inset-x-2 bottom-0 h-[3px] rounded-t-full bg-[#E6C77B]" /> : null}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex w-full flex-col gap-2 sm:flex-row xl:w-auto xl:min-w-[660px]">
+              <label className="relative min-w-0 flex-1">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78909D]" />
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search projects, students, or technology..."
+                  className="h-11 w-full rounded-[14px] border border-[#D7E4EA] bg-white/92 pl-11 pr-4 text-[11px] font-bold text-[color:var(--ink)] outline-none transition placeholder:text-[#8DA0AA] focus:border-[#9CC4D8] focus:ring-2 focus:ring-[#9CD5FF]/18 dark:border-white/10 dark:bg-white/[0.05]"
+                />
+              </label>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => { setFilterMenuOpen((v) => !v); setSortMenuOpen(false); }}
+                  className={`inline-flex h-11 min-w-[128px] items-center justify-between gap-3 rounded-[14px] border px-4 text-[10.5px] font-black transition ${workFilter !== "all" ? "border-[#D8C98F] bg-[#FFF8E6] text-[#80651C]" : "border-[#D7E4EA] bg-white/92 text-[#355872]"}`}
+                >
+                  <span className="inline-flex items-center gap-2"><SlidersHorizontal className="h-3.5 w-3.5" />Filter{workFilter !== "all" ? " · 1" : ""}</span>
+                  <ChevronDown className={`h-3.5 w-3.5 transition ${filterMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+                {filterMenuOpen ? (
+                  <div className="absolute right-0 z-30 mt-2 w-[220px] overflow-hidden rounded-[16px] border border-[#D7E4EA] bg-white p-1.5 shadow-[0_16px_36px_rgba(53,88,114,0.14)] dark:border-white/10 dark:bg-[#102631]">
+                    {WORK_FILTERS.map((filter) => (
+                      <button
+                        key={filter.id}
+                        type="button"
+                        onClick={() => {
+                          setWorkFilter(filter.id);
+                          if (filter.id !== "all") setReviewFilter("all");
+                          const next = new URLSearchParams(searchParams);
+                          if (filter.id === "all") next.delete("view"); else next.set("view", filter.id);
+                          setSearchParams(next, { replace: true });
+                          setFilterMenuOpen(false);
+                        }}
+                        className={`flex w-full items-center justify-between rounded-[11px] px-3 py-2.5 text-left text-[10.5px] font-black transition ${workFilter === filter.id ? "bg-[#FFF5D7] text-[#80651C]" : "text-[#536E7E] hover:bg-[#F3F7F9] dark:text-[#A8BBC5] dark:hover:bg-white/[0.05]"}`}
+                      >
+                        <span>{filter.label === "All work" ? "All workflow states" : filter.label}</span>
+                        <span className="text-[9px] opacity-65">{filter.id === "all" ? counts.all : counts[filter.id] || 0}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => { setSortMenuOpen((v) => !v); setFilterMenuOpen(false); }}
+                  className="inline-flex h-11 min-w-[160px] items-center justify-between gap-3 rounded-[14px] border border-[#D7E4EA] bg-white/92 px-4 text-[10.5px] font-black text-[#355872] transition hover:bg-white dark:border-white/10 dark:bg-white/[0.05] dark:text-[#B2C6D1]"
+                >
+                  <span>Sort: {selectedSort}</span>
+                  <ChevronDown className={`h-3.5 w-3.5 transition ${sortMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+                {sortMenuOpen ? (
+                  <div className="absolute right-0 z-30 mt-2 w-[190px] overflow-hidden rounded-[16px] border border-[#D7E4EA] bg-white p-1.5 shadow-[0_16px_36px_rgba(53,88,114,0.14)] dark:border-white/10 dark:bg-[#102631]">
+                    {["Review status", "Newest", "Rating", "A–Z"].map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => { setSelectedSort(option); setSortMenuOpen(false); }}
+                        className={`block w-full rounded-[11px] px-3 py-2.5 text-left text-[10.5px] font-black transition ${selectedSort === option ? "bg-[#EAF4F8] text-[#244D65] dark:bg-[#9CD5FF]/10 dark:text-[#9CD5FF]" : "text-[#536E7E] hover:bg-[#F3F7F9] dark:text-[#A8BBC5] dark:hover:bg-white/[0.05]"}`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2 border-b border-[#D9E4E9] dark:border-white/10">
-            {REVIEW_TABS.map((tab) => {
-              const active = reviewFilter === tab.id;
-
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => {
-                    setReviewFilter(tab.id);
-                    if (tab.id !== "all") {
-                      setWorkFilter("all");
-                      const next = new URLSearchParams(searchParams);
-                      next.set("view", tab.id);
-                      setSearchParams(next, { replace: true });
-                    } else if (workFilter === "all") {
-                      const next = new URLSearchParams(searchParams);
-                      next.delete("view");
-                      setSearchParams(next, { replace: true });
-                    }
-                  }}
-                  className={`relative inline-flex h-11 items-center gap-2 px-3 text-[12px] font-black transition ${
-                    active
-                      ? "text-[#17384E] dark:text-white"
-                      : "text-[#7B8D98] hover:text-[#355872] dark:text-[#8298A6] dark:hover:text-[#C7D8E1]"
-                  }`}
-                >
-                  {tab.label}
-
-                  <span
-                    className={`min-w-5 rounded-full px-1.5 py-0.5 text-[10px] ${
-                      active
-                        ? "bg-[#F2E5B8] text-[#7A6327] dark:bg-[#E6C77B]/12 dark:text-[#E6C77B]"
-                        : "bg-[#E9F0F3] text-[#7A8D99] dark:bg-white/[0.05] dark:text-[#8599A5]"
-                    }`}
-                  >
-                    {counts[tab.id]}
-                  </span>
-
-                  {active ? (
-                    <span className="absolute inset-x-2 bottom-0 h-[3px] rounded-t-full bg-[#E6C77B]" />
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {WORK_FILTERS.map((filter) => {
-              const active = workFilter === filter.id;
-              const count = filter.id === "all" ? counts.all : counts[filter.id] || 0;
-              return (
-                <button
-                  key={filter.id}
-                  type="button"
-                  onClick={() => {
-                    setWorkFilter(filter.id);
-                    if (filter.id !== "all") setReviewFilter("all");
-                    const next = new URLSearchParams(searchParams);
-                    if (filter.id === "all") next.delete("view");
-                    else next.set("view", filter.id);
-                    setSearchParams(next, { replace: true });
-                  }}
-                  className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[10px] font-black transition ${
-                    active
-                      ? "border-[#D8C98F] bg-[#FFF8E6] text-[#80651C] dark:border-[#E6C77B]/18 dark:bg-[#E6C77B]/8 dark:text-[#E6C77B]"
-                      : "border-[#D9E4E9] bg-white/45 text-[#718691] hover:bg-white/75 dark:border-white/8 dark:bg-white/[0.025] dark:text-[#8398A4]"
-                  }`}
-                >
-                  {filter.label}
-                  <span className="opacity-70">{count}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <SearchFilterToolbar
-            searchValue={search}
-            onSearchChange={setSearch}
-            searchPlaceholder="Search this course by project, student, or technology..."
-            showSort
-            sortValue={`Sort by: ${selectedSort}`}
-            onSortChange={(value) =>
-              setSelectedSort(value.replace("Sort by: ", ""))
-            }
-            sortOptions={[
-              "Sort by: Review status",
-              "Sort by: Newest",
-              "Sort by: Rating",
-              "Sort by: A–Z",
-            ]}
-          />
 
           {visibleProjects.length ? (
             <div className="space-y-3.5">
