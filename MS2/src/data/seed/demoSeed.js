@@ -7,7 +7,7 @@ import {
 } from "./extra-demo-internships-50"
 
 
-export const DEMO_DATA_VERSION = "ms2-linked-demo-v10-rating-model-2026-09-13";
+export const DEMO_DATA_VERSION = "ms2-linked-demo-v12-instructor-notification-consistency-2026-09-13";
 
 export const usersSeed = [
   {
@@ -2921,73 +2921,98 @@ export const notificationsSeed = [
     "id": "notif-instructor-demo-1-today-1",
     "userId": "instructor-demo-1",
     "type": "message",
-    "title": "New student message",
-    "text": "A student sent a follow-up question about your latest project feedback.",
+    "title": "Farida Tarek replied about her thesis draft",
+    "text": "Farida: “I uploaded the revised methodology section and accessibility evaluation. Could you check whether the evaluation criteria are specific enough now?”",
     "unread": true,
-    "createdAt": "2026-09-09T14:20:00+03:00",
-    "time": "Sep 9, 2026 at 2:20 pm",
-    "fromUserId": "student-demo-1",
-    "relatedUserId": "student-demo-1"
+    "createdAt": "2026-09-12T22:18:00+03:00",
+    "time": "Sep 12, 2026 at 10:18 pm",
+    "chatId": "chat-instructor-farida",
+    "projectId": "project-bachelor-smart-mobility",
+    "relatedProjectId": "project-bachelor-smart-mobility",
+    "fromUserId": "student-farida",
+    "relatedUserId": "student-farida"
   },
   {
     "id": "notif-instructor-demo-1-today-2",
     "userId": "instructor-demo-1",
-    "type": "project",
-    "title": "Project submitted for review",
-    "text": "A supervised project has new work ready for review.",
+    "type": "project-update",
+    "title": "Adaptive Smart Mobility Assistant: new final thesis draft",
+    "text": "Farida Tarek uploaded “Final Thesis Draft” for the Bachelor Project. The draft is ready for your first review.",
     "unread": true,
-    "createdAt": "2026-09-09T11:05:00+03:00",
-    "time": "Sep 9, 2026 at 11:05 am",
-    "projectId": "project-bfmc-raven",
-    "relatedProjectId": "project-bfmc-raven"
+    "createdAt": "2026-09-12T22:00:00+03:00",
+    "time": "Sep 12, 2026 at 10:00 pm",
+    "projectId": "project-bachelor-smart-mobility",
+    "relatedProjectId": "project-bachelor-smart-mobility",
+    "courseId": "course-bachelor",
+    "targetTab": "bachelor thesis",
+    "targetId": "thesis-project-bachelor-smart-mobility-final",
+    "fromUserId": "student-farida",
+    "relatedUserId": "student-farida"
   },
   {
     "id": "notif-instructor-demo-1-yesterday-1",
     "userId": "instructor-demo-1",
-    "type": "message",
-    "title": "Project team replied",
-    "text": "The project team replied to your previous feedback.",
-    "unread": false,
-    "createdAt": "2026-09-08T20:10:00+03:00",
-    "time": "Sep 8, 2026 at 8:10 pm",
-    "fromUserId": "student-demo-1",
-    "relatedUserId": "student-demo-1"
+    "type": "project-update",
+    "title": "Clinic Queue & Records System: milestone task updated",
+    "text": "Salma Hazem updated “Submit milestone evidence” in CSEN 501. The task now includes the queue-priority test evidence for review.",
+    "unread": true,
+    "createdAt": "2026-09-12T08:40:00+03:00",
+    "time": "Sep 12, 2026 at 8:40 am",
+    "projectId": "project-db-clinic-flow",
+    "relatedProjectId": "project-db-clinic-flow",
+    "courseId": "course-csen501",
+    "targetTab": "tasks",
+    "targetId": "task-project-db-clinic-flow-1",
+    "fromUserId": "student-salma",
+    "relatedUserId": "student-salma"
   },
   {
     "id": "notif-instructor-demo-1-week-1",
     "userId": "instructor-demo-1",
-    "type": "project",
-    "title": "Supervised project updated",
-    "text": "A student updated the project brief and documentation.",
-    "unread": true,
-    "createdAt": "2026-09-07T16:30:00+03:00",
-    "time": "Sep 7, 2026 at 4:30 pm",
-    "projectId": "project-bfmc-raven",
-    "relatedProjectId": "project-bfmc-raven"
+    "type": "project-update",
+    "title": "University Event Ticketing Database: evaluation task changed",
+    "text": "Yasmine Omar updated the CSEN 501 evaluation-summary task after adding transaction and concurrency test results.",
+    "unread": false,
+    "createdAt": "2026-09-11T19:15:00+03:00",
+    "time": "Sep 11, 2026 at 7:15 pm",
+    "projectId": "project-db-event-ticketing",
+    "relatedProjectId": "project-db-event-ticketing",
+    "courseId": "course-csen501",
+    "targetTab": "tasks",
+    "targetId": "task-project-db-event-ticketing-2",
+    "fromUserId": "student-yasmine",
+    "relatedUserId": "student-yasmine"
   },
   {
     "id": "notif-instructor-demo-1-week-2",
     "userId": "instructor-demo-1",
     "type": "message",
-    "title": "New project question",
-    "text": "A student asked for clarification before the next project milestone.",
+    "title": "Yasmin Khaled replied to your BFMC feedback",
+    "text": "Yasmin: “I added the dataset references and model-training notes to the README. Is that enough for the attribution point you flagged?”",
     "unread": false,
-    "createdAt": "2026-09-05T13:40:00+03:00",
-    "time": "Sep 5, 2026 at 1:40 pm",
-    "fromUserId": "student-farida",
-    "relatedUserId": "student-farida"
+    "createdAt": "2026-09-09T14:20:00+03:00",
+    "time": "Sep 9, 2026 at 2:20 pm",
+    "chatId": "chat-student-instructor",
+    "projectId": "project-bfmc-raven",
+    "relatedProjectId": "project-bfmc-raven",
+    "fromUserId": "student-demo-1",
+    "relatedUserId": "student-demo-1"
   },
   {
     "id": "notif-instructor-demo-1-earlier-1",
     "userId": "instructor-demo-1",
-    "type": "project",
-    "title": "Review history updated",
-    "text": "A completed review was added to the project activity history.",
+    "type": "project-update",
+    "title": "Distributed Travel Discovery Platform: implementation notes revised",
+    "text": "Yasmin Khaled revised the session and API integration notes in CSEN 503 after your previous review. The project now has changes waiting for another look.",
     "unread": false,
-    "createdAt": "2026-08-29T17:15:00+03:00",
-    "time": "Aug 29, 2026 at 5:15 pm",
-    "projectId": "project-bfmc-raven",
-    "relatedProjectId": "project-bfmc-raven"
+    "createdAt": "2026-09-09T16:00:00+03:00",
+    "time": "Sep 9, 2026 at 4:00 pm",
+    "projectId": "project-net-travel-platform",
+    "relatedProjectId": "project-net-travel-platform",
+    "courseId": "course-csen503",
+    "targetTab": "overview",
+    "fromUserId": "student-demo-1",
+    "relatedUserId": "student-demo-1"
   },
   {
     "id": "notif-employer-demo-1-today-1",
@@ -7119,7 +7144,48 @@ export const chatsSeed = [
         "text": "Please add the dataset attribution before the final public showcase.",
         "createdAt": "2026-05-04T12:10:00.000Z",
         "time": "12:10"
-      } //add sending something from student-demo-1 to this chat after instructor-demo-1 reply 
+      },
+      {
+        "id": "msg-5",
+        "senderId": "student-demo-1",
+        "sender": "other",
+        "text": "I added the dataset references and model-training notes to the README. Is that enough for the attribution point you flagged?",
+        "createdAt": "2026-09-09T11:20:00.000Z",
+        "time": "14:20"
+      }
+    ]
+  },
+  {
+    "id": "chat-instructor-farida",
+    "isDemo": true,
+    "participantIds": [
+      "instructor-demo-1",
+      "student-farida"
+    ],
+    "name": "Farida Tarek",
+    "avatar": "F",
+    "online": false,
+    "unread": 1,
+    "unreadBy": [
+      "instructor-demo-1"
+    ],
+    "messages": [
+      {
+        "id": "msg-farida-instructor-1",
+        "senderId": "instructor-demo-1",
+        "sender": "other",
+        "text": "For the next thesis revision, make the methodology measurable and tie each accessibility requirement to an evaluation criterion.",
+        "createdAt": "2026-09-10T13:30:00.000Z",
+        "time": "16:30"
+      },
+      {
+        "id": "msg-farida-instructor-2",
+        "senderId": "student-farida",
+        "sender": "other",
+        "text": "I uploaded the revised methodology section and accessibility evaluation. Could you check whether the evaluation criteria are specific enough now?",
+        "createdAt": "2026-09-12T19:18:00.000Z",
+        "time": "22:18"
+      }
     ]
   }
 ];

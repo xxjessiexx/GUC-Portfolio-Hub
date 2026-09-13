@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -11,6 +11,9 @@ import {
   RefreshCcw,
   Star,
   Users,
+  MessageSquareText,
+  FileText,
+  Clock3,
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -34,6 +37,7 @@ import {
 import {
   getInstructorProjectReviewState,
   getProjectContentUpdatedAt,
+  getProjectChangeSummary,
 } from "@/lib/projectReview";
 
 const ITEMS_PER_PAGE = 6;
@@ -43,6 +47,15 @@ const REVIEW_TABS = [
   { id: "updated", label: "Updated" },
   { id: "never-reviewed", label: "Never reviewed" },
   { id: "up-to-date", label: "Up to date" },
+];
+
+const WORK_FILTERS = [
+  { id: "all", label: "All work" },
+  { id: "unrated", label: "Unrated" },
+  { id: "waiting-on-student", label: "Waiting on student" },
+  { id: "follow-up", label: "Follow-up" },
+  { id: "revision-submitted", label: "Revision submitted" },
+  { id: "new-thesis", label: "New thesis draft" },
 ];
 
 function sameId(a, b) {
@@ -133,6 +146,27 @@ function getFeedbackSummary(project, bachelorCourse = false) {
   return parts.length ? parts.join(" · ") : "No instructor comments yet";
 }
 
+function hasNewThesisDraft(project, instructorId) {
+  return getProjectChangeSummary(project, instructorId, { limit: 6 }).some(
+    (change) => change.type === "thesis-draft-added" || change.type === "thesis-final-selected"
+  );
+}
+
+function ReviewWorkflowLabel({ reviewState }) {
+  if (!reviewState?.workflowStatus || reviewState.workflowStatus === "reviewed" || reviewState.workflowStatus === "not-started") return null;
+
+  const classes = reviewState.workflowStatus === "revision-submitted"
+    ? "border-[#E3D6AD] bg-[#FFF8E7] text-[#8A6A18] dark:border-[#E6C77B]/16 dark:bg-[#E6C77B]/8 dark:text-[#E6C77B]"
+    : "border-[#D6E2E8] bg-[#F4F8FA] text-[#607A89] dark:border-white/10 dark:bg-white/[0.04] dark:text-[#97ABB6]";
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black ${classes}`}>
+      <Clock3 className="h-3 w-3" />
+      {reviewState.workflowLabel}
+    </span>
+  );
+}
+
 function ReviewFreshnessBadge({ reviewState }) {
   if (reviewState.status === "updated") {
     return (
@@ -174,6 +208,7 @@ function ProjectRow({ project, bachelorCourse, instructorId, onOpen, onReport })
     (project.collaboratorIds || []).length ||
     1;
   const feedbackSummary = getFeedbackSummary(project, bachelorCourse);
+  const changeSummary = getProjectChangeSummary(project, instructorId, { limit: 3 });
 
   return (
     <article
@@ -204,6 +239,7 @@ function ProjectRow({ project, bachelorCourse, instructorId, onOpen, onReport })
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2.5">
             <ReviewFreshnessBadge reviewState={reviewState} />
+            <ReviewWorkflowLabel reviewState={reviewState} />
 
             {isRated ? (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[#E3D6AD] bg-[#FFF8E7] px-2.5 py-1 text-[10px] font-black text-[#8A6A18] dark:border-[#E6C77B]/16 dark:bg-[#E6C77B]/8 dark:text-[#E6C77B]">
@@ -241,6 +277,28 @@ function ProjectRow({ project, bachelorCourse, instructorId, onOpen, onReport })
               </>
             ) : null}
           </div>
+
+          {changeSummary.length ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-[9px] font-black uppercase tracking-[0.12em] text-[#8A6A18] dark:text-[#E6C77B]">
+                What changed
+              </span>
+              {changeSummary.map((change) => (
+                <button
+                  key={`${change.type}-${change.targetId}-${change.createdAt}`}
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpen(project, change.tab || "overview", change.targetId || "");
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#E2D8B8] bg-[#FFF9EA] px-2.5 py-1 text-[9.5px] font-black text-[#7F682B] transition hover:bg-[#FFF4D4] dark:border-[#E6C77B]/14 dark:bg-[#E6C77B]/7 dark:text-[#DCC77F]"
+                >
+                  {change.tab === "tasks" ? <MessageSquareText className="h-3 w-3" /> : change.tab === "bachelor thesis" ? <FileText className="h-3 w-3" /> : <RefreshCcw className="h-3 w-3" />}
+                  {change.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
 
           <p className="mt-3 line-clamp-2 max-w-[900px] text-[11.5px] font-semibold leading-5.5 text-[#71838E] dark:text-[#8599A5]">
             {project.description || "No project summary has been added yet."}
@@ -304,6 +362,7 @@ function ProjectRow({ project, bachelorCourse, instructorId, onOpen, onReport })
 export default function InstructorProjects() {
   const navigate = useNavigate();
   const { courseId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const currentUser = getCurrentUser();
   const instructorId = currentUser?.id;
 
@@ -311,7 +370,13 @@ export default function InstructorProjects() {
     getAllProjects({ includePrivate: true })
   );
   const [search, setSearch] = useState("");
-  const [reviewFilter, setReviewFilter] = useState("all");
+  const initialView = searchParams.get("view") || "all";
+  const [reviewFilter, setReviewFilter] = useState(
+    ["updated", "never-reviewed", "up-to-date"].includes(initialView) ? initialView : "all"
+  );
+  const [workFilter, setWorkFilter] = useState(
+    ["unrated", "waiting-on-student", "follow-up", "revision-submitted", "new-thesis"].includes(initialView) ? initialView : "all"
+  );
   const [selectedSort, setSelectedSort] = useState("Review status");
   const [page, setPage] = useState(1);
 
@@ -377,6 +442,10 @@ export default function InstructorProjects() {
       unrated: courseProjects.filter(
         (project) => getInstructorProjectRating(project, instructorId) === null
       ).length,
+      "waiting-on-student": reviewStates.filter((state) => state.workflowStatus === "waiting-on-student").length,
+      "follow-up": reviewStates.filter((state) => state.workflowStatus === "follow-up").length,
+      "revision-submitted": reviewStates.filter((state) => state.workflowStatus === "revision-submitted").length,
+      "new-thesis": courseProjects.filter((project) => hasNewThesisDraft(project, instructorId)).length,
     };
   }, [courseProjects, instructorId]);
 
@@ -403,7 +472,13 @@ export default function InstructorProjects() {
         const matchesReview =
           reviewFilter === "all" || reviewState.status === reviewFilter;
 
-        return matchesSearch && matchesReview;
+        const matchesWork =
+          workFilter === "all" ||
+          (workFilter === "unrated" && getInstructorProjectRating(project, instructorId) === null) ||
+          (["waiting-on-student", "follow-up", "revision-submitted"].includes(workFilter) && reviewState.workflowStatus === workFilter) ||
+          (workFilter === "new-thesis" && hasNewThesisDraft(project, instructorId));
+
+        return matchesSearch && matchesReview && matchesWork;
       })
       .sort((a, b) => {
         if (selectedSort === "Review status") {
@@ -435,10 +510,12 @@ export default function InstructorProjects() {
     courseProjects,
     search,
     reviewFilter,
+    workFilter,
     selectedSort,
+    instructorId,
   ]);
 
-  useEffect(() => setPage(1), [search, reviewFilter, selectedSort]);
+  useEffect(() => setPage(1), [search, reviewFilter, workFilter, selectedSort]);
 
   const totalPages = Math.max(
     1,
@@ -451,11 +528,12 @@ export default function InstructorProjects() {
     start + ITEMS_PER_PAGE
   );
 
-  const openProject = (project, tab = "overview") => {
+  const openProject = (project, tab = "overview", focus = "") => {
+    const focusQuery = focus ? `&focus=${encodeURIComponent(focus)}` : "";
     navigate(
       `/project?projectId=${encodeURIComponent(
         project.id
-      )}&tab=${encodeURIComponent(tab)}`,
+      )}&tab=${encodeURIComponent(tab)}${focusQuery}`,
       {
         state: {
           projectFlow: {
@@ -593,7 +671,19 @@ export default function InstructorProjects() {
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setReviewFilter(tab.id)}
+                  onClick={() => {
+                    setReviewFilter(tab.id);
+                    if (tab.id !== "all") {
+                      setWorkFilter("all");
+                      const next = new URLSearchParams(searchParams);
+                      next.set("view", tab.id);
+                      setSearchParams(next, { replace: true });
+                    } else if (workFilter === "all") {
+                      const next = new URLSearchParams(searchParams);
+                      next.delete("view");
+                      setSearchParams(next, { replace: true });
+                    }
+                  }}
                   className={`relative inline-flex h-11 items-center gap-2 px-3 text-[12px] font-black transition ${
                     active
                       ? "text-[#17384E] dark:text-white"
@@ -615,6 +705,35 @@ export default function InstructorProjects() {
                   {active ? (
                     <span className="absolute inset-x-2 bottom-0 h-[3px] rounded-t-full bg-[#E6C77B]" />
                   ) : null}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {WORK_FILTERS.map((filter) => {
+              const active = workFilter === filter.id;
+              const count = filter.id === "all" ? counts.all : counts[filter.id] || 0;
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => {
+                    setWorkFilter(filter.id);
+                    if (filter.id !== "all") setReviewFilter("all");
+                    const next = new URLSearchParams(searchParams);
+                    if (filter.id === "all") next.delete("view");
+                    else next.set("view", filter.id);
+                    setSearchParams(next, { replace: true });
+                  }}
+                  className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[10px] font-black transition ${
+                    active
+                      ? "border-[#D8C98F] bg-[#FFF8E6] text-[#80651C] dark:border-[#E6C77B]/18 dark:bg-[#E6C77B]/8 dark:text-[#E6C77B]"
+                      : "border-[#D9E4E9] bg-white/45 text-[#718691] hover:bg-white/75 dark:border-white/8 dark:bg-white/[0.025] dark:text-[#8398A4]"
+                  }`}
+                >
+                  {filter.label}
+                  <span className="opacity-70">{count}</span>
                 </button>
               );
             })}

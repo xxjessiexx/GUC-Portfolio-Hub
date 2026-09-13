@@ -136,6 +136,45 @@ const project = ({
       : []
     : [];
 
+  const reviewMode = ownerIndex % 4;
+  const hasPreviousReview = review === "reviewed" || rating > 0;
+  const lastReviewedAt = hasPreviousReview
+    ? reviewMode === 1
+      ? updatedAt
+      : reviewMode === 3
+      ? "2026-09-11T15:00:00.000Z"
+      : "2026-09-05T12:00:00.000Z"
+    : null;
+  const workflowStatus = reviewMode === 2
+    ? "waiting-on-student"
+    : reviewMode === 3
+    ? "follow-up"
+    : "reviewed";
+
+  const latestActivity = thesisMode === "pending"
+    ? {
+        type: "thesis-draft-added",
+        label: "New thesis draft uploaded",
+        detail: "The student uploaded a new final thesis draft.",
+        tab: "bachelor thesis",
+        targetId: `thesis-${id}-final`,
+      }
+    : taskMode === "pending" || taskMode === "mixed"
+    ? {
+        type: "task-updated",
+        label: "Task updated",
+        detail: "A project milestone task was changed.",
+        tab: "tasks",
+        targetId: `task-${id}-1`,
+      }
+    : {
+        type: "project-description-updated",
+        label: "Project description updated",
+        detail: "The student revised the project summary and implementation notes.",
+        tab: "overview",
+        targetId: "",
+      };
+
   return {
     id,
     isDemo: true,
@@ -158,13 +197,59 @@ const project = ({
             instructorId: "instructor-demo-1",
             instructorName: "Dr. Mervat Abuelkheir",
             value: rating,
-            createdAt: updatedAt,
-            updatedAt,
+            createdAt: lastReviewedAt || updatedAt,
+            updatedAt: lastReviewedAt || updatedAt,
           },
         ]
       : [],
     createdAt: "2026-08-12T10:00:00.000Z",
     updatedAt,
+    contentUpdatedAt: updatedAt,
+    reviewStates: lastReviewedAt
+      ? [{
+          instructorId: "instructor-demo-1",
+          lastReviewedAt,
+          workflowStatus,
+          workflowUpdatedAt: lastReviewedAt,
+        }]
+      : [],
+    activityHistory: [
+      {
+        id: `activity-${id}-created`,
+        kind: "content",
+        type: "project-created",
+        label: "Project created",
+        detail: "The student created the project workspace.",
+        tab: "overview",
+        actorId: ownerId,
+        actorName: "Student",
+        actorRole: "student",
+        createdAt: "2026-08-12T10:00:00.000Z",
+      },
+      ...(lastReviewedAt
+        ? [{
+            id: `activity-${id}-review`,
+            kind: "review",
+            type: "marked-reviewed",
+            label: "Instructor review completed",
+            detail: rating > 0 ? `Project rated ${rating} / 5.` : "Project reviewed.",
+            tab: "feedback",
+            actorId: "instructor-demo-1",
+            actorName: "Dr. Mervat Abuelkheir",
+            actorRole: "instructor",
+            createdAt: lastReviewedAt,
+          }]
+        : []),
+      {
+        id: `activity-${id}-latest`,
+        kind: "content",
+        ...latestActivity,
+        actorId: ownerId,
+        actorName: "Student",
+        actorRole: "student",
+        createdAt: updatedAt,
+      },
+    ],
     languages: technologies.slice(0, 3),
     technologies,
     tags: technologies.slice(0, 4),

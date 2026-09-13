@@ -8,6 +8,7 @@ import {
   Grid2X2,
   Mail,
   MessageCircle,
+  RefreshCcw,
   UserPlus,
 } from "lucide-react";
 import { useNotifications } from "@/context/NotificationsContext";
@@ -106,6 +107,7 @@ function getEmptyStateMessage(activeTab) {
     all: "You're all caught up — nothing needs your attention right now.",
     unread: "Everything is read — nice work.",
     feedback: "No feedback notifications yet.",
+    updates: "No student project changes since your last reviews.",
     messages: "No message notifications yet.",
     invites: "No invitations waiting right now.",
   };
@@ -191,6 +193,7 @@ export default function NotificationsTabs({ notifications }) {
     message: <Mail className="h-5 w-5" />,
     invite: <UserPlus className="h-5 w-5" />,
     "project-invite": <UserPlus className="h-5 w-5" />,
+    "project-update": <RefreshCcw className="h-5 w-5" />,
     default: <Bell className="h-5 w-5" />,
   };
 
@@ -198,13 +201,14 @@ export default function NotificationsTabs({ notifications }) {
     { key: "all", label: "All", icon: Grid2X2 },
     { key: "unread", label: "Unread", icon: Bell },
     { key: "feedback", label: "Feedback", icon: MessageCircle },
+    { key: "updates", label: "Updates", icon: RefreshCcw },
     { key: "messages", label: "Messages", icon: Mail },
     { key: "invites", label: "Invites", icon: UserPlus },
   ];
 
   const tabsByRole = {
     student: ["all", "unread", "feedback", "messages", "invites"],
-    instructor: ["all", "unread", "invites", "messages"],
+    instructor: ["all", "unread", "updates", "invites", "messages"],
     employer: ["all", "unread"],
     admin: ["all", "unread"],
   };
@@ -234,6 +238,12 @@ export default function NotificationsTabs({ notifications }) {
       if (status === "pending") return "/invitations";
       if (projectId) return `/project?projectId=${encodeURIComponent(projectId)}`;
       return "/invitations";
+    }
+
+    if (notification.type === "project-update" && projectId) {
+      const tab = notification.targetTab || "overview";
+      const focus = notification.targetId ? `&focus=${encodeURIComponent(notification.targetId)}` : "";
+      return `/project?projectId=${encodeURIComponent(projectId)}&tab=${encodeURIComponent(tab)}${focus}`;
     }
 
     if (
@@ -270,10 +280,34 @@ export default function NotificationsTabs({ notifications }) {
     return null;
   };
 
+  const openNotification = (notification, destination) => {
+    if (!destination) return;
+
+    if (
+      role === "instructor" &&
+      notification.type === "project-update" &&
+      notification.courseId
+    ) {
+      navigate(destination, {
+        state: {
+          projectFlow: {
+            originPath: `/instructor/courses/${encodeURIComponent(notification.courseId)}/projects`,
+            originLabel: "Course Projects",
+            projectIds: [notification.projectId || notification.relatedProjectId].filter(Boolean),
+          },
+        },
+      });
+      return;
+    }
+
+    navigate(destination);
+  };
+
   const filteredNotifications = useMemo(() => {
     const filtered = notifications.filter((n) => {
       if (activeTab === "unread") return n.unread;
       if (activeTab === "feedback") return n.type === "feedback";
+      if (activeTab === "updates") return n.type === "project-update";
       if (activeTab === "messages") return n.type === "message";
       if (activeTab === "invites") {
         return n.type === "invite" || n.type === "project-invite";
@@ -293,6 +327,7 @@ export default function NotificationsTabs({ notifications }) {
     all: notifications.length,
     unread: notifications.filter((n) => n.unread).length,
     feedback: notifications.filter((n) => n.type === "feedback").length,
+    updates: notifications.filter((n) => n.type === "project-update").length,
     messages: notifications.filter((n) => n.type === "message").length,
     invites: notifications.filter(
       (n) => n.type === "invite" || n.type === "project-invite"
@@ -458,7 +493,7 @@ export default function NotificationsTabs({ notifications }) {
                             )}
                             onOpen={
                               destination
-                                ? () => navigate(destination)
+                                ? () => openNotification(n, destination)
                                 : undefined
                             }
                             onDelete={deleteNotification}

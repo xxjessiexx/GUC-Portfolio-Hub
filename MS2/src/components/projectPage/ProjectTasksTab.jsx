@@ -142,17 +142,24 @@ function FeedbackArea({
 
           {canAddInstructorFeedback ? (
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-              <input
-                value={taskFeedbackDrafts[task.id] || ""}
-                onChange={(event) =>
-                  setTaskFeedbackDrafts((current) => ({
-                    ...current,
-                    [task.id]: event.target.value,
-                  }))
-                }
-                placeholder="Add feedback to this task..."
-                className="h-10 min-w-0 flex-1 rounded-[12px] border border-[#C3D6E1] bg-white px-3.5 text-[12px] font-semibold text-[color:var(--ink)] outline-none transition placeholder:text-[#9AA9B2] focus:border-[#7AAACE] focus:shadow-[0_0_0_3px_rgba(122,170,206,0.10)]"
-              />
+              <div className="min-w-0 flex-1">
+                <input
+                  value={taskFeedbackDrafts[task.id] || ""}
+                  onChange={(event) =>
+                    setTaskFeedbackDrafts((current) => ({
+                      ...current,
+                      [task.id]: event.target.value,
+                    }))
+                  }
+                  placeholder="Add feedback to this task..."
+                  className="h-10 w-full rounded-[12px] border border-[#C3D6E1] bg-white px-3.5 text-[12px] font-semibold text-[color:var(--ink)] outline-none transition placeholder:text-[#9AA9B2] focus:border-[#7AAACE] focus:shadow-[0_0_0_3px_rgba(122,170,206,0.10)]"
+                />
+                {String(taskFeedbackDrafts[task.id] || "").trim() ? (
+                  <p className="mt-1.5 text-[9.5px] font-semibold text-[#7A8D98]">
+                    Draft autosaved privately · published feedback stays within the project team.
+                  </p>
+                ) : null}
+              </div>
 
               <button
                 type="button"
@@ -241,7 +248,7 @@ export default function ProjectTasksTab({
         variant="task"
         dragDisabled={!canManageTasks}
       >
-        <div className="py-6">
+        <div id={`task-${task.id}`} className="scroll-mt-28 py-6">
           <div className="flex items-start gap-4">
             <div className="hidden w-8 shrink-0 pt-1 sm:block">
               <span className="text-[11px] font-black tracking-[0.12em] text-[#8E9DA7]">

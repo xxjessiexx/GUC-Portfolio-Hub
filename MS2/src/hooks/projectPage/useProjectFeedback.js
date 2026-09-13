@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   getDisplayName,
@@ -59,8 +59,26 @@ export function useProjectFeedback({
   persistProject,
   makeNotification,
 }) {
-  const [projectFeedbackDraft, setProjectFeedbackDraft] = useState("");
+  const draftKey = project?.id && loggedInUser?.id
+    ? `guc-feedback-draft:${project.id}:${loggedInUser.id}`
+    : "";
+
+  const [projectFeedbackDraft, setProjectFeedbackDraft] = useState(() => {
+    if (typeof window === "undefined" || !draftKey) return "";
+    return localStorage.getItem(draftKey) || "";
+  });
   const [ratingDraft, setRatingDraft] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !draftKey) return;
+    if (projectFeedbackDraft.trim()) localStorage.setItem(draftKey, projectFeedbackDraft);
+    else localStorage.removeItem(draftKey);
+  }, [draftKey, projectFeedbackDraft]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !draftKey) return;
+    setProjectFeedbackDraft(localStorage.getItem(draftKey) || "");
+  }, [draftKey]);
 
   const ratings = useMemo(() => getProjectRatings(project), [project]);
 

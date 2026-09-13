@@ -216,6 +216,7 @@ export default function ProjectFeedbackTab({
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--muted)]">
                 {ratingLabel}
+                <span className="ml-1 normal-case tracking-normal text-[#9A7618]">· Public</span>
               </span>
               <div className="flex items-center gap-3 rounded-full border border-amber-200 bg-amber-50 px-4 py-2">
                 <RatingStars value={displayedRating} readonly />
@@ -352,6 +353,10 @@ export default function ProjectFeedbackTab({
             placeholder="Write project-level feedback..."
             className="min-h-28 w-full rounded-xl border bg-white p-3 text-sm font-semibold outline-none focus:border-[var(--primary)]"
           />
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] font-semibold text-[#7A8D98]">
+            <span>Private to the project creator, collaborators and assigned instructors.</span>
+            {projectFeedbackDraft.trim() ? <span className="font-black text-[#5F849B]">Draft autosaved</span> : null}
+          </div>
 
           <div className="mt-3 flex justify-end">
             <button

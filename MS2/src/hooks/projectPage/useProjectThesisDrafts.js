@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   createStoredFileReference,
@@ -19,7 +19,25 @@ export function useProjectThesisDrafts({
   persistProject,
   makeNotification,
 }) {
-  const [draftFeedbackDrafts, setDraftFeedbackDrafts] = useState({});
+  const thesisDraftKey = project?.id && loggedInUser?.id
+    ? `guc-thesis-feedback-drafts:${project.id}:${loggedInUser.id}`
+    : "";
+  const [draftFeedbackDrafts, setDraftFeedbackDrafts] = useState(() => {
+    if (typeof window === "undefined" || !thesisDraftKey) return {};
+    try { return JSON.parse(localStorage.getItem(thesisDraftKey) || "{}"); } catch { return {}; }
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !thesisDraftKey) return;
+    const hasDrafts = Object.values(draftFeedbackDrafts).some((value) => String(value || "").trim());
+    if (hasDrafts) localStorage.setItem(thesisDraftKey, JSON.stringify(draftFeedbackDrafts));
+    else localStorage.removeItem(thesisDraftKey);
+  }, [thesisDraftKey, draftFeedbackDrafts]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !thesisDraftKey) return;
+    try { setDraftFeedbackDrafts(JSON.parse(localStorage.getItem(thesisDraftKey) || "{}")); } catch { setDraftFeedbackDrafts({}); }
+  }, [thesisDraftKey]);
   const [newDraft, setNewDraft] = useState({ title: "", fileName: "" });
   const [newDraftFile, setNewDraftFile] = useState(null);
   const [draftMessage, setDraftMessage] = useState("");
@@ -27,9 +45,14 @@ export function useProjectThesisDrafts({
   const visibleDrafts = useMemo(() => {
     if (!project?.thesisDrafts) return [];
 
-    if (isCreator) return project.thesisDrafts;
+    const versioned = project.thesisDrafts.map((draft, index) => ({
+      ...draft,
+      version: draft.version || index + 1,
+    }));
 
-    return project.thesisDrafts.filter(
+    if (isCreator) return versioned;
+
+    return versioned.filter(
       (draft) => draft.isFinal || draft.visibility === "public"
     );
   }, [isCreator, project]);

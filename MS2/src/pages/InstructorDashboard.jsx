@@ -11,6 +11,9 @@ import { useNotifications } from "@/context/NotificationsContext";
 import { useUserProfile } from "@/context/UserProfileContext";
 import InstructorDashboardAnalytics from "@/components/InstructorDashboard/InstructorDashboardAnalytics";
 
+import { getInstructorProjectRating } from "@/lib/projectRating";
+import { getInstructorProjectReviewState } from "@/lib/projectReview";
+
 import {
   getAllProjects,
   getCollection,
@@ -47,14 +50,6 @@ function getAvatar(user) {
   return user?.image || user?.avatar || user?.profileImage || "";
 }
 
-function getProjectRating(project) {
-  const rating = project?.rating;
-  if (typeof rating === "number") return rating;
-  if (typeof rating === "string") return Number(rating) || 0;
-  if (rating && typeof rating === "object") return Number(rating.value || rating.score || 0) || 0;
-  return Number(project?.averageRating || 0) || 0;
-}
-
 function getPendingInstructorInvites(projects, instructorId) {
   return projects.flatMap((project) =>
     (project.invitationStatuses || [])
@@ -65,19 +60,6 @@ function getPendingInstructorInvites(projects, instructorId) {
       )
       .map((invite) => ({ ...invite, project }))
   );
-}
-
-function projectNeedsReview(project) {
-  const hasProjectFeedback = Array.isArray(project.feedback) && project.feedback.length > 0;
-  const pendingTasks = (project.tasks || []).filter((task) => {
-    const status = String(task.status || "").toLowerCase();
-    return status !== "completed" || !(task.feedback || []).length;
-  });
-  const thesisDrafts = (project.thesisDrafts || []).filter(
-    (draft) => draft.isFinal || draft.visibility === "public" || !(draft.feedback || []).length
-  );
-
-  return !hasProjectFeedback || pendingTasks.length > 0 || thesisDrafts.length > 0;
 }
 
 function buildInstructorSnapshot(instructorId, profile, sharedNotifications = []) {
@@ -115,39 +97,74 @@ function buildInstructorSnapshot(instructorId, profile, sharedNotifications = []
 
   const pendingInvites = getPendingInstructorInvites(allProjects, instructor.id);
   const reviewQueue = supervisedProjects
-    .filter(projectNeedsReview)
-    .map((project) => {
+    .map((project) => ({
+      project,
+      reviewState: getInstructorProjectReviewState(project, instructor.id),
+    }))
+    .filter(({ reviewState }) => {
+      return (
+        reviewState.status === "never-reviewed" ||
+        reviewState.status === "updated" ||
+        reviewState.workflowStatus === "follow-up" ||
+        reviewState.workflowStatus === "revision-submitted"
+      );
+    })
+    .map(({ project, reviewState }) => {
       const isBachelor =
         String(project.type || "").toLowerCase().includes("bachelor") ||
         String(project.courseName || project.course || "").toLowerCase().includes("bachelor");
-      const pendingTask = (project.tasks || []).find(
-        (task) => String(task.status || "").toLowerCase() !== "completed"
-      );
-      const finalDraft = (project.thesisDrafts || []).find((draft) => draft.isFinal);
+
+      const primaryChange = reviewState.changes?.[0] || null;
+      const pendingTask = primaryChange?.tab === "tasks"
+        ? (project.tasks || []).find((task) => String(task.id) === String(primaryChange.targetId))
+        : null;
+      const finalDraft = primaryChange?.tab === "bachelor thesis"
+        ? (project.thesisDrafts || []).find((draft) => String(draft.id) === String(primaryChange.targetId))
+        : (project.thesisDrafts || []).find((draft) => draft.isFinal);
+
+      const reviewType = primaryChange?.tab === "bachelor thesis"
+        ? "Thesis draft"
+        : primaryChange?.tab === "tasks"
+        ? "Task feedback"
+        : "Project feedback";
+
+      const reviewAction = primaryChange?.tab === "bachelor thesis"
+        ? "Review thesis draft"
+        : primaryChange?.tab === "tasks"
+        ? "Review task update"
+        : reviewState.status === "never-reviewed"
+        ? "Review project"
+        : "Review latest changes";
 
       return {
         id: project.id,
         title: project.title || project.name || "Untitled project",
         student: project.owner?.name || project.student?.name || project.ownerName || "Student team",
         course: project.courseCode || project.courseName || project.course || "Course Project",
-        type: isBachelor && finalDraft ? "Thesis draft" : pendingTask ? "Task feedback" : "Project feedback",
+        type: reviewType,
         due: pendingTask?.deadline || finalDraft?.uploadedAt || project.updatedAt || project.createdAt,
         priority: isBachelor ? "High" : pendingTask ? "Medium" : "Low",
-        action: isBachelor && finalDraft ? "Review thesis draft" : pendingTask ? "Comment on milestone tasks" : "Rate project",
+        action: reviewAction,
         project,
       };
     })
     .slice(0, 6);
 
-  const ratings = supervisedProjects.map(getProjectRating).filter((rating) => rating > 0);
+  const ratings = supervisedProjects
+    .map((project) => getInstructorProjectRating(project, instructor.id))
+    .filter((rating) => rating !== null);
   const averageRating = ratings.length
     ? (ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length).toFixed(1)
     : "0.0";
 
-  const notifications = [
-    ...getNotificationsForUser(instructor.id),
-    ...(sharedNotifications || []),
-  ].slice(0, 8);
+  const notifications = Array.from(
+    new Map(
+      [
+        ...getNotificationsForUser(instructor.id),
+        ...(sharedNotifications || []),
+      ].map((notification) => [notification.id, notification])
+    ).values()
+  ).slice(0, 8);
 
   return {
     instructor,

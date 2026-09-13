@@ -5,7 +5,6 @@ import {
   BookCheck,
   CheckCircle2,
   Clock3,
-  FolderKanban,
   GraduationCap,
   Unlink,
 } from "lucide-react";
@@ -40,6 +39,31 @@ function getCourseProjects(course, projects) {
   );
 }
 
+function getCourseMetrics(course, projects, instructorId) {
+  const scopedProjects = getCourseProjects(course, projects);
+  const unrated = scopedProjects.filter(
+    (project) => getInstructorProjectRating(project, instructorId) === null
+  ).length;
+  const reviewStates = scopedProjects.map((project) =>
+    getInstructorProjectReviewState(project, instructorId)
+  );
+  const updated = reviewStates.filter((state) => state.status === "updated").length;
+  const neverReviewed = reviewStates.filter(
+    (state) => state.status === "never-reviewed"
+  ).length;
+  const waitingOnStudent = reviewStates.filter(
+    (state) => state.workflowStatus === "waiting-on-student"
+  ).length;
+
+  return {
+    scopedProjects,
+    unrated,
+    updated,
+    neverReviewed,
+    waitingOnStudent,
+  };
+}
+
 function CourseState({ course }) {
   if (course.isBachelorProject) {
     return (
@@ -68,39 +92,62 @@ function CourseState({ course }) {
 }
 
 function CourseCard({ course, projects, instructorId, onOpen, onUnlink }) {
-  const scopedProjects = getCourseProjects(course, projects);
-  const unrated = scopedProjects.filter(
-    (project) => getInstructorProjectRating(project, instructorId) === null
-  ).length;
-  const updated = scopedProjects.filter(
-    (project) =>
-      getInstructorProjectReviewState(project, instructorId).status === "updated"
-  ).length;
+  const {
+    scopedProjects,
+    unrated,
+    updated,
+    neverReviewed,
+    waitingOnStudent,
+  } = getCourseMetrics(course, projects, instructorId);
+
+  const attentionSummary = updated > 0
+    ? `${updated} project${updated === 1 ? " has" : "s have"} changes since your last review`
+    : unrated > 0
+    ? `${unrated} project${unrated === 1 ? " is" : "s are"} still unrated`
+    : scopedProjects.length
+    ? "No projects need attention right now"
+    : "No student projects are linked yet";
 
   return (
     <article
       role="button"
       tabIndex={0}
-      onClick={() => onOpen(course)}
+      onClick={() => onOpen(course, "all")}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          onOpen(course);
+          onOpen(course, "all");
         }
       }}
-      className="
-        group relative cursor-pointer overflow-hidden rounded-[26px]
-        border border-white/80 bg-white/68
-        p-5 shadow-[0_18px_46px_rgba(53,88,114,0.075)]
-        transition duration-200
-        hover:-translate-y-0.5 hover:border-[#D8CC98]
-        hover:shadow-[0_24px_54px_rgba(53,88,114,0.11)]
-        focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7AAACE]/45
-        dark:border-white/10 dark:bg-white/[0.045]
-        dark:hover:border-[#E6C77B]/20
-      "
+      className={`
+        group relative flex min-h-[276px] cursor-pointer flex-col overflow-hidden rounded-[26px]
+        border bg-[rgba(255,255,255,0.94)]
+        p-5 transition duration-200
+        hover:-translate-y-1 focus:outline-none
+        focus-visible:ring-2 focus-visible:ring-[color:var(--secondary)]/45
+        dark:bg-[rgba(10,25,38,0.94)]
+        ${updated > 0
+          ? "border-[color:var(--gold)]/22 shadow-[0_20px_48px_rgba(53,88,114,0.095)] hover:border-[color:var(--gold)]/40 hover:shadow-[0_28px_58px_rgba(53,88,114,0.15)]"
+          : "border-white/90 shadow-[0_18px_44px_rgba(53,88,114,0.07)] hover:border-[color:var(--secondary)]/32 hover:shadow-[0_24px_52px_rgba(53,88,114,0.11)] dark:border-white/10"}
+      `}
     >
-      <div className="absolute inset-x-0 top-0 h-[3px] bg-[linear-gradient(90deg,#355872_0%,#7AAACE_58%,#E6C77B_100%)] opacity-70" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: updated > 0
+            ? "linear-gradient(145deg, color-mix(in srgb, var(--gold) 5%, transparent) 0%, transparent 46%)"
+            : "linear-gradient(145deg, color-mix(in srgb, var(--primary) 3.5%, transparent) 0%, transparent 48%)",
+        }}
+      />
+
+      <div
+        className={`absolute inset-x-0 top-0 h-[3px] ${
+          updated > 0
+            ? "bg-[color:var(--gold)]"
+            : "bg-[color:var(--primary)]"
+        }`}
+      />
 
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-4">
@@ -116,7 +163,7 @@ function CourseCard({ course, projects, instructorId, onOpen, onUnlink }) {
               <CourseState course={course} />
             </div>
 
-            <h2 className="mt-2 line-clamp-2 text-[1.14rem] font-black leading-snug tracking-[-0.025em] text-[color:var(--ink)]">
+            <h2 className="mt-2 line-clamp-2 text-[1.14rem] font-black leading-snug tracking-[-0.025em] text-[color:var(--ink)] transition-colors duration-200 group-hover:text-[color:var(--primary)]">
               {course.name}
             </h2>
 
@@ -126,50 +173,66 @@ function CourseCard({ course, projects, instructorId, onOpen, onUnlink }) {
           </div>
         </div>
 
-        <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-[#8AA0AD] transition duration-200 group-hover:translate-x-1 group-hover:text-[#355872] dark:group-hover:text-[#E6C77B]" />
+        <span className="inline-flex shrink-0 items-center gap-1.5 pt-0.5 text-[10px] font-black text-[color:var(--muted)] opacity-72 transition duration-200 group-hover:text-[color:var(--primary)] group-hover:opacity-100">
+          Open course
+          <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+        </span>
       </div>
 
-      <div className="mt-6 grid grid-cols-3 border-y border-[#DCE6EA] py-4 dark:border-white/8">
-        <div>
-          <p className="text-[1.55rem] font-black tracking-[-0.03em] text-[color:var(--ink)]">
-            {scopedProjects.length}
-          </p>
-          <p className="mt-0.5 text-[10px] font-bold text-[color:var(--muted)]">
-            Projects
-          </p>
-        </div>
+      <div className="mt-5 grid grid-cols-3 border-y border-[#DCE6EA]/65 py-3.5 dark:border-white/8">
+        <button
+          type="button"
+          onClick={(event) => { event.stopPropagation(); onOpen(course, "all"); }}
+          className="flex flex-col items-center justify-center text-center transition hover:opacity-70"
+          title="View all projects"
+        >
+          <p className="text-[1.55rem] font-black tracking-[-0.03em] text-[color:var(--ink)]">{scopedProjects.length}</p>
+          <p className="mt-0.5 text-[10px] font-bold text-[color:var(--muted)]">Projects</p>
+        </button>
 
-        <div className="border-l border-[#DCE6EA] pl-4 dark:border-white/8">
-          <p className={updated ? "text-[1.55rem] font-black tracking-[-0.03em] text-[#A77E18] dark:text-[#E6C77B]" : "text-[1.55rem] font-black tracking-[-0.03em] text-[color:var(--ink)]"}>
-            {updated}
-          </p>
-          <p className="mt-0.5 text-[10px] font-bold text-[color:var(--muted)]">
-            Updated
-          </p>
-        </div>
+        <button
+          type="button"
+          onClick={(event) => { event.stopPropagation(); onOpen(course, "updated"); }}
+          className="flex flex-col items-center justify-center border-l border-[#DCE6EA]/55 text-center transition hover:opacity-70 dark:border-white/8"
+          title="View projects updated since your review"
+        >
+          <p className={updated ? "text-[1.55rem] font-black tracking-[-0.03em] text-[color:var(--gold)]" : "text-[1.55rem] font-black tracking-[-0.03em] text-[color:var(--ink)]"}>{updated}</p>
+          <p className="mt-0.5 text-[10px] font-bold text-[color:var(--muted)]">Updated</p>
+        </button>
 
-        <div className="border-l border-[#DCE6EA] pl-4 dark:border-white/8">
-          <p className="text-[1.55rem] font-black tracking-[-0.03em] text-[color:var(--ink)]">
-            {unrated}
-          </p>
-          <p className="mt-0.5 text-[10px] font-bold text-[color:var(--muted)]">
-            Unrated
-          </p>
-        </div>
+        <button
+          type="button"
+          onClick={(event) => { event.stopPropagation(); onOpen(course, "unrated"); }}
+          className="flex flex-col items-center justify-center border-l border-[#DCE6EA]/55 text-center transition hover:opacity-70 dark:border-white/8"
+          title="View projects you have not rated"
+        >
+          <p className="text-[1.55rem] font-black tracking-[-0.03em] text-[color:var(--ink)]">{unrated}</p>
+          <p className="mt-0.5 text-[10px] font-bold text-[color:var(--muted)]">Unrated</p>
+        </button>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[11px] font-bold text-[#6F8491] dark:text-[#8499A5]">
-          {updated > 0
-            ? `${updated} project${updated === 1 ? "" : "s"} changed since your last review`
-            : unrated > 0
-            ? `${unrated} project${unrated === 1 ? "" : "s"} not rated yet`
-            : scopedProjects.length
-            ? "No new project changes since your last reviews"
-            : "No student projects are linked yet"}
-        </p>
+      <div className="mt-3.5 flex min-h-[56px] flex-1 flex-col justify-between gap-2.5">
+        <div className="min-h-[30px]">
+          <p className="flex items-center gap-2 text-[11px] font-extrabold text-[#5F7785] dark:text-[#93A7B1]">
+            {updated > 0 ? (
+              <span
+                aria-hidden="true"
+                className="h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--gold)]"
+                style={{ boxShadow: "0 0 0 3px color-mix(in srgb, var(--gold) 12%, transparent)" }}
+              />
+            ) : null}
+            <span>{attentionSummary}</span>
+          </p>
+          {(neverReviewed > 0 || waitingOnStudent > 0) ? (
+            <p className="mt-1 text-[9.5px] font-semibold text-[#8A9AA3] dark:text-[#778E9A]">
+              {neverReviewed > 0 ? `${neverReviewed} never reviewed` : ""}
+              {neverReviewed > 0 && waitingOnStudent > 0 ? " · " : ""}
+              {waitingOnStudent > 0 ? `${waitingOnStudent} waiting on student` : ""}
+            </p>
+          ) : null}
+        </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex min-h-9 items-center justify-end">
           {!course.isBachelorProject ? (
             <button
               type="button"
@@ -178,17 +241,16 @@ function CourseCard({ course, projects, instructorId, onOpen, onUnlink }) {
                 onUnlink(course);
               }}
               disabled={course.requestStatus === "pending"}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[12px] px-2.5 text-[10px] font-black text-[#81929C] transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 dark:text-[#8297A3] dark:hover:bg-red-400/10 dark:hover:text-red-300"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[12px] px-2.5 text-[10px] font-black text-[#81929C] transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-75 dark:text-[#8297A3] dark:hover:bg-red-400/10 dark:hover:text-red-300"
             >
               <Unlink className="h-3.5 w-3.5" />
               {course.requestStatus === "pending" ? "Pending" : "Unlink"}
             </button>
-          ) : null}
-
-          <span className="inline-flex h-9 items-center gap-1.5 rounded-[12px] bg-[#EEF5F8] px-3 text-[10px] font-black text-[#355872] transition group-hover:bg-[#E8F0F4] dark:bg-white/[0.055] dark:text-[#A9C5D4]">
-            Open course
-            <ArrowRight className="h-3.5 w-3.5" />
-          </span>
+          ) : (
+            <span className="inline-flex h-9 items-center text-[10px] font-black text-[color:var(--muted)] opacity-65">
+              Required course
+            </span>
+          )}
         </div>
       </div>
     </article>
@@ -207,6 +269,7 @@ export default function InstructorMyCourses() {
     getAllProjects({ includePrivate: true })
   );
   const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
   const [page, setPage] = useState(1);
 
   const refresh = () => {
@@ -225,19 +288,53 @@ export default function InstructorMyCourses() {
     };
   }, [instructorId]);
 
+  const courseOverview = useMemo(() => {
+    const metricsByCourse = new Map();
+    let coursesNeedingAttention = 0;
+    let unratedProjects = 0;
+    let coursesWithUnrated = 0;
+    let pendingCourses = 0;
+
+    courses.forEach((course) => {
+      const metrics = getCourseMetrics(course, projects, instructorId);
+      metricsByCourse.set(String(course.id), metrics);
+
+      if (metrics.updated > 0) coursesNeedingAttention += 1;
+      unratedProjects += metrics.unrated;
+      if (metrics.unrated > 0) coursesWithUnrated += 1;
+      if (course.requestStatus === "pending") pendingCourses += 1;
+    });
+
+    return {
+      metricsByCourse,
+      coursesNeedingAttention,
+      unratedProjects,
+      coursesWithUnrated,
+      pendingCourses,
+    };
+  }, [courses, projects, instructorId]);
+
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
 
     return courses.filter((course) => {
-      if (!query) return true;
+      const metrics = courseOverview.metricsByCourse.get(String(course.id));
+      const matchesSearch = !query ||
+        `${course.code} ${course.name} ${course.type} ${course.instructor}`
+          .toLowerCase()
+          .includes(query);
 
-      return `${course.code} ${course.name} ${course.type} ${course.instructor}`
-        .toLowerCase()
-        .includes(query);
+      if (!matchesSearch) return false;
+
+      if (activeFilter === "attention") return (metrics?.updated || 0) > 0;
+      if (activeFilter === "unrated") return (metrics?.unrated || 0) > 0;
+      if (activeFilter === "pending") return course.requestStatus === "pending";
+
+      return true;
     });
-  }, [courses, search]);
+  }, [courses, search, activeFilter, courseOverview]);
 
-  useEffect(() => setPage(1), [search]);
+  useEffect(() => setPage(1), [search, activeFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const safePage = Math.min(page, totalPages);
@@ -259,28 +356,90 @@ export default function InstructorMyCourses() {
   return (
     <DashboardLayout workspace="instructor" workspaceLabel="Instructor Workspace">
       <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-[1480px] space-y-6">
-          <PageHeader
-            eyebrow="Teaching workspace"
-            title="My Courses"
-            description="Your active teaching responsibilities. Enter a course to review the student projects attached to it."
-            action={
-              <button
-                type="button"
-                onClick={() => navigate("/instructor/courses")}
-                className="inline-flex h-11 items-center gap-2 rounded-[14px] border border-[#C9DBE4] bg-white/75 px-4 text-[12px] font-black text-[#355872] transition hover:border-[#B9CED8] hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-[#9CD5FF] dark:hover:bg-white/[0.07]"
-              >
-                <GraduationCap className="h-4 w-4" />
-                Browse all courses
-              </button>
-            }
-          />
+        <div className="mx-auto w-full max-w-[1480px] space-y-5">
+          <section className="relative isolate pb-1 pt-0 sm:pb-2">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -left-20 -top-14 h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(122,174,205,0.14),transparent_68%)] blur-xl"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute right-[5%] top-5 h-28 w-56 rotate-[-8deg] rounded-full bg-[radial-gradient(ellipse,rgba(230,199,123,0.10),transparent_70%)] blur-2xl"
+            />
 
-          <SearchFilterToolbar
-            searchValue={search}
-            onSearchChange={setSearch}
-            searchPlaceholder="Search your linked courses..."
-          />
+            <PageHeader
+              eyebrow="Teaching workspace"
+              title="My Courses"
+              description="Your active teaching responsibilities. Enter a course to review the student projects attached to it."
+            />
+
+          </section>
+
+          <div
+            className="flex flex-wrap items-center gap-3 border-b border-[#D9E4E9] dark:border-white/10"
+            role="tablist"
+            aria-label="Filter my courses"
+          >
+            {[
+              { id: "all", label: "All", count: courses.length },
+              {
+                id: "attention",
+                label: "Needs attention",
+                count: courseOverview.coursesNeedingAttention,
+              },
+              {
+                id: "unrated",
+                label: "Unrated",
+                count: courseOverview.coursesWithUnrated,
+              },
+              {
+                id: "pending",
+                label: "Pending",
+                count: courseOverview.pendingCourses,
+              },
+            ].map((filter) => {
+              const selected = activeFilter === filter.id;
+
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => setActiveFilter(filter.id)}
+                  className={`relative inline-flex h-11 items-center gap-2.5 px-3.5 text-[13px] font-black transition ${
+                    selected
+                      ? "text-[#17384E] dark:text-white"
+                      : "text-[#7B8D98] hover:text-[#355872] dark:text-[#8298A6] dark:hover:text-[#C7D8E1]"
+                  }`}
+                >
+                  {filter.label}
+                  <span
+                    className={`min-w-5 rounded-full px-1.5 py-0.5 text-[10px] ${
+                      selected
+                        ? "bg-[color:var(--gold)]/42 text-[#6F581D] shadow-[0_3px_10px_rgba(230,199,123,0.16)] dark:bg-[color:var(--gold)]/14 dark:text-[color:var(--gold)]"
+                        : "bg-[#E9F0F3] text-[#7A8D99] dark:bg-white/[0.05] dark:text-[#8599A5]"
+                    }`}
+                  >
+                    {filter.count}
+                  </span>
+
+                  {selected ? (
+                    <span className="absolute inset-x-1.5 bottom-0 h-[3px] rounded-t-full bg-[color:var(--gold)] shadow-[0_-2px_8px_rgba(230,199,123,0.24)]" />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="w-full max-w-[520px]">
+            <SearchFilterToolbar
+              searchValue={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Search linked courses..."
+              className="[&>div:first-child]:min-h-[46px] [&>div:first-child]:rounded-[16px] [&>div:first-child]:shadow-[0_8px_22px_rgba(53,88,114,0.055)] [&_input]:min-h-[46px] [&_input]:text-[13px]"
+            />
+          </div>
 
           {visibleCourses.length ? (
             <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
@@ -290,11 +449,11 @@ export default function InstructorMyCourses() {
                   course={course}
                   projects={projects}
                   instructorId={instructorId}
-                  onOpen={(selectedCourse) =>
+                  onOpen={(selectedCourse, view = "all") =>
                     navigate(
                       `/instructor/courses/${encodeURIComponent(
                         selectedCourse.id
-                      )}/projects`
+                      )}/projects${view !== "all" ? `?view=${encodeURIComponent(view)}` : ""}`
                     )
                   }
                   onUnlink={handleUnlink}
@@ -308,7 +467,7 @@ export default function InstructorMyCourses() {
                 No linked courses match your search
               </h2>
               <p className="mx-auto mt-2 max-w-lg text-[13px] font-semibold leading-6 text-[color:var(--muted)]">
-                Clear the search or browse All Courses to request another teaching link.
+                Clear the search or selected filter to see your linked courses.
               </p>
             </div>
           )}

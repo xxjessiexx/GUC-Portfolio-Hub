@@ -23,7 +23,7 @@ import {
 
 
 const DB_KEY = "guc_demo_database_v11";
-const CHAT_RESET_VERSION = "chat-reset-v17";
+const CHAT_RESET_VERSION = "chat-reset-v18";
 const CHAT_RESET_KEY = "guc_demo_chat_reset_version";
 const CURRENT_USER_KEY = "currentUser";
 const LEGACY_USERS_KEY = "users";
@@ -1141,6 +1141,203 @@ export function createProject(projectInput) {
   return hydrateProject(project);
 }
 
+
+function sameJsonValue(a, b) {
+  try {
+    return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  } catch {
+    return a === b;
+  }
+}
+
+function getTaskById(tasks, id) {
+  return (Array.isArray(tasks) ? tasks : []).find(
+    (task) => String(task?.id || "") === String(id || "")
+  );
+}
+
+function classifyProjectContentChanges(existing, updates, now) {
+  const events = [];
+  const push = (event) =>
+    events.push({
+      id: makeId("activity", `${existing.id}-${event.type}-${now}-${events.length}`),
+      kind: "content",
+      createdAt: now,
+      ...event,
+    });
+
+  if (Object.prototype.hasOwnProperty.call(updates, "thesisDrafts") && !sameJsonValue(existing.thesisDrafts, updates.thesisDrafts)) {
+    const before = Array.isArray(existing.thesisDrafts) ? existing.thesisDrafts : [];
+    const after = Array.isArray(updates.thesisDrafts) ? updates.thesisDrafts : [];
+    const added = after.find((draft) => !before.some((item) => String(item.id) === String(draft.id)));
+    const beforeFinal = before.find((draft) => draft.isFinal);
+    const afterFinal = after.find((draft) => draft.isFinal);
+
+    if (added) {
+      push({
+        type: "thesis-draft-added",
+        label: "New thesis draft uploaded",
+        detail: added.title || added.fileName || added.file?.name || "A new thesis draft was added.",
+        tab: "bachelor thesis",
+        targetId: added.id,
+      });
+    } else if (String(beforeFinal?.id || "") !== String(afterFinal?.id || "") && afterFinal) {
+      push({
+        type: "thesis-final-selected",
+        label: "Final thesis draft changed",
+        detail: afterFinal.title || afterFinal.fileName || "A different final draft was selected.",
+        tab: "bachelor thesis",
+        targetId: afterFinal.id,
+      });
+    } else {
+      push({
+        type: "thesis-draft-updated",
+        label: "Thesis draft updated",
+        detail: "The Bachelor Project thesis submission changed.",
+        tab: "bachelor thesis",
+        targetId: afterFinal?.id || "",
+      });
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "tasks") && !sameJsonValue(existing.tasks, updates.tasks)) {
+    const before = Array.isArray(existing.tasks) ? existing.tasks : [];
+    const after = Array.isArray(updates.tasks) ? updates.tasks : [];
+    const added = after.find((task) => !before.some((item) => String(item.id) === String(task.id)));
+    const removed = before.find((task) => !after.some((item) => String(item.id) === String(task.id)));
+    const changed = after.find((task) => {
+      const previous = getTaskById(before, task.id);
+      if (!previous) return false;
+      const stripFeedback = (item) => {
+        const { feedback, ...rest } = item || {};
+        return rest;
+      };
+      return !sameJsonValue(stripFeedback(previous), stripFeedback(task));
+    });
+
+    if (added) {
+      push({ type: "task-added", label: "New task added", detail: added.title || "A new task was added.", tab: "tasks", targetId: added.id });
+    } else if (removed) {
+      push({ type: "task-removed", label: "Task removed", detail: removed.title || "A task was removed.", tab: "tasks", targetId: removed.id });
+    } else if (changed) {
+      const previous = getTaskById(before, changed.id);
+      const statusChanged = String(previous?.status || "") !== String(changed.status || "");
+      push({
+        type: statusChanged ? "task-status-updated" : "task-updated",
+        label: statusChanged ? "Task status updated" : "Task updated",
+        detail: statusChanged
+          ? `${changed.title || "Task"} is now ${String(changed.status || "updated").replaceAll("-", " ")}.`
+          : changed.title || "Task details changed.",
+        tab: "tasks",
+        targetId: changed.id,
+      });
+    }
+  }
+
+  const overviewChanges = [
+    ["title", "Project title changed"],
+    ["description", "Project description updated"],
+    ["github", "GitHub link updated"],
+    ["githubUrl", "GitHub link updated"],
+    ["demoUrl", "Demo updated"],
+    ["demo", "Demo updated"],
+    ["technologies", "Technologies updated"],
+    ["languages", "Programming languages updated"],
+    ["tags", "Project tags updated"],
+    ["image", "Project cover updated"],
+    ["visibility", "Project visibility changed"],
+  ];
+
+  for (const [key, label] of overviewChanges) {
+    if (Object.prototype.hasOwnProperty.call(updates, key) && !sameJsonValue(existing[key], updates[key])) {
+      const nextValue = updates[key];
+      const detail = Array.isArray(nextValue)
+        ? `${label.replace(/ updated| changed/i, "")}: ${nextValue.join(", ") || "None"}.`
+        : typeof nextValue === "string" && nextValue.trim()
+        ? `${label.replace(/ updated| changed/i, "")}: ${nextValue.trim()}`
+        : label;
+
+      push({ type: `project-${key}-updated`, label, detail, tab: "overview", targetId: "" });
+      break;
+    }
+  }
+
+  if (
+    (Object.prototype.hasOwnProperty.call(updates, "collaboratorIds") && !sameJsonValue(existing.collaboratorIds, updates.collaboratorIds)) ||
+    (Object.prototype.hasOwnProperty.call(updates, "instructorIds") && !sameJsonValue(existing.instructorIds, updates.instructorIds))
+  ) {
+    push({ type: "project-team-updated", label: "Project team updated", detail: "Collaborators or instructors changed.", tab: "overview", targetId: "" });
+  }
+
+  return events.slice(0, 4);
+}
+
+function classifyInstructorReviewActivity(existing, updates, actor, now) {
+  const entries = [];
+  const push = (event) => entries.push({
+    id: makeId("activity", `${existing.id}-review-${event.type}-${now}-${entries.length}`),
+    kind: "review",
+    actorId: actor?.id,
+    actorName: actor?.name || actor?.email || "Instructor",
+    actorRole: "instructor",
+    createdAt: now,
+    ...event,
+  });
+
+  if (Object.prototype.hasOwnProperty.call(updates, "ratings") && !sameJsonValue(existing.ratings, updates.ratings)) {
+    push({ type: "rating", label: "Project rating updated", detail: "The overall project rating was saved.", tab: "feedback" });
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, "feedback") && !sameJsonValue(existing.feedback, updates.feedback)) {
+    push({ type: "project-feedback", label: "Project feedback updated", detail: "General project feedback changed.", tab: "feedback" });
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, "tasks") && !sameJsonValue(existing.tasks, updates.tasks)) {
+    push({ type: "task-feedback", label: "Task feedback updated", detail: "Feedback on a project task changed.", tab: "tasks" });
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, "thesisDrafts") && !sameJsonValue(existing.thesisDrafts, updates.thesisDrafts)) {
+    push({ type: "thesis-feedback", label: "Thesis feedback updated", detail: "Feedback on the final thesis draft changed.", tab: "bachelor thesis" });
+  }
+
+  return entries;
+}
+
+function makeInstructorChangeNotifications(db, project, actor, events, now) {
+  if (!events.length) return [];
+  const course = (db.courses || []).find(
+    (item) => String(item.id || "") === String(project.courseId || "")
+  );
+  const instructorIds = Array.from(
+    new Set([...(project.instructorIds || []), ...(course?.instructorIds || [])])
+  )
+    .filter(Boolean)
+    .filter((id) => String(id) !== String(actor?.id || ""));
+
+  const primary = events[0];
+  const extraCount = Math.max(0, events.length - 1);
+  const actorName = actor?.name || actor?.email || "A student";
+  const projectTitle = project.title || project.name || "the project";
+  const courseLabel = project.courseCode || course?.code || project.courseName || course?.name || "";
+  const context = courseLabel ? ` (${courseLabel})` : "";
+  const primaryDetail = String(primary.detail || "").trim();
+
+  return instructorIds.map((instructorId) => ({
+    id: makeId("notification", `${project.id}-${instructorId}-${now}`),
+    userId: instructorId,
+    type: "project-update",
+    title: `${projectTitle}: ${primary.label}`,
+    text: `${actorName} updated ${projectTitle}${context}. ${primaryDetail}${extraCount ? ` Plus ${extraCount} other change${extraCount === 1 ? "" : "s"}.` : ""}`.trim(),
+    body: `${actorName} updated ${projectTitle}${context}. ${primaryDetail}${extraCount ? ` Plus ${extraCount} other change${extraCount === 1 ? "" : "s"}.` : ""}`.trim(),
+    unread: true,
+    createdAt: now,
+    time: new Date(now).toLocaleString(),
+    projectId: project.id,
+    relatedProjectId: project.id,
+    courseId: project.courseId,
+    targetTab: primary.tab || "overview",
+    targetId: primary.targetId || "",
+    changeType: primary.type,
+  }));
+}
+
 export function updateProject(projectId, updates) {
   const db = getDemoDb();
   const existing = (db.projects || []).find((project) => String(project.id) === String(projectId));
@@ -1151,9 +1348,25 @@ export function updateProject(projectId, updates) {
   const actorRole = String(actor?.role || "").trim().toLowerCase();
   const isInstructorWrite = actorRole.includes("instructor");
 
+  const contentEvents = isInstructorWrite
+    ? []
+    : classifyProjectContentChanges(existing, updates, now).map((event) => ({
+        ...event,
+        actorId: actor?.id,
+        actorName: actor?.name || actor?.email || "Student",
+        actorRole: actorRole || "student",
+      }));
+
+  const reviewEvents = isInstructorWrite
+    ? classifyInstructorReviewActivity(existing, updates, actor, now)
+    : [];
+
+  const isMeaningfulContentWrite = contentEvents.length > 0;
   const contentUpdatedAt = isInstructorWrite
     ? existing.contentUpdatedAt || existing.updatedAt || existing.createdAt || now
-    : now;
+    : isMeaningfulContentWrite
+    ? now
+    : existing.contentUpdatedAt || existing.updatedAt || existing.createdAt || now;
 
   let merged = {
     ...existing,
@@ -1162,20 +1375,35 @@ export function updateProject(projectId, updates) {
     createdAt: existing.createdAt,
     updatedAt: now,
     contentUpdatedAt,
+    activityHistory: [
+      ...(existing.activityHistory || []),
+      ...contentEvents,
+      ...reviewEvents,
+    ].slice(-120),
   };
 
   // Feedback/rating edits are meaningful review actions, but they should not make
   // the student's project look newly modified. Track the instructor review separately.
-  if (isInstructorWrite && actor?.id) {
-    merged = withInstructorReviewState(merged, actor.id, now);
+  if (isInstructorWrite && actor?.id && reviewEvents.length) {
+    merged = withInstructorReviewState(merged, actor.id, now, {
+      workflowStatus: "reviewed",
+    });
   }
 
   const updated = normalizeProjectInput(merged, actor);
+  const notifications = isInstructorWrite
+    ? db.notifications || []
+    : [
+        ...(db.notifications || []),
+        ...makeInstructorChangeNotifications(db, updated, actor, contentEvents, now),
+      ];
+
   setDemoDb({
     ...db,
     projects: db.projects.map((project) =>
       project.id === existing.id ? updated : project
     ),
+    notifications,
   });
   return hydrateProject(updated);
 }
@@ -1190,11 +1418,30 @@ export function markProjectReviewed(projectId, instructorId = getCurrentUser()?.
 
   if (!existing) return null;
 
-  const reviewed = withInstructorReviewState(
-    existing,
-    instructorId,
-    new Date().toISOString()
-  );
+  const now = new Date().toISOString();
+  const actor = getCurrentUser();
+  let reviewed = withInstructorReviewState(existing, instructorId, now, {
+    workflowStatus: "reviewed",
+  });
+
+  reviewed = {
+    ...reviewed,
+    activityHistory: [
+      ...(reviewed.activityHistory || []),
+      {
+        id: makeId("activity", `${projectId}-marked-reviewed-${now}`),
+        kind: "review",
+        type: "marked-reviewed",
+        label: "Marked as reviewed",
+        detail: "No additional feedback was required at this review.",
+        tab: "overview",
+        actorId: instructorId,
+        actorName: actor?.name || actor?.email || "Instructor",
+        actorRole: "instructor",
+        createdAt: now,
+      },
+    ].slice(-120),
+  };
 
   setDemoDb({
     ...db,
@@ -1204,6 +1451,70 @@ export function markProjectReviewed(projectId, instructorId = getCurrentUser()?.
   });
 
   return hydrateProject(reviewed);
+}
+
+export function setInstructorProjectWorkflowStatus(
+  projectId,
+  workflowStatus,
+  instructorId = getCurrentUser()?.id
+) {
+  if (!projectId || !instructorId) return null;
+
+  const allowed = new Set(["reviewed", "follow-up", "waiting-on-student"]);
+  if (!allowed.has(workflowStatus)) return null;
+
+  const db = getDemoDb();
+  const existing = (db.projects || []).find(
+    (project) => String(project.id) === String(projectId)
+  );
+  if (!existing) return null;
+
+  const now = new Date().toISOString();
+  const actor = getCurrentUser();
+  const reviewedAt = workflowStatus === "reviewed"
+    ? now
+    : (existing.reviewStates || []).find(
+        (entry) => String(entry?.instructorId || entry?.userId || "") === String(instructorId)
+      )?.lastReviewedAt || now;
+
+  let updated = withInstructorReviewState(existing, instructorId, reviewedAt, {
+    workflowStatus,
+    workflowUpdatedAt: now,
+  });
+
+  const labels = {
+    reviewed: "Review complete",
+    "follow-up": "Follow-up planned",
+    "waiting-on-student": "Waiting for student revision",
+  };
+
+  updated = {
+    ...updated,
+    activityHistory: [
+      ...(updated.activityHistory || []),
+      {
+        id: makeId("activity", `${projectId}-workflow-${workflowStatus}-${now}`),
+        kind: "review",
+        type: "review-workflow",
+        label: labels[workflowStatus],
+        detail: "Instructor review status updated.",
+        tab: "overview",
+        actorId: instructorId,
+        actorName: actor?.name || actor?.email || "Instructor",
+        actorRole: "instructor",
+        createdAt: now,
+      },
+    ].slice(-120),
+  };
+
+  setDemoDb({
+    ...db,
+    projects: db.projects.map((project) =>
+      String(project.id) === String(projectId) ? updated : project
+    ),
+  });
+
+  return hydrateProject(updated);
 }
 
 function getProjectInvitationRecord(project, userId) {

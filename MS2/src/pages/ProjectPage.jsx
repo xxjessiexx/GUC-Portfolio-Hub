@@ -5,7 +5,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Eye, EyeOff, RefreshCcw, Star, Users } from "lucide-react";
+import { Activity, ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Eye, EyeOff, FileText, MessageSquareText, RefreshCcw, Star, Users } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AppCard } from "@/components/ui/AppCard";
@@ -42,10 +42,11 @@ import {
   getCurrentUser,
   getProjectById,
   markProjectReviewed,
+  setInstructorProjectWorkflowStatus,
   updateProject,
 } from "@/data/demoStore";
 import { formatProjectRating } from "@/lib/projectRating";
-import { getInstructorProjectReviewState } from "@/lib/projectReview";
+import { getInstructorProjectReviewState, getProjectActivity, getProjectChangeSummary } from "@/lib/projectReview";
 
 
 const LIGHT_WORKSPACE_THEME = {
@@ -155,6 +156,48 @@ function getActiveTabCopy(tab) {
   };
 }
 
+
+function ProjectReviewActivity({ events = [] }) {
+  if (!events.length) return null;
+
+  const iconFor = (event) => {
+    if (String(event?.tab || "") === "tasks") return MessageSquareText;
+    if (String(event?.tab || "") === "bachelor thesis") return FileText;
+    return Activity;
+  };
+
+  return (
+    <div className="mt-5 rounded-[18px] border border-[#D5E2E8] bg-white/46 px-4 py-3.5">
+      <div className="flex items-center gap-2">
+        <Activity className="h-3.5 w-3.5 text-[#5E87A0]" />
+        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-[#5F849B]">
+          Review activity
+        </p>
+      </div>
+
+      <div className="mt-3 space-y-3">
+        {events.slice(0, 5).map((event) => {
+          const Icon = iconFor(event);
+          return (
+            <div key={event.id || `${event.type}-${event.createdAt}`} className="flex gap-2.5">
+              <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#EDF5F9] text-[#557C97]">
+                <Icon className="h-3 w-3" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10.5px] font-black text-[#294A61]">{event.label}</p>
+                <p className="mt-0.5 line-clamp-1 text-[9.5px] font-semibold text-[#7A8D98]">
+                  {event.detail || event.actorName || "Project activity"}
+                  {event.createdAt ? ` · ${formatProjectDate(event.createdAt)}` : ""}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function SequenceDestination({
   label,
   project,
@@ -189,13 +232,14 @@ function SequenceDestination({
 }
 
 export default function ProjectPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const params = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
   const projectId =
     searchParams.get("projectId") || params.projectId || params.id;
+  const focusTargetId = searchParams.get("focus") || "";
 
   const [project, setProject] = useState(null);
   const [projectMissing, setProjectMissing] = useState(false);
@@ -510,6 +554,31 @@ export default function ProjectPage() {
     makeNotification,
   });
 
+  const hasDraftWork = Boolean(
+    String(projectFeedback.projectFeedbackDraft || "").trim() ||
+    Object.values(projectTasks.taskFeedbackDrafts || {}).some((value) => String(value || "").trim()) ||
+    Object.values(thesisDrafts.draftFeedbackDrafts || {}).some((value) => String(value || "").trim())
+  );
+
+  useEffect(() => {
+    if (!hasDraftWork) return undefined;
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasDraftWork]);
+
+  useEffect(() => {
+    if (!focusTargetId) return;
+    const timer = window.setTimeout(() => {
+      const target = document.getElementById(`task-${focusTargetId}`) || document.getElementById(`thesis-${focusTargetId}`);
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [focusTargetId, safeActiveTab]);
+
   const toggleVisibility = () => {
     if (!canManageProject) return;
 
@@ -616,8 +685,11 @@ export default function ProjectPage() {
   const previousProject = getSequenceProject(projectFlow.previousId);
   const nextProject = getSequenceProject(projectFlow.nextId);
 
+  const confirmLeavingDrafts = () =>
+    !hasDraftWork || window.confirm("You have feedback drafts saved privately. Leave this project now? Your drafts will remain saved.");
+
   const openFlowProject = (id) => {
-    if (!id) return;
+    if (!id || !confirmLeavingDrafts()) return;
 
     navigate(`/project?projectId=${encodeURIComponent(id)}`, {
       state: {
@@ -633,6 +705,7 @@ export default function ProjectPage() {
   };
 
   const returnToOrigin = () => {
+    if (!confirmLeavingDrafts()) return;
     navigate(projectFlow.originPath || "/explore-projects");
   };
 
@@ -641,6 +714,27 @@ export default function ProjectPage() {
   const instructorReviewState = canAddInstructorFeedback
     ? getInstructorProjectReviewState(project?.raw || project, currentUserId)
     : null;
+  const instructorChanges = canAddInstructorFeedback
+    ? getProjectChangeSummary(project?.raw || project, currentUserId, { limit: 4 })
+    : [];
+  const activityEvents = getProjectActivity(project?.raw || project)
+    .slice()
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+  const openReviewChange = (change) => {
+    const tab = change?.tab || "overview";
+    setActiveTab(tab);
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", tab);
+    if (change?.targetId) next.set("focus", change.targetId);
+    else next.delete("focus");
+    setSearchParams(next, { replace: true });
+  };
+
+  const handleWorkflowStatus = (workflowStatus) => {
+    if (!project?.id || !currentUserId || !canAddInstructorFeedback) return;
+    setInstructorProjectWorkflowStatus(project.id, workflowStatus, currentUserId);
+  };
 
   const handleMarkReviewed = () => {
     if (!project?.id || !currentUserId || !canAddInstructorFeedback) return;
@@ -730,6 +824,32 @@ export default function ProjectPage() {
                     onAccept={() => respondToInvitation("accepted")}
                     onReject={() => respondToInvitation("rejected")}
                   />
+
+                  {canAddInstructorFeedback && instructorChanges.length ? (
+                    <div className="mt-5 rounded-[18px] border border-[#E2D7B5] bg-[#FFF9EA]/80 px-4 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <RefreshCcw className="h-3.5 w-3.5 text-[#9A7618]" />
+                        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-[#8A6A18]">
+                          Since your last review
+                        </p>
+                      </div>
+                      <div className="mt-2.5 space-y-1.5">
+                        {instructorChanges.map((change) => (
+                          <button
+                            key={`${change.type}-${change.targetId}-${change.createdAt}`}
+                            type="button"
+                            onClick={() => openReviewChange(change)}
+                            className="flex w-full items-center justify-between gap-3 rounded-[11px] px-2 py-1.5 text-left transition hover:bg-white/60"
+                          >
+                            <span className="line-clamp-1 text-[10px] font-black text-[#765E22]">{change.label}</span>
+                            <ChevronRight className="h-3 w-3 shrink-0 text-[#A78B43]" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {canAddInstructorFeedback ? <ProjectReviewActivity events={activityEvents} /> : null}
 
                   <div className="mt-5">
                     <p className="mb-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#5F849B]">
@@ -834,6 +954,20 @@ export default function ProjectPage() {
                             Mark as reviewed
                           </button>
                         ) : null}
+
+                        <label className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.1em] text-[#78909D]">
+                          <Clock3 className="h-3.5 w-3.5" />
+                          Review status
+                          <select
+                            value={instructorReviewState.workflowStatus === "revision-submitted" ? "waiting-on-student" : instructorReviewState.workflowStatus === "not-started" ? "reviewed" : instructorReviewState.workflowStatus}
+                            onChange={(event) => handleWorkflowStatus(event.target.value)}
+                            className="h-8 rounded-[10px] border border-[#C9DBE4] bg-white px-2 text-[10px] font-black normal-case tracking-normal text-[#355872] outline-none"
+                          >
+                            <option value="reviewed">Reviewed</option>
+                            <option value="follow-up">Follow-up</option>
+                            <option value="waiting-on-student">Waiting on student</option>
+                          </select>
+                        </label>
                       </div>
                     ) : null}
                   </div>
@@ -929,6 +1063,7 @@ export default function ProjectPage() {
                       onAddDraftFeedback={thesisDrafts.addDraftFeedback}
                       onEditDraftFeedback={thesisDrafts.editDraftFeedback}
                       onDeleteDraftFeedback={thesisDrafts.deleteDraftFeedback}
+                      instructorLastReviewedAt={instructorReviewState?.lastReviewedAt || null}
                     />
                   )}
                 </div>
