@@ -415,9 +415,10 @@ export default function Register({ addUser }) {
                       right-[17%]
                       h-[3px]
                       rounded-t-full
-                      bg-[linear-gradient(90deg,#E6C77B_0%,#79B0E3_100%)]
+                      bg-[color:var(--gold)]
                     "
                   />
+                  
                 )}
               </motion.button>
             );
