@@ -7090,7 +7090,7 @@ export const chatsSeed = [
         "sender": "other",
         "text": "Hi Yasmin, I reviewed your autonomous vehicle and portfolio projects. Can we discuss a frontend/AI internship?",
         "createdAt": "2026-05-08T15:00:00.000Z",
-        "time": "15:00"
+        "time": "2:00 PM"
       },
     ], //here we need some scripted relpies so that i can chat with the employeer , any other chat i will only be able to send without replies
     "scriptedReplyIndex": 0,
@@ -7120,7 +7120,7 @@ export const chatsSeed = [
         "sender": "other",
         "text": "I updated the discovery filters and linked them to the shared seed structure.",
         "createdAt": "2026-05-08T16:00:00.000Z",
-        "time": "16:00"
+        "time": "4:03 PM"
       }
     ]
   },
@@ -7143,7 +7143,7 @@ export const chatsSeed = [
         "sender": "other",
         "text": "Please add the dataset attribution before the final public showcase.",
         "createdAt": "2026-05-04T12:10:00.000Z",
-        "time": "12:10"
+        "time": "12:10 PM"
       },
       {
         "id": "msg-5",
@@ -7151,7 +7151,7 @@ export const chatsSeed = [
         "sender": "other",
         "text": "I added the dataset references and model-training notes to the README. Is that enough for the attribution point you flagged?",
         "createdAt": "2026-09-09T11:20:00.000Z",
-        "time": "14:20"
+        "time": "1:30 PM"
       }
     ]
   },
@@ -7176,7 +7176,7 @@ export const chatsSeed = [
         "sender": "other",
         "text": "For the next thesis revision, make the methodology measurable and tie each accessibility requirement to an evaluation criterion.",
         "createdAt": "2026-09-10T13:30:00.000Z",
-        "time": "16:30"
+        "time": "4:20 PM"
       },
       {
         "id": "msg-farida-instructor-2",
@@ -7184,7 +7184,7 @@ export const chatsSeed = [
         "sender": "other",
         "text": "I uploaded the revised methodology section and accessibility evaluation. Could you check whether the evaluation criteria are specific enough now?",
         "createdAt": "2026-09-12T19:18:00.000Z",
-        "time": "22:18"
+        "time": "10:18 PM"
       }
     ]
   }

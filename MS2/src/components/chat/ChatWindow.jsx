@@ -9,6 +9,7 @@ import {
   addScriptedChatReply,
   getCurrentUser,
   getOrCreateDirectChat,
+  markChatAsRead,
 } from "@/data/demoStore";
 
 export default function ChatWindow({ selectedChat, onCreatedChat }) {
@@ -66,14 +67,24 @@ export default function ChatWindow({ selectedChat, onCreatedChat }) {
 
   setIsTyping(true);
 
-  window.setTimeout(() => {
-    addScriptedChatReply(activeChat.id, nextReply, otherParticipantId, {
+window.setTimeout(() => {
+  markChatAsRead(
+    activeChat.id,
+    otherParticipantId
+  );
+
+  addScriptedChatReply(
+    activeChat.id,
+    nextReply,
+    otherParticipantId,
+    {
       markAsUnread: false,
       createNotification: false,
-    });
+    }
+  );
 
-    setIsTyping(false);
-  }, 1800);
+  setIsTyping(false);
+}, 1800);
 };
 
   useEffect(() => {

@@ -23,7 +23,7 @@ import {
 
 
 const DB_KEY = "guc_demo_database_v11";
-const CHAT_RESET_VERSION = "chat-reset-v18";
+const CHAT_RESET_VERSION = "chat-reset-v24";
 const CHAT_RESET_KEY = "guc_demo_chat_reset_version";
 const CURRENT_USER_KEY = "currentUser";
 const LEGACY_USERS_KEY = "users";
@@ -2173,10 +2173,38 @@ export function markChatAsRead(chatId, userId = getCurrentUser()?.id) {
   const updatedChats = (db.chats || []).map((chat) => {
     if (String(chat.id) !== String(chatId)) return chat;
 
+    const updatedMessages = (chat.messages || []).map((message) => {
+      /*
+        A user should only mark messages from OTHER people as read.
+        Their own messages are not "read by themselves".
+      */
+      if (String(message.senderId) === String(userId)) {
+        return message;
+      }
+
+      const existingReadBy = Array.isArray(message.readBy)
+        ? message.readBy
+        : [];
+
+      return {
+        ...message,
+        readBy: Array.from(
+          new Set([
+            ...existingReadBy.map(String),
+            String(userId),
+          ])
+        ),
+      };
+    });
+
     return {
       ...chat,
+
+      messages: updatedMessages,
+
       unreadBy: (chat.unreadBy || []).filter(
-        (readerId) => String(readerId) !== String(userId)
+        (readerId) =>
+          String(readerId) !== String(userId)
       ),
     };
   });
@@ -2211,20 +2239,31 @@ export function addChatMessage(
 
   const now = new Date();
 
-  const message = {
-    id: `msg-${String(chatId)}-${Date.now()}-${Math.random()
-      .toString(36)
-      .slice(2, 8)}`,
-    senderId,
-    sender: "me",
-    text: text?.trim() || "",
-    attachments,
-    createdAt: now.toISOString(),
-    time: now.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  };
+ const message = {
+  id: `msg-${String(chatId)}-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`,
+  senderId,
+  sender: "me",
+  text: text?.trim() || "",
+  attachments,
+
+  /*
+    The message has already reached our demo chat store,
+    so we consider it delivered immediately.
+
+    readBy remains empty until the other participant
+    opens the conversation.
+  */
+  delivered: true,
+  readBy: [],
+
+  createdAt: now.toISOString(),
+  time: now.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  }),
+};
 
   const otherParticipantIds = (targetChat.participantIds || []).filter(
     (participantId) => String(participantId) !== String(senderId)
