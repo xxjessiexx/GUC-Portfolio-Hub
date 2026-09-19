@@ -81,7 +81,7 @@ export default function ChatProfilePopover({
   return (
     <div
       className="
-        absolute left-0 top-[calc(100%+12px)] z-50
+        absolute left-0 sm:left-12 top-[calc(100%+10px)] z-50
         w-[330px] max-w-[calc(100vw-32px)]
         overflow-hidden rounded-[24px]
         border border-white/70
@@ -92,6 +92,10 @@ export default function ChatProfilePopover({
       "
       onClick={(event) => event.stopPropagation()}
     >
+      {/* Gold accent */}
+      <div className="mb-4 h-[3px] w-12 rounded-full bg-[color:var(--gold)]" />
+
+      {/* Role / secondary info */}
       <div>
         <p className="text-sm font-black text-[color:var(--primary)]">
           {roleLabel}
@@ -104,6 +108,7 @@ export default function ChatProfilePopover({
         )}
       </div>
 
+      {/* Bio */}
       <p
         className="
           mt-4 overflow-hidden
@@ -117,6 +122,7 @@ export default function ChatProfilePopover({
         {bio}
       </p>
 
+      {/* Skills */}
       {skills.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
           {skills.map((skill) => (
@@ -137,6 +143,7 @@ export default function ChatProfilePopover({
         </div>
       )}
 
+      {/* Student portfolio action */}
       {role === "student" && (
         <button
           type="button"
