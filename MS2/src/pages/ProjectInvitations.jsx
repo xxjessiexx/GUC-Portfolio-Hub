@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
-  ArrowRight,
   Check,
   CheckCircle2,
   Clock3,
@@ -219,7 +218,7 @@ function InvitationCard({
         className="
           grid
           cursor-pointer
-          lg:grid-cols-[290px_minmax(0,1fr)]
+          lg:grid-cols-[275px_minmax(0,1fr)]
 
           focus-visible:outline-none
           focus-visible:ring-2
@@ -227,24 +226,19 @@ function InvitationCard({
           focus-visible:ring-[#79B0E3]
         "
       >
-        {/* =====================================================
-            LEFT FOCAL PANEL
-        ====================================================== */}
-
+        {/* LEFT PANEL */}
         <div
           className="
             relative
             flex
-            min-h-[235px]
+            min-h-[195px]
             flex-col
             overflow-hidden
             bg-[linear-gradient(145deg,#071D2C_0%,#102F45_52%,#1E4964_100%)]
-            p-7
+            p-6
             text-white
           "
         >
-          {/* atmosphere */}
-
           <div
             className="
               pointer-events-none
@@ -261,9 +255,9 @@ function InvitationCard({
           <div
             className="
               pointer-events-none
+              absolute
               -bottom-16
               -left-10
-              absolute
               h-44
               w-44
               rounded-full
@@ -308,8 +302,8 @@ function InvitationCard({
                 {pending
                   ? "Project Invitation"
                   : status === "accepted"
-                  ? "Joined Project"
-                  : "Past Invitation"}
+                    ? "Joined Project"
+                    : "Past Invitation"}
               </p>
 
               {status === "accepted" && (
@@ -333,11 +327,9 @@ function InvitationCard({
               )}
             </div>
 
-            {/* GOLD FOCUS RULE */}
-
             <div
               className={`
-                mt-4
+                mt-3
                 h-[2px]
                 rounded-full
 
@@ -351,7 +343,7 @@ function InvitationCard({
 
             <p
               className="
-                mt-5
+                mt-4
                 text-[11px]
                 font-black
                 tracking-[0.075em]
@@ -364,9 +356,9 @@ function InvitationCard({
 
             <h2
               className="
-                mt-3
+                mt-2
                 max-w-[220px]
-                text-[29px]
+                text-[27px]
                 font-black
                 leading-[1.01]
                 tracking-[-0.045em]
@@ -378,12 +370,11 @@ function InvitationCard({
           </div>
 
           {/* ROLE */}
-
           <div
             className="
               relative
               mt-auto
-              pt-7
+              pt-5
             "
           >
             <div
@@ -393,7 +384,7 @@ function InvitationCard({
                 gap-2.5
                 border-t
                 border-white/12
-                pt-4
+                pt-3
               "
             >
               <div
@@ -457,10 +448,7 @@ function InvitationCard({
           </div>
         </div>
 
-        {/* =====================================================
-            RIGHT CONTENT
-        ====================================================== */}
-
+        {/* RIGHT CONTENT */}
         <div
           className="
             relative
@@ -468,12 +456,10 @@ function InvitationCard({
             min-w-0
             flex-col
             px-7
-            py-6
+            py-5
             sm:px-8
           "
         >
-          {/* faint corner atmosphere */}
-
           <div
             className="
               pointer-events-none
@@ -487,10 +473,7 @@ function InvitationCard({
             "
           />
 
-          {/* =================================================
-              TOP
-          ================================================== */}
-
+          {/* TOP */}
           <div
             className="
               relative
@@ -576,14 +559,11 @@ function InvitationCard({
             </div>
           </div>
 
-          {/* =================================================
-              MAIN FOCAL COPY
-          ================================================== */}
-
+          {/* MAIN COPY */}
           <div
             className="
               relative
-              mt-5
+              mt-4
             "
           >
             <p
@@ -600,8 +580,8 @@ function InvitationCard({
 
             <h3
               className="
-                mt-1.5
-                text-[22px]
+                mt-1
+                text-[21px]
                 font-black
                 leading-tight
                 tracking-[-0.03em]
@@ -613,11 +593,11 @@ function InvitationCard({
 
             <p
               className="
-                mt-2
+                mt-1.5
                 max-w-3xl
                 text-[13px]
                 font-medium
-                leading-6
+                leading-5
                 text-[color:var(--muted)]
               "
             >
@@ -625,14 +605,11 @@ function InvitationCard({
             </p>
           </div>
 
-          {/* =================================================
-              COURSE + TAGS
-          ================================================== */}
-
+          {/* COURSE + TAGS */}
           <div
             className="
               relative
-              mt-4
+              mt-3
               flex
               flex-wrap
               items-center
@@ -650,8 +627,7 @@ function InvitationCard({
               {getCourse(invitation)}
             </p>
 
-            {invitation.tags?.length >
-              0 && (
+            {invitation.tags?.length > 0 && (
               <>
                 <span
                   className="
@@ -695,152 +671,114 @@ function InvitationCard({
             )}
           </div>
 
-          {/* =================================================
-              ACTION ROW
-          ================================================== */}
-
-          <div
-            className="
-              relative
-              mt-auto
-              flex
-              flex-col
-              gap-3
-              border-t
-              border-[#DAE6EC]
-              pt-4
-              sm:flex-row
-              sm:items-center
-              sm:justify-between
-            "
-          >
-
-            {pending ? (
-              <div
-                className="
-                  flex
-                  items-center
-                  gap-2
-                "
-              >
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-
-                    onDecision(
-                      invitation,
-                      "rejected"
-                    );
-                  }}
+          {/* ACTION ROW */}
+          {(pending || status === "rejected") && (
+            <div
+              className="
+                relative
+                mt-auto
+                flex
+                flex-col
+                gap-3
+                border-t
+                border-[#DAE6EC]
+                pt-3
+                sm:flex-row
+                sm:items-center
+                sm:justify-between
+              "
+            >
+              {pending ? (
+                <div
                   className="
-                    inline-flex
-                    h-10
+                    flex
                     items-center
-                    justify-center
-                    gap-1.5
-                    rounded-[13px]
-                    border
-                    border-[#CDD9E0]
-                    bg-[#FDFEFE]
-                    px-4
-                    text-[11px]
-                    font-black
-                    text-[#617480]
-                    shadow-[0_4px_10px_rgba(53,88,114,0.04)]
-                    transition-all
-
-                    hover:border-[#B5C6CF]
-                    hover:bg-white
-                    hover:text-[#405665]
-                  "
-                >
-                  <X className="h-3.5 w-3.5" />
-
-                  Decline
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-
-                    onDecision(
-                      invitation,
-                      "accepted"
-                    );
-                  }}
-                  className="
-                    inline-flex
-                    h-10
-                    items-center
-                    justify-center
                     gap-2
-                    rounded-[13px]
-                    bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
-                    px-5
-                    text-[11px]
-                    font-black
-                    text-white
-                    shadow-[0_9px_20px_rgba(53,88,114,0.20)]
-                    transition-all
-
-                    hover:-translate-y-[1px]
-                    hover:brightness-105
-                    hover:shadow-[0_12px_25px_rgba(53,88,114,0.24)]
                   "
                 >
-                  <Check className="h-3.5 w-3.5" />
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
 
-                  Accept invitation
-                </button>
-              </div>
-            ) : status === "accepted" ? (
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onOpen(invitation);
-                }}
-                className="
-                  inline-flex
-                  h-10
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-[13px]
-                  border
-                  border-[#CDD9E0]
-                  bg-[#FDFEFE]
-                  px-4
-                  text-[11px]
-                  font-black
-                  text-[#355872]
-                  shadow-[0_4px_10px_rgba(53,88,114,0.04)]
-                  transition-all
-                  hover:border-[#B5C6CF]
-                  hover:bg-white
-                  dark:border-white/10
-                  dark:bg-white/[0.04]
-                  dark:text-[#A9C5D4]
-                  dark:hover:bg-white/[0.07]
-                "
-              >
-                Open project
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            ) : (
-              <p
-                className="
-                  text-[9px]
-                  font-semibold
-                  text-[color:var(--muted)]
-                "
-              >
-                You declined this invitation.
-              </p>
-            )}
-          </div>
+                      onDecision(
+                        invitation,
+                        "rejected"
+                      );
+                    }}
+                    className="
+                      inline-flex
+                      h-9
+                      items-center
+                      justify-center
+                      gap-1.5
+                      rounded-[13px]
+                      border
+                      border-[#CDD9E0]
+                      bg-[#FDFEFE]
+                      px-4
+                      text-[11px]
+                      font-black
+                      text-[#617480]
+                      shadow-[0_4px_10px_rgba(53,88,114,0.04)]
+                      transition-all
+
+                      hover:border-[#B5C6CF]
+                      hover:bg-white
+                      hover:text-[#405665]
+                    "
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Decline
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+
+                      onDecision(
+                        invitation,
+                        "accepted"
+                      );
+                    }}
+                    className="
+                      inline-flex
+                      h-9
+                      items-center
+                      justify-center
+                      gap-2
+                      rounded-[13px]
+                      bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)]
+                      px-5
+                      text-[11px]
+                      font-black
+                      text-white
+                      shadow-[0_9px_20px_rgba(53,88,114,0.20)]
+                      transition-all
+
+                      hover:-translate-y-[1px]
+                      hover:brightness-105
+                      hover:shadow-[0_12px_25px_rgba(53,88,114,0.24)]
+                    "
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    Accept invitation
+                  </button>
+                </div>
+              ) : (
+                <p
+                  className="
+                    text-[9px]
+                    font-semibold
+                    text-[color:var(--muted)]
+                  "
+                >
+                  You declined this invitation.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </AppCard>
