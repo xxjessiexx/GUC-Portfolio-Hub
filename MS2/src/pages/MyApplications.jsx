@@ -461,29 +461,67 @@ function ApplicationSurface({ application, onOpen }) {
                 line: "bg-[#E6C77B]",
               };
 
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpen();
+    }
+  };
+
   return (
     <article
-      className="group overflow-hidden rounded-[30px] border border-white bg-white/95 p-0 shadow-[0_22px_55px_rgba(53,88,114,0.13)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-[3px] hover:shadow-[0_30px_68px_rgba(53,88,114,0.18)] dark:border-[var(--card-border)] dark:bg-[var(--surface)]"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={handleKeyDown}
+      className="
+        group
+        cursor-pointer
+        overflow-hidden
+        rounded-[30px]
+        border border-white
+        bg-white/95
+        p-0
+        shadow-[0_22px_55px_rgba(53,88,114,0.13)]
+        backdrop-blur-xl
+        transition-all
+        duration-300
+
+        hover:-translate-y-[3px]
+        hover:shadow-[0_30px_68px_rgba(53,88,114,0.18)]
+
+        focus-visible:outline-none
+        focus-visible:ring-2
+        focus-visible:ring-[#79B0E3]
+        focus-visible:ring-offset-2
+
+        dark:border-[var(--card-border)]
+        dark:bg-[var(--surface)]
+      "
     >
       <div className="grid lg:grid-cols-[290px_minmax(0,1fr)]">
-        <button
-          type="button"
-          onClick={onOpen}
-          className="relative flex min-h-[235px] flex-col overflow-hidden bg-[linear-gradient(145deg,#071D2C_0%,#102F45_52%,#1E4964_100%)] p-7 text-left text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#79B0E3]"
-        >
+        {/* Left section */}
+        <div className="relative flex min-h-[235px] flex-col overflow-hidden bg-[linear-gradient(145deg,#071D2C_0%,#102F45_52%,#1E4964_100%)] p-7 text-left text-white">
           <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(156,213,255,0.19),transparent_69%)]" />
+
           <div className="pointer-events-none absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(230,199,123,0.11),transparent_70%)]" />
 
           <div className="relative">
             <div className="flex items-center justify-between gap-3">
-              <p className={`text-[9px] font-black uppercase tracking-[0.18em] ${statusTone.accent}`}>
+              <p
+                className={`text-[9px] font-black uppercase tracking-[0.18em] ${statusTone.accent}`}
+              >
                 {statusTone.label}
               </p>
 
-              <span className={`h-2.5 w-2.5 rounded-full ${statusTone.dot}`} />
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${statusTone.dot}`}
+              />
             </div>
 
-            <span className={`mt-4 block h-[2px] w-10 rounded-full ${statusTone.line}`} />
+            <span
+              className={`mt-4 block h-[2px] w-10 rounded-full ${statusTone.line}`}
+            />
 
             <p className="mt-5 text-[11px] font-black uppercase tracking-[0.10em] text-[#8FC3E5]">
               {application.company}
@@ -507,8 +545,9 @@ function ApplicationSurface({ application, onOpen }) {
               </span>
             </div>
           </div>
-        </button>
+        </div>
 
+        {/* Right section */}
         <div className="relative flex min-w-0 flex-col px-7 py-6 sm:px-8">
           <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(156,213,255,0.10),transparent_70%)]" />
 
@@ -535,6 +574,7 @@ function ApplicationSurface({ application, onOpen }) {
               <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
                 Applied
               </p>
+
               <p className="mt-1 text-[11px] font-black text-[#355872]">
                 {formatDisplayDate(application.dateApplied)}
               </p>
@@ -546,6 +586,7 @@ function ApplicationSurface({ application, onOpen }) {
               <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
                 Company
               </p>
+
               <p className="mt-1 text-[11px] font-black text-[#355872]">
                 {application.company}
               </p>
@@ -557,13 +598,12 @@ function ApplicationSurface({ application, onOpen }) {
               <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">
                 Status
               </p>
+
               <p className="mt-1 text-[11px] font-black text-[#355872]">
                 {application.status}
               </p>
             </div>
           </div>
-
-          
         </div>
       </div>
     </article>
