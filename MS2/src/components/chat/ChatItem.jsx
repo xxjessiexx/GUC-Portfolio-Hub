@@ -1,3 +1,5 @@
+import { Pin } from "lucide-react";
+
 import {
   getChatDisplayMeta,
   getCurrentUser,
@@ -48,11 +50,18 @@ export default function ChatItem({
   chat,
   isActive,
   onClick,
+  pinned = false,
+  onTogglePin,
 }) {
   const currentUser = getCurrentUser();
   const displayChat = getChatDisplayMeta(chat, currentUser?.id);
-  const lastMessage = chat.messages?.[chat.messages.length - 1];
-  const isUnread = (chat.unreadBy || []).includes(currentUser?.id);
+
+  const lastMessage =
+    chat.messages?.[chat.messages.length - 1];
+
+  const isUnread = (chat.unreadBy || []).includes(
+    currentUser?.id
+  );
 
   return (
     <button
@@ -69,6 +78,7 @@ export default function ChatItem({
         <span className="absolute left-0 top-5 h-10 w-1 rounded-r-full bg-[color:var(--gold)]" />
       )}
 
+      {/* Avatar */}
       <div className="relative shrink-0">
         <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-[linear-gradient(135deg,var(--dark),var(--primary))] text-sm font-black text-white shadow-[var(--shadow-soft)]">
           {displayChat.image ? (
@@ -93,36 +103,81 @@ export default function ChatItem({
         )}
       </div>
 
+      {/* Chat content */}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <h3
             className={cn(
-              "truncate text-sm text-[color:var(--ink)]",
+              "min-w-0 flex-1 truncate text-sm text-[color:var(--ink)]",
               isUnread ? "font-black" : "font-bold"
             )}
           >
             {displayChat.name}
           </h3>
 
-          <span className="shrink-0 text-[11px] font-bold text-[color:var(--muted)]">
-            {formatChatTime(lastMessage?.time)}
-          </span>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span className="text-[11px] font-bold text-[color:var(--muted)]">
+              {formatChatTime(lastMessage?.time)}
+            </span>
+
+            <span
+              role="button"
+              tabIndex={0}
+              aria-label={
+                pinned
+                  ? `Unpin conversation with ${displayChat.name}`
+                  : `Pin conversation with ${displayChat.name}`
+              }
+              title={
+                pinned
+                  ? "Unpin conversation"
+                  : "Pin conversation"
+              }
+              onClick={(event) => {
+                event.stopPropagation();
+                onTogglePin?.(chat);
+              }}
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" ||
+                  event.key === " "
+                ) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onTogglePin?.(chat);
+                }
+              }}
+              className={cn(
+                "grid h-7 w-7 cursor-pointer place-items-center rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--gold)]/45",
+                pinned
+                  ? "bg-[color:var(--gold)]/14 text-[color:var(--gold)] opacity-100"
+                  : "text-[color:var(--muted)] opacity-0 hover:bg-[color:var(--primary)]/7 hover:text-[color:var(--primary)] group-hover:opacity-60"
+              )}
+            >
+              <Pin
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform duration-200",
+                  pinned && "rotate-[-10deg]"
+                )}
+              />
+            </span>
+          </div>
         </div>
 
-    <p
-  className={cn(
-    "mt-1 truncate text-xs leading-5",
-    isUnread
-      ? "font-black text-[color:var(--primary)]"
-      : "font-semibold text-[color:var(--muted)]"
-  )}
->
-  {lastMessage?.text?.trim()
-    ? lastMessage.text
-    : lastMessage?.attachments?.length > 0
-      ? `📎 ${lastMessage.attachments[0].name}`
-      : "No messages yet."}
-</p>
+        <p
+          className={cn(
+            "mt-1 truncate text-xs leading-5",
+            isUnread
+              ? "font-black text-[color:var(--primary)]"
+              : "font-semibold text-[color:var(--muted)]"
+          )}
+        >
+          {lastMessage?.text?.trim()
+            ? lastMessage.text
+            : lastMessage?.attachments?.length > 0
+              ? `📎 ${lastMessage.attachments[0].name}`
+              : "No messages yet."}
+        </p>
       </div>
     </button>
   );
