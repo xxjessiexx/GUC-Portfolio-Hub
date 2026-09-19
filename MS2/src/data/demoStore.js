@@ -23,7 +23,7 @@ import {
 
 
 const DB_KEY = "guc_demo_database_v11";
-const CHAT_RESET_VERSION = "chat-reset-v18";
+const CHAT_RESET_VERSION = "chat-reset-v23";
 const CHAT_RESET_KEY = "guc_demo_chat_reset_version";
 const CURRENT_USER_KEY = "currentUser";
 const LEGACY_USERS_KEY = "users";
