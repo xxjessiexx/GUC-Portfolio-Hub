@@ -98,14 +98,9 @@ const [reportReason, setReportReason] =
 
   const [search, setSearch] = useState("");
 
-  const [selectedCourse, setSelectedCourse] =
-    useState("All Courses");
-
-  const [selectedInstructor, setSelectedInstructor] =
-    useState("All Instructors");
-
-  const [selectedDate, setSelectedDate] =
-    useState("Anytime");
+  const [selectedCourses, setSelectedCourses] = useState([]);
+const [selectedInstructors, setSelectedInstructors] = useState([]);
+const [selectedSkills, setSelectedSkills] = useState([]);
 
   const [selectedSort, setSelectedSort] =
     useState("Newest");
@@ -131,36 +126,34 @@ const [reportedProjects, setReportedProjects] =
   });
 
   const courseOptions = [
-  "Course: All Courses",
-
   ...new Set(
-    projects.map(
-      (project) =>
-        `Course: ${getDisplayCourse(project)}`
-    )
+    projects
+      .map((project) => getDisplayCourse(project))
+      .filter(Boolean)
   ),
 ];
 
 const instructorOptions = [
-  "Instructor: All Instructors",
-
   ...new Set(
     projects
       .map((project) => project.instructor)
       .filter(Boolean)
-      .map(
-        (instructor) =>
-          `Instructor: ${instructor}`
-      )
   ),
 ];
 
-  /* FAVORITES */
-  const toggleFavorite = (id) => {
-  toggleFavoriteProject(id);
+const skillOptions = [
+  ...new Set(
+    ProjectNameData.flatMap(
+      (project) => project.tags || []
+    )
+  ),
+];
 
+const toggleFavorite = (id) => {
+  toggleFavoriteProject(id);
   setProjects(getAllProjects());
 };
+
   /* FILTERS */
   const filteredProjects = projects
 
@@ -201,52 +194,39 @@ const instructorOptions = [
   );
 
     const matchesCourse =
-  selectedCourse === "All Courses" ||
+  selectedCourses.length === 0 ||
+  selectedCourses.includes(
+    getDisplayCourse(project)
+  );
 
-  getDisplayCourse(project) === selectedCourse ||
+const matchesInstructor =
+  selectedInstructors.length === 0 ||
+  selectedInstructors.includes(
+    project.instructor
+  );
 
-  project.courseName === selectedCourse ||
+const matchesSkill =
+  selectedSkills.length === 0 ||
+  selectedSkills.some((skill) =>
+    project.tags?.some(
+      (tag) =>
+        tag.toLowerCase() ===
+        skill.toLowerCase()
+    )
+  );
 
-  project.program === selectedCourse;
-
-    const matchesInstructor =
-  selectedInstructor ===
-    "All Instructors" ||
-
-  project.instructor
-    ?.toLowerCase()
-    .includes(
-      selectedInstructor.toLowerCase()
-    );
-
-    const matchesDate = (() => {
-      if (selectedDate === "Anytime") return true;
-
-      const rawDate = project.date || project.createdAt || project.updatedAt;
-      const projectDate = rawDate ? new Date(rawDate) : null;
-      if (!projectDate || Number.isNaN(projectDate.getTime())) return false;
-
-      const now = new Date();
-      const cutoff = new Date(now);
-
-      if (selectedDate === "This Week") {
-        cutoff.setDate(now.getDate() - 7);
-        return projectDate >= cutoff && projectDate <= now;
-      }
-
-      if (selectedDate === "This Month") {
-        cutoff.setMonth(now.getMonth() - 1);
-        return projectDate >= cutoff && projectDate <= now;
-      }
-
-      return true;
-    })();
+return (
+  matchesSearch &&
+  matchesCourse &&
+  matchesInstructor &&
+  matchesSkill
+);
 
     return (
       matchesSearch &&
       matchesCourse &&
       matchesInstructor &&
-      matchesDate
+      matchesSkill
     );
   })
 
@@ -373,52 +353,52 @@ const instructorOptions = [
               setFiltersOpen((current) => !current)
             }
             filterTitle="Filter projects"
-            onClearFilters={() => {
-              setSelectedCourse("All Courses");
-              setSelectedInstructor("All Instructors");
-              setSelectedDate("Anytime");
-              setCurrentPage(1);
-            }}
+           onClearFilters={() => {
+  setSelectedCourses([]);
+  setSelectedInstructors([]);
+  setSelectedSkills([]);
+  setCurrentPage(1);
+}}
           >
             <FilterSelect
-              value={`Course: ${selectedCourse}`}
-              onChange={(value) => {
-                setSelectedCourse(
-                  value.replace("Course: ", "")
-                );
-                setCurrentPage(1);
-              }}
-              options={courseOptions}
-            />
+  multiple
+  value={selectedCourses}
+  onChange={(values) => {
+    setSelectedCourses(values);
+    setCurrentPage(1);
+  }}
+  options={courseOptions}
+  placeholder="All Courses"
+/>
 
-            <FilterSelect
-              value={`Instructor: ${selectedInstructor}`}
-              onChange={(value) => {
-                setSelectedInstructor(
-                  value.replace("Instructor: ", "")
-                );
-                setCurrentPage(1);
-              }}
-              options={instructorOptions}
-            />
+<FilterSelect
+  multiple
+  value={selectedInstructors}
+  onChange={(values) => {
+    setSelectedInstructors(values);
+    setCurrentPage(1);
+  }}
+  options={instructorOptions}
+  placeholder="All Instructors"
+/>
 
-            <FilterSelect
-              value={`Date: ${selectedDate}`}
-              onChange={(value) => {
-                setSelectedDate(
-                  value.replace("Date: ", "")
-                );
-                setCurrentPage(1);
-              }}
-              options={[
-                "Date: Anytime",
-                "Date: This Week",
-                "Date: This Month",
-              ]}
-            />
+<FilterSelect
+  multiple
+  value={selectedSkills}
+  onChange={(values) => {
+    setSelectedSkills(values);
+    setCurrentPage(1);
+  }}
+  options={skillOptions}
+  placeholder="All Skills"
+/>
           </SearchFilterToolbar>
         {/* TOP BAR */}
-        <div ref={resultsTopRef} className="flex scroll-mt-28 items-center justify-between">
+        <div ref={resultsTopRef}  className="
+    relative z-0
+    flex scroll-mt-28
+    items-center justify-between
+  ">
 
           <h2 className="font-bold text-[var(--ink)]">
             {filteredProjects.length} projects found
@@ -660,3 +640,4 @@ const instructorOptions = [
     </DashboardLayout>
   );
 }
+
