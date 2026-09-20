@@ -43,7 +43,7 @@ export default function InstructorCard({ instructor, onView }) {
       }}
       className="
         group
-        w-full max-w-[320px]
+        w-full max-w-[320px] h-full
         overflow-hidden
         rounded-3xl
         border border-[var(--card-border)]
@@ -82,7 +82,7 @@ export default function InstructorCard({ instructor, onView }) {
         />
       </div>
 
-      <div className="p-5">
+      <div className="flex flex-1 flex-col p-5">
         <h3
           className="
             text-lg font-black
@@ -118,48 +118,53 @@ export default function InstructorCard({ instructor, onView }) {
           ) : null}
         </div>
 
-        {courses.length ? (
-          <div className="mt-4 border-t border-[var(--border-blue)] pt-3.5">
-            <div className="flex items-center justify-between gap-3">
-              <p
-                className="
-                  text-[9.5px] font-black uppercase tracking-[0.14em]
-                  text-[#6F8391]
-                  dark:text-[#8FA5B4]
-                "
-              >
-                Teaching
-              </p>
+       {courses.length ? (
+  <div className="mt-auto border-t border-[var(--border-blue)] pt-3.5">
+    <div className="flex items-center justify-between gap-3">
+      <p
+        className="
+          text-[9.5px] font-black uppercase tracking-[0.14em]
+          text-[#6F8391]
+          dark:text-[#8FA5B4]
+        "
+      >
+        Teaching
+      </p>
 
-              <span className="text-[9.5px] font-black text-[var(--muted)]">
-                {courses.length} {courses.length === 1 ? "course" : "courses"}
+      <span className="text-[9.5px] font-black text-[var(--muted)]">
+        {courses.length} {courses.length === 1 ? "course" : "courses"}
+      </span>
+    </div>
+
+   <div>
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+        {visibleCourses.map((course, index) => (
+          <span
+            key={`${course}-${index}`}
+            className="text-[11px] font-black text-[var(--primary)]"
+          >
+            {courseCode(course)}
+
+            {index < visibleCourses.length - 1 ? (
+              <span className="ml-2.5 text-[#B89736] dark:text-[var(--gold)]">
+                ·
               </span>
-            </div>
-
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-              {visibleCourses.map((course, index) => (
-                <span
-                  key={`${course}-${index}`}
-                  className="text-[11px] font-black text-[var(--primary)]"
-                >
-                  {courseCode(course)}
-                  {index < visibleCourses.length - 1 ? (
-                    <span className="ml-2.5 text-[#B89736] dark:text-[var(--gold)]">
-                      ·
-                    </span>
-                  ) : null}
-                </span>
-              ))}
-            </div>
-
-            {remainingCourses > 0 ? (
-              <p className="mt-2 text-[10.5px] font-black text-[var(--primary)]">
-                + {remainingCourses} more {remainingCourses === 1 ? "course" : "courses"}
-              </p>
             ) : null}
-          </div>
-        ) : null}
+          </span>
+        ))}
       </div>
+
+      {remainingCourses > 0 ? (
+        <p className="mt-2 text-[10.5px] font-black text-[var(--primary)]">
+          + {remainingCourses} more{" "}
+          {remainingCourses === 1 ? "course" : "courses"}
+        </p>
+      ) : null}
+    </div>
+  </div>
+) : null}
+    
+</div>
     </AppCard>
   );
 }

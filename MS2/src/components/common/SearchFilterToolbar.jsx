@@ -35,25 +35,47 @@ export default function SearchFilterToolbar({
     };
 
    const handleOutsideClick = (event) => {
-  if (!window.matchMedia("(min-width: 768px)").matches) return;
-  if (!rootRef.current) return;
+  if (!window.matchMedia("(min-width: 768px)").matches) {
+    return;
+  }
+
+  if (!rootRef.current) {
+    return;
+  }
 
   const target = event.target;
 
-  // Radix Select renders its menu in a Portal, outside rootRef.
-  // Treat clicks inside that portal as part of this toolbar.
-  // Otherwise the filter panel unmounts on pointerdown before
-  // Radix can fire onValueChange, which makes the dropdowns look dead.
-  const clickedInsideSelectPortal =
-    target instanceof Element &&
-    Boolean(
-      target.closest(
-        '[data-slot="select-content"], [data-slot="select-item"], [data-radix-popper-content-wrapper]'
-      )
-    );
+  if (!(target instanceof Element)) {
+    return;
+  }
 
-  if (clickedInsideSelectPortal) return;
-  if (rootRef.current.contains(target)) return;
+  // Normal Radix Select dropdown
+  const clickedInsideSelectPortal = Boolean(
+    target.closest(
+      `
+        [data-slot="select-content"],
+        [data-slot="select-item"],
+        [data-radix-popper-content-wrapper]
+      `
+    )
+  );
+
+  // Our custom multi-select dropdown
+  const clickedInsideMultiSelect = Boolean(
+    target.closest('[data-filter-dropdown="true"]')
+  );
+
+  // Click happened inside toolbar/filter panel
+  const clickedInsideToolbar =
+    rootRef.current.contains(target);
+
+  if (
+    clickedInsideSelectPortal ||
+    clickedInsideMultiSelect ||
+    clickedInsideToolbar
+  ) {
+    return;
+  }
 
   onToggleFilters?.();
 };
@@ -67,7 +89,10 @@ export default function SearchFilterToolbar({
   }, [filtersOpen, onToggleFilters]);
 
   return (
-    <section ref={rootRef} className={`relative z-30 ${className}`}>
+    <section
+  ref={rootRef}
+  className={`relative z-[100] overflow-visible ${className}`}
+>
       <div
         className="
           flex min-h-[64px] w-full items-stretch overflow-hidden
@@ -198,15 +223,16 @@ export default function SearchFilterToolbar({
       {showFilters && filtersOpen && (
         <>
           <div
-            className="
-              absolute right-0 top-[calc(100%+10px)] z-[999]
-              hidden w-[400px] max-w-[calc(100vw-32px)]
-              md:block
-            "
-          >
+  className="
+    absolute right-0 top-[calc(100%+10px)] z-[110]
+    hidden w-[400px] max-w-[calc(100vw-32px)]
+    overflow-visible
+    md:block
+  "
+>
             <div
               className="
-                overflow-hidden rounded-[20px]
+                overflow-visible rounded-[20px]
                 border border-[#D5E3EA]
                 bg-[#F7FBFD]
                 shadow-[0_24px_60px_rgba(31,59,78,0.18)]
@@ -260,6 +286,7 @@ export default function SearchFilterToolbar({
               >
                 {children}
               </FilterPanel>
+             
             </div>
           </div>
 
