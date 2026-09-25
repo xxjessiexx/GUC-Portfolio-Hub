@@ -1,4 +1,4 @@
-import { Bell, Check, MoreHorizontal, Trash2 } from "lucide-react";
+import { Bell, Check, MailOpen, MoreHorizontal, Pin, PinOff, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
@@ -77,6 +77,7 @@ export default function NotificationCard({
   title,
   description,
   unread,
+  pinned = false,
   attention = false,
   time,
   type,
@@ -84,6 +85,8 @@ export default function NotificationCard({
   onOpen,
   onDelete,
   onMarkAsRead,
+  onMarkAsUnread,
+  onTogglePin,
   onAcceptInvite,
   onRejectInvite,
 }) {
@@ -118,9 +121,21 @@ export default function NotificationCard({
     }
   };
 
-  const handleMarkAsRead = (event) => {
+  const handleToggleRead = (event) => {
     event.stopPropagation();
-    onMarkAsRead(id);
+
+    if (unread) {
+      onMarkAsRead?.(id);
+    } else {
+      onMarkAsUnread?.(id);
+    }
+
+    setMenuOpen(false);
+  };
+
+  const handleTogglePin = (event) => {
+    event.stopPropagation();
+    onTogglePin?.(id);
     setMenuOpen(false);
   };
 
@@ -143,7 +158,7 @@ export default function NotificationCard({
     event.stopPropagation();
 
     const buttonRect = event.currentTarget.getBoundingClientRect();
-    const dropdownHeight = 135;
+    const dropdownHeight = 185;
 
     const notificationsList = event.currentTarget.closest(
       "[data-notifications-list]"
@@ -227,9 +242,21 @@ export default function NotificationCard({
             <div className="min-w-0 flex-1 space-y-2">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-sm font-black text-[color:var(--ink)]">
-                    {title}
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    {pinned && (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full bg-[color:var(--gold)]/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-[color:var(--primary)] dark:text-[color:var(--gold)]"
+                        title="Pinned notification"
+                      >
+                        <Pin className="h-3 w-3 fill-current" />
+                        Pinned
+                      </span>
+                    )}
+
+                    <h2 className="text-sm font-black text-[color:var(--ink)]">
+                      {title}
+                    </h2>
+                  </div>
 
                   <p className="mt-1 line-clamp-2 text-sm font-medium leading-6 text-[color:var(--muted)]">
                     {description}
@@ -265,16 +292,31 @@ export default function NotificationCard({
                           openUpward ? "bottom-11" : "top-11"
                         )}
                       >
-                        {unread && (
-                          <button
-                            type="button"
-                            onClick={handleMarkAsRead}
-                            className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-black text-[color:var(--primary)] transition-colors duration-200 hover:bg-[rgba(230,199,123,0.28)] hover:text-[color:var(--ink)] dark:text-white dark:hover:bg-white/10"
-                          >
+                        <button
+                          type="button"
+                          onClick={handleTogglePin}
+                          className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-black text-[color:var(--primary)] transition-colors duration-200 hover:bg-[rgba(230,199,123,0.28)] hover:text-[color:var(--ink)] dark:text-white dark:hover:bg-white/10"
+                        >
+                          {pinned ? (
+                            <PinOff className="h-4 w-4" />
+                          ) : (
+                            <Pin className="h-4 w-4" />
+                          )}
+                          {pinned ? "Unpin" : "Pin notification"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleToggleRead}
+                          className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-black text-[color:var(--primary)] transition-colors duration-200 hover:bg-[rgba(230,199,123,0.28)] hover:text-[color:var(--ink)] dark:text-white dark:hover:bg-white/10"
+                        >
+                          {unread ? (
                             <Check className="h-4 w-4" />
-                            Mark as read
-                          </button>
-                        )}
+                          ) : (
+                            <MailOpen className="h-4 w-4" />
+                          )}
+                          {unread ? "Mark as read" : "Mark as unread"}
+                        </button>
 
                         <button
                           type="button"

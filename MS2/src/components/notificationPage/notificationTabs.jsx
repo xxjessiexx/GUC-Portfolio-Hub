@@ -116,7 +116,12 @@ function getEmptyStateMessage(activeTab) {
 }
 
 export default function NotificationsTabs({ notifications }) {
-  const { markAsRead, deleteNotification } = useNotifications();
+  const {
+    markAsRead,
+    markAsUnread,
+    togglePinNotification,
+    deleteNotification,
+  } = useNotifications();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -317,6 +322,12 @@ export default function NotificationsTabs({ notifications }) {
     });
 
     return [...filtered].sort((a, b) => {
+      const pinDifference = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
+
+      if (pinDifference !== 0) {
+        return pinDifference;
+      }
+
       const aDate = getNotificationDate(a)?.getTime() ?? 0;
       const bDate = getNotificationDate(b)?.getTime() ?? 0;
       return bDate - aDate;
@@ -431,15 +442,26 @@ export default function NotificationsTabs({ notifications }) {
           <div className="space-y-8" data-notifications-list>
             {(() => {
               const groupOrder = ["Today", "Yesterday", "This week", "Earlier"];
+              const pinnedItems = visibleNotifications.filter(
+                (notification) => notification.pinned
+              );
+              const unpinnedItems = visibleNotifications.filter(
+                (notification) => !notification.pinned
+              );
 
-              const grouped = groupOrder
-                .map((label) => ({
-                  label,
-                  items: visibleNotifications.filter(
-                    (notification) => getDateGroup(notification) === label
-                  ),
-                }))
-                .filter((group) => group.items.length > 0);
+              const grouped = [
+                ...(pinnedItems.length
+                  ? [{ label: "Pinned", items: pinnedItems, isPinnedGroup: true }]
+                  : []),
+                ...groupOrder
+                  .map((label) => ({
+                    label,
+                    items: unpinnedItems.filter(
+                      (notification) => getDateGroup(notification) === label
+                    ),
+                  }))
+                  .filter((group) => group.items.length > 0),
+              ];
 
               return grouped.map((group) => {
                 const dateLabel = formatGroupDate(group.items[0], group.label);
@@ -484,6 +506,7 @@ export default function NotificationsTabs({ notifications }) {
                               n.text || n.message || n.body || n.description
                             }
                             unread={n.unread}
+                            pinned={Boolean(n.pinned)}
                             icon={iconMap[n.type] || iconMap.default}
                             time={n.createdAt || n.time}
                             type={n.type}
@@ -498,6 +521,8 @@ export default function NotificationsTabs({ notifications }) {
                             }
                             onDelete={deleteNotification}
                             onMarkAsRead={markAsRead}
+                            onMarkAsUnread={markAsUnread}
+                            onTogglePin={togglePinNotification}
                             onAcceptInvite={(id) =>
                               respondToProjectInvite(id, "accepted")
                             }

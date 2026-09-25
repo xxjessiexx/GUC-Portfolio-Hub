@@ -411,7 +411,7 @@ toastTimerRef.current = window.setTimeout(() => {
     return visibleNotifications.filter((n) => n.unread).length;
   }, [visibleNotifications]);
 
-  const markAsRead = useCallback((notificationId) => {
+  const setNotificationReadState = useCallback((notificationId, unread) => {
     const currentUser = getCurrentUser();
 
     if (!currentUser?.id) return;
@@ -419,11 +419,25 @@ toastTimerRef.current = window.setTimeout(() => {
     const db = getDemoDb();
 
     const updated = (db.notifications || []).map((item) =>
-      item.id === notificationId ? { ...item, unread: false } : item
+      item.id === notificationId ? { ...item, unread } : item
     );
 
     setCollection("notifications", updated);
   }, []);
+
+  const markAsRead = useCallback(
+    (notificationId) => {
+      setNotificationReadState(notificationId, false);
+    },
+    [setNotificationReadState]
+  );
+
+  const markAsUnread = useCallback(
+    (notificationId) => {
+      setNotificationReadState(notificationId, true);
+    },
+    [setNotificationReadState]
+  );
 
   const markAllAsRead = useCallback(() => {
     const currentUser = getCurrentUser();
@@ -443,12 +457,47 @@ toastTimerRef.current = window.setTimeout(() => {
     setCollection("notifications", updated);
   }, []);
 
+  const togglePinNotification = useCallback((notificationId) => {
+    const currentUser = getCurrentUser();
+
+    if (!currentUser?.id) return;
+
+    const db = getDemoDb();
+
+    const updated = (db.notifications || []).map((item) =>
+      item.id === notificationId
+        ? { ...item, pinned: !Boolean(item.pinned) }
+        : item
+    );
+
+    setCollection("notifications", updated);
+  }, []);
+
   const deleteNotification = useCallback((notificationId) => {
     const db = getDemoDb();
 
     const updated = (db.notifications || []).filter(
       (item) => item.id !== notificationId
     );
+
+    setCollection("notifications", updated);
+  }, []);
+
+  const deleteAllNotifications = useCallback(() => {
+    const currentUser = getCurrentUser();
+
+    if (!currentUser?.id) return;
+
+    const db = getDemoDb();
+
+    const updated = (db.notifications || []).filter((item) => {
+      const belongsToCurrentUser =
+        String(item.userId || "") === String(currentUser.id) ||
+        String(item.recipientId || "") === String(currentUser.id) ||
+        String(item.toUserId || "") === String(currentUser.id);
+
+      return !belongsToCurrentUser;
+    });
 
     setCollection("notifications", updated);
   }, []);
@@ -533,8 +582,11 @@ toastTimerRef.current = window.setTimeout(() => {
         isNotificationAllowed,
 
         markAsRead,
+        markAsUnread,
         markAllAsRead,
+        togglePinNotification,
         deleteNotification,
+        deleteAllNotifications,
         addNotification,
         reloadNotifications: loadNotifications,
       }}

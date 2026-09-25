@@ -258,10 +258,10 @@ function EmptyState({ hasFilters, onCreate, onClear }) {
         <button
           type="button"
           onClick={onCreate}
-          className="inline-flex h-11 items-center gap-2 rounded-[14px] bg-[#355872] px-5 text-[12px] font-black text-white shadow-[0_10px_24px_rgba(53,88,114,0.16)] transition hover:bg-[#294A61]"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-[12px] border border-[#355872]/15 bg-white/80 px-4 text-xs font-black text-[#355872] transition hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-white/[0.06] dark:text-[#9CD5FF] dark:hover:bg-white/[0.1]"
         >
           <Plus className="h-4 w-4" />
-          Create internship
+          Add Internship
         </button>
       </div>
     </div>
@@ -749,10 +749,10 @@ export default function ManageInternships() {
             <button
               type="button"
               onClick={() => navigate("/create-internship")}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)] px-7 text-sm font-black text-white shadow-[0_12px_30px_rgba(53,88,114,.22)] transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_20px_40px_rgba(53,88,114,.30)]"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-[12px] border border-[#355872]/15 bg-white/80 px-4 text-xs font-black text-[#355872] transition hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-white/[0.06] dark:text-[#9CD5FF] dark:hover:bg-white/[0.1]"
             >
               <Plus className="h-4 w-4" />
-              Create Internship
+              Add Internship
             </button>
           }
         />
@@ -999,40 +999,60 @@ export default function ManageInternships() {
                             )}
                           </div>
 
-                          <RowMenu
-                            internship={internship}
-                            status={status}
-                            isOpen={openMenuId === internship.id}
-                            onToggle={(next) =>
-                              setOpenMenuId(next ? internship.id : null)
-                            }
-                            onView={() =>
-                              navigate(`/internships/${internship.id}`)
-                            }
-                            onApplicants={() =>
-                              navigate(
-                                `/manage-applicants/${internship.id}`
-                              )
-                            }
-                            onEdit={() =>
-                              navigate(
-                                `/edit-internship/${internship.id}`
-                              )
-                            }
-                            onDuplicate={() =>
-                              duplicateInternship(internship)
-                            }
-                            onToggleClosed={() =>
-                              toggleClosed(internship)
-                            }
-                            onToggleArchived={() =>
-                              toggleArchived(internship)
-                            }
-                            onDelete={() => {
-                              setOpenMenuId(null);
-                              setDeleteTarget(internship);
-                            }}
-                          />
+                          <div
+                            className="flex shrink-0 items-center gap-2"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            {status !== "draft" ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  navigate(
+                                    `/manage-applicants/${internship.id}`
+                                  )
+                                }
+                                className="inline-flex h-10 items-center justify-center gap-2 rounded-[12px] border border-[#355872]/15 bg-white/80 px-4 text-[11px] font-black text-[#355872] transition hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-white/[0.06] dark:text-[#9CD5FF] dark:hover:bg-white/[0.1]"
+                              >
+                                <Users className="h-3.5 w-3.5" />
+                                View applicants
+                              </button>
+                            ) : null}
+
+                            <RowMenu
+                              internship={internship}
+                              status={status}
+                              isOpen={openMenuId === internship.id}
+                              onToggle={(next) =>
+                                setOpenMenuId(next ? internship.id : null)
+                              }
+                              onView={() =>
+                                navigate(`/internships/${internship.id}`)
+                              }
+                              onApplicants={() =>
+                                navigate(
+                                  `/manage-applicants/${internship.id}`
+                                )
+                              }
+                              onEdit={() =>
+                                navigate(
+                                  `/edit-internship/${internship.id}`
+                                )
+                              }
+                              onDuplicate={() =>
+                                duplicateInternship(internship)
+                              }
+                              onToggleClosed={() =>
+                                toggleClosed(internship)
+                              }
+                              onToggleArchived={() =>
+                                toggleArchived(internship)
+                              }
+                              onDelete={() => {
+                                setOpenMenuId(null);
+                                setDeleteTarget(internship);
+                              }}
+                            />
+                          </div>
                         </div>
 
                         <div className="relative mt-6 flex flex-wrap items-end gap-x-6 gap-y-4">
@@ -1075,11 +1095,11 @@ export default function ManageInternships() {
                           </p>
                         ) : null}
 
-                        <div
-                          className="relative mt-6 border-t border-[#DAE6EC] pt-4"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          {status === "draft" ? (
+                        {status === "draft" ? (
+                          <div
+                            className="relative mt-6 border-t border-[#DAE6EC] pt-4"
+                            onClick={(event) => event.stopPropagation()}
+                          >
                             <button
                               type="button"
                               onClick={() =>
@@ -1092,21 +1112,8 @@ export default function ManageInternships() {
                               <Edit3 className="h-3.5 w-3.5" />
                               Continue draft
                             </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                navigate(
-                                  `/manage-applicants/${internship.id}`
-                                )
-                              }
-                              className="inline-flex h-10 items-center justify-center gap-2 rounded-[13px] bg-[linear-gradient(135deg,#2C3947_0%,#355872_55%,#7AAACE_100%)] px-5 text-[11px] font-black text-white shadow-[0_9px_20px_rgba(53,88,114,0.20)] transition-all hover:-translate-y-[1px] hover:brightness-105 hover:shadow-[0_12px_25px_rgba(53,88,114,0.24)]"
-                            >
-                              <Users className="h-3.5 w-3.5" />
-                              View applicants
-                            </button>
-                          )}
-                        </div>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </article>
