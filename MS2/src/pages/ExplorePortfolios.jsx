@@ -17,10 +17,12 @@ import { useLocation } from "react-router-dom";
 import { useNavigate }
 from "react-router-dom";
 
-import {
-  FolderOpen,
-  Sparkles,
+import { 
+  FolderOpen, 
+  Sparkles, 
   ArrowRight,
+  FolderSearch,
+  RotateCcw,
 } from "lucide-react";
 
 import { useEffect, useRef, useState } from "react";
@@ -49,11 +51,8 @@ const resultsTopRef = useRef(null);
 const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedMajor, setSelectedMajor] =
-    useState("All Majors");
-
-  const [selectedSkill, setSelectedSkill] =
-    useState("All Skills");
-
+    useState([]);
+  const [selectedSkills, setSelectedSkills] = useState([]);
   const [selectedSort, setSelectedSort] =
     useState("Most Projects");
     const [filtersOpen, setFiltersOpen] =
@@ -67,6 +66,29 @@ const [currentPage, setCurrentPage] = useState(1);
   toggleFavoritePortfolio(id);
 
   setPortfolios(getAllPortfolios());
+};
+
+const skillOptions = [
+  ...new Set(
+    portfolios.flatMap(
+      (portfolio) => portfolio.skills || []
+    )
+  ),
+];
+
+const majorOptions = [
+  ...new Set(
+    portfolios
+      .map((portfolio) => portfolio.major)
+      .filter(Boolean)
+  ),
+];
+
+const clearFilters = () => {
+  setSearch("");
+  setSelectedMajor([]);
+  setSelectedSkills([]);
+  setCurrentPage(1);
 };
 
   /* FILTERING */
@@ -94,14 +116,18 @@ const [currentPage, setCurrentPage] = useState(1);
             
         );
 
-      const matchesMajor =
-        selectedMajor === "All Majors" ||
-        portfolio.major === selectedMajor;
+     const matchesMajor =
+  selectedMajor.length === 0 ||
+  selectedMajor.includes(portfolio.major);
 
-      const matchesSkill =
-        selectedSkill === "All Skills" ||
-        portfolio.skills.includes(selectedSkill);
-
+     const matchesSkill =
+  selectedSkills.length === 0 ||
+  selectedSkills.some((skill) =>
+    portfolio.skills?.some(
+      (portfolioSkill) =>
+        portfolioSkill.toLowerCase() === skill.toLowerCase()
+    )
+  );
 
       return (
         matchesSearch &&
@@ -124,9 +150,9 @@ const [currentPage, setCurrentPage] = useState(1);
     });
 
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, selectedMajor, selectedSkill, selectedSort]);
+  useEffect(() => { 
+  setCurrentPage(1); 
+}, [search, selectedMajor, selectedSkills, selectedSort]);
 
 
   const totalPages = Math.max(
@@ -227,92 +253,238 @@ const [currentPage, setCurrentPage] = useState(1);
 
   filterTitle="Filter portfolios"
 
-  onClearFilters={() => {
-    setSelectedMajor("All Majors");
-    setSelectedSkill("All Skills");
-  }}
+  onClearFilters={clearFilters}
 >
   <FilterSelect
-  value={`Major: ${selectedMajor}`}
-  onChange={(value) =>
-    setSelectedMajor(
-      value.replace("Major: ", "")
-    )
-  }
-
-  options={[
-    "Major: All Majors",
-
-    ...Array.from(
-      new Set(
-        portfolios
-          .map((portfolio) =>
-            portfolio.major
-          )
-          .filter(Boolean)
-      )
-    ).map(
-      (major) => `Major: ${major}`
-    ),
-  ]}
+  multiple
+  value={selectedMajor}
+  onChange={(values) => {
+    setSelectedMajor(values);
+    setCurrentPage(1);
+  }}
+  options={majorOptions}
+  placeholder="Major"
 />
 
   <FilterSelect
-  value={`Skill: ${selectedSkill}`}
-  onChange={(value) =>
-    setSelectedSkill(
-      value.replace("Skill: ", "")
-    )
-  }
-
-  options={[
-    "Skill: All Skills",
-
-    ...Array.from(
-      new Set(
-        portfolios.flatMap(
-          (portfolio) =>
-            portfolio.skills || []
-        )
-      )
-    ).map(
-      (skill) => `Skill: ${skill}`
-    ),
-  ]}
+  multiple
+  value={selectedSkills}
+  onChange={(values) => {
+    setSelectedSkills(values);
+    setCurrentPage(1);
+  }}
+  options={skillOptions}
+  placeholder="Tech Stack"
 />
 </SearchFilterToolbar>
 
 
 
             {/* PORTFOLIOS */}
-            {/* PORTFOLIOS */}
-<div ref={resultsTopRef} className="grid scroll-mt-28 grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {/* PORTFOLIOS / EMPTY STATE */}
+<div ref={resultsTopRef} className="scroll-mt-28">
 
-  {paginatedPortfolios.map((portfolio) => (
-    <PortfolioCard
-      key={portfolio.id}
-      portfolio={portfolio}
-      toggleFavorite={toggleFavorite}
-      showReport={showReport}
-      onReport={(portfolio) => {
-        setSelectedPortfolio(portfolio);
-        setReportOpen(true);
-      }}
-    />
-  ))}
+  {filteredPortfolios.length === 0 ? (
+    <div
+      className="
+        relative
+        flex min-h-[420px]
+        items-center justify-center
+        overflow-hidden
+        rounded-[32px]
+      "
+    >
+      {/* Decorative glow */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          h-[300px] w-[300px]
+          rounded-full
+          bg-[#9CD5FF]/15
+          blur-[70px]
+        "
+      />
+
+      <div
+        className="
+          relative z-10
+          flex max-w-[560px]
+          flex-col items-center
+          text-center
+        "
+      >
+        {/* Illustration */}
+        <div className="relative mb-6">
+
+          <div
+            className="
+              absolute left-1/2 top-1/2
+              h-36 w-36
+              -translate-x-1/2 -translate-y-1/2
+              rounded-full
+              bg-[#9CD5FF]/15
+            "
+          />
+
+          <div
+            className="
+              absolute left-1/2 top-1/2
+              h-24 w-24
+              -translate-x-1/2 -translate-y-1/2
+              rounded-full
+              bg-[#7AAACE]/10
+            "
+          />
+
+          <div
+            className="
+              relative
+              flex h-24 w-24
+              items-center justify-center
+              rounded-[28px]
+              border border-[#7AAACE]/25
+              bg-white/55
+              shadow-[0_18px_45px_rgba(53,88,114,0.12)]
+              backdrop-blur-xl
+
+              dark:border-white/10
+              dark:bg-white/[0.05]
+            "
+          >
+            <FolderSearch
+              size={45}
+              strokeWidth={1.7}
+              className="
+                text-[#7AAACE]
+                dark:text-[#8FC5E8]
+              "
+            />
+          </div>
+
+          {/* Decorative details */}
+          <span
+            className="
+              absolute -left-8 top-4
+              h-2.5 w-2.5
+              rounded-full
+              bg-[#7AAACE]/70
+            "
+          />
+
+          <span
+            className="
+              absolute -right-8 bottom-5
+              h-2 w-2
+              rotate-45
+              bg-[#C49A2C]/80
+            "
+          />
+        </div>
+
+        <h3
+          className="
+            text-[26px]
+            font-black
+            tracking-[-0.03em]
+            text-[var(--ink)]
+          "
+        >
+          No portfolios found
+        </h3>
+
+        <p
+          className="
+            mt-2
+            max-w-[470px]
+            text-[15px]
+            font-medium
+            leading-6
+            text-[var(--muted)]
+          "
+        >
+          We couldn't find any portfolios matching your search or filters.
+          Try adjusting your keywords or filters to discover more students.
+        </p>
+
+        <button
+          type="button"
+          onClick={clearFilters}
+          className="
+            mt-6
+            inline-flex
+            items-center
+            gap-2
+
+            rounded-2xl
+            border border-[#7AAACE]/35
+            bg-[#9CD5FF]/15
+
+            px-5 py-3
+
+            text-sm
+            font-black
+            text-[#355872]
+
+            shadow-[0_8px_24px_rgba(53,88,114,0.08)]
+
+            transition-all
+            duration-200
+
+            hover:-translate-y-0.5
+            hover:border-[#7AAACE]/60
+            hover:bg-[#9CD5FF]/25
+            hover:shadow-[0_12px_30px_rgba(53,88,114,0.12)]
+
+            dark:border-[#7AAACE]/25
+            dark:bg-[#7AAACE]/10
+            dark:text-[#8FC5E8]
+          "
+        >
+          <RotateCcw size={16} strokeWidth={2.4} />
+          Clear all filters
+        </button>
+      </div>
+    </div>
+  ) : (
+    <>
+      <div
+        className="
+          grid
+          grid-cols-1
+          gap-5
+          sm:grid-cols-2
+          lg:grid-cols-3
+          xl:grid-cols-4
+        "
+      >
+        {paginatedPortfolios.map((portfolio) => (
+          <PortfolioCard
+            key={portfolio.id}
+            portfolio={portfolio}
+            toggleFavorite={toggleFavorite}
+            showReport={showReport}
+            onReport={(portfolio) => {
+              setSelectedPortfolio(portfolio);
+              setReportOpen(true);
+            }}
+          />
+        ))}
+      </div>
+
+      <Pagination
+        currentPage={safeCurrentPage}
+        totalPages={totalPages}
+        totalItems={filteredPortfolios.length}
+        pageStartIndex={pageStartIndex}
+        pageSize={ITEMS_PER_PAGE}
+        onPageChange={goToPage}
+        ariaLabel="Portfolio results pagination"
+      />
+    </>
+  )}
 
 </div>
-
-
-        <Pagination
-          currentPage={safeCurrentPage}
-          totalPages={totalPages}
-          totalItems={filteredPortfolios.length}
-          pageStartIndex={pageStartIndex}
-          pageSize={ITEMS_PER_PAGE}
-          onPageChange={goToPage}
-          ariaLabel="Portfolio results pagination"
-        />
 
         
 

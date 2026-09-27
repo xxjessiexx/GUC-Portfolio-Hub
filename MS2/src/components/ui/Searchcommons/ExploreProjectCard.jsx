@@ -31,6 +31,15 @@ export default function ExploreProjectCard({
     navigate(`/project?projectId=${encodeURIComponent(project.id)}`);
   };
 
+  const visibleTags = Array.isArray(project.tags)
+  ? project.tags.slice(0, 5)
+  : [];
+
+const hiddenTagCount = Math.max(
+  (project.tags?.length || 0) - visibleTags.length,
+  0
+);
+
   return (
     <AppCard
       role="link"
@@ -141,11 +150,48 @@ export default function ExploreProjectCard({
           </div>
         </div>
 
-        <div className="mt-2 flex flex-wrap gap-2">
-          {(project.tags || []).map((tag) => (
-            <CourseBadge key={tag} course={tag} />
-          ))}
-        </div>
+        {/* Course / Skill Tags */}
+<div className="mt-3 flex flex-wrap items-center gap-y-2">
+  {visibleTags.map((tag, index) => (
+    <div key={tag} className="flex items-center">
+      <span
+        className="
+          text-[11.5px] font-black
+          text-[#355872]
+          dark:text-[#8FC5E8]
+        "
+      >
+        {tag}
+      </span>
+
+      {(index < visibleTags.length - 1 || hiddenTagCount > 0) && (
+        <span
+          className="
+            mx-3
+            text-[19px] font-black
+            text-[#C49A2C]
+            dark:text-[var(--gold)]
+          "
+        >
+          ·
+        </span>
+      )}
+    </div>
+  ))}
+
+  {hiddenTagCount > 0 && (
+    <span
+      className="
+        text-[11px] font-black
+        text-[#355872]
+        dark:text-[#8FC5E8]
+      "
+    >
+      +{hiddenTagCount} more{" "}
+      {hiddenTagCount === 1 ? "skill" : "skills"}
+    </span>
+  )}
+</div>
       </div>
     </AppCard>
   );

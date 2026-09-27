@@ -101,8 +101,8 @@ const developers = [
 },
   {
     name: "Mai Mohamed",
-    role: "React Frontend Developer",
-    desc: "Collaborated on the React frontend, responsive page implementation, and shared UI components.",
+    role: "UI/UX Developer · React Frontend Developer",
+    desc: "Helped shape the Student Portfolio Hub from both the design and development sides, building full-stack features and creating a consistent, user-friendly experience across the platform within an Agile team.",
     initials: "MM",
     image: "/team/mai-mohamed.jpg",
     links: {

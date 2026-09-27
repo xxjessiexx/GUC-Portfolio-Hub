@@ -6726,7 +6726,7 @@ export const extraPortfolioProjects50 = [
     "name": "Interactive CV Builder",
     "type": "Course Project",
     "courseId": "course-portfolio-showcase",
-    "courseCode": "PORTFOLIO",
+    "courseCode": "CSEN 703",
     "courseName": "Student Portfolio Showcase",
     "course": "Student Portfolio Showcase",
     "ownerId": "student-malak-fouad",

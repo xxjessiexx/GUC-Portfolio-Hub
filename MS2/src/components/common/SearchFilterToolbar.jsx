@@ -6,6 +6,8 @@ import FilterSelect from "@/components/common/FilterSelect";
 import FilterPanel from "@/components/common/FilterPanel";
 
 export default function SearchFilterToolbar({
+  
+
   searchValue,
   onSearchChange,
   searchPlaceholder = "Search...",

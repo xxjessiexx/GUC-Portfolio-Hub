@@ -30,6 +30,7 @@ export default function PortfolioCard({
 
   const isOutstanding = Number(portfolio.projects || 0) >= 6;
 
+  
   return (
     <AppCard
       role="link"

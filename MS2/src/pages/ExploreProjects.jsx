@@ -10,7 +10,7 @@ import { AdminActionDialog }
 from "@/components/adminModule/AdminActionDialog";
 import Toast from "@/components/ui/toast";
 import SideToast from "@/components/ui/SideToast";
-
+import { useSearchParams } from "react-router-dom";
 /* IMPORT DATA */
 import ProjectNameData from "@/data/ProjectNameData";
 
@@ -23,11 +23,21 @@ import {
   Grid2X2,
   List,
   SlidersHorizontal,
+  FolderSearch,
+  RotateCcw,
 } from "lucide-react";
 
 import { useEffect, useRef, useState } from "react";
 
 export default function ExploreProjects({showReport = false,}) {
+
+  const clearFilters = () => {
+  setSearch("");
+  setSelectedCourses([]);
+  setSelectedInstructors([]);
+  setSelectedSkills([]);
+  setCurrentPage(1);
+};
 
   /* STATE */
   const getDisplayCourse = (project) => {
@@ -55,6 +65,9 @@ const [selectedProject, setSelectedProject] =
 
 const [reportReason, setReportReason] =
   useState("");
+  const [searchParams] = useSearchParams();
+
+const initialSearch = searchParams.get("search") || "";
 
   const [projects, setProjects] =
   useState(() => getAllProjects());
@@ -96,7 +109,7 @@ const [reportReason, setReportReason] =
 
   const [view, setView] = useState("grid");
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
 
   const [selectedCourses, setSelectedCourses] = useState([]);
 const [selectedInstructors, setSelectedInstructors] = useState([]);
@@ -390,7 +403,7 @@ return (
     setCurrentPage(1);
   }}
   options={skillOptions}
-  placeholder="All Skills"
+  placeholder="Technologies"
 />
           </SearchFilterToolbar>
         {/* TOP BAR */}
@@ -479,55 +492,215 @@ return (
 </div>
         </div>
 
-        {/* PROJECTS */}
+        {/* PROJECTS / EMPTY STATE */}
+{filteredProjects.length === 0 ? (
+  <div
+    className="
+      relative
+      flex min-h-[420px]
+      items-center justify-center
+      overflow-hidden
+      rounded-[32px]
+    "
+  >
+    {/* subtle decorative glow */}
+    <div
+      className="
+        pointer-events-none
+        absolute
+        h-[300px] w-[300px]
+        rounded-full
+        bg-[#9CD5FF]/15
+        blur-[70px]
+      "
+    />
+
+    <div className="relative z-10 flex max-w-[560px] flex-col items-center text-center">
+
+      {/* Icon illustration */}
+      <div className="relative mb-6">
+        {/* soft background circles */}
         <div
-          className={
-            view === "grid"
-              ? `
-                grid
-                grid-cols-1
-                sm:grid-cols-2
-                lg:grid-cols-3
-                xl:grid-cols-4
-                gap-5
-              `
-              : "flex flex-col gap-5"
-          }
+          className="
+            absolute left-1/2 top-1/2
+            h-36 w-36
+            -translate-x-1/2 -translate-y-1/2
+            rounded-full
+            bg-[#9CD5FF]/15
+          "
+        />
+
+        <div
+          className="
+            absolute left-1/2 top-1/2
+            h-24 w-24
+            -translate-x-1/2 -translate-y-1/2
+            rounded-full
+            bg-[#7AAACE]/10
+          "
+        />
+
+        {/* main icon */}
+        <div
+          className="
+            relative
+            flex h-24 w-24
+            items-center justify-center
+            rounded-[28px]
+            border border-[#7AAACE]/25
+            bg-white/55
+            shadow-[0_18px_45px_rgba(53,88,114,0.12)]
+            backdrop-blur-xl
+
+            dark:border-white/10
+            dark:bg-white/[0.05]
+          "
         >
-
-          {paginatedProjects.map((project) => (
-            <ExploreProjectCard
-            key={project.id}
-            project={{
-            ...project,
-            reported:
-  reportedProjects.some(
-    (reported) =>
-      reported.projectId === project.id
-  )
-          }}
-            view={view}
-            toggleFavorite={toggleFavorite}
-            showReport={showReport}
-           onReport={(project) => {
-          setSelectedProject(project);
-          setReportOpen(true);
-        }}
+          <FolderSearch
+            size={45}
+            strokeWidth={1.7}
+            className="
+              text-[#7AAACE]
+              dark:text-[#8FC5E8]
+            "
           />
-          ))}
-
         </div>
 
-        <Pagination
-          currentPage={safeCurrentPage}
-          totalPages={totalPages}
-          totalItems={filteredProjects.length}
-          pageStartIndex={pageStartIndex}
-          pageSize={ITEMS_PER_PAGE}
-          onPageChange={goToPage}
-          ariaLabel="Project results pagination"
+        {/* decorative dots */}
+        <span
+          className="
+            absolute -left-8 top-4
+            h-2.5 w-2.5
+            rounded-full
+            bg-[#7AAACE]/70
+          "
+        />
+
+        <span
+          className="
+            absolute -right-8 bottom-5
+            h-2 w-2
+            rotate-45
+            bg-[#C49A2C]/80
+          "
         />
       </div>
+
+      {/* Title */}
+      <h3
+        className="
+          text-[26px]
+          font-black
+          tracking-[-0.03em]
+          text-[var(--ink)]
+        "
+      >
+        No projects found
+      </h3>
+
+      {/* Description */}
+      <p
+        className="
+          mt-2
+          max-w-[470px]
+          text-[15px]
+          font-medium
+          leading-6
+          text-[var(--muted)]
+        "
+      >
+        We couldn't find any projects matching your search or filters.
+        Try adjusting your keywords or filters to discover more projects.
+      </p>
+
+      {/* Clear button */}
+      <button
+        type="button"
+        onClick={clearFilters}
+        className="
+          mt-6
+          inline-flex
+          items-center
+          gap-2
+
+          rounded-2xl
+          border border-[#7AAACE]/35
+          bg-[#9CD5FF]/15
+
+          px-5 py-3
+
+          text-sm
+          font-black
+          text-[#355872]
+
+          shadow-[0_8px_24px_rgba(53,88,114,0.08)]
+
+          transition-all
+          duration-200
+
+          hover:-translate-y-0.5
+          hover:border-[#7AAACE]/60
+          hover:bg-[#9CD5FF]/25
+          hover:shadow-[0_12px_30px_rgba(53,88,114,0.12)]
+
+          dark:border-[#7AAACE]/25
+          dark:bg-[#7AAACE]/10
+          dark:text-[#8FC5E8]
+        "
+      >
+        <RotateCcw size={16} strokeWidth={2.4} />
+        Clear all filters
+      </button>
+    </div>
+  </div>
+) : (
+  <>
+    <div
+      className={
+        view === "grid"
+          ? `
+              grid
+              grid-cols-1
+              sm:grid-cols-2
+              lg:grid-cols-3
+              xl:grid-cols-4
+              gap-5
+            `
+          : "flex flex-col gap-5"
+      }
+    >
+      {paginatedProjects.map((project) => (
+        <ExploreProjectCard
+          key={project.id}
+          project={{
+            ...project,
+            reported: reportedProjects.some(
+              (reported) => reported.projectId === project.id
+            ),
+          }}
+          view={view}
+          toggleFavorite={toggleFavorite}
+          showReport={showReport}
+          onReport={(project) => {
+            setSelectedProject(project);
+            setReportOpen(true);
+          }}
+        />
+      ))}
+    </div>
+
+    <Pagination
+      currentPage={safeCurrentPage}
+      totalPages={totalPages}
+      totalItems={filteredProjects.length}
+      pageStartIndex={pageStartIndex}
+      pageSize={ITEMS_PER_PAGE}
+      onPageChange={goToPage}
+      ariaLabel="Project results pagination"
+    />
+  </>
+)}
+</div>
 
       <AdminActionDialog
   open={reportOpen}
