@@ -413,10 +413,7 @@ return (
     items-center justify-between
   ">
 
-          <h2 className="font-bold text-[var(--ink)]">
-            {filteredProjects.length} projects found
-          </h2>
-
+          
           {/* VIEW BUTTONS */}
           {/* VIEW BUTTONS */}
 <div
