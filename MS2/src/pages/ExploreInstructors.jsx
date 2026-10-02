@@ -5,6 +5,8 @@ import {
   Mail,
   MapPin,
   Eye,
+  UserSearch,
+  RotateCcw,
 } from "lucide-react";
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -24,7 +26,7 @@ import ViewInstructor from "@/pages/ViewInstructor";
 import { getAllInstructors } from "@/data/demoStore";
 
 export default function ExploreInstructors() {
-    const [selectedCourse, setSelectedCourse] = useState("all");
+    const [selectedCourse, setSelectedCourse] = useState([]);
     const [search, setSearch] = useState("");
     const [instructors, setInstructors] =
   useState(getAllInstructors());
@@ -33,30 +35,37 @@ export default function ExploreInstructors() {
     const [filtersOpen, setFiltersOpen] =
   useState(false);
 
-  const courseOptions = [
-  "Course: All Courses",
+  const getCourseName = (course) => {
+  return course.includes(" - ")
+    ? course.split(" - ").slice(1).join(" - ").trim()
+    : course;
+};
 
-  ...Array.from(
-    new Set(
-      instructors.flatMap(
-        (instructor) =>
-          instructor.courses || []
-      )
+const courseOptions = [
+  ...new Set(
+    instructors.flatMap((instructor) =>
+      (instructor.courses || []).map(getCourseName)
     )
-  ).map(
-    (course) => `Course: ${course}`
   ),
 ];
+
+const clearFilters = () => {
+  setSearch("");
+  setSelectedCourse([]);
+  setCurrentPage(1);
+};
 
     const filteredInstructors = instructors.filter(
   (instructor) => {
     const matchesCourse =
-      selectedCourse === "all" ||
-      instructor.courses?.some((course) =>
-        course
-          .toLowerCase()
-          .includes(selectedCourse.toLowerCase())
-      );
+  selectedCourse.length === 0 ||
+  selectedCourse.some((selected) =>
+    instructor.courses?.some(
+      (course) =>
+        getCourseName(course).toLowerCase() ===
+        selected.toLowerCase()
+    )
+  );
 
     // CLEAN SEARCH
     const normalizedSearch = search
@@ -92,8 +101,8 @@ export default function ExploreInstructors() {
     const ITEMS_PER_PAGE = 9;
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [search, selectedCourse]);
+  setCurrentPage(1);
+}, [search, selectedCourse]);
 
 
   const totalPages = Math.max(
@@ -181,62 +190,231 @@ export default function ExploreInstructors() {
 
   filterTitle="Filter instructors"
 
-  onClearFilters={() => {
-    setSelectedCourse("all");
-  }}
+  onClearFilters={clearFilters}
 >
   <FilterSelect
-    value={
-      selectedCourse === "all"
-        ? "Course: All Courses"
-        : `Course: ${selectedCourse}`
-    }
-    onChange={(value) => {
-      const cleanedValue = value.replace(
-        "Course: ",
-        ""
-      );
-
-      setSelectedCourse(
-        cleanedValue === "All Courses"
-          ? "all"
-          : cleanedValue
-      );
-    }}
-    options={courseOptions}
-  />
+  multiple
+  value={selectedCourse}
+  onChange={(values) => {
+    setSelectedCourse(values);
+    setCurrentPage(1);
+  }}
+  options={courseOptions}
+  placeholder="Course"
+/>
 </SearchFilterToolbar>
 
 {/* TOP BAR */}
-<div ref={resultsTopRef} className="flex scroll-mt-28 items-center justify-between">
+{/* INSTRUCTORS / EMPTY STATE */}
+<div ref={resultsTopRef} className="scroll-mt-28">
 
-  <h2 className="font-bold text-[var(--ink)]">
-    {filteredInstructors.length} instructors found
-  </h2>
+  {filteredInstructors.length === 0 ? (
+    <div
+      className="
+        relative
+        flex min-h-[420px]
+        items-center justify-center
+        overflow-hidden
+        rounded-[32px]
+      "
+    >
+      {/* Decorative glow */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          h-[300px] w-[300px]
+          rounded-full
+          bg-[#9CD5FF]/15
+          blur-[70px]
+        "
+      />
 
-</div>
-        {/* INSTRUCTORS LIST */}
-        <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {paginatedInstructors.map((instructor) => (
-            <InstructorCard
-  key={instructor.id}
-  instructor={instructor}
-  onView={() =>
-    setSelectedInstructor(instructor)
-  }
-/>
-          ))}
+      <div
+        className="
+          relative z-10
+          flex max-w-[560px]
+          flex-col items-center
+          text-center
+        "
+      >
+        {/* Illustration */}
+        <div className="relative mb-6">
+
+          <div
+            className="
+              absolute left-1/2 top-1/2
+              h-36 w-36
+              -translate-x-1/2 -translate-y-1/2
+              rounded-full
+              bg-[#9CD5FF]/15
+            "
+          />
+
+          <div
+            className="
+              absolute left-1/2 top-1/2
+              h-24 w-24
+              -translate-x-1/2 -translate-y-1/2
+              rounded-full
+              bg-[#7AAACE]/10
+            "
+          />
+
+          <div
+            className="
+              relative
+              flex h-24 w-24
+              items-center justify-center
+              rounded-[28px]
+              border border-[#7AAACE]/25
+              bg-white/55
+              shadow-[0_18px_45px_rgba(53,88,114,0.12)]
+              backdrop-blur-xl
+
+              dark:border-white/10
+              dark:bg-white/[0.05]
+            "
+          >
+            <UserSearch
+              size={45}
+              strokeWidth={1.7}
+              className="
+                text-[#7AAACE]
+                dark:text-[#8FC5E8]
+              "
+            />
+          </div>
+
+          {/* Decorative details */}
+          <span
+            className="
+              absolute -left-8 top-4
+              h-2.5 w-2.5
+              rounded-full
+              bg-[#7AAACE]/70
+            "
+          />
+
+          <span
+            className="
+              absolute -right-8 bottom-5
+              h-2 w-2
+              rotate-45
+              bg-[#C49A2C]/80
+            "
+          />
         </div>
 
-        <Pagination
-          currentPage={safeCurrentPage}
-          totalPages={totalPages}
-          totalItems={filteredInstructors.length}
-          pageStartIndex={pageStartIndex}
-          pageSize={ITEMS_PER_PAGE}
-          onPageChange={goToPage}
-          ariaLabel="Instructor results pagination"
-        />
+        <h3
+          className="
+            text-[26px]
+            font-black
+            tracking-[-0.03em]
+            text-[var(--ink)]
+          "
+        >
+          No instructors found
+        </h3>
+
+        <p
+          className="
+            mt-2
+            max-w-[470px]
+            text-[15px]
+            font-medium
+            leading-6
+            text-[var(--muted)]
+          "
+        >
+          We couldn't find any instructors matching your search or filters.
+          Try adjusting your keywords or course filters to discover more instructors.
+        </p>
+
+        <button
+          type="button"
+          onClick={clearFilters}
+          className="
+            mt-6
+            inline-flex
+            items-center
+            gap-2
+
+            rounded-2xl
+            border border-[#7AAACE]/35
+            bg-[#9CD5FF]/15
+
+            px-5 py-3
+
+            text-sm
+            font-black
+            text-[#355872]
+
+            shadow-[0_8px_24px_rgba(53,88,114,0.08)]
+
+            transition-all
+            duration-200
+
+            hover:-translate-y-0.5
+            hover:border-[#7AAACE]/60
+            hover:bg-[#9CD5FF]/25
+            hover:shadow-[0_12px_30px_rgba(53,88,114,0.12)]
+
+            dark:border-[#7AAACE]/25
+            dark:bg-[#7AAACE]/10
+            dark:text-[#8FC5E8]
+          "
+        >
+          <RotateCcw size={16} strokeWidth={2.4} />
+          Clear all filters
+        </button>
+      </div>
+    </div>
+  ) : (
+    <>
+      {/* TOP BAR */}
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="font-bold text-[var(--ink)]">
+          {filteredInstructors.length} instructors found
+        </h2>
+      </div>
+
+      {/* INSTRUCTORS LIST */}
+      <div
+        className="
+          grid
+          grid-cols-1
+          items-start
+          gap-5
+          sm:grid-cols-2
+          lg:grid-cols-3
+          xl:grid-cols-4
+        "
+      >
+        {paginatedInstructors.map((instructor) => (
+          <InstructorCard
+            key={instructor.id}
+            instructor={instructor}
+            onView={() =>
+              setSelectedInstructor(instructor)
+            }
+          />
+        ))}
+      </div>
+
+      <Pagination
+        currentPage={safeCurrentPage}
+        totalPages={totalPages}
+        totalItems={filteredInstructors.length}
+        pageStartIndex={pageStartIndex}
+        pageSize={ITEMS_PER_PAGE}
+        onPageChange={goToPage}
+        ariaLabel="Instructor results pagination"
+      />
+    </>
+  )}
+
+</div>
 
       </div>
       {selectedInstructor && (

@@ -106,9 +106,9 @@ const developers = [
     initials: "MM",
     image: "/team/mai-mohamed.jpg",
     links: {
-      github: "",
-      linkedin: "",
-      email: "",
+      github: "https://github.com/maimahmoud-web",
+      linkedin: "https://www.linkedin.com/in/may-mahmoud-9b418a287",
+      email: "mailto:may43877@gmail.com",
     },
   },
   {

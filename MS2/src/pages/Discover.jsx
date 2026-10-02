@@ -11,7 +11,8 @@ import { getAllProjects,getCollection,
   normalizeRole, } from "@/data/demoStore";
 
 import {
-  Sparkles,
+   Telescope,
+  
   FolderOpen,
   UserRound,
   GraduationCap,
@@ -31,6 +32,7 @@ import {
   Layers3,
   Star,
 } from "lucide-react";
+
 
 /* =========================================================
    DEMO DATA
@@ -158,21 +160,8 @@ const recommendedProjects = extraPortfolioProjects50
   .slice(0, 4);
 
 
-
-
-
-
-
-/* =========================================================
-   PAGE
-========================================================= */
-
 export default function DiscoverPage() {
   const navigate = useNavigate();
-
-  /* =======================================================
-     SECTION REFERENCES
-  ======================================================= */
 
   const forYouRef = useRef(null);
   const projectsRef = useRef(null);
@@ -180,10 +169,6 @@ export default function DiscoverPage() {
   const instructorsRef = useRef(null);
   const trendingRef = useRef(null);
 
-
-  /* =======================================================
-     SCROLL TO SECTION
-  ======================================================= */
 
   const scrollToSection = (ref) => {
     ref.current?.scrollIntoView({
@@ -203,7 +188,6 @@ allProjects.forEach((project) => {
     ...(project.languages || []),
   ];
 
-  // Prevent the same project from counting a topic more than once
   const uniqueTopics = [...new Set(topics)];
 
   uniqueTopics.forEach((topic) => {
@@ -226,9 +210,6 @@ const trendingTopics = Object.entries(topicCounts)
 
 const allUsers = getCollection("users");
 
-// ─────────────────────────────────────────────
-// PROJECT PREVIEW
-// ─────────────────────────────────────────────
 
 const projectPreview = [...allProjects]
   .filter(
@@ -251,10 +232,6 @@ const projectPreview = [...allProjects]
     likes: project.likes || project.rating || 0,
   }));
 
-
-// ─────────────────────────────────────────────
-// PORTFOLIO PREVIEW
-// ─────────────────────────────────────────────
 
 const portfolioPreview = allUsers
   .filter(
@@ -287,11 +264,6 @@ const portfolioPreview = allUsers
   })
   .sort((a, b) => b.projects - a.projects)
   .slice(0, 3);
-
-
-// ─────────────────────────────────────────────
-// INSTRUCTOR PREVIEW
-// ─────────────────────────────────────────────
 
 const instructorPreview = allUsers
   .filter(
@@ -329,9 +301,7 @@ const instructorPreview = allUsers
 
       <div className="mx-auto w-full max-w-[1480px]">
 
-        {/* =================================================
-            HEADER
-        ================================================= */}
+        {}
 
         <PageHeader
           className="mb-10"
@@ -342,9 +312,7 @@ const instructorPreview = allUsers
 
         <div className="space-y-10">
 
-          {/* =================================================
-              SECTION NAVIGATION
-          ================================================= */}
+          {}
 
           <nav
             className="
@@ -367,7 +335,7 @@ const instructorPreview = allUsers
           >
 
             <DiscoverTab
-              icon={Sparkles}
+               icon={Telescope}
               label="For You"
               onClick={() =>
                 scrollToSection(forYouRef)
@@ -413,17 +381,13 @@ const instructorPreview = allUsers
           </nav>
 
 
-          {/* =================================================
-              FOR YOU
-          ================================================= */}
+          {}
 
-         {/* =================================================
-    FOR YOU
-================================================= */}
+         {}
 
 <section ref={forYouRef} className="scroll-mt-28">
   <SectionTitle
-    icon={Sparkles}
+    icon={Telescope}
     title="For You"
     subtitle="Curated picks based on your interests."
   />
@@ -841,13 +805,10 @@ function DiscoverTab({
   label,
   onClick,
 }) {
-
   return (
-
     <button
       type="button"
       onClick={onClick}
-
       className="
         group
         relative
@@ -872,29 +833,26 @@ function DiscoverTab({
         hover:text-[var(--primary)]
       "
     >
-
-      <Icon
-        size={17}
-        strokeWidth={2.2}
-
-        className="
-          transition-transform
-          duration-200
-
-          group-hover:scale-110
-        "
-      />
+      {/* Only show icon if one was provided */}
+      {Icon && (
+        <Icon
+          size={17}
+          strokeWidth={2.2}
+          className="
+            transition-transform
+            duration-200
+            group-hover:scale-110
+          "
+        />
+      )}
 
       {label}
 
-
       {/* HOVER LINE */}
-
       <span
         className="
           absolute
           bottom-0
-
           left-1/2
 
           h-[3px]
@@ -903,7 +861,6 @@ function DiscoverTab({
           -translate-x-1/2
 
           rounded-full
-
           bg-[#7AAACE]
 
           transition-all
@@ -912,16 +869,11 @@ function DiscoverTab({
           group-hover:w-[70%]
         "
       />
-
     </button>
-
   );
 }
 
 
-/* =========================================================
-   SECTION TITLE
-========================================================= */
 
 function SectionTitle({
   icon: Icon,
@@ -944,11 +896,12 @@ function SectionTitle({
         "
       >
 
-        <Icon
-          size={22}
-          className="text-[var(--primary)]"
-        />
-
+        {Icon && (
+  <Icon
+    size={22}
+    className="text-[var(--primary)]"
+  />
+)}
 
         <h2
           className="

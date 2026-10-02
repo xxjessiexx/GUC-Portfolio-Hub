@@ -43,7 +43,7 @@ export default function InstructorCard({ instructor, onView }) {
       }}
       className="
         group
-        w-full max-w-[320px] h-full
+        w-full max-w-[320px]
         overflow-hidden
         rounded-3xl
         border border-[var(--card-border)]
@@ -63,21 +63,24 @@ export default function InstructorCard({ instructor, onView }) {
       {/* Visual zone — same footprint/rhythm as project cards */}
       <div
         className="
-          flex h-44 items-center justify-center
-          border-b border-[var(--card-border)]
-          bg-[linear-gradient(145deg,rgba(234,242,246,0.95),rgba(248,251,252,0.98))]
-          dark:bg-[linear-gradient(145deg,rgba(14,35,49,0.95),rgba(18,42,58,0.98))]
+           relative flex h-44 items-center justify-center
+    border-b border-[var(--card-border)]
+
+   bg-[#ADBFCA]
+dark:bg-[#162633]
         "
       >
         <img
           src={instructor.image}
           alt={instructor.name}
           className="
-            h-[108px] w-[108px] rounded-full
-            border-[5px] border-white/85
-            object-cover
-            shadow-[0_18px_38px_rgba(53,88,114,0.18)]
-            dark:border-white/10
+            h-[108px] w-[108px]
+    rounded-full
+    object-cover
+    border-[4px] border-[#E4EBEF]
+    shadow-[0_8px_18px_rgba(53,88,114,0.28),0_-2px_5px_rgba(255,255,255,0.65)]
+    dark:border-[#29404F]
+    dark:shadow-[0_8px_20px_rgba(0,0,0,0.4),0_-2px_4px_rgba(255,255,255,0.06)]
           "
         />
       </div>
